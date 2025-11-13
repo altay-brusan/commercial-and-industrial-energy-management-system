@@ -1,0 +1,131 @@
+@import './_variables';
+@import "./_mixins";
+@import "./_main";
+@import "./_topbar";
+@import "./_menu";
+@import "./_config";
+@import "./_content";
+@import "./_footer";
+@import "./_responsive";
+@import "./_utils";
+@import "./_typography";
+
+.custom-page {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.custom-data-table {
+
+    .p-paginator-bottom {
+        border-width: 2px 0 0 0;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+    }
+}
+
+.p-float-label:has(input:focus) label,
+.p-float-label:has(input.p-filled) label,
+.p-float-label:has(input:-webkit-autofill) label,
+.p-float-label:has(textarea:focus) label,
+.p-float-label:has(textarea.p-filled) label,
+.p-float-label:has(.p-inputwrapper-focus) label,
+.p-float-label:has(.p-inputwrapper-filled) label {
+    top: 0.07rem;
+    padding: 0 0.25rem;
+    background-color: var(--surface-a);
+    border-radius: 0.25rem;
+}
+
+.overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    bottom: 0;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 9999;
+
+    &::before {
+        content: '';
+        background: rgba(0, 0, 0, 0.6);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999;
+    }
+}
+
+.p-stepper .p-stepper-panels,
+.p-stepper .p-stepper-header .p-stepper-action {
+    background-color: var(--surface-card);
+}
+
+@media (max-width: 768px) {
+    .mobile-w-full {
+        width: 100%;
+    }
+}
+
+
+.top-5 {
+    top: 20px;
+}
+
+.right-5 {
+    right: 20px;
+}
+
+.p-button.p-button-text {
+    color: var(--primary-color);
+}
+
+.bg-black {
+    background-color: black;
+}
+
+
+.react-flow__node {
+    &.parent {
+
+        .react-flow__handle-top,
+        .react-flow__handle-bottom {
+            visibility: hidden;
+        }
+    }
+}
+
+
+.capacitor-data-center {
+    right: -160.4px;
+    transform: translateY(-50%);
+    top: 50%;
+}
+
+.p-password .p-icon-field {
+    width: 100%;
+}
+
+.padding-0 {
+
+    .p-card-body,
+    .p-card-content {
+        padding: 0;
+    }
+}
+
+.map-card {
+
+    .p-card-body,
+    .p-card-content {
+        height: 100%;
+    }
+}
+
+.capacitor-wifi {
+    left: -20px;
+}

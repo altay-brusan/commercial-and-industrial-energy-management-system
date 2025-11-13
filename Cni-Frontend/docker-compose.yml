@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  n2n-energy:
+    build:
+      context: .
+      target: runner
+    working_dir: /app
+    platform: linux/amd64
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: always
