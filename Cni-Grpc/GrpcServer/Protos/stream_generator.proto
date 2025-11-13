@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package ems.generator.stream;
+
+import "types_generic.proto";
+
+// Service definition for Generator interactions
+service Generatorervice {
+  // RPC for streaming Generator data with a specified period
+  rpc StreamGeneratorData (GeneratorDataRequest) returns (stream GeneratorData);
+}
+
+// Request message with a period parameter
+message GeneratorDataRequest {
+  uint32 id = 1; // ID of the component in the system  
+  uint32 period_s = 2; // Period in seconds between data updates
+}
+
+// Comprehensive Generator data structure
+message GeneratorData {
+    uint32 id = 1;                // ID of the component in the system
+    ems.types.generic.AC_Power ac_power = 2; // Power output of the generator [Kilowatts (kW)]
+    uint32 engine_speed = 3;      // Rotational speed of the engine [RPM]
+    uint32 oil_pressure = 4;      // Pressure of the engine oil [PSI]
+    uint32 coolant_temperature = 5; // Temperature of the engine coolant [Degrees Celsius]
+    double fuel_level = 6;        // Percentage of fuel remaining [%]
+    uint32 battery_voltage = 7;   // Voltage of the starting battery [Volts (V)]
+    uint32 run_time = 8;          // Total operating hours of the generator [Hours]
+    uint32 start_attempts = 9;    // Number of start attempts [Count]
+    bool emergency_stop_active = 10; // Indicates if emergency stop is engaged [Boolean]
+    uint32 fuel_consumption_rate = 11; // Current fuel consumption rate [Liters/hour]
+    uint32 total_fuel_used = 12;  // Total fuel consumed [Liters]
+    uint32 load_percentage = 13;  // Percentage of full load capacity [%]
+    uint32 load_demand = 14;      // Current load demand [Kilowatts (kW)]
+    uint32 ambient_temperature = 15; // Current ambient temperature [Degrees Celsius]
+    uint32 humidity = 16;         // Current ambient humidity [%]
+    ems.types.generic.Status status = 17; // Status of the generator
+}

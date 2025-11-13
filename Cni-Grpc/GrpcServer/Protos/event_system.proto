@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package ems.system.event;
+
+// Enum to identify different types of events
+enum EventLevel {
+  INFO = 0; // Informational event
+  WARNING = 1; // Warning event
+  ERROR = 2; // Error event
+}
+
+// Message for event data
+message EventData {
+  EventLevel type = 1;          // Type of the event
+  string description = 2;      // Human-readable description of the event
+  int64 timestamp = 3;         // Time when the event occurred
+  repeated uint32 device_ids = 4; // IDs of the devices associated with the event
+  map<string, string> metadata = 5;        // Additional metadata (key-value pairs)
+}
+
+// Service for streaming events
+service EventService {
+  // Stream all events to the client
+  rpc StreamEvents (Empty) returns (stream EventData);
+}
+
+message Empty {}
+
