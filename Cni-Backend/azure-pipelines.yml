@@ -1,0 +1,46 @@
+# Azure DevOps Pipeline for ASP.NET Core (.NET Framework)
+trigger:
+- main  # Change if needed
+
+pool:  
+  name: Azure Pipelines
+
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  artifactName: 'drop'
+  publishDir: '$(Build.ArtifactStagingDirectory)/publish'
+
+steps:
+
+#  Install NuGet
+- task: NuGetToolInstaller@1
+
+# Restore NuGet Packages
+- task: NuGetCommand@2
+  inputs:
+    command: 'restore'
+    restoreSolution: '$(solution)'
+
+# Build Solution
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(publishDir)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+# Run Unit Tests
+- task: VSTest@2
+  inputs:
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+# Publish the Application
+- task: PublishBuildArtifacts@1
+  displayName: "Publish Artifacts"
+  inputs:
+    pathToPublish: '$(publishDir)'
+    artifactName: '$(artifactName)'

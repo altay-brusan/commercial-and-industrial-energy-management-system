@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package ems.smartmeter.stream;
+
+import "types_generic.proto";
+
+// Service definition for SmartMeter interactions
+service SmartMeterService {
+  // RPC for streaming SmartMeter data with a specified period
+  rpc StreamSmartMeterData (SmartMeterDataRequest) returns (stream SmartMeterData);
+}
+
+// Request message with a period parameter
+message SmartMeterDataRequest {
+  uint32 id = 1; // ID of the component in the system  
+  uint32 period_s = 2; // Period in seconds between data updates
+}
+
+// Comprehensive Smart Meter data structure
+message SmartMeterData {
+  uint32 id = 1;                // ID of the component in the system
+  ems.types.generic.AC_Power ac_power = 2; // Power measurements of the smart meter [Kilowatts (kW)]
+  double active_energy_import = 3;     // Cumulative active energy imported [Kilowatt-hours (kWh)]
+  double active_energy_export = 4;     // Cumulative active energy exported [Kilowatt-hours (kWh)]
+  double reactive_energy_import = 5;   // Cumulative reactive energy imported [Kilovolt-ampere-reactive hours (kVARh)]
+  double reactive_energy_export = 6;   // Cumulative reactive energy exported [Kilovolt-ampere-reactive hours (kVARh)]
+  double total_active_energy = 7;      // Total cumulative active energy [Kilowatt-hours (kWh)]
+  double total_reactive_energy = 8;    // Total cumulative reactive energy [Kilovolt-ampere-reactive hours (kVARh)]
+  double current_demand = 9;           // Current demand across all phases [Amps (A)]
+  double power_demand = 10;            // Power demand across all phases [Kilowatts (kW)]
+  ems.types.generic.Status status = 11; // Status of smart meter
+}

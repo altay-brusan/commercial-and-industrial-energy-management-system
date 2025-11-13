@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package ems.system.stream;
+
+import "types_generic.proto";
+
+// Service definition for Generator interactions
+service SystemService {
+  // RPC for streaming Generator data with a specified period
+  rpc StreamSystemData (SystemDataRequest) returns (stream SystemData);
+}
+
+// Request message with a period parameter
+message SystemDataRequest {
+  uint32 id = 1; // ID of the component in the system  
+  uint32 period_s = 2; // Period in seconds between data updates
+}
+
+// Comprehensive System data structure
+message SystemData {
+    double grid_power = 1; // Power output of the grid [Kilowatts (kW)] = 
+    double pcs_power = 2; // Power output of the BESS [Kilowatts (kW)]
+    double generator_power = 3; // Power output of the generator [Kilowatts (kW)]
+    double solar_power = 4; // Power output of the solar panels [Kilowatts (kW)]
+    double load_grid_contribution = 5; // Load contribution from the grid [Kilowatts (kW)] daily
+    double load_pcs_contribution = 6; // Load contribution from the BESS [Kilowatts (kW)] daily
+    double load_generator_contribution = 7; // Load contribution from the generator [Kilowatts (kW)] daily
+    double load_solar_contribution = 8; // Load contribution from the solar panels [Kilowatts (kW)] daily
+}
