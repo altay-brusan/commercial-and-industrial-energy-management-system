@@ -36,17 +36,17 @@ public class GetScadaDataMinimalQueryHandler : IRequestHandler<GetScadaDataMinim
         var time = _virtualClockService.CurrentTime;
 
 
-        var solarData = await _context.SolarDatas.Where(f => f.SolarId == 2).OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+        var solarData = await _context.SolarDatas.Where(f => f.SolarId == 2).OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(cancellationToken);
-        var bessData = await _context.BESSDatas.Where(f => f.BESSId == 1).OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+        var bessData = await _context.BESSDatas.Where(f => f.BESSId == 1).OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(cancellationToken);
-        var pcs = await _context.PCSDatas.Where(f => f.PCSId == 3).OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+        var pcs = await _context.PCSDatas.Where(f => f.PCSId == 3).OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(cancellationToken);
-        var facilityData = await _context.SmartMeterDatas.Where(f => f.SmartMeterId == 5).OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+        var facilityData = await _context.SmartMeterDatas.Where(f => f.SmartMeterId == 5).OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(cancellationToken);
-        var gridData = await _context.SmartMeterDatas.Where(f => f.SmartMeterId == 4).OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+        var gridData = await _context.SmartMeterDatas.Where(f => f.SmartMeterId == 4).OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(cancellationToken);
-        var systemdata = await _context.GrpcFacilityDatas.Where(f => f.FacilityId == 6).OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+        var systemdata = await _context.GrpcFacilityDatas.Where(f => f.FacilityId == 6).OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(cancellationToken);
 
 

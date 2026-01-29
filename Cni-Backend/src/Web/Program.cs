@@ -37,7 +37,7 @@ app.UseSerilogRequestLogging();
 // HTTP isteklerini otomatik loglar
 app.UseMiddleware<MultiTenantMiddleware>();
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Test")
 {
     var lineArgs = Environment.GetCommandLineArgs();
     if (!lineArgs.Any(p => p.Contains("NSwag.AspNetCore.Launcher.dll")))
@@ -69,11 +69,15 @@ app.Map("/", () => Results.Redirect("/api"));
 app.MapHub<LiveDataHub>("/liveDataHub");
 app.MapEndpoints();
 
-app.UseHangfireDashboard("/jobs-dashboard");
-RecurringJob.AddOrUpdate<GrpcFacilityWorker>(
-    "grpc-facility-job",
-    worker => worker.CheckFacilities(),
-    "*/10 * * * *");
+// Skip Hangfire in Test environment
+if (app.Environment.EnvironmentName != "Test")
+{
+    app.UseHangfireDashboard("/jobs-dashboard");
+    RecurringJob.AddOrUpdate<GrpcFacilityWorker>(
+        "grpc-facility-job",
+        worker => worker.CheckFacilities(),
+        "*/10 * * * *");
+}
 app.Run();
 
 public partial class Program { }

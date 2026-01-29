@@ -4,6 +4,7 @@ using Backend.Infrastructure.Data;
 using Backend.Web.Hubs.Implementations;
 using Backend.Web.Services;
 using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Mvc;
 
 using NSwag;
@@ -23,12 +24,24 @@ public static class DependencyInjection
             .AddDbContextCheck<ApplicationDbContext>();
 
         builder.Services.AddExceptionHandler<CustomExceptionHandler>();
-        var hangfireConnectionString = builder.Configuration.GetConnectionString("HangfireDb");
-        builder.Services.AddHangfire(config =>
+
+        // Skip Hangfire in Test environment - it requires PostgreSQL
+        var isTestEnvironment = string.Equals(builder.Environment.EnvironmentName, "Test", StringComparison.OrdinalIgnoreCase);
+        if (!isTestEnvironment)
         {
-            config.UseSqlServerStorage(hangfireConnectionString);
-        });
-        builder.Services.AddHangfireServer();
+            var connectionString = builder.Configuration.GetConnectionString("BackendDb");
+            builder.Services.AddHangfire(config =>
+            {
+                config.UsePostgreSqlStorage(options =>
+                {
+                    options.UseNpgsqlConnection(connectionString);
+                }, new PostgreSqlStorageOptions
+                {
+                    SchemaName = "hangfire"
+                });
+            });
+            builder.Services.AddHangfireServer();
+        }
         // Customise default API behaviour
         builder.Services.Configure<ApiBehaviorOptions>(options =>
             options.SuppressModelStateInvalidFilter = true);
@@ -38,7 +51,7 @@ public static class DependencyInjection
 
         builder.Services.AddOpenApiDocument((configure, sp) =>
         {
-            configure.Title = "Backend API";
+            configure.Title = "DERMS API";
 
             // Add JWT
             configure.AddSecurity("JWT", Enumerable.Empty<string>(), new OpenApiSecurityScheme

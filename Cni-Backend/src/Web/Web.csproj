@@ -14,7 +14,7 @@
     <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
     <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Hangfire.AspNetCore" />
-    <PackageReference Include="Hangfire.SqlServer" />
+    <PackageReference Include="Hangfire.PostgreSql" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
@@ -33,7 +33,7 @@
     </PackageReference>
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Settings.Configuration" />
-    <PackageReference Include="Serilog.Sinks.MSSqlServer" />
+    <PackageReference Include="Serilog.Sinks.PostgreSQL" />
   </ItemGroup>
 
 

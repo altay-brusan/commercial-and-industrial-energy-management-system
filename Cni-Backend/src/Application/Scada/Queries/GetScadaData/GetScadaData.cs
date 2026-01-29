@@ -87,7 +87,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
     {
         var latestData = await _context.SolarDatas
     .Where(x => x.SolarId == device.Id)
-   .OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+   .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(ct);
 
         if (latestData == null) return;
@@ -106,7 +106,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
     {
         var latestData = await _context.PCSDatas
     .Where(x => x.PCSId == device.Id)
-   .OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+   .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(ct);
 
         if (latestData == null) return;
@@ -121,7 +121,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
     {
         var latestData = await _context.SmartMeterDatas
     .Where(x => x.SmartMeterId == device.Id)
-   .OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+   .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(ct);
 
         if (latestData == null) return;
@@ -166,7 +166,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
     {
         var latestData = await _context.BESSDatas
             .Where(x => x.BESSId == device.Id)
-   .OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+   .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(ct);
 
         if (latestData == null) return;
@@ -185,7 +185,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
     {
         var latestData = await _context.SmartMeterDatas
             .Where(x => x.SmartMeterId == device.Id)
-   .OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+   .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(ct);
 
         if (latestData == null) return;
@@ -201,7 +201,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
     {
         var latestSystemData = await _context.GrpcFacilityDatas
             .Where(x => x.FacilityId == device.FacilityId)
-   .OrderBy(x => Math.Abs(EF.Functions.DateDiffSecond(x.Created, time)))
+   .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
     .FirstOrDefaultAsync(ct);
 
         if (latestSystemData == null) return;
