@@ -48,7 +48,16 @@ public class ApplicationDbContextInitialiser
     {
         try
         {
-            await _context.Database.MigrateAsync();
+            // Check if using SQLite (typically for tests) - use EnsureCreated instead of Migrate
+            var isSqlite = _context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) ?? false;
+            if (isSqlite)
+            {
+                await _context.Database.EnsureCreatedAsync();
+            }
+            else
+            {
+                await _context.Database.MigrateAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -117,7 +126,94 @@ public class ApplicationDbContextInitialiser
         */
         // Parent olmayan kayıtlar (grup node'ları ve hiçbir gruba bağlı olmayan node'lar)
 
+        int tenantId = 1;
+        int firmId = 1;
         int facilitiyId = 1;
+
+        // Create Tenant first (required for multi-tenancy)
+        if (!_context.Tenants.Any())
+        {
+            var tenant = new Tenant
+            {
+                Identifier = "default",
+                Name = "Default Tenant",
+                Created = DateTime.UtcNow
+            };
+            _context.Tenants.Add(tenant);
+            await _context.SaveChangesAsync();
+            tenantId = tenant.Id;
+        }
+        else
+        {
+            var existingTenant = await _context.Tenants.FirstOrDefaultAsync();
+            if (existingTenant != null)
+            {
+                tenantId = existingTenant.Id;
+            }
+        }
+
+        // Create Firm (required for Facility foreign key)
+        if (!_context.Firms.Any())
+        {
+            var firm = new Firm
+            {
+                TenantId = tenantId,
+                Name = "Default Firm",
+                Type = "Default",
+                Country = "Default",
+                State = "",
+                City = "",
+                District = "",
+                PostalCode = "",
+                Address = "",
+                ContactEmail = "",
+                ContactPhone = "",
+                Fax = "",
+                TaxNumber = "",
+                TaxOffice = "",
+                Created = DateTime.UtcNow
+            };
+            _context.Firms.Add(firm);
+            await _context.SaveChangesAsync();
+            firmId = firm.Id;
+        }
+        else
+        {
+            var existingFirm = await _context.Firms.FirstOrDefaultAsync();
+            if (existingFirm != null)
+            {
+                firmId = existingFirm.Id;
+            }
+        }
+
+        // Create Facility (required for Device foreign key)
+        if (!_context.Facilities.Any())
+        {
+            var facility = new Facility
+            {
+                TenantId = tenantId,
+                FirmId = firmId,
+                Name = "Default Facility",
+                Address = "Default Address",
+                Capacity = 100,
+                Longitude = 0,
+                Latitude = 0,
+                GrpcStatus = true,
+                GrpcChannel = "",
+                Created = DateTime.UtcNow
+            };
+            _context.Facilities.Add(facility);
+            await _context.SaveChangesAsync();
+            facilitiyId = facility.Id;
+        }
+        else
+        {
+            var existingFacility = await _context.Facilities.FirstOrDefaultAsync();
+            if (existingFacility != null)
+            {
+                facilitiyId = existingFacility.Id;
+            }
+        }
 
         #region DeviceConf
 

@@ -3,97 +3,97 @@ using System;
 using Backend.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Backend.Infrastructure.Migrations
+namespace Backend.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250331032951_GrpcDatabeseRenewingSystemData2")]
-    partial class GrpcDatabeseRenewingSystemData2
+    [Migration("20260129150000_InitialPostgresCreate")]
+    partial class InitialPostgresCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+                .HasAnnotation("ProductVersion", "9.0.1")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("AppBESSData", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("BESSId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double?>("BatteryTemperature")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("Capacity")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("ChargeLimit")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<string>("ChargeStatus")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("text")
                         .HasColumnName("ChargeStatus");
 
                     b.Property<bool>("CoolingActive")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double?>("DischargeLimit")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("EnergyThroughput")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("NumberOfCells")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("NumberOfModules")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("NumberOfPacks")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double?>("StateOfCharge")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("StateOfHealth")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double?>("TotalEnergyStored")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -103,77 +103,77 @@ namespace Backend.Infrastructure.Migrations
             modelBuilder.Entity("Backend.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(70)
-                        .HasColumnType("nvarchar(70)");
+                        .HasColumnType("character varying(70)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Surname")
                         .IsRequired()
                         .HasMaxLength(70)
-                        .HasColumnType("nvarchar(70)");
+                        .HasColumnType("character varying(70)");
 
                     b.Property<int?>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
@@ -182,8 +182,7 @@ namespace Backend.Infrastructure.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+                        .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AppUsers", (string)null);
                 });
@@ -192,51 +191,51 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("DeviceName")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("DeviceTypeId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("GrpcConnection")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<int>("GrpcDeviceStatus")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("GrpcLastDataReviceDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("MachineId")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("SourceDeviceId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -245,8 +244,7 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("FacilityId");
 
                     b.HasIndex("SourceDeviceId")
-                        .IsUnique()
-                        .HasFilter("[SourceDeviceId] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("TenantId");
 
@@ -257,36 +255,36 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("HasGrpcStream")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
                     b.Property<bool>("IsDataCollectedViaOtherDevice")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
+                        .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
@@ -297,53 +295,53 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int>("Capacity")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("FirmId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("GrpcChannel")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("GrpcStatus")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double>("Latitude")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("Longitude")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -358,90 +356,90 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
                         .IsRequired()
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("ContactEmail")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ContactPhone")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Country")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("District")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Fax")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("LogoUrl")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("PostalCode")
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("State")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("TaxNumber")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("TaxOffice")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -454,40 +452,40 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("ApiAccess")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("MaxFacilities")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("MaxUsers")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Modules")
                         .IsRequired()
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -501,51 +499,51 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double?>("GeneratorPower")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("GridPower")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double?>("LoadGeneratorContribution")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("LoadGridContribution")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("LoadPcsContribution")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("LoadSolarContribution")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("PcsPower")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("SolarPower")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -556,42 +554,42 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double?>("Efficiency")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("PCSId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double?>("TemperaturePcs")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double?>("TotalEnergyAbsorbed")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("TotalEnergyDelivered")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -602,54 +600,54 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<double?>("ActiveEnergyExport")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("ActiveEnergyImport")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double?>("CurrentDemand")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double?>("PowerDemand")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("ReactiveEnergyExport")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("ReactiveEnergyImport")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("SmartMeterId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double?>("TotalActiveEnergy")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("TotalReactiveEnergy")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 
@@ -660,39 +658,39 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double?>("PerformanceRatio")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("PvPanelTemperature")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double?>("SolarEnergyProduced")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("SolarId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -703,36 +701,36 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ConnectionString")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Identifier")
                         .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("character varying(250)");
 
                     b.Property<string>("Items")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("character varying(500)");
 
                     b.HasKey("Id");
 
@@ -743,41 +741,41 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<bool>("Done")
-                        .HasColumnType("bit");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("ListId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("Priority")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("Reminder")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -790,29 +788,29 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
@@ -823,48 +821,48 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Data")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("SourceHandle")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("SourceId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("TargetHandle")
                         .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("TargetId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Type")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -883,64 +881,63 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Data")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int?>("DeviceId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Extent")
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("ParentId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Position")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int?>("SourceHandleCount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Style")
                         .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int?>("TargetHandleCount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Type")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("DeviceId")
-                        .IsUnique()
-                        .HasFilter("[DeviceId] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("FacilityId");
 
@@ -953,33 +950,33 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("FacilityId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("FirmId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -988,8 +985,7 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("FirmId");
 
                     b.HasIndex("UserId", "FirmId", "FacilityId")
-                        .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL AND [FirmId] IS NOT NULL AND [FacilityId] IS NOT NULL");
+                        .IsUnique();
 
                     b.ToTable("UserFirmFacilities", (string)null);
                 });
@@ -997,26 +993,25 @@ namespace Backend.Infrastructure.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
+                        .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AppRoles", (string)null);
                 });
@@ -1025,19 +1020,19 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -1050,19 +1045,19 @@ namespace Backend.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -1074,17 +1069,17 @@ namespace Backend.Infrastructure.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -1096,10 +1091,10 @@ namespace Backend.Infrastructure.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -1111,16 +1106,16 @@ namespace Backend.Infrastructure.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
@@ -1132,26 +1127,26 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDCPower", "DcPower", b1 =>
                         {
                             b1.Property<int>("AppBESSDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<double?>("Current")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Current");
 
                             b1.Property<double?>("Power")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Power");
 
                             b1.Property<double?>("TotalEnergyDaily")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_TotalEnergyDaily");
 
                             b1.Property<double?>("TotalEnergyLifetime")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_TotalEnergyLifetime");
 
                             b1.Property<double?>("Voltage")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Voltage");
 
                             b1.HasKey("AppBESSDataId");
@@ -1165,18 +1160,18 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDeviceStatus", "Status", b1 =>
                         {
                             b1.Property<int>("AppBESSDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<bool>("FaultStatus")
-                                .HasColumnType("bit")
+                                .HasColumnType("boolean")
                                 .HasColumnName("Status_FaultStatus");
 
                             b1.Property<int>("OperatingMode")
-                                .HasColumnType("int")
+                                .HasColumnType("integer")
                                 .HasColumnName("Status_OperatingMode");
 
                             b1.Property<bool>("WarningStatus")
-                                .HasColumnType("bit")
+                                .HasColumnType("boolean")
                                 .HasColumnName("Status_WarningStatus");
 
                             b1.HasKey("AppBESSDataId");
@@ -1263,125 +1258,125 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppACPower", "AcPower", b1 =>
                         {
                             b1.Property<int>("AppPCSDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<double?>("ActivePowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase1");
 
                             b1.Property<double?>("ActivePowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase2");
 
                             b1.Property<double?>("ActivePowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase3");
 
                             b1.Property<double?>("ApparentPowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase1");
 
                             b1.Property<double?>("ApparentPowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase2");
 
                             b1.Property<double?>("ApparentPowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase3");
 
                             b1.Property<double?>("CurrentPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase1");
 
                             b1.Property<double?>("CurrentPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase2");
 
                             b1.Property<double?>("CurrentPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase3");
 
                             b1.Property<double?>("CurrentRms")
-                                .HasColumnType("float");
+                                .HasColumnType("double precision");
 
                             b1.Property<double?>("Frequency")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Frequency");
 
                             b1.Property<double?>("LineToLineVoltagePhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase1");
 
                             b1.Property<double?>("LineToLineVoltagePhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase2");
 
                             b1.Property<double?>("LineToLineVoltagePhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase3");
 
                             b1.Property<double?>("PowerFactorPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase1");
 
                             b1.Property<double?>("PowerFactorPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase2");
 
                             b1.Property<double?>("PowerFactorPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase3");
 
                             b1.Property<double?>("ReactivePowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase1");
 
                             b1.Property<double?>("ReactivePowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase2");
 
                             b1.Property<double?>("ReactivePowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase3");
 
                             b1.Property<double?>("TotalActivePower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalActivePower");
 
                             b1.Property<double?>("TotalApparentPower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalApparentPower");
 
                             b1.Property<double?>("TotalEnergyDaily")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalEnergyDaily");
 
                             b1.Property<double?>("TotalEnergyLifetime")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalEnergyLifetime");
 
                             b1.Property<double?>("TotalPowerFactor")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalPowerFactor");
 
                             b1.Property<double?>("TotalReactivePower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalReactivePower");
 
                             b1.Property<double?>("VoltagePhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase1");
 
                             b1.Property<double?>("VoltagePhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase2");
 
                             b1.Property<double?>("VoltagePhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase3");
 
                             b1.Property<double?>("VoltageRms")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_RMS");
 
                             b1.HasKey("AppPCSDataId");
@@ -1395,26 +1390,26 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDCPower", "DcPower", b1 =>
                         {
                             b1.Property<int>("AppPCSDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<double?>("Current")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Current");
 
                             b1.Property<double?>("Power")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Power");
 
                             b1.Property<double?>("TotalEnergyDaily")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_TotalEnergyDaily");
 
                             b1.Property<double?>("TotalEnergyLifetime")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_TotalEnergyLifetime");
 
                             b1.Property<double?>("Voltage")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Voltage");
 
                             b1.HasKey("AppPCSDataId");
@@ -1428,18 +1423,18 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDeviceStatus", "Status", b1 =>
                         {
                             b1.Property<int>("AppPCSDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<bool>("FaultStatus")
-                                .HasColumnType("bit")
+                                .HasColumnType("boolean")
                                 .HasColumnName("FaultStatus");
 
                             b1.Property<int>("OperatingMode")
-                                .HasColumnType("int")
+                                .HasColumnType("integer")
                                 .HasColumnName("OperatingMode");
 
                             b1.Property<bool>("WarningStatus")
-                                .HasColumnType("bit")
+                                .HasColumnType("boolean")
                                 .HasColumnName("WarningStatus");
 
                             b1.HasKey("AppPCSDataId");
@@ -1465,125 +1460,125 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppACPower", "AcPower", b1 =>
                         {
                             b1.Property<int>("AppSmartMeterDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<double?>("ActivePowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase1");
 
                             b1.Property<double?>("ActivePowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase2");
 
                             b1.Property<double?>("ActivePowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase3");
 
                             b1.Property<double?>("ApparentPowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase1");
 
                             b1.Property<double?>("ApparentPowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase2");
 
                             b1.Property<double?>("ApparentPowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase3");
 
                             b1.Property<double?>("CurrentPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase1");
 
                             b1.Property<double?>("CurrentPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase2");
 
                             b1.Property<double?>("CurrentPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase3");
 
                             b1.Property<double?>("CurrentRms")
-                                .HasColumnType("float");
+                                .HasColumnType("double precision");
 
                             b1.Property<double?>("Frequency")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Frequency");
 
                             b1.Property<double?>("LineToLineVoltagePhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase1");
 
                             b1.Property<double?>("LineToLineVoltagePhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase2");
 
                             b1.Property<double?>("LineToLineVoltagePhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase3");
 
                             b1.Property<double?>("PowerFactorPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase1");
 
                             b1.Property<double?>("PowerFactorPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase2");
 
                             b1.Property<double?>("PowerFactorPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase3");
 
                             b1.Property<double?>("ReactivePowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase1");
 
                             b1.Property<double?>("ReactivePowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase2");
 
                             b1.Property<double?>("ReactivePowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase3");
 
                             b1.Property<double?>("TotalActivePower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalActivePower");
 
                             b1.Property<double?>("TotalApparentPower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalApparentPower");
 
                             b1.Property<double?>("TotalEnergyDaily")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalEnergyDaily");
 
                             b1.Property<double?>("TotalEnergyLifetime")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalEnergyLifetime");
 
                             b1.Property<double?>("TotalPowerFactor")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalPowerFactor");
 
                             b1.Property<double?>("TotalReactivePower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalReactivePower");
 
                             b1.Property<double?>("VoltagePhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase1");
 
                             b1.Property<double?>("VoltagePhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase2");
 
                             b1.Property<double?>("VoltagePhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase3");
 
                             b1.Property<double?>("VoltageRms")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_RMS");
 
                             b1.HasKey("AppSmartMeterDataId");
@@ -1597,18 +1592,18 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDeviceStatus", "Status", b1 =>
                         {
                             b1.Property<int>("AppSmartMeterDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<bool>("FaultStatus")
-                                .HasColumnType("bit")
+                                .HasColumnType("boolean")
                                 .HasColumnName("FaultStatus");
 
                             b1.Property<int>("OperatingMode")
-                                .HasColumnType("int")
+                                .HasColumnType("integer")
                                 .HasColumnName("OperatingMode");
 
                             b1.Property<bool>("WarningStatus")
-                                .HasColumnType("bit")
+                                .HasColumnType("boolean")
                                 .HasColumnName("WarningStatus");
 
                             b1.HasKey("AppSmartMeterDataId");
@@ -1631,125 +1626,125 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppACPower", "ACOutput", b1 =>
                         {
                             b1.Property<int>("AppSolarDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<double?>("ActivePowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase1");
 
                             b1.Property<double?>("ActivePowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase2");
 
                             b1.Property<double?>("ActivePowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ActivePower_Phase3");
 
                             b1.Property<double?>("ApparentPowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase1");
 
                             b1.Property<double?>("ApparentPowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase2");
 
                             b1.Property<double?>("ApparentPowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ApparentPower_Phase3");
 
                             b1.Property<double?>("CurrentPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase1");
 
                             b1.Property<double?>("CurrentPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase2");
 
                             b1.Property<double?>("CurrentPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Current_Phase3");
 
                             b1.Property<double?>("CurrentRms")
-                                .HasColumnType("float");
+                                .HasColumnType("double precision");
 
                             b1.Property<double?>("Frequency")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Frequency");
 
                             b1.Property<double?>("LineToLineVoltagePhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase1");
 
                             b1.Property<double?>("LineToLineVoltagePhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase2");
 
                             b1.Property<double?>("LineToLineVoltagePhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_LineToLineVoltage_Phase3");
 
                             b1.Property<double?>("PowerFactorPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase1");
 
                             b1.Property<double?>("PowerFactorPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase2");
 
                             b1.Property<double?>("PowerFactorPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_PowerFactor_Phase3");
 
                             b1.Property<double?>("ReactivePowerPhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase1");
 
                             b1.Property<double?>("ReactivePowerPhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase2");
 
                             b1.Property<double?>("ReactivePowerPhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_ReactivePower_Phase3");
 
                             b1.Property<double?>("TotalActivePower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalActivePower");
 
                             b1.Property<double?>("TotalApparentPower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalApparentPower");
 
                             b1.Property<double?>("TotalEnergyDaily")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalEnergyDaily");
 
                             b1.Property<double?>("TotalEnergyLifetime")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalEnergyLifetime");
 
                             b1.Property<double?>("TotalPowerFactor")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalPowerFactor");
 
                             b1.Property<double?>("TotalReactivePower")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_TotalReactivePower");
 
                             b1.Property<double?>("VoltagePhase1")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase1");
 
                             b1.Property<double?>("VoltagePhase2")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase2");
 
                             b1.Property<double?>("VoltagePhase3")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_Phase3");
 
                             b1.Property<double?>("VoltageRms")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ACOutput_Voltage_RMS");
 
                             b1.HasKey("AppSolarDataId");
@@ -1763,26 +1758,26 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDCPower", "ChargerPower", b1 =>
                         {
                             b1.Property<int>("AppSolarDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<double?>("Current")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ChargerPower_Current");
 
                             b1.Property<double?>("Power")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ChargerPower_Power");
 
                             b1.Property<double?>("TotalEnergyDaily")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ChargerPower_TotalEnergyDaily");
 
                             b1.Property<double?>("TotalEnergyLifetime")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ChargerPower_TotalEnergyLifetime");
 
                             b1.Property<double?>("Voltage")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("ChargerPower_Voltage");
 
                             b1.HasKey("AppSolarDataId");
@@ -1796,26 +1791,26 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDCPower", "DCOutput", b1 =>
                         {
                             b1.Property<int>("AppSolarDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<double?>("Current")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Current");
 
                             b1.Property<double?>("Power")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Power");
 
                             b1.Property<double?>("TotalEnergyDaily")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_TotalEnergyDaily");
 
                             b1.Property<double?>("TotalEnergyLifetime")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_TotalEnergyLifetime");
 
                             b1.Property<double?>("Voltage")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("DCOutput_Voltage");
 
                             b1.HasKey("AppSolarDataId");
@@ -1829,26 +1824,26 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDCPower", "PanelPower", b1 =>
                         {
                             b1.Property<int>("AppSolarDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<double?>("Current")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("PanelPower_Current");
 
                             b1.Property<double?>("Power")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("PanelPower_Power");
 
                             b1.Property<double?>("TotalEnergyDaily")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("PanelPower_TotalEnergyDaily");
 
                             b1.Property<double?>("TotalEnergyLifetime")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("PanelPower_TotalEnergyLifetime");
 
                             b1.Property<double?>("Voltage")
-                                .HasColumnType("float")
+                                .HasColumnType("double precision")
                                 .HasColumnName("PanelPower_Voltage");
 
                             b1.HasKey("AppSolarDataId");
@@ -1862,18 +1857,18 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.Entities.Proto.Shared.AppDeviceStatus", "Status", b1 =>
                         {
                             b1.Property<int>("AppSolarDataId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<bool>("FaultStatus")
-                                .HasColumnType("bit")
+                                .HasColumnType("boolean")
                                 .HasColumnName("FaultStatus");
 
                             b1.Property<int>("OperatingMode")
-                                .HasColumnType("int")
+                                .HasColumnType("integer")
                                 .HasColumnName("OperatingMode");
 
                             b1.Property<bool>("WarningStatus")
-                                .HasColumnType("bit")
+                                .HasColumnType("boolean")
                                 .HasColumnName("WarningStatus");
 
                             b1.HasKey("AppSolarDataId");
@@ -1916,11 +1911,11 @@ namespace Backend.Infrastructure.Migrations
                     b.OwnsOne("Backend.Domain.ValueObjects.Colour", "Colour", b1 =>
                         {
                             b1.Property<int>("TodoListId")
-                                .HasColumnType("int");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Code")
                                 .IsRequired()
-                                .HasColumnType("nvarchar(max)");
+                                .HasColumnType("text");
 
                             b1.HasKey("TodoListId");
 

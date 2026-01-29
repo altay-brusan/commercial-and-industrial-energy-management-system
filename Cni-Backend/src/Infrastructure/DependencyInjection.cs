@@ -22,19 +22,28 @@ public static class DependencyInjection
 {
     public static void AddInfrastructureServices(this IHostApplicationBuilder builder, IConfiguration configuration)
     {
-        var connectionString = builder.Configuration.GetConnectionString("BackendDb");
-        Guard.Against.Null(connectionString, message: "Connection string 'BackendDb' not found.");
-
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
 
-        builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
+        // Skip DbContext and Identity EntityFrameworkStores registration in Test environment
+        // Tests will register their own DbContext with SQLite
+        var environment = builder.Environment.EnvironmentName;
+        var isTestEnvironment = string.Equals(environment, "Test", StringComparison.OrdinalIgnoreCase);
+
+        if (!isTestEnvironment)
         {
-            options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
-            options.UseSqlServer(connectionString);
-        });
+            var connectionString = builder.Configuration.GetConnectionString("BackendDb");
+            Guard.Against.Null(connectionString, message: "Connection string 'BackendDb' not found.");
+
+            builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
+            {
+                options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
+                options.UseNpgsql(connectionString);
+            });
+            builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
+        }
+
         builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(GrpcMappingProfile).Assembly));
-        builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
@@ -43,11 +52,18 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorizationBuilder();
 
-        builder.Services
+        var identityBuilder = builder.Services
             .AddIdentityCore<ApplicationUser>()
-            .AddRoles<IdentityRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddApiEndpoints();
+            .AddRoles<IdentityRole>();
+
+        // Only add EntityFrameworkStores in non-test environment
+        // Tests will configure their own stores with SQLite
+        if (!isTestEnvironment)
+        {
+            identityBuilder.AddEntityFrameworkStores<ApplicationDbContext>();
+        }
+
+        identityBuilder.AddApiEndpoints();
 
         builder.Services.AddSingleton(TimeProvider.System);
         // Startup.cs veya Program.cs içinde
