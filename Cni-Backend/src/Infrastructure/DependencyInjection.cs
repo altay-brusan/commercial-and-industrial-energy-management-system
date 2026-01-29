@@ -33,7 +33,7 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
             options.UseSqlServer(connectionString);
         });
-        builder.Services.AddAutoMapper(typeof(GrpcMappingProfile).Assembly);
+        builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(GrpcMappingProfile).Assembly));
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();

@@ -6,6 +6,7 @@ using Backend.Application.Common.Models;
 using Backend.Application.TodoItems.Queries.GetTodoItemsWithPagination;
 using Backend.Application.TodoLists.Queries.GetTodos;
 using Backend.Domain.Entities;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 
 namespace Backend.Application.UnitTests.Common.Mappings;
@@ -17,8 +18,9 @@ public class MappingTests
 
     public MappingTests()
     {
-        _configuration = new MapperConfiguration(config => 
-            config.AddMaps(Assembly.GetAssembly(typeof(IApplicationDbContext))));
+        var configExpression = new MapperConfigurationExpression();
+        configExpression.AddMaps(Assembly.GetAssembly(typeof(IApplicationDbContext)));
+        _configuration = new MapperConfiguration(configExpression, NullLoggerFactory.Instance);
 
         _mapper = _configuration.CreateMapper();
     }
