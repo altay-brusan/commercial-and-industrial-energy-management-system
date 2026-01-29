@@ -22,7 +22,8 @@ public partial class Testing
     {
         _database = await TestDatabaseFactory.CreateAsync();
 
-        _factory = new CustomWebApplicationFactory(_database.GetConnection(), _database.GetConnectionString());
+        _factory = new CustomWebApplicationFactory(_database.GetConnection());
+        _factory.EnsureDatabaseCreated();
 
         _scopeFactory = _factory.Services.GetRequiredService<IServiceScopeFactory>();
     }
@@ -66,7 +67,23 @@ public partial class Testing
 
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
-        var user = new ApplicationUser { UserName = userName, Email = userName };
+        // Check if user already exists
+        var existingUser = await userManager.FindByNameAsync(userName);
+        if (existingUser != null)
+        {
+            _userId = existingUser.Id;
+            return _userId;
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = userName,
+            Email = userName,
+            Name = "Test",
+            Surname = "User",
+            Title = "Test Title",
+            Description = "Test Description"
+        };
 
         var result = await userManager.CreateAsync(user, password);
 
@@ -76,7 +93,11 @@ public partial class Testing
 
             foreach (var role in roles)
             {
-                await roleManager.CreateAsync(new IdentityRole(role));
+                // Only create role if it doesn't exist
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
             }
 
             await userManager.AddToRolesAsync(user, roles);

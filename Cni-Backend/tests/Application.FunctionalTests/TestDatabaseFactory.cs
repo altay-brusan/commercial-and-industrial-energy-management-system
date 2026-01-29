@@ -1,12 +1,11 @@
-﻿namespace Backend.Application.FunctionalTests;
+namespace Backend.Application.FunctionalTests;
 
 public static class TestDatabaseFactory
 {
     public static async Task<ITestDatabase> CreateAsync()
     {
-        // Testcontainers requires Docker. To use a local SQL Server database instead,
-        // switch to `SqlTestDatabase` and update appsettings.json.
-        var database = new SqlTestcontainersTestDatabase();
+        // Use SQLite in-memory database for fast testing without requiring Docker or external database
+        var database = new InMemoryTestDatabase();
 
         await database.InitialiseAsync();
 
