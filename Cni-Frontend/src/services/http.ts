@@ -26,7 +26,7 @@ class HttpClient {
 
     private constructor() {
         this.api = axios.create({
-            baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://derms-api.n2nenergy.com/api',
+            baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://derms-api-2.n2nenergy.com/api',
             timeout: 30000,
             headers: {
                 'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ class HttpClient {
             throw new Error('No refresh token available');
         }
 
-        const [err, res] = await tryCatch(axios.post((process.env.NEXT_PUBLIC_API_URL || 'https://derms-api.n2nenergy.com/api') + '/Users/refresh', {
+        const [err, res] = await tryCatch(axios.post((process.env.NEXT_PUBLIC_API_URL || 'https://derms-api-2.n2nenergy.com/api') + '/Users/refresh', {
             refreshToken: refreshToken
         },
             {

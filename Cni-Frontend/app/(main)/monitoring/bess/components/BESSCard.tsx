@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from 'primereact/card';
 import { FaBatteryFull, FaFan, FaThermometerHalf } from 'react-icons/fa';
 import { MeterGroup } from 'primereact/metergroup';
@@ -17,6 +18,7 @@ interface BESSCardProps {
 
 const BESSCard: React.FC<BESSCardProps> = ({ data, index }) => {
     const t = useTranslations();
+    const router = useRouter();
     const [showDetails, setShowDetails] = useState(false);
 
     const handleToggleDetails = () => {
@@ -144,6 +146,17 @@ const BESSCard: React.FC<BESSCardProps> = ({ data, index }) => {
                         <div className="flex justify-content-between ">
                             <span>{t('BESS.batteryCycles')}</span>
                             <span>9000</span>
+                        </div>
+                        <Divider />
+                        <div className='w-full flex flex-column gap-2'>
+                            <Button
+                                label={t('general.viewDetails')}
+                                icon="pi pi-server"
+                                className="w-full"
+                                severity="info"
+                                outlined
+                                onClick={() => router.push('/monitoring/bmu')}
+                            />
                         </div>
                         <div className='w-full flex justify-content-center mt-4'>
                             <Button className='' text onClick={handleToggleDetails}>
