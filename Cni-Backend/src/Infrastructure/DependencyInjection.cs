@@ -79,5 +79,8 @@ public static class DependencyInjection
         builder.Services.AddSingleton<ILogEventEnricher, UserEnricher>();
         builder.Services.AddSingleton<IExternalDataService, ExternalDataService>();
         builder.Services.AddSingleton<GrpcStreamManager>();
+
+        // TSO Service for fetching energy prices from external providers
+        builder.Services.AddHttpClient<ITsoService, TsoService>();
     }
 }
