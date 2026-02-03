@@ -1,5 +1,7 @@
+using Backend.Application.Common;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
 
@@ -19,6 +21,18 @@ public record GetLiveTsoPricesQuery : IRequest<LiveTsoPricesDto>
     /// The date to fetch prices for. If not specified, uses today or tomorrow based on TSO rules.
     /// </summary>
     public DateTimeOffset? Date { get; set; }
+
+    /// <summary>
+    /// The country to fetch prices for (e.g., "Netherlands", "Germany", "Türkiye").
+    /// If not specified, uses the TSO's default configuration.
+    /// </summary>
+    public string? Country { get; set; }
+
+    /// <summary>
+    /// Requested resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).
+    /// If the source data has higher resolution, it will be aggregated.
+    /// </summary>
+    public int? Period { get; set; }
 }
 
 public class GetLiveTsoPricesQueryValidator : AbstractValidator<GetLiveTsoPricesQuery>
@@ -27,6 +41,10 @@ public class GetLiveTsoPricesQueryValidator : AbstractValidator<GetLiveTsoPrices
     {
         RuleFor(v => v.TsoId)
             .GreaterThan(0);
+
+        RuleFor(v => v.Period)
+            .Must(p => p == null || new[] { 15, 30, 60 }.Contains(p.Value))
+            .WithMessage("Period must be 15, 30, or 60 minutes");
     }
 }
 
@@ -59,13 +77,17 @@ public class GetLiveTsoPricesQueryHandler : IRequestHandler<GetLiveTsoPricesQuer
         // Determine the date to fetch
         var targetDate = request.Date ?? DetermineTargetDate(tso.Code);
 
+        // Use provided country or null (service will handle appropriately)
+        var country = request.Country;
+
         // Fetch prices from the TSO
         var result = await _tsoService.GetDayAheadPricesAsync(
             tso.Code,
             tso.BaseUrl,
             tso.ApiKey,
-            tso.AreaCode,
+            country,
             targetDate,
+            request.Period,
             cancellationToken);
 
         if (!result.Success)
@@ -76,20 +98,28 @@ public class GetLiveTsoPricesQueryHandler : IRequestHandler<GetLiveTsoPricesQuer
                 ErrorMessage = result.ErrorMessage,
                 TsoId = tso.Id,
                 TsoName = tso.Name,
-                TsoCode = tso.Code
+                TsoCode = tso.Code,
+                Country = country,
+                Date = targetDate,
+                ResolutionMinutes = result.ResolutionMinutes,
+                Timezone = result.Timezone
             };
         }
 
-        // Calculate prices with tax and distribution fee
+        // Fetch country tariff from database (or use defaults)
+        var (distributionFee, transmissionFee, taxRate, usingDefaultTariff) =
+            await GetTariffForCountryAsync(tso.TenantId, country, cancellationToken);
+
+        // Calculate prices with new formula: (NetPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
         var prices = result.Prices.Select(p =>
         {
-            var totalPrice = p.PricePerMWh * (1 + tso.TaxRate) + tso.DistributionFee;
+            var grossPrice = (p.PricePerMWh + distributionFee + transmissionFee) * (1 + taxRate);
             return new LivePricePointDto
             {
                 Timestamp = p.Timestamp,
-                Hour = p.Hour,
-                RawPrice = p.PricePerMWh,
-                TotalPrice = totalPrice
+                LocalTimestamp = p.LocalTimestamp,
+                NetPrice = p.PricePerMWh,
+                GrossPrice = grossPrice
             };
         }).ToList();
 
@@ -97,19 +127,19 @@ public class GetLiveTsoPricesQueryHandler : IRequestHandler<GetLiveTsoPricesQuer
         LivePriceStatisticsDto? statistics = null;
         if (prices.Count > 0)
         {
-            var minRawPrice = prices.Min(p => p.RawPrice);
-            var maxRawPrice = prices.Max(p => p.RawPrice);
+            var minNetPrice = prices.Min(p => p.NetPrice);
+            var maxNetPrice = prices.Max(p => p.NetPrice);
 
             statistics = new LivePriceStatisticsDto
             {
-                MinRawPrice = minRawPrice,
-                MaxRawPrice = maxRawPrice,
-                AvgRawPrice = prices.Average(p => p.RawPrice),
-                MinTotalPrice = prices.Min(p => p.TotalPrice),
-                MaxTotalPrice = prices.Max(p => p.TotalPrice),
-                AvgTotalPrice = prices.Average(p => p.TotalPrice),
-                MinPriceHour = prices.FirstOrDefault(p => p.RawPrice == minRawPrice)?.Hour,
-                MaxPriceHour = prices.FirstOrDefault(p => p.RawPrice == maxRawPrice)?.Hour
+                MinNetPrice = minNetPrice,
+                MaxNetPrice = maxNetPrice,
+                AvgNetPrice = prices.Average(p => p.NetPrice),
+                MinGrossPrice = prices.Min(p => p.GrossPrice),
+                MaxGrossPrice = prices.Max(p => p.GrossPrice),
+                AvgGrossPrice = prices.Average(p => p.GrossPrice),
+                MinPriceHour = prices.FirstOrDefault(p => p.NetPrice == minNetPrice)?.LocalTimestamp.Hour,
+                MaxPriceHour = prices.FirstOrDefault(p => p.NetPrice == maxNetPrice)?.LocalTimestamp.Hour
             };
         }
 
@@ -119,13 +149,43 @@ public class GetLiveTsoPricesQueryHandler : IRequestHandler<GetLiveTsoPricesQuer
             TsoId = tso.Id,
             TsoName = tso.Name,
             TsoCode = tso.Code,
+            Country = country,
             Currency = result.Currency,
             Date = targetDate,
-            TaxRate = tso.TaxRate,
-            DistributionFee = tso.DistributionFee,
+            DistributionFee = distributionFee,
+            TransmissionFee = transmissionFee,
+            TaxRate = taxRate,
+            UsingDefaultTariff = usingDefaultTariff,
             Prices = prices,
-            Statistics = statistics
+            Statistics = statistics,
+            ResolutionMinutes = result.ResolutionMinutes,
+            Timezone = result.Timezone
         };
+    }
+
+    private async Task<(decimal distributionFee, decimal transmissionFee, decimal taxRate, bool usingDefault)> GetTariffForCountryAsync(
+        int tenantId,
+        string? countryName,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(countryName))
+        {
+            return (TariffDefaults.DistributionFee, TariffDefaults.TransmissionFee, TariffDefaults.TaxRate, true);
+        }
+
+        // Try to find tariff by country name (case-insensitive match)
+        var tariff = await _context.CountryTariffs
+            .Where(t => t.TenantId == tenantId && t.IsActive)
+            .Where(t => t.CountryName.ToLower() == countryName.ToLower())
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (tariff != null)
+        {
+            return (tariff.DistributionFee, tariff.TransmissionFee, tariff.TaxRate, false);
+        }
+
+        // Fall back to defaults
+        return (TariffDefaults.DistributionFee, TariffDefaults.TransmissionFee, TariffDefaults.TaxRate, true);
     }
 
     private DateTimeOffset DetermineTargetDate(string tsoCode)

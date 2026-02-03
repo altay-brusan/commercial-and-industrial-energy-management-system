@@ -26,6 +26,7 @@ public interface IApplicationDbContext
     DbSet<AppGrpcSystemData> GrpcFacilityDatas { get; }
     DbSet<TransmissionSystemOperator> TransmissionSystemOperators { get; }
     DbSet<EnergyPriceHistory> EnergyPriceHistories { get; }
+    DbSet<CountryTariff> CountryTariffs { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     // Transaction desteği için yeni metot
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);

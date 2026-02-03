@@ -29,7 +29,12 @@ public class EnergyPriceHistory : BaseAuditableEntity, IMultiTenantEntity
     public decimal AppliedDistributionFee { get; set; }
 
     /// <summary>
-    /// Total calculated price: RawPrice * (1 + TaxRate) + DistributionFee
+    /// Transmission fee that was applied at the time of recording (per MWh)
+    /// </summary>
+    public decimal AppliedTransmissionFee { get; set; }
+
+    /// <summary>
+    /// Total calculated price: (RawPrice + DistributionFee + TransmissionFee) * (1 + TaxRate)
     /// </summary>
     public decimal TotalPrice { get; set; }
 

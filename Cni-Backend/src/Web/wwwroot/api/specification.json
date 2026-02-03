@@ -188,6 +188,215 @@
         ]
       }
     },
+    "/api/CountryTariffs/{id}": {
+      "get": {
+        "tags": [
+          "CountryTariffs"
+        ],
+        "operationId": "GetCountryTariff",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountryTariffDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "CountryTariffs"
+        ],
+        "operationId": "UpdateCountryTariff",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCountryTariffCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "CountryTariffs"
+        ],
+        "operationId": "DeleteCountryTariff",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/CountryTariffs": {
+      "get": {
+        "tags": [
+          "CountryTariffs"
+        ],
+        "operationId": "GetCountryTariffs",
+        "parameters": [
+          {
+            "name": "PageNumber",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "IsActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "CountryCode",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedListOfCountryTariffDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "CountryTariffs"
+        ],
+        "operationId": "CreateCountryTariff",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCountryTariffCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/Devices/{id}": {
       "get": {
         "tags": [
@@ -344,6 +553,15 @@
             "x-position": 1
           },
           {
+            "name": "country",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
             "name": "date",
             "in": "query",
             "schema": {
@@ -351,7 +569,17 @@
               "format": "date-time",
               "nullable": true
             },
-            "x-position": 2
+            "x-position": 3
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 4
           }
         ],
         "responses": {
@@ -3105,6 +3333,130 @@
           }
         }
       },
+      "CountryTariffDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tenantId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "countryName": {
+            "type": "string"
+          },
+          "distributionFee": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "transmissionFee": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "taxRate": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaginatedListOfCountryTariffDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CountryTariffDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateCountryTariffCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "tenantId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "countryName": {
+            "type": "string"
+          },
+          "distributionFee": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "transmissionFee": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "taxRate": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "UpdateCountryTariffCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "countryName": {
+            "type": "string"
+          },
+          "distributionFee": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "transmissionFee": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "taxRate": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
       "DeviceDto": {
         "type": "object",
         "additionalProperties": false,
@@ -3243,6 +3595,10 @@
           "tsoCode": {
             "type": "string"
           },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
           "currency": {
             "type": "string"
           },
@@ -3250,13 +3606,20 @@
             "type": "string",
             "format": "date-time"
           },
+          "distributionFee": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "transmissionFee": {
+            "type": "number",
+            "format": "decimal"
+          },
           "taxRate": {
             "type": "number",
             "format": "decimal"
           },
-          "distributionFee": {
-            "type": "number",
-            "format": "decimal"
+          "usingDefaultTariff": {
+            "type": "boolean"
           },
           "prices": {
             "type": "array",
@@ -3271,6 +3634,14 @@
                 "$ref": "#/components/schemas/LivePriceStatisticsDto"
               }
             ]
+          },
+          "resolutionMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timezone": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -3282,15 +3653,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "hour": {
-            "type": "integer",
-            "format": "int32"
+          "localTimestamp": {
+            "type": "string",
+            "format": "date-time"
           },
-          "rawPrice": {
+          "netPrice": {
             "type": "number",
             "format": "decimal"
           },
-          "totalPrice": {
+          "grossPrice": {
             "type": "number",
             "format": "decimal"
           }
@@ -3300,27 +3671,27 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "minRawPrice": {
+          "minNetPrice": {
             "type": "number",
             "format": "decimal"
           },
-          "maxRawPrice": {
+          "maxNetPrice": {
             "type": "number",
             "format": "decimal"
           },
-          "avgRawPrice": {
+          "avgNetPrice": {
             "type": "number",
             "format": "decimal"
           },
-          "minTotalPrice": {
+          "minGrossPrice": {
             "type": "number",
             "format": "decimal"
           },
-          "maxTotalPrice": {
+          "maxGrossPrice": {
             "type": "number",
             "format": "decimal"
           },
-          "avgTotalPrice": {
+          "avgGrossPrice": {
             "type": "number",
             "format": "decimal"
           },
@@ -3524,6 +3895,25 @@
           "priceTimestamp": {
             "type": "string",
             "format": "date-time"
+          },
+          "countryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "distributionFee": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "transmissionFee": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "taxRate": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
           }
         }
       },
@@ -5285,14 +5675,6 @@
             "type": "string",
             "nullable": true
           },
-          "taxRate": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "distributionFee": {
-            "type": "number",
-            "format": "decimal"
-          },
           "timeResolutionMinutes": {
             "type": "integer",
             "format": "int32"
@@ -5357,14 +5739,6 @@
           "code": {
             "type": "string"
           },
-          "taxRate": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "distributionFee": {
-            "type": "number",
-            "format": "decimal"
-          },
           "currency": {
             "type": "string"
           },
@@ -5393,14 +5767,6 @@
           "apiKey": {
             "type": "string",
             "nullable": true
-          },
-          "taxRate": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "distributionFee": {
-            "type": "number",
-            "format": "decimal"
           },
           "timeResolutionMinutes": {
             "type": "integer",
@@ -5435,14 +5801,6 @@
           "apiKey": {
             "type": "string",
             "nullable": true
-          },
-          "taxRate": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "distributionFee": {
-            "type": "number",
-            "format": "decimal"
           },
           "timeResolutionMinutes": {
             "type": "integer",

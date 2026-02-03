@@ -38,6 +38,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     public DbSet<TransmissionSystemOperator> TransmissionSystemOperators => Set<TransmissionSystemOperator>();
     public DbSet<EnergyPriceHistory> EnergyPriceHistories => Set<EnergyPriceHistory>();
+    public DbSet<CountryTariff> CountryTariffs => Set<CountryTariff>();
 
     public DbSet<TodoList> TodoLists => Set<TodoList>();
 
@@ -52,6 +53,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<TodoList>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
         builder.Entity<TransmissionSystemOperator>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
         builder.Entity<EnergyPriceHistory>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
+        builder.Entity<CountryTariff>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         builder.Entity<ApplicationUser>().ToTable("AppUsers");

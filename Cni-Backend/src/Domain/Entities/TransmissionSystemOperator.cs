@@ -29,16 +29,6 @@ public class TransmissionSystemOperator : BaseAuditableEntity, IMultiTenantEntit
     public string? ApiKey { get; set; }
 
     /// <summary>
-    /// Tax rate applied to raw prices (as decimal, e.g., 0.18 for 18%)
-    /// </summary>
-    public decimal TaxRate { get; set; }
-
-    /// <summary>
-    /// Distribution fee added to the price (per MWh in TSO's currency)
-    /// </summary>
-    public decimal DistributionFee { get; set; }
-
-    /// <summary>
     /// Time resolution of the TSO's data in minutes (e.g., 15, 60)
     /// </summary>
     public int TimeResolutionMinutes { get; set; } = 60;

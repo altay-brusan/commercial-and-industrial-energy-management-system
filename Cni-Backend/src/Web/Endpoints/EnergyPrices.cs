@@ -4,6 +4,7 @@ using Backend.Application.EnergyPrices.Queries.GetEnergyPricesWithRange;
 using Backend.Application.EnergyPrices.Queries.GetEnergyPriceStatistics;
 using Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Web.Endpoints;
 
@@ -24,9 +25,25 @@ public class EnergyPrices : EndpointGroupBase
     /// Fetches live day-ahead prices directly from a TSO API.
     /// Returns current/tomorrow's prices with tax and distribution fees applied.
     /// </summary>
-    public async Task<Ok<LiveTsoPricesDto>> GetLiveTsoPrices(ISender sender, int tsoId, DateTimeOffset? date = null)
+    /// <param name="sender">MediatR sender</param>
+    /// <param name="tsoId">The TSO ID (1=ENTSOE, 2=EPIAS)</param>
+    /// <param name="country">Country name (e.g., "Netherlands", "Germany", "Türkiye")</param>
+    /// <param name="date">Optional date to fetch prices for</param>
+    /// <param name="period">Resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).</param>
+    public async Task<Ok<LiveTsoPricesDto>> GetLiveTsoPrices(
+        ISender sender,
+        [FromRoute] int tsoId,
+        [FromQuery] string? country = null,
+        [FromQuery] DateTimeOffset? date = null,
+        [FromQuery] int? period = null)
     {
-        var query = new GetLiveTsoPricesQuery { TsoId = tsoId, Date = date };
+        var query = new GetLiveTsoPricesQuery
+        {
+            TsoId = tsoId,
+            Country = country,
+            Date = date,
+            Period = period
+        };
         var result = await sender.Send(query);
         return TypedResults.Ok(result);
     }

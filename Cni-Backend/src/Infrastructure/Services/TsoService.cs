@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Backend.Application.Common.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -27,14 +28,36 @@ public class TsoService : ITsoService
         string tsoCode,
         string baseUrl,
         string? apiKey,
-        string? areaCode,
+        string? country,
         DateTimeOffset date,
+        int? periodMinutes = null,
         CancellationToken cancellationToken = default)
     {
-        return tsoCode.ToUpperInvariant() switch
+        var upperTsoCode = tsoCode.ToUpperInvariant();
+
+        // Map country name to TSO-specific area code
+        string? areaCode = null;
+        if (!string.IsNullOrWhiteSpace(country))
         {
-            "ENTSOE" => await GetEntsoepricesAsync(baseUrl, apiKey, areaCode, date, cancellationToken),
-            "EPIAS" => await GetEpiasPricesAsync(baseUrl, apiKey, date, cancellationToken),
+            if (!TsoCountryMapping.IsCountrySupported(upperTsoCode, country))
+            {
+                return new TsoPriceResult
+                {
+                    Success = false,
+                    ErrorMessage = TsoCountryMapping.GetUnsupportedCountryMessage(upperTsoCode, country),
+                    TsoCode = tsoCode
+                };
+            }
+            areaCode = TsoCountryMapping.GetAreaCode(upperTsoCode, country);
+        }
+
+        // Default to hourly if not specified
+        var targetResolution = periodMinutes ?? 60;
+
+        return upperTsoCode switch
+        {
+            "ENTSOE" => await GetEntsoepricesAsync(baseUrl, apiKey, areaCode, country, date, targetResolution, cancellationToken),
+            "EPIAS" => await GetEpiasPricesAsync(baseUrl, apiKey, date, targetResolution, cancellationToken),
             _ => new TsoPriceResult
             {
                 Success = false,
@@ -50,14 +73,19 @@ public class TsoService : ITsoService
         string baseUrl,
         string? apiKey,
         string? areaCode,
+        string? country,
         DateTimeOffset date,
+        int targetResolution,
         CancellationToken cancellationToken)
     {
+        var timezone = TsoCountryMapping.GetTimezone(country);
         var result = new TsoPriceResult
         {
             TsoCode = "ENTSOE",
             Currency = "EUR",
-            Date = date
+            Date = date,
+            Timezone = timezone,
+            ResolutionMinutes = targetResolution
         };
 
         if (string.IsNullOrEmpty(apiKey))
@@ -77,11 +105,13 @@ public class TsoService : ITsoService
         try
         {
             // ENTSO-E uses UTC times in format yyyyMMddHHmm
-            var startUtc = date.UtcDateTime.Date;
-            var endUtc = startUtc.AddDays(1);
+            // Important: Use the date component directly, don't convert to UTC first
+            // as that can shift the date backwards (e.g., 2026-02-03 00:00 +03:00 becomes 2026-02-02 in UTC)
+            var targetDate = date.Date;
+            var nextDate = targetDate.AddDays(1);
 
-            string periodStart = startUtc.ToString("yyyyMMdd") + "0000";
-            string periodEnd = endUtc.ToString("yyyyMMdd") + "0000";
+            string periodStart = targetDate.ToString("yyyyMMdd") + "0000";
+            string periodEnd = nextDate.ToString("yyyyMMdd") + "0000";
 
             // Build URL for Day-ahead Prices (documentType A44)
             var url = $"{baseUrl}?securityToken={apiKey}" +
@@ -91,7 +121,8 @@ public class TsoService : ITsoService
                       $"&periodStart={periodStart}" +
                       $"&periodEnd={periodEnd}";
 
-            _logger.LogInformation("Fetching ENTSO-E prices for {Date} from {Url}", date.ToString("yyyy-MM-dd"), baseUrl);
+            _logger.LogInformation("Fetching ENTSO-E prices for {Date} (periodStart={PeriodStart}, periodEnd={PeriodEnd}) from {BaseUrl}",
+                targetDate.ToString("yyyy-MM-dd"), periodStart, periodEnd, baseUrl);
 
             var response = await _httpClient.GetAsync(url, cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -113,7 +144,20 @@ public class TsoService : ITsoService
             }
 
             // Parse XML response
-            result.Prices = ParseEntsoeXml(content, date);
+            var (prices, sourceResolution) = ParseEntsoeXml(content, date, country);
+
+            // Aggregate to target resolution if needed
+            if (sourceResolution < targetResolution)
+            {
+                prices = AggregateToLargerPeriod(prices, sourceResolution, targetResolution);
+                result.ResolutionMinutes = targetResolution;
+            }
+            else
+            {
+                result.ResolutionMinutes = sourceResolution;
+            }
+
+            result.Prices = prices;
             result.Success = result.Prices.Count > 0;
 
             if (!result.Success)
@@ -132,55 +176,172 @@ public class TsoService : ITsoService
         }
     }
 
-    private List<TsoHourlyPrice> ParseEntsoeXml(string xmlContent, DateTimeOffset date)
+    /// <summary>
+    /// Parses ISO 8601 duration string to minutes.
+    /// Supports: PT15M, PT30M, PT60M, PT1H
+    /// </summary>
+    private static int ParseIso8601DurationToMinutes(string duration)
     {
-        var prices = new List<TsoHourlyPrice>();
+        if (string.IsNullOrWhiteSpace(duration))
+            return 60; // Default to hourly
+
+        // Match PT[number]M pattern (e.g., PT15M, PT30M, PT60M)
+        var minuteMatch = Regex.Match(duration, @"PT(\d+)M", RegexOptions.IgnoreCase);
+        if (minuteMatch.Success && int.TryParse(minuteMatch.Groups[1].Value, out int minutes))
+        {
+            return minutes;
+        }
+
+        // Match PT[number]H pattern (e.g., PT1H)
+        var hourMatch = Regex.Match(duration, @"PT(\d+)H", RegexOptions.IgnoreCase);
+        if (hourMatch.Success && int.TryParse(hourMatch.Groups[1].Value, out int hours))
+        {
+            return hours * 60;
+        }
+
+        return 60; // Default to hourly
+    }
+
+    private (List<TsoPricePoint> Prices, int SourceResolution) ParseEntsoeXml(string xmlContent, DateTimeOffset date, string? country)
+    {
+        var prices = new List<TsoPricePoint>();
+        int sourceResolution = 60; // Default to hourly
 
         try
         {
             var doc = XDocument.Parse(xmlContent);
-            XNamespace ns = "urn:iec62325.351:tc57wg16:451-3:publicationdocument:7:3";
 
-            var timeSeries = doc.Descendants(ns + "TimeSeries").FirstOrDefault();
-            if (timeSeries == null)
+            // Get all TimeSeries elements (there may be multiple)
+            var allTimeSeries = doc.Descendants().Where(e => e.Name.LocalName == "TimeSeries").ToList();
+
+            if (allTimeSeries.Count == 0)
+                return (prices, sourceResolution);
+
+            foreach (var timeSeries in allTimeSeries)
             {
-                // Try without namespace
-                timeSeries = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "TimeSeries");
-            }
+                // Each TimeSeries can have multiple Periods
+                var periods = timeSeries.Descendants().Where(e => e.Name.LocalName == "Period").ToList();
 
-            if (timeSeries == null)
-                return prices;
-
-            var period = timeSeries.Descendants().FirstOrDefault(e => e.Name.LocalName == "Period");
-            if (period == null)
-                return prices;
-
-            var points = period.Descendants().Where(e => e.Name.LocalName == "Point");
-
-            foreach (var point in points)
-            {
-                var positionStr = point.Descendants().FirstOrDefault(e => e.Name.LocalName == "position")?.Value;
-                var priceStr = point.Descendants().FirstOrDefault(e => e.Name.LocalName == "price.amount")?.Value;
-
-                if (int.TryParse(positionStr, out int position) &&
-                    decimal.TryParse(priceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal price))
+                foreach (var period in periods)
                 {
-                    var hour = position - 1; // Position is 1-based, convert to 0-23
-                    prices.Add(new TsoHourlyPrice
+                    // Get the period start time from timeInterval
+                    var startStr = period.Descendants()
+                        .FirstOrDefault(e => e.Name.LocalName == "start")?.Value;
+
+                    DateTimeOffset periodStart;
+                    if (!string.IsNullOrEmpty(startStr) && DateTimeOffset.TryParse(startStr, out var parsedStart))
                     {
-                        Hour = hour,
-                        Timestamp = date.Date.AddHours(hour),
-                        PricePerMWh = price
-                    });
+                        periodStart = parsedStart;
+                    }
+                    else
+                    {
+                        // Fallback to requested date
+                        periodStart = date.Date;
+                    }
+
+                    // Parse resolution from XML (e.g., PT15M, PT60M)
+                    var resolutionStr = period.Descendants()
+                        .FirstOrDefault(e => e.Name.LocalName == "resolution")?.Value;
+                    sourceResolution = ParseIso8601DurationToMinutes(resolutionStr ?? "PT60M");
+
+                    var points = period.Descendants().Where(e => e.Name.LocalName == "Point");
+
+                    foreach (var point in points)
+                    {
+                        var positionStr = point.Descendants().FirstOrDefault(e => e.Name.LocalName == "position")?.Value;
+                        var priceStr = point.Descendants().FirstOrDefault(e => e.Name.LocalName == "price.amount")?.Value;
+
+                        if (int.TryParse(positionStr, out int position) &&
+                            decimal.TryParse(priceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal price))
+                        {
+                            // FIXED: Calculate timestamp based on actual resolution
+                            // Position is 1-based, so position 1 = minute 0
+                            var minutesOffset = (position - 1) * sourceResolution;
+                            var timestamp = periodStart.AddMinutes(minutesOffset);
+
+                            // Convert to local timezone
+                            var localTimestamp = TsoCountryMapping.ConvertToLocalTime(timestamp, country);
+
+                            prices.Add(new TsoPricePoint
+                            {
+                                Timestamp = timestamp,
+                                LocalTimestamp = localTimestamp,
+                                PricePerMWh = price
+                            });
+                        }
+                    }
                 }
             }
+
+            // Filter to only include prices for the requested date (in local time) and sort by timestamp
+            var targetDate = date.Date;
+            prices = prices
+                .Where(p => p.LocalTimestamp.Date == targetDate)
+                .OrderBy(p => p.Timestamp)
+                .ToList();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to parse ENTSO-E XML response");
         }
 
-        return prices;
+        return (prices, sourceResolution);
+    }
+
+    /// <summary>
+    /// Aggregates prices from a smaller period to a larger period.
+    /// Takes the first value of each larger period (e.g., 00:00, 00:15, 00:30, 00:45 → 00:00).
+    /// </summary>
+    private static List<TsoPricePoint> AggregateToLargerPeriod(
+        List<TsoPricePoint> prices,
+        int sourceResolution,
+        int targetResolution)
+    {
+        if (prices.Count == 0 || sourceResolution >= targetResolution)
+            return prices;
+
+        var aggregated = new List<TsoPricePoint>();
+
+        // Group by the start of each target period
+        var grouped = prices
+            .GroupBy(p =>
+            {
+                // Calculate which target period this price belongs to
+                var totalMinutes = p.LocalTimestamp.Hour * 60 + p.LocalTimestamp.Minute;
+                var periodIndex = totalMinutes / targetResolution;
+                return periodIndex;
+            })
+            .OrderBy(g => g.Key);
+
+        foreach (var group in grouped)
+        {
+            // Take the first price in each period
+            var firstPrice = group.OrderBy(p => p.Timestamp).First();
+
+            // Adjust the local timestamp to the start of the period
+            var periodStartMinutes = group.Key * targetResolution;
+            var periodHour = periodStartMinutes / 60;
+            var periodMinute = periodStartMinutes % 60;
+
+            // Calculate the UTC timestamp for the period start
+            var localPeriodStart = new DateTimeOffset(
+                firstPrice.LocalTimestamp.Year,
+                firstPrice.LocalTimestamp.Month,
+                firstPrice.LocalTimestamp.Day,
+                periodHour,
+                periodMinute,
+                0,
+                firstPrice.LocalTimestamp.Offset);
+
+            aggregated.Add(new TsoPricePoint
+            {
+                Timestamp = localPeriodStart.ToUniversalTime(),
+                LocalTimestamp = localPeriodStart,
+                PricePerMWh = firstPrice.PricePerMWh
+            });
+        }
+
+        return aggregated;
     }
 
     #endregion
@@ -191,13 +352,16 @@ public class TsoService : ITsoService
         string baseUrl,
         string? apiKey,
         DateTimeOffset date,
+        int targetResolution,
         CancellationToken cancellationToken)
     {
         var result = new TsoPriceResult
         {
             TsoCode = "EPIAS",
             Currency = "TRY",
-            Date = date
+            Date = date,
+            Timezone = "Europe/Istanbul",
+            ResolutionMinutes = 60 // EPIAS always returns hourly data
         };
 
         try
@@ -265,14 +429,19 @@ public class TsoService : ITsoService
                 return result;
             }
 
+            var turkeyOffset = TimeSpan.FromHours(3);
             result.Prices = epiasResponse.Items
-                .Select(item => new TsoHourlyPrice
+                .Select(item =>
                 {
-                    Hour = item.Date.Hour,
-                    Timestamp = new DateTimeOffset(item.Date, TimeSpan.FromHours(3)), // Turkey is UTC+3
-                    PricePerMWh = item.Price
+                    var localTimestamp = new DateTimeOffset(item.Date, turkeyOffset);
+                    return new TsoPricePoint
+                    {
+                        Timestamp = localTimestamp.ToUniversalTime(),
+                        LocalTimestamp = localTimestamp,
+                        PricePerMWh = item.Price
+                    };
                 })
-                .OrderBy(p => p.Hour)
+                .OrderBy(p => p.LocalTimestamp)
                 .ToList();
 
             result.Success = true;

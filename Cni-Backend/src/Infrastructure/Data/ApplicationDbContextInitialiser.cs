@@ -81,49 +81,6 @@ public class ApplicationDbContextInitialiser
 
     public async Task TrySeedAsync()
     {
-        // Default roles
-        /*
-        var administratorRole = new IdentityRole(Roles.Administrator);
-
-        if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
-        {
-            await _roleManager.CreateAsync(administratorRole);
-        }
-
-        // Default users
-        var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost", TenantId = 1, Name = "Admin", Surname = "SuperAdmin" };
-
-        if (_userManager.Users.All(u => u.UserName != administrator.UserName))
-        {
-            await _userManager.CreateAsync(administrator, "***REMOVED***");
-            if (!string.IsNullOrWhiteSpace(administratorRole.Name))
-            {
-                await _userManager.AddToRolesAsync(administrator, new[] { administratorRole.Name });
-            }
-        }
-
-        // Default data
-        // Seed, if necessary
-        if (!_context.TodoLists.Any())
-        {
-            _context.TodoLists.Add(new TodoList
-            {
-                Title = "Todo List",
-                Items =
-                {
-                    new TodoItem { Title = "Make a todo list 📃" },
-                    new TodoItem { Title = "Check off the first item ✅" },
-                    new TodoItem { Title = "Realise you've already done two things on the list! 🤯"},
-                    new TodoItem { Title = "Reward yourself with a nice, long nap 🏆" },
-                }
-            });
-
-            await _context.SaveChangesAsync();
-        }
-
-        
-
-        */
         // Parent olmayan kayıtlar (grup node'ları ve hiçbir gruba bağlı olmayan node'lar)
 
         int tenantId = 1;
@@ -214,6 +171,64 @@ public class ApplicationDbContextInitialiser
                 facilitiyId = existingFacility.Id;
             }
         }
+
+        #region RolesAndUsers
+
+        // Create Administrator role
+        var administratorRole = new IdentityRole(Roles.Administrator);
+        if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
+        {
+            await _roleManager.CreateAsync(administratorRole);
+        }
+
+        // Create TenantAdmin role
+        var tenantAdminRole = new IdentityRole(Roles.TenantAdmin);
+        if (_roleManager.Roles.All(r => r.Name != tenantAdminRole.Name))
+        {
+            await _roleManager.CreateAsync(tenantAdminRole);
+        }
+
+        // Create Administrator user
+        var administrator = new ApplicationUser
+        {
+            UserName = "administrator@localhost",
+            Email = "administrator@localhost",
+            TenantId = tenantId,
+            Name = "Admin",
+            Surname = "User",
+            Title = "System Administrator",
+            Description = "Default system administrator account"
+        };
+
+        if (_userManager.Users.All(u => u.UserName != administrator.UserName))
+        {
+            var result = await _userManager.CreateAsync(administrator, "***REMOVED***");
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRolesAsync(administrator, new[] { administratorRole.Name! });
+
+                // Create UserFirmFacility association
+                var userFirmFacility = new UserFirmFacility
+                {
+                    TenantId = tenantId,
+                    UserId = administrator.Id,
+                    FirmId = firmId,
+                    FacilityId = facilitiyId,
+                    Created = DateTime.UtcNow
+                };
+                _context.UserFirmFacilities.Add(userFirmFacility);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Administrator user created successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to create administrator user: {Errors}",
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+        }
+
+        #endregion
 
         #region DeviceConf
 

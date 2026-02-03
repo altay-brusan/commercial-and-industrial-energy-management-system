@@ -13,8 +13,6 @@ public record CreateTransmissionSystemOperatorCommand : IRequest<int>
     public string Code { get; set; } = string.Empty;
     public string BaseUrl { get; set; } = string.Empty;
     public string? ApiKey { get; set; }
-    public decimal TaxRate { get; set; }
-    public decimal DistributionFee { get; set; }
     public int TimeResolutionMinutes { get; set; } = 60;
     public string Currency { get; set; } = "EUR";
     public string? AreaCode { get; set; }
@@ -35,13 +33,6 @@ public class CreateTransmissionSystemOperatorCommandValidator : AbstractValidato
         RuleFor(v => v.BaseUrl)
             .NotEmpty()
             .MaximumLength(500);
-
-        RuleFor(v => v.TaxRate)
-            .GreaterThanOrEqualTo(0)
-            .LessThanOrEqualTo(1);
-
-        RuleFor(v => v.DistributionFee)
-            .GreaterThanOrEqualTo(0);
 
         RuleFor(v => v.TimeResolutionMinutes)
             .GreaterThan(0);
@@ -81,8 +72,6 @@ public class CreateTransmissionSystemOperatorCommandHandler : IRequestHandler<Cr
             Code = request.Code,
             BaseUrl = request.BaseUrl,
             ApiKey = request.ApiKey,
-            TaxRate = request.TaxRate,
-            DistributionFee = request.DistributionFee,
             TimeResolutionMinutes = request.TimeResolutionMinutes,
             Currency = request.Currency,
             AreaCode = request.AreaCode,

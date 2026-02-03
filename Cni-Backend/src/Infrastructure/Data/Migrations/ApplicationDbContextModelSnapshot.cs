@@ -184,6 +184,56 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.ToTable("AppUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.CountryTariff", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CountryName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DistributionFee")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TransmissionFee")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("CountryTariffs");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Device", b =>
                 {
                     b.Property<int>("Id")
@@ -300,6 +350,9 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<decimal>("AppliedTaxRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("AppliedTransmissionFee")
                         .HasColumnType("numeric");
 
                     b.Property<DateTimeOffset>("Created")
@@ -1029,9 +1082,6 @@ namespace Backend.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("DistributionFee")
-                        .HasColumnType("numeric");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -1044,9 +1094,6 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<decimal>("TaxRate")
-                        .HasColumnType("numeric");
 
                     b.Property<int>("TenantId")
                         .HasColumnType("integer");
@@ -1302,6 +1349,17 @@ namespace Backend.Infrastructure.Data.Migrations
 
                     b.Navigation("Status")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.CountryTariff", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Device", b =>

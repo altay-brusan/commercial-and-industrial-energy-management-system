@@ -1,7 +1,9 @@
+using Backend.Application.Common;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Backend.Domain.Entities;
 using Backend.Domain.Events;
+using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Application.EnergyPrices.Commands.CreateEnergyPriceHistory;
 
@@ -12,6 +14,18 @@ public record CreateEnergyPriceHistoryCommand : IRequest<int>
     public int TsoId { get; set; }
     public decimal RawPrice { get; set; }
     public DateTimeOffset PriceTimestamp { get; set; }
+
+    /// <summary>
+    /// Country name for tariff lookup. If not provided, defaults will be used.
+    /// </summary>
+    public string? CountryName { get; set; }
+
+    /// <summary>
+    /// Override tariff values. If provided, these will be used instead of looking up from the database.
+    /// </summary>
+    public decimal? DistributionFee { get; set; }
+    public decimal? TransmissionFee { get; set; }
+    public decimal? TaxRate { get; set; }
 }
 
 public class CreateEnergyPriceHistoryCommandValidator : AbstractValidator<CreateEnergyPriceHistoryCommand>
@@ -56,16 +70,26 @@ public class CreateEnergyPriceHistoryCommandHandler : IRequestHandler<CreateEner
 
         Guard.Against.NotFound(request.TsoId, tso);
 
-        // Calculate total price: RawPrice * (1 + TaxRate) + DistributionFee
-        var totalPrice = request.RawPrice * (1 + tso.TaxRate) + tso.DistributionFee;
+        // Get tariff values - use provided values, or look up from database, or fall back to defaults
+        var (distributionFee, transmissionFee, taxRate) = await GetTariffValuesAsync(
+            (int)tenantId,
+            request.CountryName,
+            request.DistributionFee,
+            request.TransmissionFee,
+            request.TaxRate,
+            cancellationToken);
+
+        // Calculate total price with new formula: (RawPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
+        var totalPrice = (request.RawPrice + distributionFee + transmissionFee) * (1 + taxRate);
 
         var entity = new EnergyPriceHistory
         {
             TenantId = (int)tenantId,
             TsoId = request.TsoId,
             RawPrice = request.RawPrice,
-            AppliedTaxRate = tso.TaxRate,
-            AppliedDistributionFee = tso.DistributionFee,
+            AppliedTaxRate = taxRate,
+            AppliedDistributionFee = distributionFee,
+            AppliedTransmissionFee = transmissionFee,
             TotalPrice = totalPrice,
             PriceTimestamp = request.PriceTimestamp,
             Currency = tso.Currency
@@ -77,5 +101,45 @@ public class CreateEnergyPriceHistoryCommandHandler : IRequestHandler<CreateEner
 
         await _context.SaveChangesAsync(cancellationToken);
         return entity.Id;
+    }
+
+    private async Task<(decimal distributionFee, decimal transmissionFee, decimal taxRate)> GetTariffValuesAsync(
+        int tenantId,
+        string? countryName,
+        decimal? overrideDistributionFee,
+        decimal? overrideTransmissionFee,
+        decimal? overrideTaxRate,
+        CancellationToken cancellationToken)
+    {
+        // If all values are provided as overrides, use them
+        if (overrideDistributionFee.HasValue && overrideTransmissionFee.HasValue && overrideTaxRate.HasValue)
+        {
+            return (overrideDistributionFee.Value, overrideTransmissionFee.Value, overrideTaxRate.Value);
+        }
+
+        // Try to look up from database by country name
+        if (!string.IsNullOrWhiteSpace(countryName))
+        {
+            var tariff = await _context.CountryTariffs
+                .Where(t => t.TenantId == tenantId && t.IsActive)
+                .Where(t => t.CountryName.ToLower() == countryName.ToLower())
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (tariff != null)
+            {
+                return (
+                    overrideDistributionFee ?? tariff.DistributionFee,
+                    overrideTransmissionFee ?? tariff.TransmissionFee,
+                    overrideTaxRate ?? tariff.TaxRate
+                );
+            }
+        }
+
+        // Fall back to defaults
+        return (
+            overrideDistributionFee ?? TariffDefaults.DistributionFee,
+            overrideTransmissionFee ?? TariffDefaults.TransmissionFee,
+            overrideTaxRate ?? TariffDefaults.TaxRate
+        );
     }
 }

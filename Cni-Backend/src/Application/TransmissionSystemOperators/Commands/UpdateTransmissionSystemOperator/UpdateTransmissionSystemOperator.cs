@@ -11,8 +11,6 @@ public record UpdateTransmissionSystemOperatorCommand : IRequest
     public string Code { get; set; } = string.Empty;
     public string BaseUrl { get; set; } = string.Empty;
     public string? ApiKey { get; set; }
-    public decimal TaxRate { get; set; }
-    public decimal DistributionFee { get; set; }
     public int TimeResolutionMinutes { get; set; } = 60;
     public string Currency { get; set; } = "EUR";
     public string? AreaCode { get; set; }
@@ -34,13 +32,6 @@ public class UpdateTransmissionSystemOperatorCommandValidator : AbstractValidato
         RuleFor(v => v.BaseUrl)
             .NotEmpty()
             .MaximumLength(500);
-
-        RuleFor(v => v.TaxRate)
-            .GreaterThanOrEqualTo(0)
-            .LessThanOrEqualTo(1);
-
-        RuleFor(v => v.DistributionFee)
-            .GreaterThanOrEqualTo(0);
 
         RuleFor(v => v.TimeResolutionMinutes)
             .GreaterThan(0);
@@ -71,8 +62,6 @@ public class UpdateTransmissionSystemOperatorCommandHandler : IRequestHandler<Up
         entity.Code = request.Code;
         entity.BaseUrl = request.BaseUrl;
         entity.ApiKey = request.ApiKey;
-        entity.TaxRate = request.TaxRate;
-        entity.DistributionFee = request.DistributionFee;
         entity.TimeResolutionMinutes = request.TimeResolutionMinutes;
         entity.Currency = request.Currency;
         entity.AreaCode = request.AreaCode;
