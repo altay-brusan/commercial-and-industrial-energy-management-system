@@ -24,6 +24,8 @@ public interface IApplicationDbContext
     DbSet<AppPCSData> PCSDatas { get; }
     DbSet<AppSmartMeterData> SmartMeterDatas { get; }
     DbSet<AppGrpcSystemData> GrpcFacilityDatas { get; }
+    DbSet<TransmissionSystemOperator> TransmissionSystemOperators { get; }
+    DbSet<EnergyPriceHistory> EnergyPriceHistories { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     // Transaction desteği için yeni metot
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);
