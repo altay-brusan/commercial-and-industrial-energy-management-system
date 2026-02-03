@@ -288,6 +288,60 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.ToTable("DeviceTypes", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.EnergyPriceHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AppliedDistributionFee")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("AppliedTaxRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("PriceTimestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("RawPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("TsoId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TsoId");
+
+                    b.ToTable("EnergyPriceHistories");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
                 {
                     b.Property<int>("Id")
@@ -943,6 +997,70 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.ToTable("TopologyNodes", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.TransmissionSystemOperator", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApiKey")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AreaCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BaseUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DistributionFee")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TimeResolutionMinutes")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TransmissionSystemOperators");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.UserFirmFacility", b =>
                 {
                     b.Property<int>("Id")
@@ -1218,6 +1336,25 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Navigation("SourceDevice");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.EnergyPriceHistory", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.TransmissionSystemOperator", "Tso")
+                        .WithMany("PriceHistories")
+                        .HasForeignKey("TsoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("Tso");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
@@ -1987,6 +2124,17 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.TransmissionSystemOperator", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.UserFirmFacility", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.Facility", "Facility")
@@ -2099,6 +2247,11 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Navigation("SourceEdges");
 
                     b.Navigation("TargetEdges");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TransmissionSystemOperator", b =>
+                {
+                    b.Navigation("PriceHistories");
                 });
 #pragma warning restore 612, 618
         }
