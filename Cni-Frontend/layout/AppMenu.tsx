@@ -29,6 +29,17 @@ const AppMenu = () => {
                             to: '/monitoring',
                             items: [
                                 { label: t('menu.bess'), icon: 'pi pi-fw pi-th-large', to: '/monitoring/bess' },
+                                {
+                                    label: t('menu.bmu'),
+                                    icon: 'pi pi-fw pi-server',
+                                    items: [
+                                        { label: t('menu.bmuOverview'), icon: 'pi pi-fw pi-eye', to: '/monitoring/bmu' },
+                                        { label: t('menu.bmuFaults'), icon: 'pi pi-fw pi-exclamation-triangle', to: '/monitoring/bmu/faults' },
+                                        { label: t('menu.bmuThermal'), icon: 'pi pi-fw pi-sun', to: '/monitoring/bmu/thermal' },
+                                        { label: t('menu.bmuChillerAlarms'), icon: 'pi pi-fw pi-bell', to: '/monitoring/bmu/thermal/alarms' },
+                                        { label: t('menu.bmuHvcu'), icon: 'pi pi-fw pi-sliders-h', to: '/monitoring/bmu/hvcu' },
+                                    ]
+                                },
                                 // { label: t('menu.transformators&Invertors'), icon: 'pi pi-fw pi-th-large', to: '/monitoring/transformators-invertors' },
                                 { label: t('menu.inverters'), icon: 'pi pi-fw pi-th-large', to: '/monitoring/inverters' },
                                 // { label: t('menu.grid'), icon: 'pi pi-fw pi-th-large', to: '/monitoring/grid' },
@@ -91,6 +102,7 @@ const AppMenu = () => {
                                 { label: t('menu.holdingIdentification'), icon: 'pi pi-fw pi-building', to: '/holding-identification' },
                                 { label: t('menu.facilityIdentification'), icon: 'pi pi-fw pi-building', to: '/facility-identification' },
                                 { label: t('menu.userIdentification'), icon: 'pi pi-fw pi-user', to: '/user-identification' },
+                                { label: t('menu.deviceManagement'), icon: 'pi pi-fw pi-microchip', to: '/devices' },
                                 { label: t('menu.planDefinition'), icon: 'pi pi-fw pi-file', to: '/plan-identification' },
                                 { label: t('menu.blockedAddresses'), icon: 'pi pi-fw pi-ban', to: '/blocked-addresses' },
                             ]
