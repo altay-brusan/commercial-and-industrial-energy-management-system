@@ -97,8 +97,14 @@ public class EnergyPriceFetchWorker
 
     private async Task FetchPricesForAreaAsync(MarketOperator mo, string areaCode, DateTimeOffset targetDate)
     {
-        // Get country name from area code for the API call
+        // Get country name from area code - this is what we'll store in the database
         var countryName = TsoCountryMapping.GetCountryNameFromAreaCode(areaCode);
+
+        if (string.IsNullOrEmpty(countryName))
+        {
+            _logger.LogWarning("Could not map area code {AreaCode} to country name, skipping", areaCode);
+            return;
+        }
 
         // Use the first supported resolution (typically 60 for hourly data)
         var resolution = mo.SupportedResolutions.FirstOrDefault(r => r == 60) != 0
@@ -116,8 +122,8 @@ public class EnergyPriceFetchWorker
 
         if (!result.Success)
         {
-            _logger.LogWarning("Failed to fetch prices from {MoCode} for area {AreaCode}: {Error}",
-                mo.Code, areaCode, result.ErrorMessage);
+            _logger.LogWarning("Failed to fetch prices from {MoCode} for {Country}: {Error}",
+                mo.Code, countryName, result.ErrorMessage);
             return;
         }
 
@@ -126,11 +132,11 @@ public class EnergyPriceFetchWorker
 
         foreach (var pricePoint in result.Prices)
         {
-            // Check if this price point already exists (deduplication)
+            // Check if this price point already exists (deduplication by country name)
             var exists = await _context.EnergyPriceHistories
                 .AnyAsync(e =>
                     e.MarketOperatorId == mo.Id &&
-                    e.AreaCode == areaCode &&
+                    e.Country == countryName &&
                     e.PriceLocalTimestamp == pricePoint.LocalTimestamp);
 
             if (exists)
@@ -139,11 +145,11 @@ public class EnergyPriceFetchWorker
                 continue;
             }
 
-            // Calculate gross price (for now, store net price as gross too - tariff calculation happens at query time)
+            // Store with country name instead of area code
             var entity = new EnergyPriceHistory
             {
                 MarketOperatorId = mo.Id,
-                AreaCode = areaCode,
+                Country = countryName,
                 NetPrice = pricePoint.PricePerMWh,
                 GrossPrice = pricePoint.PricePerMWh, // Gross price calculated at query time with tenant tariffs
                 PriceLocalTimestamp = pricePoint.LocalTimestamp
@@ -158,7 +164,7 @@ public class EnergyPriceFetchWorker
             await _context.SaveChangesAsync(CancellationToken.None);
         }
 
-        _logger.LogInformation("Fetched prices from {MoCode} for area {AreaCode}: {Inserted} inserted, {Skipped} skipped (duplicates)",
-            mo.Code, areaCode, insertedCount, skippedCount);
+        _logger.LogInformation("Fetched prices from {MoCode} for {Country}: {Inserted} inserted, {Skipped} skipped (duplicates)",
+            mo.Code, countryName, insertedCount, skippedCount);
     }
 }

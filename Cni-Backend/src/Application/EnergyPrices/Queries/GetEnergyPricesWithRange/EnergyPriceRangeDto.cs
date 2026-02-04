@@ -5,7 +5,7 @@ public class EnergyPriceRangeDto
     public int MarketOperatorId { get; set; }
     public string MarketOperatorName { get; set; } = string.Empty;
     public string MarketOperatorCode { get; set; } = string.Empty;
-    public string AreaCode { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset EndDate { get; set; }
     public List<EnergyPricePointDto> Prices { get; set; } = new();

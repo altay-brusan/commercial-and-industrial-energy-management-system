@@ -3874,7 +3874,7 @@
           "marketOperatorCode": {
             "type": "string"
           },
-          "areaCode": {
+          "country": {
             "type": "string"
           },
           "startDate": {
@@ -3925,7 +3925,7 @@
           "marketOperatorCode": {
             "type": "string"
           },
-          "areaCode": {
+          "country": {
             "type": "string"
           },
           "startDate": {

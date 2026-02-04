@@ -360,10 +360,10 @@ namespace Backend.Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AreaCode")
+                    b.Property<string>("Country")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -393,9 +393,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MarketOperatorId", "AreaCode");
+                    b.HasIndex("MarketOperatorId", "Country");
 
-                    b.HasIndex("MarketOperatorId", "AreaCode", "PriceLocalTimestamp")
+                    b.HasIndex("MarketOperatorId", "Country", "PriceLocalTimestamp")
                         .IsUnique();
 
                     b.ToTable("EnergyPriceHistories", (string)null);

@@ -10,8 +10,8 @@ public class EnergyPriceHistoryConfiguration : IEntityTypeConfiguration<EnergyPr
     {
         builder.ToTable("EnergyPriceHistories");
 
-        builder.Property(p => p.AreaCode)
-            .HasMaxLength(50)
+        builder.Property(p => p.Country)
+            .HasMaxLength(100)
             .IsRequired();
 
         builder.Property(p => p.NetPrice)
@@ -31,11 +31,11 @@ public class EnergyPriceHistoryConfiguration : IEntityTypeConfiguration<EnergyPr
             .HasForeignKey(p => p.MarketOperatorId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Unique index on (MarketOperatorId, AreaCode, PriceLocalTimestamp) to prevent duplicates
-        builder.HasIndex(p => new { p.MarketOperatorId, p.AreaCode, p.PriceLocalTimestamp })
+        // Unique index on (MarketOperatorId, Country, PriceLocalTimestamp) to prevent duplicates
+        builder.HasIndex(p => new { p.MarketOperatorId, p.Country, p.PriceLocalTimestamp })
             .IsUnique();
 
         // Index for efficient range queries
-        builder.HasIndex(p => new { p.MarketOperatorId, p.AreaCode });
+        builder.HasIndex(p => new { p.MarketOperatorId, p.Country });
     }
 }

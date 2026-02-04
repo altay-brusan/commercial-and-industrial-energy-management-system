@@ -32,11 +32,16 @@ public class GetEnergyPricesWithRangeQueryHandler : IRequestHandler<GetEnergyPri
 {
     private readonly IApplicationDbContext _context;
     private readonly IMultiTenantService _multiTenantService;
+    private readonly ICountryMappingService _countryMappingService;
 
-    public GetEnergyPricesWithRangeQueryHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
+    public GetEnergyPricesWithRangeQueryHandler(
+        IApplicationDbContext context,
+        IMultiTenantService multiTenantService,
+        ICountryMappingService countryMappingService)
     {
         _context = context;
         _multiTenantService = multiTenantService;
+        _countryMappingService = countryMappingService;
     }
 
     public async Task<EnergyPriceRangeDto?> Handle(GetEnergyPricesWithRangeQuery request, CancellationToken cancellationToken)
@@ -61,9 +66,16 @@ public class GetEnergyPricesWithRangeQueryHandler : IRequestHandler<GetEnergyPri
 
         var mo = tenantMo.MarketOperator;
 
+        // Convert tenant's AreaCode to Country name for querying history
+        var countryName = _countryMappingService.GetCountryNameFromAreaCode(tenantMo.AreaCode);
+        if (string.IsNullOrEmpty(countryName))
+        {
+            return null;
+        }
+
         var prices = await _context.EnergyPriceHistories
             .Where(x => x.MarketOperatorId == mo.Id
-                && x.AreaCode == tenantMo.AreaCode
+                && x.Country == countryName
                 && x.PriceLocalTimestamp >= request.StartDate
                 && x.PriceLocalTimestamp <= request.EndDate)
             .OrderBy(x => x.PriceLocalTimestamp)
@@ -80,7 +92,7 @@ public class GetEnergyPricesWithRangeQueryHandler : IRequestHandler<GetEnergyPri
             MarketOperatorId = mo.Id,
             MarketOperatorName = mo.Name,
             MarketOperatorCode = mo.Code,
-            AreaCode = tenantMo.AreaCode,
+            Country = countryName,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             Prices = prices

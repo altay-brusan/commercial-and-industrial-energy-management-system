@@ -2,7 +2,7 @@ namespace Backend.Domain.Entities;
 
 /// <summary>
 /// Stores historical energy price data from Market Operators.
-/// Global entity - shared across all tenants for the same Market Operator and area.
+/// Global entity - shared across all tenants for the same Market Operator and country.
 /// </summary>
 public class EnergyPriceHistory : BaseAuditableEntity
 {
@@ -12,9 +12,10 @@ public class EnergyPriceHistory : BaseAuditableEntity
     public int MarketOperatorId { get; set; }
 
     /// <summary>
-    /// The area/bidding zone code for this price data
+    /// The country name for this price data (e.g., "Netherlands", "Turkey", "Germany")
+    /// Converted from area code when storing.
     /// </summary>
-    public string AreaCode { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
 
     /// <summary>
     /// Net price from the Market Operator (per MWh) - before taxes and fees
