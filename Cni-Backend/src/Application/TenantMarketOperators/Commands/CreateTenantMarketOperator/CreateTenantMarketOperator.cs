@@ -71,28 +71,21 @@ public class CreateTenantMarketOperatorCommandValidator : AbstractValidator<Crea
 public class CreateTenantMarketOperatorCommandHandler : IRequestHandler<CreateTenantMarketOperatorCommand, int>
 {
     private readonly IApplicationDbContext _context;
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly IMultiTenantService _multiTenantService;
 
     public CreateTenantMarketOperatorCommandHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
     {
         _context = context;
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<int> Handle(CreateTenantMarketOperatorCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = _isSuperAdmin ? request.TenantId : _tenantId;
-
-        if (tenantId is null)
-        {
-            throw new ArgumentNullException(nameof(tenantId));
-        }
+        var tenantId = _multiTenantService.GetTenantIdForCreation(request.TenantId > 0 ? request.TenantId : null);
 
         var entity = new TenantMarketOperator
         {
-            TenantId = (int)tenantId,
+            TenantId = tenantId,
             MarketOperatorId = request.MarketOperatorId,
             AreaCode = request.AreaCode,
             SamplingFrequencyMinutes = request.SamplingFrequencyMinutes,

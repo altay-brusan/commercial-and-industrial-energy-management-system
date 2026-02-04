@@ -48,8 +48,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .RemoveAll<IMultiTenantService>()
                 .AddScoped<IMultiTenantService>(provider =>
                     Mock.Of<IMultiTenantService>(s =>
-                        s.GetCurrentTenantId() == 1 &&
-                        s.IsSuperAdmin() == false));
+                        s.GetAuthenticatedTenantId() == 1 &&
+                        s.GetSelectedTenantId() == null &&
+                        s.GetEffectiveTenantId() == 1 &&
+                        s.IsSuperAdmin() == false &&
+                        s.IsTenantScoped() == true &&
+                        s.IsImpersonating() == false));
 
             // Remove existing ApplicationDbContext and all related services
             var descriptorToRemove = services.SingleOrDefault(

@@ -12,14 +12,15 @@ namespace Backend.Infrastructure.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole, string>, IApplicationDbContext
 {
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly int? _effectiveTenantId;
+    private readonly bool _isTenantScoped;
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IMultiTenantService multiTenantService) : base(options)
     {
-
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _effectiveTenantId = multiTenantService.GetEffectiveTenantId();
+        _isTenantScoped = multiTenantService.IsTenantScoped();
     }
+
     public DbSet<Plan> Plans => Set<Plan>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Firm> Firms => Set<Firm>();
@@ -48,12 +49,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        builder.Entity<Tenant>().HasQueryFilter(x => _isSuperAdmin || x.Id == _tenantId);
-        builder.Entity<Firm>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
-        builder.Entity<Facility>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
-        builder.Entity<TodoList>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
-        builder.Entity<TenantMarketOperator>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
-        builder.Entity<CountryTariff>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
+        // Query filters use effective tenant ID when scoped
+        // !_isTenantScoped = admin without selection -> shows ALL data
+        // _isTenantScoped = regular user OR admin with selection -> scoped to effective tenant
+        builder.Entity<Tenant>().HasQueryFilter(x => !_isTenantScoped || x.Id == _effectiveTenantId);
+        builder.Entity<Firm>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
+        builder.Entity<Facility>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
+        builder.Entity<TodoList>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
+        builder.Entity<TenantMarketOperator>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
+        builder.Entity<CountryTariff>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
         // Note: MarketOperators and EnergyPriceHistories are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

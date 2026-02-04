@@ -13,20 +13,28 @@ public class GetTenantMarketOperatorQueryHandler : IRequestHandler<GetTenantMark
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly IMultiTenantService _multiTenantService;
 
     public GetTenantMarketOperatorQueryHandler(IApplicationDbContext context, IMapper mapper, IMultiTenantService multiTenantService)
     {
         _context = context;
         _mapper = mapper;
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<TenantMarketOperatorDto?> Handle(GetTenantMarketOperatorQuery request, CancellationToken cancellationToken)
     {
-        var tenantId = _isSuperAdmin ? request.TenantId : _tenantId;
+        // For this query, use the request TenantId if provided and user is admin,
+        // otherwise use effective tenant from context
+        int? tenantId;
+        if (_multiTenantService.IsSuperAdmin() && request.TenantId > 0)
+        {
+            tenantId = request.TenantId;
+        }
+        else
+        {
+            tenantId = _multiTenantService.GetEffectiveTenantId();
+        }
 
         if (tenantId is null)
         {

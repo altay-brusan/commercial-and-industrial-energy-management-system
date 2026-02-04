@@ -1,4 +1,4 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Mappings;
 using Backend.Application.Common.Models;
 using Backend.Application.Common.Security;
@@ -17,22 +17,23 @@ public class GetUsersWithPaginationQueryHandler : IRequestHandler<GetUsersWithPa
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IMapper _mapper;
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly IMultiTenantService _multiTenantService;
+
     public GetUsersWithPaginationQueryHandler(UserManager<ApplicationUser> userManager, IMapper mapper, IMultiTenantService multiTenantService)
     {
         _userManager = userManager;
-        _mapper = mapper; 
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _mapper = mapper;
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<PaginatedList<UserBriefDto>> Handle(GetUsersWithPaginationQuery request, CancellationToken cancellationToken)
     {
-        
-        return await _userManager.Users.Where(x => _isSuperAdmin || x.TenantId == _tenantId)
+        var effectiveTenantId = _multiTenantService.GetEffectiveTenantId();
+
+        return await _userManager.Users
+            .Where(x => effectiveTenantId == null || x.TenantId == effectiveTenantId)
             .OrderBy(x => x.Name)
-             .ProjectTo<UserBriefDto>(_mapper.ConfigurationProvider)
+            .ProjectTo<UserBriefDto>(_mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);
     }
 }

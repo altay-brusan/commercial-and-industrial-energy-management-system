@@ -45,28 +45,21 @@ public class CreateCountryTariffCommandValidator : AbstractValidator<CreateCount
 public class CreateCountryTariffCommandHandler : IRequestHandler<CreateCountryTariffCommand, int>
 {
     private readonly IApplicationDbContext _context;
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly IMultiTenantService _multiTenantService;
 
     public CreateCountryTariffCommandHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
     {
         _context = context;
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<int> Handle(CreateCountryTariffCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = _isSuperAdmin ? request.TenantId : _tenantId;
-
-        if (tenantId is null)
-        {
-            throw new ArgumentNullException(nameof(tenantId));
-        }
+        var tenantId = _multiTenantService.GetTenantIdForCreation(request.TenantId > 0 ? request.TenantId : null);
 
         var entity = new CountryTariff
         {
-            TenantId = (int)tenantId,
+            TenantId = tenantId,
             CountryCode = request.CountryCode.ToUpperInvariant(),
             CountryName = request.CountryName,
             DistributionFee = request.DistributionFee,

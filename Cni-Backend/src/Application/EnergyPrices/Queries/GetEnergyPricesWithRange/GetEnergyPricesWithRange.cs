@@ -31,25 +31,27 @@ public class GetEnergyPricesWithRangeQueryValidator : AbstractValidator<GetEnerg
 public class GetEnergyPricesWithRangeQueryHandler : IRequestHandler<GetEnergyPricesWithRangeQuery, EnergyPriceRangeDto?>
 {
     private readonly IApplicationDbContext _context;
-    private readonly int? _tenantId;
+    private readonly IMultiTenantService _multiTenantService;
 
     public GetEnergyPricesWithRangeQueryHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
     {
         _context = context;
-        _tenantId = multiTenantService.GetCurrentTenantId();
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<EnergyPriceRangeDto?> Handle(GetEnergyPricesWithRangeQuery request, CancellationToken cancellationToken)
     {
-        if (_tenantId is null)
+        if (!_multiTenantService.IsTenantScoped())
         {
             return null;
         }
 
+        var tenantId = _multiTenantService.GetEffectiveTenantId()!.Value;
+
         // Get tenant's Market Operator configuration
         var tenantMo = await _context.TenantMarketOperators
             .Include(x => x.MarketOperator)
-            .Where(x => x.TenantId == _tenantId && x.IsActive)
+            .Where(x => x.TenantId == tenantId && x.IsActive)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (tenantMo?.MarketOperator == null)

@@ -1,4 +1,4 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Backend.Domain.Entities;
 using Backend.Domain.Events;
@@ -85,27 +85,21 @@ public class CreateFirmCommandValidator : AbstractValidator<CreateFirmCommand>
 public class CreateFirmCommandHandler : IRequestHandler<CreateFirmCommand, int>
 {
     private readonly IApplicationDbContext _context;
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly IMultiTenantService _multiTenantService;
+
     public CreateFirmCommandHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
     {
         _context = context;
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<int> Handle(CreateFirmCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = _isSuperAdmin ? request.TenantId : _tenantId;
-
-        if (tenantId is null)
-        {
-            throw new ArgumentNullException(nameof(tenantId));
-        }
+        var tenantId = _multiTenantService.GetTenantIdForCreation(request.TenantId > 0 ? request.TenantId : null);
 
         var entity = new Firm
         {
-            TenantId = (int)tenantId,
+            TenantId = tenantId,
             Name = request.Name,
             LogoUrl = request.LogoUrl,
             Type = request.Type,

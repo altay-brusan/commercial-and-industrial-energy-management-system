@@ -40,7 +40,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
     private readonly IApplicationDbContext _context;
     private readonly ITsoService _tsoService;
     private readonly ICountryMappingService _countryMappingService;
-    private readonly int? _tenantId;
+    private readonly IMultiTenantService _multiTenantService;
 
     public GetLiveEnergyPricesQueryHandler(
         IApplicationDbContext context,
@@ -51,30 +51,32 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         _context = context;
         _tsoService = tsoService;
         _countryMappingService = countryMappingService;
-        _tenantId = multiTenantService.GetCurrentTenantId();
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<LiveEnergyPricesDto> Handle(GetLiveEnergyPricesQuery request, CancellationToken cancellationToken)
     {
-        if (_tenantId is null)
+        if (!_multiTenantService.IsTenantScoped())
         {
             return new LiveEnergyPricesDto
             {
                 Success = false,
-                ErrorMessage = "Tenant context not found"
+                ErrorMessage = "Please select a tenant to view energy prices"
             };
         }
+
+        var tenantId = _multiTenantService.GetEffectiveTenantId()!.Value;
 
         // Get tenant's Market Operator configuration
         var tenantMo = await _context.TenantMarketOperators
             .Include(x => x.MarketOperator)
-            .Where(x => x.TenantId == _tenantId && x.IsActive)
+            .Where(x => x.TenantId == tenantId && x.IsActive)
             .FirstOrDefaultAsync(cancellationToken);
 
         // If no tenant MO configured, try to determine default based on Firm's country
         if (tenantMo?.MarketOperator == null)
         {
-            var fallbackResult = await GetFallbackMarketOperatorAsync(cancellationToken);
+            var fallbackResult = await GetFallbackMarketOperatorAsync(tenantId, cancellationToken);
             if (!fallbackResult.Result.Success)
             {
                 return fallbackResult.Result;
@@ -120,7 +122,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
 
         // Fetch country tariff from database (or use defaults)
         var (distributionFee, transmissionFee, taxRate, currency, usingDefaultTariff) =
-            await GetTariffForCountryAsync(countryName, cancellationToken);
+            await GetTariffForCountryAsync(tenantId, countryName, cancellationToken);
 
         // Calculate prices with formula: (NetPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
         var prices = result.Prices.Select(p =>
@@ -175,11 +177,11 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         };
     }
 
-    private async Task<(LiveEnergyPricesDto Result, Domain.Entities.TenantMarketOperator? TenantMarketOperator)> GetFallbackMarketOperatorAsync(CancellationToken cancellationToken)
+    private async Task<(LiveEnergyPricesDto Result, Domain.Entities.TenantMarketOperator? TenantMarketOperator)> GetFallbackMarketOperatorAsync(int tenantId, CancellationToken cancellationToken)
     {
         // Try to get tenant's firm to determine country
         var firm = await _context.Firms
-            .Where(f => f.TenantId == _tenantId)
+            .Where(f => f.TenantId == tenantId)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (firm?.Country == null)
@@ -217,7 +219,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         // Create a virtual TenantMarketOperator for the fallback
         var virtualTmo = new Domain.Entities.TenantMarketOperator
         {
-            TenantId = _tenantId!.Value,
+            TenantId = tenantId,
             MarketOperatorId = mo.Id,
             MarketOperator = mo,
             AreaCode = areaCode,
@@ -231,6 +233,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
     }
 
     private async Task<(decimal distributionFee, decimal transmissionFee, decimal taxRate, string currency, bool usingDefault)> GetTariffForCountryAsync(
+        int tenantId,
         string? countryName,
         CancellationToken cancellationToken)
     {
@@ -241,7 +244,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
 
         // Try to find tariff by country name (case-insensitive match)
         var tariff = await _context.CountryTariffs
-            .Where(t => t.TenantId == _tenantId && t.IsActive)
+            .Where(t => t.TenantId == tenantId && t.IsActive)
             .Where(t => t.CountryName.ToLower() == countryName.ToLower())
             .FirstOrDefaultAsync(cancellationToken);
 

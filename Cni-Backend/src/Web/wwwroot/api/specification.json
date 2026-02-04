@@ -6,6 +6,59 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/AdminTenantContext": {
+      "get": {
+        "tags": [
+          "AdminTenantContext"
+        ],
+        "operationId": "GetCurrentContext",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantContextDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/AdminTenantContext/tenants": {
+      "get": {
+        "tags": [
+          "AdminTenantContext"
+        ],
+        "operationId": "GetAvailableTenants",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TenantSelectorDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/AppRoles/roles": {
       "get": {
         "tags": [
@@ -3317,6 +3370,53 @@
   },
   "components": {
     "schemas": {
+      "TenantContextDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "authenticatedTenantId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "selectedTenantId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "effectiveTenantId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isSuperAdmin": {
+            "type": "boolean"
+          },
+          "isTenantScoped": {
+            "type": "boolean"
+          },
+          "isImpersonating": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TenantSelectorDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "identifier": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "PaginatedListOfAppRoleBriefDto": {
         "type": "object",
         "additionalProperties": false,
