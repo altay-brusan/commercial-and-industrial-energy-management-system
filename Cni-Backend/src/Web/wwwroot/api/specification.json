@@ -588,13 +588,23 @@
         ]
       }
     },
-    "/api/EnergyPrices": {
+    "/api/EnergyPrices/Live": {
       "get": {
         "tags": [
           "EnergyPrices"
         ],
         "operationId": "GetLiveEnergyPrices",
         "parameters": [
+          {
+            "name": "tenantId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 1
+          },
           {
             "name": "date",
             "in": "query",
@@ -603,7 +613,7 @@
               "format": "date-time",
               "nullable": true
             },
-            "x-position": 1
+            "x-position": 2
           },
           {
             "name": "period",
@@ -613,7 +623,7 @@
               "format": "int32",
               "nullable": true
             },
-            "x-position": 2
+            "x-position": 3
           }
         ],
         "responses": {
@@ -635,12 +645,71 @@
         ]
       }
     },
-    "/api/EnergyPrices/range": {
+    "/api/EnergyPrices/History": {
       "get": {
         "tags": [
           "EnergyPrices"
         ],
-        "operationId": "GetEnergyPricesWithRange",
+        "operationId": "GetHistoricalEnergyPrices",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalEnergyPricesDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/EnergyPrices/History/Tenant": {
+      "get": {
+        "tags": [
+          "EnergyPrices"
+        ],
+        "operationId": "GetHistoricalEnergyPricesForTenant",
         "parameters": [
           {
             "name": "StartDate",
@@ -682,7 +751,7 @@
         ]
       }
     },
-    "/api/EnergyPrices/statistics": {
+    "/api/EnergyPrices/History/Statistics": {
       "get": {
         "tags": [
           "EnergyPrices"
@@ -3739,6 +3808,11 @@
             "type": "string",
             "nullable": true
           },
+          "tenantId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "marketOperatorId": {
             "type": "integer",
             "format": "int32"
@@ -3750,6 +3824,9 @@
             "type": "string"
           },
           "areaCode": {
+            "type": "string"
+          },
+          "country": {
             "type": "string"
           },
           "currency": {
@@ -3857,6 +3934,58 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          }
+        }
+      },
+      "HistoricalEnergyPricesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "country": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dataPointCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoricalPricePointDto"
+            }
+          }
+        }
+      },
+      "HistoricalPricePointDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "netPrice": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "grossPrice": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "marketOperatorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "marketOperatorCode": {
+            "type": "string"
           }
         }
       },

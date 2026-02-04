@@ -81,14 +81,18 @@ public class ApplicationDbContextInitialiser
 
     public async Task TrySeedAsync()
     {
-        // Parent olmayan kayıtlar (grup node'ları ve hiçbir gruba bağlı olmayan node'lar)
+        // NOTE: Use IgnoreQueryFilters() to bypass multi-tenant query filters during seeding.
+        // Without this, the Any() checks may return false even when records exist,
+        // because the query filters require a tenant context that isn't set during startup.
 
         int tenantId = 1;
         int firmId = 1;
         int facilitiyId = 1;
 
         // Create Tenant first (required for multi-tenancy)
-        if (!_context.Tenants.Any())
+        // Use IgnoreQueryFilters to check ALL tenants regardless of current tenant context
+        var existingTenant = await _context.Tenants.IgnoreQueryFilters().FirstOrDefaultAsync();
+        if (existingTenant == null)
         {
             var tenant = new Tenant
             {
@@ -99,18 +103,18 @@ public class ApplicationDbContextInitialiser
             _context.Tenants.Add(tenant);
             await _context.SaveChangesAsync();
             tenantId = tenant.Id;
+            _logger.LogInformation("Default tenant created with ID {TenantId}", tenantId);
         }
         else
         {
-            var existingTenant = await _context.Tenants.FirstOrDefaultAsync();
-            if (existingTenant != null)
-            {
-                tenantId = existingTenant.Id;
-            }
+            tenantId = existingTenant.Id;
+            _logger.LogInformation("Using existing tenant with ID {TenantId}", tenantId);
         }
 
         // Create Firm (required for Facility foreign key)
-        if (!_context.Firms.Any())
+        // Use IgnoreQueryFilters to check ALL firms regardless of current tenant context
+        var existingFirm = await _context.Firms.IgnoreQueryFilters().FirstOrDefaultAsync();
+        if (existingFirm == null)
         {
             var firm = new Firm
             {
@@ -133,18 +137,18 @@ public class ApplicationDbContextInitialiser
             _context.Firms.Add(firm);
             await _context.SaveChangesAsync();
             firmId = firm.Id;
+            _logger.LogInformation("Default firm created with ID {FirmId}", firmId);
         }
         else
         {
-            var existingFirm = await _context.Firms.FirstOrDefaultAsync();
-            if (existingFirm != null)
-            {
-                firmId = existingFirm.Id;
-            }
+            firmId = existingFirm.Id;
+            _logger.LogInformation("Using existing firm with ID {FirmId}", firmId);
         }
 
         // Create Facility (required for Device foreign key)
-        if (!_context.Facilities.Any())
+        // Use IgnoreQueryFilters to check ALL facilities regardless of current tenant context
+        var existingFacility = await _context.Facilities.IgnoreQueryFilters().FirstOrDefaultAsync();
+        if (existingFacility == null)
         {
             var facility = new Facility
             {
@@ -162,30 +166,38 @@ public class ApplicationDbContextInitialiser
             _context.Facilities.Add(facility);
             await _context.SaveChangesAsync();
             facilitiyId = facility.Id;
+            _logger.LogInformation("Default facility created with ID {FacilityId}", facilitiyId);
         }
         else
         {
-            var existingFacility = await _context.Facilities.FirstOrDefaultAsync();
-            if (existingFacility != null)
-            {
-                facilitiyId = existingFacility.Id;
-            }
+            facilitiyId = existingFacility.Id;
+            _logger.LogInformation("Using existing facility with ID {FacilityId}", facilitiyId);
         }
 
         #region RolesAndUsers
 
-        // Create Administrator role
+        // Create Administrator role (super admin with full system access)
         var administratorRole = new IdentityRole(Roles.Administrator);
         if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
         {
             await _roleManager.CreateAsync(administratorRole);
+            _logger.LogInformation("Created role: {Role}", Roles.Administrator);
         }
 
-        // Create TenantAdmin role
+        // Create TenantAdmin role (tenant administrator)
         var tenantAdminRole = new IdentityRole(Roles.TenantAdmin);
         if (_roleManager.Roles.All(r => r.Name != tenantAdminRole.Name))
         {
             await _roleManager.CreateAsync(tenantAdminRole);
+            _logger.LogInformation("Created role: {Role}", Roles.TenantAdmin);
+        }
+
+        // Create User role (regular user with limited access)
+        var userRole = new IdentityRole(Roles.User);
+        if (_roleManager.Roles.All(r => r.Name != userRole.Name))
+        {
+            await _roleManager.CreateAsync(userRole);
+            _logger.LogInformation("Created role: {Role}", Roles.User);
         }
 
         // Create Administrator user

@@ -14,6 +14,12 @@ namespace Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
 public record GetLiveEnergyPricesQuery : IRequest<LiveEnergyPricesDto>
 {
     /// <summary>
+    /// Optional tenant ID. If provided (admin only), fetches prices for that tenant's configuration.
+    /// If not provided, uses the current tenant context.
+    /// </summary>
+    public int? TenantId { get; set; }
+
+    /// <summary>
     /// The date to fetch prices for. If not specified, uses today or tomorrow based on MO rules.
     /// </summary>
     public DateTimeOffset? Date { get; set; }
@@ -56,16 +62,48 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
 
     public async Task<LiveEnergyPricesDto> Handle(GetLiveEnergyPricesQuery request, CancellationToken cancellationToken)
     {
-        if (!_multiTenantService.IsTenantScoped())
-        {
-            return new LiveEnergyPricesDto
-            {
-                Success = false,
-                ErrorMessage = "Please select a tenant to view energy prices"
-            };
-        }
+        int tenantId;
 
-        var tenantId = _multiTenantService.GetEffectiveTenantId()!.Value;
+        // If TenantId is explicitly provided in the request
+        if (request.TenantId.HasValue)
+        {
+            // Verify the user has admin access to query other tenants
+            if (!_multiTenantService.IsSuperAdmin())
+            {
+                return new LiveEnergyPricesDto
+                {
+                    Success = false,
+                    ErrorMessage = "Only administrators can query prices for other tenants"
+                };
+            }
+
+            // Verify the tenant exists
+            var tenantExists = await _context.Tenants.AnyAsync(t => t.Id == request.TenantId.Value, cancellationToken);
+            if (!tenantExists)
+            {
+                return new LiveEnergyPricesDto
+                {
+                    Success = false,
+                    ErrorMessage = $"Tenant with ID {request.TenantId.Value} not found"
+                };
+            }
+
+            tenantId = request.TenantId.Value;
+        }
+        else
+        {
+            // Use the current tenant context
+            if (!_multiTenantService.IsTenantScoped())
+            {
+                return new LiveEnergyPricesDto
+                {
+                    Success = false,
+                    ErrorMessage = "Please select a tenant or provide TenantId to view energy prices"
+                };
+            }
+
+            tenantId = _multiTenantService.GetEffectiveTenantId()!.Value;
+        }
 
         // Get tenant's Market Operator configuration
         var tenantMo = await _context.TenantMarketOperators
@@ -160,10 +198,12 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         return new LiveEnergyPricesDto
         {
             Success = true,
+            TenantId = tenantId,
             MarketOperatorId = mo.Id,
             MarketOperatorName = mo.Name,
             MarketOperatorCode = mo.Code,
             AreaCode = areaCode,
+            Country = countryName ?? string.Empty,
             Currency = currency,
             Date = targetDate,
             DistributionFee = distributionFee,

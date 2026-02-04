@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Backend.Infrastructure.BackgroundJobs;
 
 /// <summary>
-/// Background worker that fetches energy prices from all active Market Operators.
+/// Background worker that fetches energy prices for all active tenant configurations.
+/// Fetches data for all unique (MarketOperator, AreaCode) combinations from TenantMarketOperators.
 /// Runs twice daily:
 /// - Morning (0:01 AM UTC): Fetch current day prices
 /// - Afternoon (12:01 PM UTC / ~13:01 CET): Fetch tomorrow's prices after ENTSO-E publishes
@@ -17,6 +18,9 @@ public class EnergyPriceFetchWorker
     private readonly ILogger<EnergyPriceFetchWorker> _logger;
     private readonly IApplicationDbContext _context;
     private readonly ITsoService _tsoService;
+
+    private const int MaxRetryAttempts = 3;
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromMinutes(5);
 
     public EnergyPriceFetchWorker(
         ILogger<EnergyPriceFetchWorker> logger,
@@ -29,14 +33,14 @@ public class EnergyPriceFetchWorker
     }
 
     /// <summary>
-    /// Morning job - fetches current day prices for all active Market Operators.
+    /// Morning job - fetches current day prices for all tenant configurations.
     /// Scheduled to run at 0:01 AM UTC.
     /// </summary>
     public async Task FetchMorningPrices()
     {
         var targetDate = DateTimeOffset.UtcNow.Date;
         _logger.LogInformation("Starting morning price fetch for {Date}", targetDate.ToString("yyyy-MM-dd"));
-        await FetchPricesForAllMarketOperatorsAsync(targetDate);
+        await FetchPricesForAllTenantsAsync(targetDate);
     }
 
     /// <summary>
@@ -47,26 +51,51 @@ public class EnergyPriceFetchWorker
     {
         var targetDate = DateTimeOffset.UtcNow.Date.AddDays(1);
         _logger.LogInformation("Starting afternoon price fetch for {Date}", targetDate.ToString("yyyy-MM-dd"));
-        await FetchPricesForAllMarketOperatorsAsync(targetDate);
+        await FetchPricesForAllTenantsAsync(targetDate);
     }
 
-    private async Task FetchPricesForAllMarketOperatorsAsync(DateTimeOffset targetDate)
+    /// <summary>
+    /// Fetches prices for all unique (MarketOperator, AreaCode) combinations from active tenant configurations.
+    /// </summary>
+    private async Task FetchPricesForAllTenantsAsync(DateTimeOffset targetDate)
     {
         try
         {
-            // Get all active Market Operators
-            var marketOperators = await _context.MarketOperators
-                .Where(mo => mo.IsActive)
+            // Get all unique (MarketOperatorId, AreaCode) combinations from active tenant configurations
+            var tenantConfigs = await _context.TenantMarketOperators
+                .Include(tmo => tmo.MarketOperator)
+                .Where(tmo => tmo.IsActive && tmo.MarketOperator != null && tmo.MarketOperator.IsActive)
                 .ToListAsync();
 
-            _logger.LogInformation("Found {Count} active Market Operators", marketOperators.Count);
+            // Group by (MarketOperatorId, AreaCode) to avoid duplicate fetches
+            var uniqueConfigs = tenantConfigs
+                .GroupBy(tmo => new { tmo.MarketOperatorId, tmo.AreaCode })
+                .Select(g => g.First())
+                .ToList();
 
-            foreach (var mo in marketOperators)
+            _logger.LogInformation("Found {TotalCount} tenant configurations, {UniqueCount} unique (MO, AreaCode) combinations",
+                tenantConfigs.Count, uniqueConfigs.Count);
+
+            var failedConfigs = new List<(TenantMarketOperator Config, string Error)>();
+
+            foreach (var tmo in uniqueConfigs)
             {
-                await FetchPricesForMarketOperatorAsync(mo, targetDate);
+                var success = await FetchPricesForConfigWithRetryAsync(tmo, targetDate);
+                if (!success)
+                {
+                    failedConfigs.Add((tmo, "Failed after retries"));
+                }
             }
 
-            _logger.LogInformation("Price fetch completed for {Date}", targetDate.ToString("yyyy-MM-dd"));
+            if (failedConfigs.Count > 0)
+            {
+                _logger.LogWarning("Price fetch completed with {FailedCount} failures for {Date}",
+                    failedConfigs.Count, targetDate.ToString("yyyy-MM-dd"));
+            }
+            else
+            {
+                _logger.LogInformation("Price fetch completed successfully for {Date}", targetDate.ToString("yyyy-MM-dd"));
+            }
         }
         catch (Exception ex)
         {
@@ -75,27 +104,52 @@ public class EnergyPriceFetchWorker
         }
     }
 
-    private async Task FetchPricesForMarketOperatorAsync(MarketOperator mo, DateTimeOffset targetDate)
+    /// <summary>
+    /// Fetches prices for a tenant configuration with retry logic.
+    /// </summary>
+    private async Task<bool> FetchPricesForConfigWithRetryAsync(TenantMarketOperator tmo, DateTimeOffset targetDate)
     {
-        _logger.LogInformation("Fetching prices from {MoName} ({MoCode}) for {Date}",
-            mo.Name, mo.Code, targetDate.ToString("yyyy-MM-dd"));
+        var mo = tmo.MarketOperator!;
 
-        foreach (var areaCode in mo.AreaCodes)
+        for (int attempt = 1; attempt <= MaxRetryAttempts; attempt++)
         {
             try
             {
-                await FetchPricesForAreaAsync(mo, areaCode, targetDate);
+                var success = await FetchPricesForAreaAsync(mo, tmo.AreaCode, targetDate);
+                if (success)
+                {
+                    return true;
+                }
+
+                if (attempt < MaxRetryAttempts)
+                {
+                    _logger.LogWarning("Fetch attempt {Attempt}/{MaxAttempts} failed for {MoCode}/{AreaCode}. Retrying in {Delay}...",
+                        attempt, MaxRetryAttempts, mo.Code, tmo.AreaCode, RetryDelay);
+                    await Task.Delay(RetryDelay);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching prices from {MoCode} for area {AreaCode}",
-                    mo.Code, areaCode);
-                // Continue with next area code
+                _logger.LogError(ex, "Error on attempt {Attempt}/{MaxAttempts} fetching prices from {MoCode} for area {AreaCode}",
+                    attempt, MaxRetryAttempts, mo.Code, tmo.AreaCode);
+
+                if (attempt < MaxRetryAttempts)
+                {
+                    await Task.Delay(RetryDelay);
+                }
             }
         }
+
+        _logger.LogError("Failed to fetch prices from {MoCode} for area {AreaCode} after {MaxAttempts} attempts",
+            mo.Code, tmo.AreaCode, MaxRetryAttempts);
+        return false;
     }
 
-    private async Task FetchPricesForAreaAsync(MarketOperator mo, string areaCode, DateTimeOffset targetDate)
+    /// <summary>
+    /// Fetches prices for a specific area and stores them in the database.
+    /// </summary>
+    /// <returns>True if prices were successfully fetched (even if all were duplicates), false otherwise.</returns>
+    private async Task<bool> FetchPricesForAreaAsync(MarketOperator mo, string areaCode, DateTimeOffset targetDate)
     {
         // Get country name from area code - this is what we'll store in the database
         var countryName = TsoCountryMapping.GetCountryNameFromAreaCode(areaCode);
@@ -103,7 +157,7 @@ public class EnergyPriceFetchWorker
         if (string.IsNullOrEmpty(countryName))
         {
             _logger.LogWarning("Could not map area code {AreaCode} to country name, skipping", areaCode);
-            return;
+            return false;
         }
 
         // Use the first supported resolution (typically 60 for hourly data)
@@ -124,7 +178,14 @@ public class EnergyPriceFetchWorker
         {
             _logger.LogWarning("Failed to fetch prices from {MoCode} for {Country}: {Error}",
                 mo.Code, countryName, result.ErrorMessage);
-            return;
+            return false;
+        }
+
+        if (result.Prices.Count == 0)
+        {
+            _logger.LogWarning("No prices returned from {MoCode} for {Country} on {Date}",
+                mo.Code, countryName, targetDate.ToString("yyyy-MM-dd"));
+            return false;
         }
 
         var insertedCount = 0;
@@ -166,5 +227,7 @@ public class EnergyPriceFetchWorker
 
         _logger.LogInformation("Fetched prices from {MoCode} for {Country}: {Inserted} inserted, {Skipped} skipped (duplicates)",
             mo.Code, countryName, insertedCount, skippedCount);
+
+        return true;
     }
 }

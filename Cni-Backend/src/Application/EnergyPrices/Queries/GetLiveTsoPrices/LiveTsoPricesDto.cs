@@ -4,10 +4,12 @@ public class LiveEnergyPricesDto
 {
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
+    public int? TenantId { get; set; }
     public int MarketOperatorId { get; set; }
     public string MarketOperatorName { get; set; } = string.Empty;
     public string MarketOperatorCode { get; set; } = string.Empty;
     public string AreaCode { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
     public string Currency { get; set; } = string.Empty;
     public DateTimeOffset Date { get; set; }
     public decimal DistributionFee { get; set; }
