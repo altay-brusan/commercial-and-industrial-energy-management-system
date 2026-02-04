@@ -77,6 +77,19 @@ if (app.Environment.EnvironmentName != "Test")
         "grpc-facility-job",
         worker => worker.CheckFacilities(),
         "*/10 * * * *");
+
+    // Energy price fetch jobs
+    // Morning job - fetch current day prices (0:01 AM UTC)
+    RecurringJob.AddOrUpdate<EnergyPriceFetchWorker>(
+        "energy-price-morning-job",
+        worker => worker.FetchMorningPrices(),
+        "1 0 * * *");
+
+    // Afternoon job - fetch tomorrow prices (12:01 PM UTC = 13:01 CET)
+    RecurringJob.AddOrUpdate<EnergyPriceFetchWorker>(
+        "energy-price-afternoon-job",
+        worker => worker.FetchAfternoonPrices(),
+        "1 12 * * *");
 }
 app.Run();
 

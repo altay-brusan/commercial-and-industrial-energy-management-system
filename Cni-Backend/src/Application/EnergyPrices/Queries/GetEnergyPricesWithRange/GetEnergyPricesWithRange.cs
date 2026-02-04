@@ -4,13 +4,12 @@ using Backend.Application.Common.Security;
 namespace Backend.Application.EnergyPrices.Queries.GetEnergyPricesWithRange;
 
 /// <summary>
-/// Gets energy prices for a date range from a specific TSO.
+/// Gets energy prices for a date range from the tenant's configured Market Operator.
 /// Returns a time series of prices with timestamps.
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record GetEnergyPricesWithRangeQuery : IRequest<EnergyPriceRangeDto?>
 {
-    public int TsoId { get; set; }
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset EndDate { get; set; }
 }
@@ -19,9 +18,6 @@ public class GetEnergyPricesWithRangeQueryValidator : AbstractValidator<GetEnerg
 {
     public GetEnergyPricesWithRangeQueryValidator()
     {
-        RuleFor(v => v.TsoId)
-            .GreaterThan(0);
-
         RuleFor(v => v.StartDate)
             .NotEmpty();
 
@@ -35,41 +31,54 @@ public class GetEnergyPricesWithRangeQueryValidator : AbstractValidator<GetEnerg
 public class GetEnergyPricesWithRangeQueryHandler : IRequestHandler<GetEnergyPricesWithRangeQuery, EnergyPriceRangeDto?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly int? _tenantId;
 
-    public GetEnergyPricesWithRangeQueryHandler(IApplicationDbContext context)
+    public GetEnergyPricesWithRangeQueryHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
     {
         _context = context;
+        _tenantId = multiTenantService.GetCurrentTenantId();
     }
 
     public async Task<EnergyPriceRangeDto?> Handle(GetEnergyPricesWithRangeQuery request, CancellationToken cancellationToken)
     {
-        var tso = await _context.TransmissionSystemOperators
-            .FindAsync(new object[] { request.TsoId }, cancellationToken);
-
-        if (tso == null)
+        if (_tenantId is null)
         {
             return null;
         }
 
+        // Get tenant's Market Operator configuration
+        var tenantMo = await _context.TenantMarketOperators
+            .Include(x => x.MarketOperator)
+            .Where(x => x.TenantId == _tenantId && x.IsActive)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (tenantMo?.MarketOperator == null)
+        {
+            return null;
+        }
+
+        var mo = tenantMo.MarketOperator;
+
         var prices = await _context.EnergyPriceHistories
-            .Where(x => x.TsoId == request.TsoId
-                && x.PriceTimestamp >= request.StartDate
-                && x.PriceTimestamp <= request.EndDate)
-            .OrderBy(x => x.PriceTimestamp)
+            .Where(x => x.MarketOperatorId == mo.Id
+                && x.AreaCode == tenantMo.AreaCode
+                && x.PriceLocalTimestamp >= request.StartDate
+                && x.PriceLocalTimestamp <= request.EndDate)
+            .OrderBy(x => x.PriceLocalTimestamp)
             .Select(x => new EnergyPricePointDto
             {
-                Timestamp = x.PriceTimestamp,
-                RawPrice = x.RawPrice,
-                TotalPrice = x.TotalPrice
+                Timestamp = x.PriceLocalTimestamp,
+                NetPrice = x.NetPrice,
+                GrossPrice = x.GrossPrice
             })
             .ToListAsync(cancellationToken);
 
         return new EnergyPriceRangeDto
         {
-            TsoId = tso.Id,
-            TsoName = tso.Name,
-            TsoCode = tso.Code,
-            Currency = tso.Currency,
+            MarketOperatorId = mo.Id,
+            MarketOperatorName = mo.Name,
+            MarketOperatorCode = mo.Code,
+            AreaCode = tenantMo.AreaCode,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             Prices = prices

@@ -1,4 +1,4 @@
-﻿using Backend.Domain.Entities;
+using Backend.Domain.Entities;
 using Backend.Domain.Entities.Proto;
 using Backend.Domain.Entities.Topology;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -24,7 +24,8 @@ public interface IApplicationDbContext
     DbSet<AppPCSData> PCSDatas { get; }
     DbSet<AppSmartMeterData> SmartMeterDatas { get; }
     DbSet<AppGrpcSystemData> GrpcFacilityDatas { get; }
-    DbSet<TransmissionSystemOperator> TransmissionSystemOperators { get; }
+    DbSet<MarketOperator> MarketOperators { get; }
+    DbSet<TenantMarketOperator> TenantMarketOperators { get; }
     DbSet<EnergyPriceHistory> EnergyPriceHistories { get; }
     DbSet<CountryTariff> CountryTariffs { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Backend.Application.Common.Interfaces;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.Proto;
@@ -36,14 +36,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<AppPCSData> PCSDatas => Set<AppPCSData>();
     public DbSet<AppSmartMeterData> SmartMeterDatas => Set<AppSmartMeterData>();
 
-    public DbSet<TransmissionSystemOperator> TransmissionSystemOperators => Set<TransmissionSystemOperator>();
+    public DbSet<MarketOperator> MarketOperators => Set<MarketOperator>();
+    public DbSet<TenantMarketOperator> TenantMarketOperators => Set<TenantMarketOperator>();
     public DbSet<EnergyPriceHistory> EnergyPriceHistories => Set<EnergyPriceHistory>();
     public DbSet<CountryTariff> CountryTariffs => Set<CountryTariff>();
 
     public DbSet<TodoList> TodoLists => Set<TodoList>();
 
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
-    
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -51,9 +52,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<Firm>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
         builder.Entity<Facility>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
         builder.Entity<TodoList>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
-        builder.Entity<TransmissionSystemOperator>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
-        builder.Entity<EnergyPriceHistory>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
+        builder.Entity<TenantMarketOperator>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
         builder.Entity<CountryTariff>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
+        // Note: MarketOperators and EnergyPriceHistories are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         builder.Entity<ApplicationUser>().ToTable("AppUsers");

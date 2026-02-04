@@ -82,5 +82,8 @@ public static class DependencyInjection
 
         // TSO Service for fetching energy prices from external providers
         builder.Services.AddHttpClient<ITsoService, TsoService>();
+
+        // Country mapping service for area codes and timezones
+        builder.Services.AddSingleton<ICountryMappingService, CountryMappingService>();
     }
 }

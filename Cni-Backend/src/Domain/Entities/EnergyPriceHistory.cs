@@ -1,54 +1,36 @@
 namespace Backend.Domain.Entities;
 
 /// <summary>
-/// Stores historical energy price data from TSO providers.
-/// Includes raw price, applied rates, and calculated total price.
+/// Stores historical energy price data from Market Operators.
+/// Global entity - shared across all tenants for the same Market Operator and area.
 /// </summary>
-public class EnergyPriceHistory : BaseAuditableEntity, IMultiTenantEntity
+public class EnergyPriceHistory : BaseAuditableEntity
 {
-    public int TenantId { get; set; }
+    /// <summary>
+    /// Reference to the Market Operator
+    /// </summary>
+    public int MarketOperatorId { get; set; }
 
     /// <summary>
-    /// Reference to the Transmission System Operator (TSO)
+    /// The area/bidding zone code for this price data
     /// </summary>
-    public int TsoId { get; set; }
+    public string AreaCode { get; set; } = string.Empty;
 
     /// <summary>
-    /// Raw price from the TSO (per MWh)
+    /// Net price from the Market Operator (per MWh) - before taxes and fees
     /// </summary>
-    public decimal RawPrice { get; set; }
+    public decimal NetPrice { get; set; }
 
     /// <summary>
-    /// Tax rate that was applied at the time of recording (as decimal)
+    /// Gross price (per MWh) - including applicable taxes and fees at time of recording
     /// </summary>
-    public decimal AppliedTaxRate { get; set; }
+    public decimal GrossPrice { get; set; }
 
     /// <summary>
-    /// Distribution fee that was applied at the time of recording (per MWh)
+    /// Local timestamp of the price data point (in the area's timezone)
     /// </summary>
-    public decimal AppliedDistributionFee { get; set; }
+    public DateTimeOffset PriceLocalTimestamp { get; set; }
 
-    /// <summary>
-    /// Transmission fee that was applied at the time of recording (per MWh)
-    /// </summary>
-    public decimal AppliedTransmissionFee { get; set; }
-
-    /// <summary>
-    /// Total calculated price: (RawPrice + DistributionFee + TransmissionFee) * (1 + TaxRate)
-    /// </summary>
-    public decimal TotalPrice { get; set; }
-
-    /// <summary>
-    /// Timestamp of the price data point (UTC)
-    /// </summary>
-    public DateTimeOffset PriceTimestamp { get; set; }
-
-    /// <summary>
-    /// Currency code at the time of recording
-    /// </summary>
-    public string Currency { get; set; } = "EUR";
-
-    public Tenant? Tenant { get; set; }
-
-    public TransmissionSystemOperator? Tso { get; set; }
+    // Navigation property
+    public MarketOperator? MarketOperator { get; set; }
 }

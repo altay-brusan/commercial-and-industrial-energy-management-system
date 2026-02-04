@@ -187,6 +187,27 @@ public static class TsoCountryMapping
     }
 
     /// <summary>
+    /// Gets the country name from an ENTSO-E area code.
+    /// </summary>
+    /// <param name="areaCode">The ENTSO-E EIC area code</param>
+    /// <returns>The country name if found, null otherwise</returns>
+    public static string? GetCountryNameFromAreaCode(string? areaCode)
+    {
+        if (string.IsNullOrWhiteSpace(areaCode))
+            return null;
+
+        // Special case for EPIAS (Turkey)
+        if (areaCode.Equals("TR", StringComparison.OrdinalIgnoreCase))
+            return "Turkey";
+
+        // Reverse lookup in ENTSO-E area codes
+        var entry = EntsoeAreaCodes.FirstOrDefault(kvp =>
+            kvp.Value.Equals(areaCode, StringComparison.OrdinalIgnoreCase));
+
+        return entry.Key; // Returns null if not found
+    }
+
+    /// <summary>
     /// Gets the IANA timezone ID for a country.
     /// </summary>
     /// <param name="country">The country name</param>

@@ -6,27 +6,17 @@ using Microsoft.EntityFrameworkCore;
 namespace Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
 
 /// <summary>
-/// Fetches live/current day-ahead prices directly from a TSO API.
+/// Fetches live/current day-ahead prices directly from a Market Operator API.
+/// Uses the tenant's configured Market Operator or falls back to default based on Firm's country.
 /// This does NOT store the data - it's for real-time display.
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
-public record GetLiveTsoPricesQuery : IRequest<LiveTsoPricesDto>
+public record GetLiveEnergyPricesQuery : IRequest<LiveEnergyPricesDto>
 {
     /// <summary>
-    /// The TSO ID to fetch prices from
-    /// </summary>
-    public int TsoId { get; set; }
-
-    /// <summary>
-    /// The date to fetch prices for. If not specified, uses today or tomorrow based on TSO rules.
+    /// The date to fetch prices for. If not specified, uses today or tomorrow based on MO rules.
     /// </summary>
     public DateTimeOffset? Date { get; set; }
-
-    /// <summary>
-    /// The country to fetch prices for (e.g., "Netherlands", "Germany", "Türkiye").
-    /// If not specified, uses the TSO's default configuration.
-    /// </summary>
-    public string? Country { get; set; }
 
     /// <summary>
     /// Requested resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).
@@ -35,71 +25,93 @@ public record GetLiveTsoPricesQuery : IRequest<LiveTsoPricesDto>
     public int? Period { get; set; }
 }
 
-public class GetLiveTsoPricesQueryValidator : AbstractValidator<GetLiveTsoPricesQuery>
+public class GetLiveEnergyPricesQueryValidator : AbstractValidator<GetLiveEnergyPricesQuery>
 {
-    public GetLiveTsoPricesQueryValidator()
+    public GetLiveEnergyPricesQueryValidator()
     {
-        RuleFor(v => v.TsoId)
-            .GreaterThan(0);
-
         RuleFor(v => v.Period)
             .Must(p => p == null || new[] { 15, 30, 60 }.Contains(p.Value))
             .WithMessage("Period must be 15, 30, or 60 minutes");
     }
 }
 
-public class GetLiveTsoPricesQueryHandler : IRequestHandler<GetLiveTsoPricesQuery, LiveTsoPricesDto>
+public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPricesQuery, LiveEnergyPricesDto>
 {
     private readonly IApplicationDbContext _context;
     private readonly ITsoService _tsoService;
+    private readonly ICountryMappingService _countryMappingService;
+    private readonly int? _tenantId;
 
-    public GetLiveTsoPricesQueryHandler(IApplicationDbContext context, ITsoService tsoService)
+    public GetLiveEnergyPricesQueryHandler(
+        IApplicationDbContext context,
+        ITsoService tsoService,
+        ICountryMappingService countryMappingService,
+        IMultiTenantService multiTenantService)
     {
         _context = context;
         _tsoService = tsoService;
+        _countryMappingService = countryMappingService;
+        _tenantId = multiTenantService.GetCurrentTenantId();
     }
 
-    public async Task<LiveTsoPricesDto> Handle(GetLiveTsoPricesQuery request, CancellationToken cancellationToken)
+    public async Task<LiveEnergyPricesDto> Handle(GetLiveEnergyPricesQuery request, CancellationToken cancellationToken)
     {
-        // Get the TSO configuration
-        var tso = await _context.TransmissionSystemOperators
-            .FindAsync(new object[] { request.TsoId }, cancellationToken);
-
-        if (tso == null)
+        if (_tenantId is null)
         {
-            return new LiveTsoPricesDto
+            return new LiveEnergyPricesDto
             {
                 Success = false,
-                ErrorMessage = $"TSO with ID {request.TsoId} not found"
+                ErrorMessage = "Tenant context not found"
             };
         }
 
+        // Get tenant's Market Operator configuration
+        var tenantMo = await _context.TenantMarketOperators
+            .Include(x => x.MarketOperator)
+            .Where(x => x.TenantId == _tenantId && x.IsActive)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // If no tenant MO configured, try to determine default based on Firm's country
+        if (tenantMo?.MarketOperator == null)
+        {
+            var fallbackResult = await GetFallbackMarketOperatorAsync(cancellationToken);
+            if (!fallbackResult.Result.Success)
+            {
+                return fallbackResult.Result;
+            }
+            // If fallback found, use that MO
+            tenantMo = fallbackResult.TenantMarketOperator;
+        }
+
+        var mo = tenantMo!.MarketOperator!;
+        var areaCode = tenantMo.AreaCode;
+
         // Determine the date to fetch
-        var targetDate = request.Date ?? DetermineTargetDate(tso.Code);
+        var targetDate = request.Date ?? DetermineTargetDate(mo.Code);
 
-        // Use provided country or null (service will handle appropriately)
-        var country = request.Country;
+        // Get country name from area code for tariff lookup
+        var countryName = _countryMappingService.GetCountryNameFromAreaCode(areaCode);
 
-        // Fetch prices from the TSO
+        // Fetch prices from the Market Operator
         var result = await _tsoService.GetDayAheadPricesAsync(
-            tso.Code,
-            tso.BaseUrl,
-            tso.ApiKey,
-            country,
+            mo.Code,
+            mo.BaseUrl,
+            mo.ApiKey,
+            countryName,
             targetDate,
-            request.Period,
+            request.Period ?? tenantMo.SamplingFrequencyMinutes,
             cancellationToken);
 
         if (!result.Success)
         {
-            return new LiveTsoPricesDto
+            return new LiveEnergyPricesDto
             {
                 Success = false,
                 ErrorMessage = result.ErrorMessage,
-                TsoId = tso.Id,
-                TsoName = tso.Name,
-                TsoCode = tso.Code,
-                Country = country,
+                MarketOperatorId = mo.Id,
+                MarketOperatorName = mo.Name,
+                MarketOperatorCode = mo.Code,
+                AreaCode = areaCode,
                 Date = targetDate,
                 ResolutionMinutes = result.ResolutionMinutes,
                 Timezone = result.Timezone
@@ -107,10 +119,10 @@ public class GetLiveTsoPricesQueryHandler : IRequestHandler<GetLiveTsoPricesQuer
         }
 
         // Fetch country tariff from database (or use defaults)
-        var (distributionFee, transmissionFee, taxRate, usingDefaultTariff) =
-            await GetTariffForCountryAsync(tso.TenantId, country, cancellationToken);
+        var (distributionFee, transmissionFee, taxRate, currency, usingDefaultTariff) =
+            await GetTariffForCountryAsync(countryName, cancellationToken);
 
-        // Calculate prices with new formula: (NetPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
+        // Calculate prices with formula: (NetPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
         var prices = result.Prices.Select(p =>
         {
             var grossPrice = (p.PricePerMWh + distributionFee + transmissionFee) * (1 + taxRate);
@@ -143,14 +155,14 @@ public class GetLiveTsoPricesQueryHandler : IRequestHandler<GetLiveTsoPricesQuer
             };
         }
 
-        return new LiveTsoPricesDto
+        return new LiveEnergyPricesDto
         {
             Success = true,
-            TsoId = tso.Id,
-            TsoName = tso.Name,
-            TsoCode = tso.Code,
-            Country = country,
-            Currency = result.Currency,
+            MarketOperatorId = mo.Id,
+            MarketOperatorName = mo.Name,
+            MarketOperatorCode = mo.Code,
+            AreaCode = areaCode,
+            Currency = currency,
             Date = targetDate,
             DistributionFee = distributionFee,
             TransmissionFee = transmissionFee,
@@ -163,40 +175,94 @@ public class GetLiveTsoPricesQueryHandler : IRequestHandler<GetLiveTsoPricesQuer
         };
     }
 
-    private async Task<(decimal distributionFee, decimal transmissionFee, decimal taxRate, bool usingDefault)> GetTariffForCountryAsync(
-        int tenantId,
+    private async Task<(LiveEnergyPricesDto Result, Domain.Entities.TenantMarketOperator? TenantMarketOperator)> GetFallbackMarketOperatorAsync(CancellationToken cancellationToken)
+    {
+        // Try to get tenant's firm to determine country
+        var firm = await _context.Firms
+            .Where(f => f.TenantId == _tenantId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (firm?.Country == null)
+        {
+            return (new LiveEnergyPricesDto
+            {
+                Success = false,
+                ErrorMessage = "No Market Operator configured for this tenant and no firm country found for fallback"
+            }, null);
+        }
+
+        // Determine MO based on country
+        var moCode = firm.Country.ToUpperInvariant() switch
+        {
+            "TURKEY" or "TÜRKİYE" or "TURKIYE" or "TR" => "EPIAS",
+            _ => "ENTSOE" // Default to ENTSO-E for EU countries
+        };
+
+        var mo = await _context.MarketOperators
+            .Where(m => m.Code == moCode && m.IsActive)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (mo == null)
+        {
+            return (new LiveEnergyPricesDto
+            {
+                Success = false,
+                ErrorMessage = $"Default Market Operator '{moCode}' not found"
+            }, null);
+        }
+
+        // Get the first area code from the MO or map from country
+        var areaCode = _countryMappingService.GetAreaCode(moCode, firm.Country) ?? mo.AreaCodes.FirstOrDefault() ?? "";
+
+        // Create a virtual TenantMarketOperator for the fallback
+        var virtualTmo = new Domain.Entities.TenantMarketOperator
+        {
+            TenantId = _tenantId!.Value,
+            MarketOperatorId = mo.Id,
+            MarketOperator = mo,
+            AreaCode = areaCode,
+            SamplingFrequencyMinutes = mo.SupportedResolutions.FirstOrDefault(r => r == 60) != 0
+                ? 60
+                : mo.SupportedResolutions.FirstOrDefault(),
+            IsActive = true
+        };
+
+        return (new LiveEnergyPricesDto { Success = true }, virtualTmo);
+    }
+
+    private async Task<(decimal distributionFee, decimal transmissionFee, decimal taxRate, string currency, bool usingDefault)> GetTariffForCountryAsync(
         string? countryName,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(countryName))
         {
-            return (TariffDefaults.DistributionFee, TariffDefaults.TransmissionFee, TariffDefaults.TaxRate, true);
+            return (TariffDefaults.DistributionFee, TariffDefaults.TransmissionFee, TariffDefaults.TaxRate, "EUR", true);
         }
 
         // Try to find tariff by country name (case-insensitive match)
         var tariff = await _context.CountryTariffs
-            .Where(t => t.TenantId == tenantId && t.IsActive)
+            .Where(t => t.TenantId == _tenantId && t.IsActive)
             .Where(t => t.CountryName.ToLower() == countryName.ToLower())
             .FirstOrDefaultAsync(cancellationToken);
 
         if (tariff != null)
         {
-            return (tariff.DistributionFee, tariff.TransmissionFee, tariff.TaxRate, false);
+            return (tariff.DistributionFee, tariff.TransmissionFee, tariff.TaxRate, tariff.Currency, false);
         }
 
         // Fall back to defaults
-        return (TariffDefaults.DistributionFee, TariffDefaults.TransmissionFee, TariffDefaults.TaxRate, true);
+        return (TariffDefaults.DistributionFee, TariffDefaults.TransmissionFee, TariffDefaults.TaxRate, "EUR", true);
     }
 
-    private DateTimeOffset DetermineTargetDate(string tsoCode)
+    private DateTimeOffset DetermineTargetDate(string moCode)
     {
-        // Different TSOs publish day-ahead prices at different times
+        // Different MOs publish day-ahead prices at different times
         // ENTSO-E: Around 13:00 CET
         // EPIAS: Around 14:00 Turkey time (UTC+3)
 
         var now = DateTimeOffset.UtcNow;
 
-        return tsoCode.ToUpperInvariant() switch
+        return moCode.ToUpperInvariant() switch
         {
             "ENTSOE" => DetermineEntsoeTargetDate(now),
             "EPIAS" => DetermineEpiasTargetDate(now),

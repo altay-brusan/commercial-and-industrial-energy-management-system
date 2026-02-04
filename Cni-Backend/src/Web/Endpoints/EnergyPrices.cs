@@ -1,5 +1,3 @@
-using Backend.Application.EnergyPrices.Commands.CreateEnergyPriceHistory;
-using Backend.Application.EnergyPrices.Queries.GetEnergyPrice;
 using Backend.Application.EnergyPrices.Queries.GetEnergyPricesWithRange;
 using Backend.Application.EnergyPrices.Queries.GetEnergyPriceStatistics;
 using Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
@@ -14,33 +12,26 @@ public class EnergyPrices : EndpointGroupBase
     {
         app.MapGroup(this)
             .RequireAuthorization()
-            .MapGet(GetLiveTsoPrices, "live/{tsoId}")
-            .MapGet(GetEnergyPrice, "price")
+            .MapGet(GetLiveEnergyPrices)
             .MapGet(GetEnergyPricesWithRange, "range")
-            .MapGet(GetEnergyPriceStatistics, "statistics")
-            .MapPost(CreateEnergyPriceHistory);
+            .MapGet(GetEnergyPriceStatistics, "statistics");
     }
 
     /// <summary>
-    /// Fetches live day-ahead prices directly from a TSO API.
+    /// Fetches live day-ahead prices directly from the tenant's configured Market Operator API.
     /// Returns current/tomorrow's prices with tax and distribution fees applied.
+    /// If no Market Operator is configured for the tenant, falls back to default based on Firm's country.
     /// </summary>
     /// <param name="sender">MediatR sender</param>
-    /// <param name="tsoId">The TSO ID (1=ENTSOE, 2=EPIAS)</param>
-    /// <param name="country">Country name (e.g., "Netherlands", "Germany", "Türkiye")</param>
     /// <param name="date">Optional date to fetch prices for</param>
     /// <param name="period">Resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).</param>
-    public async Task<Ok<LiveTsoPricesDto>> GetLiveTsoPrices(
+    public async Task<Ok<LiveEnergyPricesDto>> GetLiveEnergyPrices(
         ISender sender,
-        [FromRoute] int tsoId,
-        [FromQuery] string? country = null,
         [FromQuery] DateTimeOffset? date = null,
         [FromQuery] int? period = null)
     {
-        var query = new GetLiveTsoPricesQuery
+        var query = new GetLiveEnergyPricesQuery
         {
-            TsoId = tsoId,
-            Country = country,
             Date = date,
             Period = period
         };
@@ -49,17 +40,7 @@ public class EnergyPrices : EndpointGroupBase
     }
 
     /// <summary>
-    /// Gets energy price for a specific provider and timestamp.
-    /// If exact timestamp doesn't exist, returns the nearest available price.
-    /// </summary>
-    public async Task<Ok<EnergyPriceDto>> GetEnergyPrice(ISender sender, [AsParameters] GetEnergyPriceQuery query)
-    {
-        var result = await sender.Send(query);
-        return TypedResults.Ok(result);
-    }
-
-    /// <summary>
-    /// Gets energy prices for a date range.
+    /// Gets energy prices for a date range from the tenant's configured Market Operator.
     /// Returns a time series of prices with timestamps.
     /// </summary>
     public async Task<Ok<EnergyPriceRangeDto>> GetEnergyPricesWithRange(ISender sender, [AsParameters] GetEnergyPricesWithRangeQuery query)
@@ -70,19 +51,11 @@ public class EnergyPrices : EndpointGroupBase
 
     /// <summary>
     /// Gets statistical values (min, max, average) for energy prices within a date range.
+    /// Uses the tenant's configured Market Operator.
     /// </summary>
     public async Task<Ok<EnergyPriceStatisticsDto>> GetEnergyPriceStatistics(ISender sender, [AsParameters] GetEnergyPriceStatisticsQuery query)
     {
         var result = await sender.Send(query);
         return TypedResults.Ok(result);
-    }
-
-    /// <summary>
-    /// Creates a new energy price history record.
-    /// </summary>
-    public async Task<Created<int>> CreateEnergyPriceHistory(ISender sender, CreateEnergyPriceHistoryCommand command)
-    {
-        var id = await sender.Send(command);
-        return TypedResults.Created($"/{nameof(EnergyPrices)}/{id}", id);
     }
 }

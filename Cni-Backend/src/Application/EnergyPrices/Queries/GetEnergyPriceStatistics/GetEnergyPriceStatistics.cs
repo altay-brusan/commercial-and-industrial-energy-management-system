@@ -5,11 +5,11 @@ namespace Backend.Application.EnergyPrices.Queries.GetEnergyPriceStatistics;
 
 /// <summary>
 /// Gets statistical values (min, max, average) for energy prices within a date range.
+/// Uses the tenant's configured Market Operator.
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record GetEnergyPriceStatisticsQuery : IRequest<EnergyPriceStatisticsDto?>
 {
-    public int TsoId { get; set; }
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset EndDate { get; set; }
 }
@@ -18,9 +18,6 @@ public class GetEnergyPriceStatisticsQueryValidator : AbstractValidator<GetEnerg
 {
     public GetEnergyPriceStatisticsQueryValidator()
     {
-        RuleFor(v => v.TsoId)
-            .GreaterThan(0);
-
         RuleFor(v => v.StartDate)
             .NotEmpty();
 
@@ -34,69 +31,82 @@ public class GetEnergyPriceStatisticsQueryValidator : AbstractValidator<GetEnerg
 public class GetEnergyPriceStatisticsQueryHandler : IRequestHandler<GetEnergyPriceStatisticsQuery, EnergyPriceStatisticsDto?>
 {
     private readonly IApplicationDbContext _context;
+    private readonly int? _tenantId;
 
-    public GetEnergyPriceStatisticsQueryHandler(IApplicationDbContext context)
+    public GetEnergyPriceStatisticsQueryHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
     {
         _context = context;
+        _tenantId = multiTenantService.GetCurrentTenantId();
     }
 
     public async Task<EnergyPriceStatisticsDto?> Handle(GetEnergyPriceStatisticsQuery request, CancellationToken cancellationToken)
     {
-        var tso = await _context.TransmissionSystemOperators
-            .FindAsync(new object[] { request.TsoId }, cancellationToken);
-
-        if (tso == null)
+        if (_tenantId is null)
         {
             return null;
         }
 
+        // Get tenant's Market Operator configuration
+        var tenantMo = await _context.TenantMarketOperators
+            .Include(x => x.MarketOperator)
+            .Where(x => x.TenantId == _tenantId && x.IsActive)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (tenantMo?.MarketOperator == null)
+        {
+            return null;
+        }
+
+        var mo = tenantMo.MarketOperator;
+
         var prices = await _context.EnergyPriceHistories
-            .Where(x => x.TsoId == request.TsoId
-                && x.PriceTimestamp >= request.StartDate
-                && x.PriceTimestamp <= request.EndDate)
+            .Where(x => x.MarketOperatorId == mo.Id
+                && x.AreaCode == tenantMo.AreaCode
+                && x.PriceLocalTimestamp >= request.StartDate
+                && x.PriceLocalTimestamp <= request.EndDate)
             .ToListAsync(cancellationToken);
 
         if (prices.Count == 0)
         {
             return new EnergyPriceStatisticsDto
             {
-                TsoId = tso.Id,
-                TsoName = tso.Name,
-                TsoCode = tso.Code,
-                Currency = tso.Currency,
+                MarketOperatorId = mo.Id,
+                MarketOperatorName = mo.Name,
+                MarketOperatorCode = mo.Code,
+                AreaCode = tenantMo.AreaCode,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
                 DataPointCount = 0
             };
         }
 
-        var minRawPriceItem = prices.MinBy(x => x.RawPrice);
-        var maxRawPriceItem = prices.MaxBy(x => x.RawPrice);
-        var minTotalPriceItem = prices.MinBy(x => x.TotalPrice);
-        var maxTotalPriceItem = prices.MaxBy(x => x.TotalPrice);
+        var minNetPriceItem = prices.MinBy(x => x.NetPrice);
+        var maxNetPriceItem = prices.MaxBy(x => x.NetPrice);
+        var minGrossPriceItem = prices.MinBy(x => x.GrossPrice);
+        var maxGrossPriceItem = prices.MaxBy(x => x.GrossPrice);
 
         return new EnergyPriceStatisticsDto
         {
-            TsoId = tso.Id,
-            TsoName = tso.Name,
-            TsoCode = tso.Code,
-            Currency = tso.Currency,
+            MarketOperatorId = mo.Id,
+            MarketOperatorName = mo.Name,
+            MarketOperatorCode = mo.Code,
+            AreaCode = tenantMo.AreaCode,
             StartDate = request.StartDate,
             EndDate = request.EndDate,
             DataPointCount = prices.Count,
 
-            MinRawPrice = prices.Min(x => x.RawPrice),
-            MaxRawPrice = prices.Max(x => x.RawPrice),
-            AvgRawPrice = prices.Average(x => x.RawPrice),
+            MinNetPrice = prices.Min(x => x.NetPrice),
+            MaxNetPrice = prices.Max(x => x.NetPrice),
+            AvgNetPrice = prices.Average(x => x.NetPrice),
 
-            MinTotalPrice = prices.Min(x => x.TotalPrice),
-            MaxTotalPrice = prices.Max(x => x.TotalPrice),
-            AvgTotalPrice = prices.Average(x => x.TotalPrice),
+            MinGrossPrice = prices.Min(x => x.GrossPrice),
+            MaxGrossPrice = prices.Max(x => x.GrossPrice),
+            AvgGrossPrice = prices.Average(x => x.GrossPrice),
 
-            MinRawPriceTimestamp = minRawPriceItem?.PriceTimestamp,
-            MaxRawPriceTimestamp = maxRawPriceItem?.PriceTimestamp,
-            MinTotalPriceTimestamp = minTotalPriceItem?.PriceTimestamp,
-            MaxTotalPriceTimestamp = maxTotalPriceItem?.PriceTimestamp
+            MinNetPriceTimestamp = minNetPriceItem?.PriceLocalTimestamp,
+            MaxNetPriceTimestamp = maxNetPriceItem?.PriceLocalTimestamp,
+            MinGrossPriceTimestamp = minGrossPriceItem?.PriceLocalTimestamp,
+            MaxGrossPriceTimestamp = maxGrossPriceItem?.PriceLocalTimestamp
         };
     }
 }

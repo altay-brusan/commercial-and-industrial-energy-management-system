@@ -1,13 +1,13 @@
 namespace Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
 
-public class LiveTsoPricesDto
+public class LiveEnergyPricesDto
 {
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
-    public int TsoId { get; set; }
-    public string TsoName { get; set; } = string.Empty;
-    public string TsoCode { get; set; } = string.Empty;
-    public string? Country { get; set; }
+    public int MarketOperatorId { get; set; }
+    public string MarketOperatorName { get; set; } = string.Empty;
+    public string MarketOperatorCode { get; set; } = string.Empty;
+    public string AreaCode { get; set; } = string.Empty;
     public string Currency { get; set; } = string.Empty;
     public DateTimeOffset Date { get; set; }
     public decimal DistributionFee { get; set; }
@@ -23,7 +23,7 @@ public class LiveTsoPricesDto
     public int ResolutionMinutes { get; set; } = 60;
 
     /// <summary>
-    /// The IANA timezone ID for the country (e.g., "Europe/Amsterdam").
+    /// The IANA timezone ID for the area (e.g., "Europe/Amsterdam").
     /// </summary>
     public string? Timezone { get; set; }
 }
@@ -36,7 +36,7 @@ public class LivePricePointDto
     public DateTimeOffset Timestamp { get; set; }
 
     /// <summary>
-    /// Local timestamp in the country's timezone.
+    /// Local timestamp in the area's timezone.
     /// </summary>
     public DateTimeOffset LocalTimestamp { get; set; }
 

@@ -42,6 +42,11 @@ public class CountryTariff : BaseAuditableEntity, IMultiTenantEntity
     /// </summary>
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Currency code for prices in this country (e.g., "EUR", "TRY")
+    /// </summary>
+    public string Currency { get; set; } = "EUR";
+
     // Navigation
     public Tenant? Tenant { get; set; }
 }
