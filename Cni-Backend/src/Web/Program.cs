@@ -73,10 +73,11 @@ app.MapEndpoints();
 if (app.Environment.EnvironmentName != "Test")
 {
     app.UseHangfireDashboard("/jobs-dashboard");
-    RecurringJob.AddOrUpdate<GrpcFacilityWorker>(
-        "grpc-facility-job",
-        worker => worker.CheckFacilities(),
-        "*/10 * * * *");
+    // gRPC disabled
+    // RecurringJob.AddOrUpdate<GrpcFacilityWorker>(
+    //     "grpc-facility-job",
+    //     worker => worker.CheckFacilities(),
+    //     "*/10 * * * *");
 
     // Energy price fetch jobs
     // Morning job - fetch current day prices (0:01 AM UTC)

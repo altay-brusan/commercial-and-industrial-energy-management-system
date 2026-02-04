@@ -43,7 +43,7 @@ public static class DependencyInjection
             builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         }
 
-        builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(GrpcMappingProfile).Assembly));
+        builder.Services.AddAutoMapper(typeof(GrpcMappingProfile).Assembly);
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
@@ -78,7 +78,8 @@ public static class DependencyInjection
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityEmailAdapter<ApplicationUser>>();
         builder.Services.AddSingleton<ILogEventEnricher, UserEnricher>();
         builder.Services.AddSingleton<IExternalDataService, ExternalDataService>();
-        builder.Services.AddSingleton<GrpcStreamManager>();
+        // gRPC disabled
+        // builder.Services.AddSingleton<GrpcStreamManager>();
 
         // TSO Service for fetching energy prices from external providers
         builder.Services.AddHttpClient<ITsoService, TsoService>();
