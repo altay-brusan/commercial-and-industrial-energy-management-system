@@ -139,7 +139,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             mo.ApiKey,
             countryName,
             targetDate,
-            request.Period ?? tenantMo.SamplingFrequencyMinutes,
+            request.Period ?? tenantMo.SamplingPeriodMinutes,
             cancellationToken);
 
         if (!result.Success)
@@ -263,7 +263,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             MarketOperatorId = mo.Id,
             MarketOperator = mo,
             AreaCode = areaCode,
-            SamplingFrequencyMinutes = mo.SupportedResolutions.FirstOrDefault(r => r == 60) != 0
+            SamplingPeriodMinutes = mo.SupportedResolutions.FirstOrDefault(r => r == 60) != 0
                 ? 60
                 : mo.SupportedResolutions.FirstOrDefault(),
             IsActive = true

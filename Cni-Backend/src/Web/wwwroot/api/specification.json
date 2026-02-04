@@ -5600,7 +5600,7 @@
           "areaCode": {
             "type": "string"
           },
-          "samplingFrequencyMinutes": {
+          "samplingPeriodMinutes": {
             "type": "integer",
             "format": "int32"
           },
@@ -5624,7 +5624,7 @@
           "areaCode": {
             "type": "string"
           },
-          "samplingFrequencyMinutes": {
+          "samplingPeriodMinutes": {
             "type": "integer",
             "format": "int32"
           }
@@ -5645,7 +5645,7 @@
           "areaCode": {
             "type": "string"
           },
-          "samplingFrequencyMinutes": {
+          "samplingPeriodMinutes": {
             "type": "integer",
             "format": "int32"
           },

@@ -9,7 +9,7 @@ public record UpdateTenantMarketOperatorCommand : IRequest
     public int Id { get; set; }
     public int MarketOperatorId { get; set; }
     public string AreaCode { get; set; } = string.Empty;
-    public int SamplingFrequencyMinutes { get; set; } = 60;
+    public int SamplingPeriodMinutes { get; set; } = 60;
     public bool IsActive { get; set; } = true;
 }
 
@@ -33,10 +33,10 @@ public class UpdateTenantMarketOperatorCommandValidator : AbstractValidator<Upda
             .MustAsync(BeValidAreaCode)
             .WithMessage("Area code must be one of the supported area codes for the selected Market Operator.");
 
-        RuleFor(v => v.SamplingFrequencyMinutes)
+        RuleFor(v => v.SamplingPeriodMinutes)
             .GreaterThan(0)
             .MustAsync(BeValidResolution)
-            .WithMessage("Sampling frequency must be one of the supported resolutions for the selected Market Operator.");
+            .WithMessage("Sampling period must be one of the supported resolutions for the selected Market Operator.");
     }
 
     private async Task<bool> BeValidAreaCode(UpdateTenantMarketOperatorCommand command, string areaCode, CancellationToken cancellationToken)
@@ -74,7 +74,7 @@ public class UpdateTenantMarketOperatorCommandHandler : IRequestHandler<UpdateTe
 
         entity.MarketOperatorId = request.MarketOperatorId;
         entity.AreaCode = request.AreaCode;
-        entity.SamplingFrequencyMinutes = request.SamplingFrequencyMinutes;
+        entity.SamplingPeriodMinutes = request.SamplingPeriodMinutes;
         entity.IsActive = request.IsActive;
 
         await _context.SaveChangesAsync(cancellationToken);

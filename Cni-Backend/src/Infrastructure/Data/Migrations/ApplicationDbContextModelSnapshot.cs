@@ -936,7 +936,7 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<int>("MarketOperatorId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SamplingFrequencyMinutes")
+                    b.Property<int>("SamplingPeriodMinutes")
                         .HasColumnType("integer");
 
                     b.Property<int>("TenantId")

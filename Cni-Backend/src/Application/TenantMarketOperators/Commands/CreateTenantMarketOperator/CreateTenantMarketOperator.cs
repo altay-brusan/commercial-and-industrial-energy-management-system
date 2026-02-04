@@ -11,7 +11,7 @@ public record CreateTenantMarketOperatorCommand : IRequest<int>
     public int TenantId { get; set; }
     public int MarketOperatorId { get; set; }
     public string AreaCode { get; set; } = string.Empty;
-    public int SamplingFrequencyMinutes { get; set; } = 60;
+    public int SamplingPeriodMinutes { get; set; } = 60;
 }
 
 public class CreateTenantMarketOperatorCommandValidator : AbstractValidator<CreateTenantMarketOperatorCommand>
@@ -34,10 +34,10 @@ public class CreateTenantMarketOperatorCommandValidator : AbstractValidator<Crea
             .MustAsync(BeValidAreaCode)
             .WithMessage("Area code must be one of the supported area codes for the selected Market Operator.");
 
-        RuleFor(v => v.SamplingFrequencyMinutes)
+        RuleFor(v => v.SamplingPeriodMinutes)
             .GreaterThan(0)
             .MustAsync(BeValidResolution)
-            .WithMessage("Sampling frequency must be one of the supported resolutions for the selected Market Operator.");
+            .WithMessage("Sampling period must be one of the supported resolutions for the selected Market Operator.");
 
         RuleFor(v => v)
             .MustAsync(BeUniqueAssignment)
@@ -88,7 +88,7 @@ public class CreateTenantMarketOperatorCommandHandler : IRequestHandler<CreateTe
             TenantId = tenantId,
             MarketOperatorId = request.MarketOperatorId,
             AreaCode = request.AreaCode,
-            SamplingFrequencyMinutes = request.SamplingFrequencyMinutes,
+            SamplingPeriodMinutes = request.SamplingPeriodMinutes,
             IsActive = true
         };
 

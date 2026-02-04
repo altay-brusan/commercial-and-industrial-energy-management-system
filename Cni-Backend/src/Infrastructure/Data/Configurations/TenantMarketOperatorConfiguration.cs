@@ -14,7 +14,7 @@ public class TenantMarketOperatorConfiguration : IEntityTypeConfiguration<Tenant
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(p => p.SamplingFrequencyMinutes)
+        builder.Property(p => p.SamplingPeriodMinutes)
             .IsRequired();
 
         // Foreign key to Tenant

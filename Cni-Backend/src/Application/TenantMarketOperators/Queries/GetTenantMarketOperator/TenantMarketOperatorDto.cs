@@ -10,7 +10,7 @@ public class TenantMarketOperatorDto
     public string MarketOperatorName { get; set; } = string.Empty;
     public string MarketOperatorCode { get; set; } = string.Empty;
     public string AreaCode { get; set; } = string.Empty;
-    public int SamplingFrequencyMinutes { get; set; }
+    public int SamplingPeriodMinutes { get; set; }
     public bool IsActive { get; set; }
 
     private class Mapping : Profile
