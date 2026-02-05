@@ -457,7 +457,7 @@
             "x-position": 1
           },
           {
-            "name": "date",
+            "name": "startDate",
             "in": "query",
             "schema": {
               "type": "string",
@@ -467,6 +467,16 @@
             "x-position": 2
           },
           {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
             "name": "period",
             "in": "query",
             "schema": {
@@ -474,7 +484,7 @@
               "format": "int32",
               "nullable": true
             },
-            "x-position": 3
+            "x-position": 4
           }
         ],
         "responses": {
@@ -3613,7 +3623,11 @@
           "currency": {
             "type": "string"
           },
-          "date": {
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
             "type": "string",
             "format": "date-time"
           },
@@ -3645,6 +3659,10 @@
                 "$ref": "#/components/schemas/LivePriceStatisticsDto"
               }
             ]
+          },
+          "dataPointCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "resolutionMinutes": {
             "type": "integer",

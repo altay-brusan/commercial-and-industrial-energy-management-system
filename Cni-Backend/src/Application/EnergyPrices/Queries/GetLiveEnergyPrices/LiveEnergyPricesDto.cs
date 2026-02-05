@@ -11,13 +11,19 @@ public class LiveEnergyPricesDto
     public string AreaCode { get; set; } = string.Empty;
     public string Country { get; set; } = string.Empty;
     public string Currency { get; set; } = string.Empty;
-    public DateTimeOffset Date { get; set; }
+    public DateTimeOffset StartDate { get; set; }
+    public DateTimeOffset EndDate { get; set; }
     public decimal DistributionFee { get; set; }
     public decimal TransmissionFee { get; set; }
     public decimal TaxRate { get; set; }
     public bool UsingDefaultTariff { get; set; }
     public List<LivePricePointDto> Prices { get; set; } = new();
     public LivePriceStatisticsDto? Statistics { get; set; }
+
+    /// <summary>
+    /// Total number of price data points returned.
+    /// </summary>
+    public int DataPointCount { get; set; }
 
     /// <summary>
     /// The resolution of the returned prices in minutes (15, 30, or 60).

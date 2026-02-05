@@ -19,9 +19,14 @@ public record GetLiveEnergyPricesQuery : IRequest<LiveEnergyPricesDto>
     public int FirmId { get; set; }
 
     /// <summary>
-    /// The date to fetch prices for. If not specified, uses today or tomorrow based on MO rules.
+    /// Start date (inclusive). If not specified, uses today or tomorrow based on MO publication rules.
     /// </summary>
-    public DateTimeOffset? Date { get; set; }
+    public DateTimeOffset? StartDate { get; set; }
+
+    /// <summary>
+    /// End date (inclusive). If not specified, defaults to StartDate + 1 day.
+    /// </summary>
+    public DateTimeOffset? EndDate { get; set; }
 
     /// <summary>
     /// Requested resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).
@@ -83,73 +88,104 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         var mo = firmMo!.MarketOperator!;
         var areaCode = firmMo.AreaCode;
 
-        // Determine the date to fetch
-        var targetDate = request.Date ?? DetermineTargetDate(mo.Code);
+        // Determine the date range to fetch
+        var startDate = request.StartDate ?? DetermineTargetDate(mo.Code);
+        // If EndDate not specified, default to StartDate + 1 day
+        var endDate = request.EndDate ?? startDate.AddDays(1);
 
         // Get country name from area code for tariff lookup
         var countryName = _countryMappingService.GetCountryNameFromAreaCode(areaCode);
 
-        // Fetch prices from the Market Operator
-        var result = await _energyPriceService.GetDayAheadPricesAsync(
-            mo.Code,
-            mo.BaseUrl,
-            mo.ApiKey,
-            countryName,
-            targetDate,
-            request.Period ?? firmMo.SamplingPeriodMinutes,
-            cancellationToken);
+        // Fetch country tariff from database (or use defaults)
+        var (distributionFee, transmissionFee, taxRate, currency, usingDefaultTariff) =
+            await GetTariffForCountryAsync(request.FirmId, countryName, cancellationToken);
 
-        if (!result.Success)
+        // Fetch prices for each day in the range
+        var allPrices = new List<LivePricePointDto>();
+        var errors = new List<string>();
+        int resolutionMinutes = 60;
+        string? timezone = null;
+
+        var currentDate = startDate.Date;
+        var endDateValue = endDate.Date;
+
+        while (currentDate <= endDateValue)
+        {
+            var result = await _energyPriceService.GetDayAheadPricesAsync(
+                mo.Code,
+                mo.BaseUrl,
+                mo.ApiKey,
+                countryName,
+                currentDate,
+                request.Period ?? firmMo.SamplingPeriodMinutes,
+                cancellationToken);
+
+            if (result.Success && result.Prices.Count > 0)
+            {
+                resolutionMinutes = result.ResolutionMinutes;
+                timezone = result.Timezone;
+
+                // Calculate prices with formula: (NetPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
+                var dayPrices = result.Prices.Select(p =>
+                {
+                    var grossPrice = (p.PricePerMWh + distributionFee + transmissionFee) * (1 + taxRate);
+                    return new LivePricePointDto
+                    {
+                        Timestamp = p.Timestamp,
+                        LocalTimestamp = p.LocalTimestamp,
+                        NetPrice = p.PricePerMWh,
+                        GrossPrice = grossPrice
+                    };
+                });
+
+                allPrices.AddRange(dayPrices);
+            }
+            else if (!string.IsNullOrEmpty(result.ErrorMessage))
+            {
+                errors.Add($"{currentDate:yyyy-MM-dd}: {result.ErrorMessage}");
+            }
+
+            currentDate = currentDate.AddDays(1);
+        }
+
+        // If no prices were fetched at all, return error
+        if (allPrices.Count == 0)
         {
             return new LiveEnergyPricesDto
             {
                 Success = false,
-                ErrorMessage = result.ErrorMessage,
+                ErrorMessage = errors.Count > 0 ? string.Join("; ", errors) : "No price data found for the specified date range",
                 MarketOperatorId = mo.Id,
                 MarketOperatorName = mo.Name,
                 MarketOperatorCode = mo.Code,
                 AreaCode = areaCode,
-                Date = targetDate,
-                ResolutionMinutes = result.ResolutionMinutes,
-                Timezone = result.Timezone
+                StartDate = startDate,
+                EndDate = endDate,
+                ResolutionMinutes = resolutionMinutes,
+                Timezone = timezone
             };
         }
 
-        // Fetch country tariff from database (or use defaults)
-        // For tariffs, we'll use the first facility of this firm (or use defaults)
-        var (distributionFee, transmissionFee, taxRate, currency, usingDefaultTariff) =
-            await GetTariffForCountryAsync(request.FirmId, countryName, cancellationToken);
+        // Sort all prices by timestamp
+        allPrices = allPrices.OrderBy(p => p.Timestamp).ToList();
 
-        // Calculate prices with formula: (NetPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
-        var prices = result.Prices.Select(p =>
-        {
-            var grossPrice = (p.PricePerMWh + distributionFee + transmissionFee) * (1 + taxRate);
-            return new LivePricePointDto
-            {
-                Timestamp = p.Timestamp,
-                LocalTimestamp = p.LocalTimestamp,
-                NetPrice = p.PricePerMWh,
-                GrossPrice = grossPrice
-            };
-        }).ToList();
-
-        // Calculate statistics
+        // Calculate statistics across all days
         LivePriceStatisticsDto? statistics = null;
-        if (prices.Count > 0)
+        if (allPrices.Count > 0)
         {
-            var minNetPrice = prices.Min(p => p.NetPrice);
-            var maxNetPrice = prices.Max(p => p.NetPrice);
+            var minNetPrice = allPrices.Min(p => p.NetPrice);
+            var maxNetPrice = allPrices.Max(p => p.NetPrice);
 
             statistics = new LivePriceStatisticsDto
             {
                 MinNetPrice = minNetPrice,
                 MaxNetPrice = maxNetPrice,
-                AvgNetPrice = prices.Average(p => p.NetPrice),
-                MinGrossPrice = prices.Min(p => p.GrossPrice),
-                MaxGrossPrice = prices.Max(p => p.GrossPrice),
-                AvgGrossPrice = prices.Average(p => p.GrossPrice),
-                MinPriceHour = prices.FirstOrDefault(p => p.NetPrice == minNetPrice)?.LocalTimestamp.Hour,
-                MaxPriceHour = prices.FirstOrDefault(p => p.NetPrice == maxNetPrice)?.LocalTimestamp.Hour
+                AvgNetPrice = allPrices.Average(p => p.NetPrice),
+                MinGrossPrice = allPrices.Min(p => p.GrossPrice),
+                MaxGrossPrice = allPrices.Max(p => p.GrossPrice),
+                AvgGrossPrice = allPrices.Average(p => p.GrossPrice),
+                MinPriceHour = allPrices.FirstOrDefault(p => p.NetPrice == minNetPrice)?.LocalTimestamp.Hour,
+                MaxPriceHour = allPrices.FirstOrDefault(p => p.NetPrice == maxNetPrice)?.LocalTimestamp.Hour
             };
         }
 
@@ -163,15 +199,17 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             AreaCode = areaCode,
             Country = countryName ?? string.Empty,
             Currency = currency,
-            Date = targetDate,
+            StartDate = startDate,
+            EndDate = endDate,
             DistributionFee = distributionFee,
             TransmissionFee = transmissionFee,
             TaxRate = taxRate,
             UsingDefaultTariff = usingDefaultTariff,
-            Prices = prices,
+            Prices = allPrices,
             Statistics = statistics,
-            ResolutionMinutes = result.ResolutionMinutes,
-            Timezone = result.Timezone
+            ResolutionMinutes = resolutionMinutes,
+            Timezone = timezone,
+            DataPointCount = allPrices.Count
         };
     }
 

@@ -274,7 +274,7 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
     }
 
     [Test]
-    public async Task ShouldUseCustomDateWhenSpecified()
+    public async Task ShouldUseCustomDateRangeWhenSpecified()
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
@@ -320,12 +320,14 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         };
         await Testing.AddAsync(firmMarketOperator);
 
-        var customDate = DateTimeOffset.UtcNow.Date.AddDays(1);
+        var startDate = DateTimeOffset.UtcNow.Date;
+        var endDate = startDate.AddDays(2);
 
         var query = new GetLiveEnergyPricesQuery
         {
             FirmId = firm.Id,
-            Date = customDate
+            StartDate = startDate,
+            EndDate = endDate
         };
 
         // Act
@@ -335,7 +337,94 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         result.Should().NotBeNull();
         if (result.Success)
         {
-            result.Date.Date.Should().Be(customDate.Date);
+            result.StartDate.Date.Should().Be(startDate.Date);
+            result.EndDate.Date.Should().Be(endDate.Date);
         }
+    }
+
+    [Test]
+    public async Task ShouldDefaultEndDateToStartDatePlusOneDay()
+    {
+        // Arrange
+        await Testing.RunAsAdministratorAsync();
+
+        var tenant = new Tenant { Name = "Demo Default EndDate Holding", Identifier = "demo-default-enddate-holding" };
+        await Testing.AddAsync(tenant);
+
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Default EndDate Firm BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Utrecht",
+            City = "Utrecht",
+            Address = "Vredenburg 40",
+            ContactEmail = "info@demo-default-enddate.nl",
+            ContactPhone = "+31301234568",
+            TaxNumber = "NL333333334B01",
+            TaxOffice = "Utrecht"
+        };
+        await Testing.AddAsync(firm);
+
+        var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
+        var marketOperator = new MarketOperator
+        {
+            Name = "Demo ENTSO-E Default EndDate",
+            Code = uniqueMoCode,
+            BaseUrl = "https://web-api.tp.entsoe.eu/api",
+            AreaCodes = new List<string> { "10YNL----------L" },
+            SupportedResolutions = new List<int> { 60 },
+            IsActive = true
+        };
+        await Testing.AddAsync(marketOperator);
+
+        var firmMarketOperator = new FirmMarketOperator
+        {
+            FirmId = firm.Id,
+            MarketOperatorId = marketOperator.Id,
+            AreaCode = "10YNL----------L",
+            SamplingPeriodMinutes = 60,
+            IsActive = true
+        };
+        await Testing.AddAsync(firmMarketOperator);
+
+        var startDate = DateTimeOffset.UtcNow.Date;
+
+        var query = new GetLiveEnergyPricesQuery
+        {
+            FirmId = firm.Id,
+            StartDate = startDate
+            // EndDate not specified - should default to StartDate + 1 day
+        };
+
+        // Act
+        var result = await Testing.SendAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        // EndDate should default to StartDate + 1 day
+        result.EndDate.Date.Should().Be(startDate.AddDays(1).Date);
+    }
+
+    [Test]
+    public async Task ShouldRejectDateRangeExceeding7Days()
+    {
+        // Arrange
+        await Testing.RunAsAdministratorAsync();
+
+        var startDate = DateTimeOffset.UtcNow.Date;
+        var endDate = startDate.AddDays(10); // 10 days exceeds limit
+
+        var query = new GetLiveEnergyPricesQuery
+        {
+            FirmId = 1,
+            StartDate = startDate,
+            EndDate = endDate
+        };
+
+        // Act & Assert
+        await FluentActions.Invoking(() =>
+            Testing.SendAsync(query)).Should().ThrowAsync<ValidationException>();
     }
 }
