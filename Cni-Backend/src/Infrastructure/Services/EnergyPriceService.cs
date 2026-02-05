@@ -10,22 +10,22 @@ using Microsoft.Extensions.Logging;
 namespace Backend.Infrastructure.Services;
 
 /// <summary>
-/// Service for fetching energy prices from TSOs (ENTSO-E and EPIAS).
+/// Service for fetching energy prices from Market Operators (ENTSO-E and EPIAS).
 /// </summary>
-public class TsoService : ITsoService
+public class EnergyPriceService : IEnergyPriceService
 {
     private readonly HttpClient _httpClient;
-    private readonly ILogger<TsoService> _logger;
+    private readonly ILogger<EnergyPriceService> _logger;
 
-    public TsoService(HttpClient httpClient, ILogger<TsoService> logger)
+    public EnergyPriceService(HttpClient httpClient, ILogger<EnergyPriceService> logger)
     {
         _httpClient = httpClient;
         _httpClient.Timeout = TimeSpan.FromSeconds(30);
         _logger = logger;
     }
 
-    public async Task<TsoPriceResult> GetDayAheadPricesAsync(
-        string tsoCode,
+    public async Task<EnergyPriceResult> GetDayAheadPricesAsync(
+        string moCode,
         string baseUrl,
         string? apiKey,
         string? country,
@@ -33,43 +33,43 @@ public class TsoService : ITsoService
         int? periodMinutes = null,
         CancellationToken cancellationToken = default)
     {
-        var upperTsoCode = tsoCode.ToUpperInvariant();
+        var upperMoCode = moCode.ToUpperInvariant();
 
-        // Map country name to TSO-specific area code
+        // Map country name to Market Operator-specific area code
         string? areaCode = null;
         if (!string.IsNullOrWhiteSpace(country))
         {
-            if (!TsoCountryMapping.IsCountrySupported(upperTsoCode, country))
+            if (!AreaCodeMapping.IsCountrySupported(upperMoCode, country))
             {
-                return new TsoPriceResult
+                return new EnergyPriceResult
                 {
                     Success = false,
-                    ErrorMessage = TsoCountryMapping.GetUnsupportedCountryMessage(upperTsoCode, country),
-                    TsoCode = tsoCode
+                    ErrorMessage = AreaCodeMapping.GetUnsupportedCountryMessage(upperMoCode, country),
+                    MarketOperatorCode = moCode
                 };
             }
-            areaCode = TsoCountryMapping.GetAreaCode(upperTsoCode, country);
+            areaCode = AreaCodeMapping.GetAreaCode(upperMoCode, country);
         }
 
         // Default to hourly if not specified
         var targetResolution = periodMinutes ?? 60;
 
-        return upperTsoCode switch
+        return upperMoCode switch
         {
             "ENTSOE" => await GetEntsoepricesAsync(baseUrl, apiKey, areaCode, country, date, targetResolution, cancellationToken),
             "EPIAS" => await GetEpiasPricesAsync(baseUrl, apiKey, date, targetResolution, cancellationToken),
-            _ => new TsoPriceResult
+            _ => new EnergyPriceResult
             {
                 Success = false,
-                ErrorMessage = $"Unknown TSO code: {tsoCode}. Supported codes: ENTSOE, EPIAS",
-                TsoCode = tsoCode
+                ErrorMessage = $"Unknown Market Operator code: {moCode}. Supported codes: ENTSOE, EPIAS",
+                MarketOperatorCode = moCode
             }
         };
     }
 
     #region ENTSO-E Implementation
 
-    private async Task<TsoPriceResult> GetEntsoepricesAsync(
+    private async Task<EnergyPriceResult> GetEntsoepricesAsync(
         string baseUrl,
         string? apiKey,
         string? areaCode,
@@ -78,10 +78,10 @@ public class TsoService : ITsoService
         int targetResolution,
         CancellationToken cancellationToken)
     {
-        var timezone = TsoCountryMapping.GetTimezone(country);
-        var result = new TsoPriceResult
+        var timezone = AreaCodeMapping.GetTimezone(country);
+        var result = new EnergyPriceResult
         {
-            TsoCode = "ENTSOE",
+            MarketOperatorCode = "ENTSOE",
             Currency = "EUR",
             Date = date,
             Timezone = timezone,
@@ -202,9 +202,9 @@ public class TsoService : ITsoService
         return 60; // Default to hourly
     }
 
-    private (List<TsoPricePoint> Prices, int SourceResolution) ParseEntsoeXml(string xmlContent, DateTimeOffset date, string? country)
+    private (List<EnergyPricePoint> Prices, int SourceResolution) ParseEntsoeXml(string xmlContent, DateTimeOffset date, string? country)
     {
-        var prices = new List<TsoPricePoint>();
+        var prices = new List<EnergyPricePoint>();
         int sourceResolution = 60; // Default to hourly
 
         try
@@ -260,9 +260,9 @@ public class TsoService : ITsoService
                             var timestamp = periodStart.AddMinutes(minutesOffset);
 
                             // Convert to local timezone
-                            var localTimestamp = TsoCountryMapping.ConvertToLocalTime(timestamp, country);
+                            var localTimestamp = AreaCodeMapping.ConvertToLocalTime(timestamp, country);
 
-                            prices.Add(new TsoPricePoint
+                            prices.Add(new EnergyPricePoint
                             {
                                 Timestamp = timestamp,
                                 LocalTimestamp = localTimestamp,
@@ -292,15 +292,15 @@ public class TsoService : ITsoService
     /// Aggregates prices from a smaller period to a larger period.
     /// Takes the first value of each larger period (e.g., 00:00, 00:15, 00:30, 00:45 → 00:00).
     /// </summary>
-    private static List<TsoPricePoint> AggregateToLargerPeriod(
-        List<TsoPricePoint> prices,
+    private static List<EnergyPricePoint> AggregateToLargerPeriod(
+        List<EnergyPricePoint> prices,
         int sourceResolution,
         int targetResolution)
     {
         if (prices.Count == 0 || sourceResolution >= targetResolution)
             return prices;
 
-        var aggregated = new List<TsoPricePoint>();
+        var aggregated = new List<EnergyPricePoint>();
 
         // Group by the start of each target period
         var grouped = prices
@@ -333,7 +333,7 @@ public class TsoService : ITsoService
                 0,
                 firstPrice.LocalTimestamp.Offset);
 
-            aggregated.Add(new TsoPricePoint
+            aggregated.Add(new EnergyPricePoint
             {
                 Timestamp = localPeriodStart.ToUniversalTime(),
                 LocalTimestamp = localPeriodStart,
@@ -348,16 +348,16 @@ public class TsoService : ITsoService
 
     #region EPIAS Implementation
 
-    private async Task<TsoPriceResult> GetEpiasPricesAsync(
+    private async Task<EnergyPriceResult> GetEpiasPricesAsync(
         string baseUrl,
         string? apiKey,
         DateTimeOffset date,
         int targetResolution,
         CancellationToken cancellationToken)
     {
-        var result = new TsoPriceResult
+        var result = new EnergyPriceResult
         {
-            TsoCode = "EPIAS",
+            MarketOperatorCode = "EPIAS",
             Currency = "TRY",
             Date = date,
             Timezone = "Europe/Istanbul",
@@ -434,7 +434,7 @@ public class TsoService : ITsoService
                 .Select(item =>
                 {
                     var localTimestamp = new DateTimeOffset(item.Date, turkeyOffset);
-                    return new TsoPricePoint
+                    return new EnergyPricePoint
                     {
                         Timestamp = localTimestamp.ToUniversalTime(),
                         LocalTimestamp = localTimestamp,

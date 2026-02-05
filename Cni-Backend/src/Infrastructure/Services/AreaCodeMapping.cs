@@ -1,10 +1,10 @@
 namespace Backend.Infrastructure.Services;
 
 /// <summary>
-/// Maps country names to TSO-specific area codes and timezones.
-/// Each TSO may use different coding schemes.
+/// Maps country names to Market Operator-specific area codes and timezones.
+/// Each Market Operator may use different coding schemes.
 /// </summary>
-public static class TsoCountryMapping
+public static class AreaCodeMapping
 {
     /// <summary>
     /// ENTSO-E EIC (Energy Identification Code) area codes by country.
@@ -125,17 +125,17 @@ public static class TsoCountryMapping
     };
 
     /// <summary>
-    /// Gets the TSO-specific area code for a country.
+    /// Gets the Market Operator-specific area code for a country.
     /// </summary>
-    /// <param name="tsoCode">The TSO code (e.g., "ENTSOE", "EPIAS")</param>
+    /// <param name="moCode">The Market Operator code (e.g., "ENTSOE", "EPIAS")</param>
     /// <param name="country">The country name</param>
     /// <returns>The area code if found, null otherwise</returns>
-    public static string? GetAreaCode(string tsoCode, string country)
+    public static string? GetAreaCode(string moCode, string country)
     {
         if (string.IsNullOrWhiteSpace(country))
             return null;
 
-        return tsoCode.ToUpperInvariant() switch
+        return moCode.ToUpperInvariant() switch
         {
             "ENTSOE" => EntsoeAreaCodes.TryGetValue(country, out var code) ? code : null,
             "EPIAS" => EpiasSupportedCountries.Contains(country) ? null : null, // EPIAS doesn't use area codes
@@ -144,14 +144,14 @@ public static class TsoCountryMapping
     }
 
     /// <summary>
-    /// Checks if a country is supported by a TSO.
+    /// Checks if a country is supported by a Market Operator.
     /// </summary>
-    public static bool IsCountrySupported(string tsoCode, string country)
+    public static bool IsCountrySupported(string moCode, string country)
     {
         if (string.IsNullOrWhiteSpace(country))
             return false;
 
-        return tsoCode.ToUpperInvariant() switch
+        return moCode.ToUpperInvariant() switch
         {
             "ENTSOE" => EntsoeAreaCodes.ContainsKey(country),
             "EPIAS" => EpiasSupportedCountries.Contains(country),
@@ -160,11 +160,11 @@ public static class TsoCountryMapping
     }
 
     /// <summary>
-    /// Gets the list of supported countries for a TSO.
+    /// Gets the list of supported countries for a Market Operator.
     /// </summary>
-    public static IReadOnlyList<string> GetSupportedCountries(string tsoCode)
+    public static IReadOnlyList<string> GetSupportedCountries(string moCode)
     {
-        return tsoCode.ToUpperInvariant() switch
+        return moCode.ToUpperInvariant() switch
         {
             "ENTSOE" => EntsoeAreaCodes.Keys.ToList(),
             "EPIAS" => EpiasSupportedCountries.ToList(),
@@ -175,15 +175,15 @@ public static class TsoCountryMapping
     /// <summary>
     /// Gets the appropriate error message when a country is not supported.
     /// </summary>
-    public static string GetUnsupportedCountryMessage(string tsoCode, string country)
+    public static string GetUnsupportedCountryMessage(string moCode, string country)
     {
-        var supportedCountries = GetSupportedCountries(tsoCode);
+        var supportedCountries = GetSupportedCountries(moCode);
         var countriesList = string.Join(", ", supportedCountries.Take(10));
 
         if (supportedCountries.Count > 10)
             countriesList += $", ... and {supportedCountries.Count - 10} more";
 
-        return $"Country '{country}' is not supported by {tsoCode}. Supported countries: {countriesList}";
+        return $"Country '{country}' is not supported by {moCode}. Supported countries: {countriesList}";
     }
 
     /// <summary>

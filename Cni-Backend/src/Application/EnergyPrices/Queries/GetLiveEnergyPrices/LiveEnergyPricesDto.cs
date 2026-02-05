@@ -1,4 +1,4 @@
-namespace Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
+namespace Backend.Application.EnergyPrices.Queries.GetLiveEnergyPrices;
 
 public class LiveEnergyPricesDto
 {

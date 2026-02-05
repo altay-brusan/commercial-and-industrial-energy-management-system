@@ -1,23 +1,23 @@
 namespace Backend.Application.Common.Interfaces;
 
 /// <summary>
-/// Service interface for fetching energy prices from Transmission System Operators (TSO).
+/// Service interface for fetching energy prices from Market Operators (ENTSO-E, EPIAS, etc.).
 /// </summary>
-public interface ITsoService
+public interface IEnergyPriceService
 {
     /// <summary>
-    /// Fetches day-ahead prices from a TSO for a specific date and country.
+    /// Fetches day-ahead prices from a Market Operator for a specific date and country.
     /// </summary>
-    /// <param name="tsoCode">TSO code (e.g., "ENTSOE", "EPIAS")</param>
-    /// <param name="baseUrl">Base URL of the TSO API</param>
+    /// <param name="moCode">Market Operator code (e.g., "ENTSOE", "EPIAS")</param>
+    /// <param name="baseUrl">Base URL of the Market Operator API</param>
     /// <param name="apiKey">API key or credentials</param>
     /// <param name="country">Country name (e.g., "Netherlands", "Germany", "Türkiye")</param>
     /// <param name="date">The date to fetch prices for</param>
     /// <param name="periodMinutes">Requested resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result containing prices or error message</returns>
-    Task<TsoPriceResult> GetDayAheadPricesAsync(
-        string tsoCode,
+    Task<EnergyPriceResult> GetDayAheadPricesAsync(
+        string moCode,
         string baseUrl,
         string? apiKey,
         string? country,
@@ -27,16 +27,16 @@ public interface ITsoService
 }
 
 /// <summary>
-/// Result of a TSO price fetch operation.
+/// Result of an energy price fetch operation.
 /// </summary>
-public class TsoPriceResult
+public class EnergyPriceResult
 {
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
-    public string TsoCode { get; set; } = string.Empty;
+    public string MarketOperatorCode { get; set; } = string.Empty;
     public string Currency { get; set; } = string.Empty;
     public DateTimeOffset Date { get; set; }
-    public List<TsoPricePoint> Prices { get; set; } = new();
+    public List<EnergyPricePoint> Prices { get; set; } = new();
 
     /// <summary>
     /// The resolution of the returned prices in minutes (15, 30, or 60).
@@ -50,9 +50,9 @@ public class TsoPriceResult
 }
 
 /// <summary>
-/// Represents a single price point from a TSO.
+/// Represents a single energy price point.
 /// </summary>
-public class TsoPricePoint
+public class EnergyPricePoint
 {
     /// <summary>
     /// UTC timestamp of the price point.
@@ -65,7 +65,7 @@ public class TsoPricePoint
     public DateTimeOffset LocalTimestamp { get; set; }
 
     /// <summary>
-    /// Price per MWh in the TSO's currency.
+    /// Price per MWh in the Market Operator's currency.
     /// </summary>
     public decimal PricePerMWh { get; set; }
 }

@@ -17,7 +17,7 @@ public class EnergyPriceFetchWorker
 {
     private readonly ILogger<EnergyPriceFetchWorker> _logger;
     private readonly IApplicationDbContext _context;
-    private readonly ITsoService _tsoService;
+    private readonly IEnergyPriceService _energyPriceService;
 
     private const int MaxRetryAttempts = 3;
     private static readonly TimeSpan RetryDelay = TimeSpan.FromMinutes(5);
@@ -25,11 +25,11 @@ public class EnergyPriceFetchWorker
     public EnergyPriceFetchWorker(
         ILogger<EnergyPriceFetchWorker> logger,
         IApplicationDbContext context,
-        ITsoService tsoService)
+        IEnergyPriceService energyPriceService)
     {
         _logger = logger;
         _context = context;
-        _tsoService = tsoService;
+        _energyPriceService = energyPriceService;
     }
 
     /// <summary>
@@ -152,7 +152,7 @@ public class EnergyPriceFetchWorker
     private async Task<bool> FetchPricesForAreaAsync(MarketOperator mo, string areaCode, DateTimeOffset targetDate)
     {
         // Get country name from area code - this is what we'll store in the database
-        var countryName = TsoCountryMapping.GetCountryNameFromAreaCode(areaCode);
+        var countryName = AreaCodeMapping.GetCountryNameFromAreaCode(areaCode);
 
         if (string.IsNullOrEmpty(countryName))
         {
@@ -165,7 +165,7 @@ public class EnergyPriceFetchWorker
             ? 60
             : mo.SupportedResolutions.FirstOrDefault();
 
-        var result = await _tsoService.GetDayAheadPricesAsync(
+        var result = await _energyPriceService.GetDayAheadPricesAsync(
             mo.Code,
             mo.BaseUrl,
             mo.ApiKey,

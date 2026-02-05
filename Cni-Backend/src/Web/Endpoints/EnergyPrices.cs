@@ -1,7 +1,7 @@
 using Backend.Application.EnergyPrices.Queries.GetEnergyPricesWithRange;
 using Backend.Application.EnergyPrices.Queries.GetEnergyPriceStatistics;
 using Backend.Application.EnergyPrices.Queries.GetHistoricalEnergyPrices;
-using Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
+using Backend.Application.EnergyPrices.Queries.GetLiveEnergyPrices;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 

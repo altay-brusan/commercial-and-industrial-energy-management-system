@@ -81,8 +81,8 @@ public static class DependencyInjection
         // gRPC disabled
         // builder.Services.AddSingleton<GrpcStreamManager>();
 
-        // TSO Service for fetching energy prices from external providers
-        builder.Services.AddHttpClient<ITsoService, TsoService>();
+        // Energy Price Service for fetching prices from Market Operators
+        builder.Services.AddHttpClient<IEnergyPriceService, EnergyPriceService>();
 
         // Country mapping service for area codes and timezones
         builder.Services.AddSingleton<ICountryMappingService, CountryMappingService>();

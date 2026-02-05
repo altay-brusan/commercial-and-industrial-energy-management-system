@@ -3,7 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Microsoft.EntityFrameworkCore;
 
-namespace Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
+namespace Backend.Application.EnergyPrices.Queries.GetLiveEnergyPrices;
 
 /// <summary>
 /// Fetches live/current day-ahead prices directly from a Market Operator API.
@@ -47,16 +47,16 @@ public class GetLiveEnergyPricesQueryValidator : AbstractValidator<GetLiveEnergy
 public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPricesQuery, LiveEnergyPricesDto>
 {
     private readonly IApplicationDbContext _context;
-    private readonly ITsoService _tsoService;
+    private readonly IEnergyPriceService _energyPriceService;
     private readonly ICountryMappingService _countryMappingService;
 
     public GetLiveEnergyPricesQueryHandler(
         IApplicationDbContext context,
-        ITsoService tsoService,
+        IEnergyPriceService energyPriceService,
         ICountryMappingService countryMappingService)
     {
         _context = context;
-        _tsoService = tsoService;
+        _energyPriceService = energyPriceService;
         _countryMappingService = countryMappingService;
     }
 
@@ -104,7 +104,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         var countryName = _countryMappingService.GetCountryNameFromAreaCode(areaCode);
 
         // Fetch prices from the Market Operator
-        var result = await _tsoService.GetDayAheadPricesAsync(
+        var result = await _energyPriceService.GetDayAheadPricesAsync(
             mo.Code,
             mo.BaseUrl,
             mo.ApiKey,
