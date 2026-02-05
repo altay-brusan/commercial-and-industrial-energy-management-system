@@ -30,29 +30,29 @@ public class GetDayAheadPricesTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "No MO Tenant", Identifier = "no-mo-tenant" };
+        var tenant = new Tenant { Name = "Demo No MO Energy Holding", Identifier = "demo-no-mo-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "No MO Firm",
+            Name = "Demo No MO Solar BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
+            State = "Noord-Holland",
             City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            Address = "Herengracht 100",
+            ContactEmail = "info@demo-no-mo-solar.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "No MO Facility"
+            Name = "Demo Solar Park Almere"
         };
         await Testing.AddAsync(facility);
 
@@ -75,36 +75,36 @@ public class GetDayAheadPricesTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "No Prices Tenant", Identifier = "no-prices-tenant" };
+        var tenant = new Tenant { Name = "Demo No Prices Energy Holding", Identifier = "demo-no-prices-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "No Prices Firm",
+            Name = "Demo No Prices Wind BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Noord-Holland",
+            City = "Haarlem",
+            Address = "Grote Markt 50",
+            ContactEmail = "info@demo-no-prices-wind.nl",
+            ContactPhone = "+31235678901",
+            TaxNumber = "NL987654321B01",
+            TaxOffice = "Haarlem"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "No Prices Facility"
+            Name = "Demo Wind Park Wieringermeer"
         };
         await Testing.AddAsync(facility);
 
         var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E",
+            Name = "Demo ENTSO-E NL",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },
@@ -142,36 +142,36 @@ public class GetDayAheadPricesTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Prices Tenant", Identifier = "prices-tenant" };
+        var tenant = new Tenant { Name = "Demo Prices Energy Holding", Identifier = "demo-prices-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Prices Firm",
+            Name = "Demo Prices Solar BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Zuid-Holland",
+            City = "Rotterdam",
+            Address = "Coolsingel 200",
+            ContactEmail = "info@demo-prices-solar.nl",
+            ContactPhone = "+31101234567",
+            TaxNumber = "NL555555555B01",
+            TaxOffice = "Rotterdam"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Prices Facility"
+            Name = "Demo Solar Farm Delfland"
         };
         await Testing.AddAsync(facility);
 
         var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E",
+            Name = "Demo ENTSO-E NL Prices",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },
@@ -217,7 +217,7 @@ public class GetDayAheadPricesTests : BaseTestFixture
         // Assert
         result.Should().NotBeNull();
         result!.FacilityId.Should().Be(facility.Id);
-        result.FacilityName.Should().Be("Prices Facility");
+        result.FacilityName.Should().Be("Demo Solar Farm Delfland");
         result.Country.Should().Be("Netherlands");
         result.MarketOperatorId.Should().Be(marketOperator.Id);
         result.MarketOperatorCode.Should().Be(uniqueMoCode);
@@ -231,40 +231,40 @@ public class GetDayAheadPricesTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Range Tenant", Identifier = "range-tenant" };
+        var tenant = new Tenant { Name = "Demo Date Range Energy Holding", Identifier = "demo-date-range-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Range Firm",
+            Name = "Demo Date Range Wind BV",
             Type = "Standard",
-            Country = "Germany",
-            State = "BY",
-            City = "Munich",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "MUC"
+            Country = "Netherlands",
+            State = "Flevoland",
+            City = "Lelystad",
+            Address = "Stationsplein 10",
+            ContactEmail = "info@demo-date-range-wind.nl",
+            ContactPhone = "+31320123456",
+            TaxNumber = "NL666666666B01",
+            TaxOffice = "Lelystad"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Range Facility"
+            Name = "Demo Wind Park Flevoland"
         };
         await Testing.AddAsync(facility);
 
-        var uniqueMoCode = $"ENTDE_{Guid.NewGuid():N}";
+        var uniqueMoCode = $"ENTNL_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E DE",
+            Name = "Demo ENTSO-E NL Range",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },
-            AreaCodes = new List<string> { "10YDE-VE-------2" },
+            AreaCodes = new List<string> { "10YNL----------L" },
             IsActive = true
         };
         await Testing.AddAsync(marketOperator);
@@ -273,7 +273,7 @@ public class GetDayAheadPricesTests : BaseTestFixture
         {
             FirmId = firm.Id,
             MarketOperatorId = marketOperator.Id,
-            AreaCode = "10YDE-VE-------2",
+            AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 60,
             IsActive = true
         };
@@ -288,7 +288,7 @@ public class GetDayAheadPricesTests : BaseTestFixture
                 var priceHistory = new DayAheadEnergyPriceHistory
                 {
                     MarketOperatorId = marketOperator.Id,
-                    Country = "Germany",
+                    Country = "Netherlands",
                     NetPrice = 40m + day * 10 + hour,
                     GrossPrice = 50m + day * 10 + hour,
                     PriceLocalTimestamp = baseDate.AddDays(day).AddHours(hour)
@@ -318,36 +318,36 @@ public class GetDayAheadPricesTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Discount Tenant", Identifier = "discount-tenant" };
+        var tenant = new Tenant { Name = "Demo Discount Energy Holding", Identifier = "demo-discount-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Discount Firm",
+            Name = "Demo Discount Solar BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Utrecht",
+            City = "Utrecht",
+            Address = "Vredenburg 40",
+            ContactEmail = "info@demo-discount-solar.nl",
+            ContactPhone = "+31301234567",
+            TaxNumber = "NL777777777B01",
+            TaxOffice = "Utrecht"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Discount Facility"
+            Name = "Demo Solar Park Utrecht"
         };
         await Testing.AddAsync(facility);
 
         var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E",
+            Name = "Demo ENTSO-E NL Discount",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },

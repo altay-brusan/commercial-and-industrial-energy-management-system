@@ -11,29 +11,29 @@ public class GetFacilityTariffsTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "List FT Tenant", Identifier = "list-ft-tenant" };
+        var tenant = new Tenant { Name = "Demo List FT Energy Holding", Identifier = "demo-list-ft-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "List FT Firm",
+            Name = "Demo List FT Solar BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
+            State = "Noord-Holland",
             City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            Address = "Rokin 150",
+            ContactEmail = "info@demo-list-ft-solar.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "List FT Facility"
+            Name = "Demo Solar Park Purmerend"
         };
         await Testing.AddAsync(facility);
 
@@ -50,10 +50,11 @@ public class GetFacilityTariffsTests : BaseTestFixture
 
         var tariff2 = new Tariff
         {
-            CountryName = "Germany",
-            DistributionFee = 30m,
-            TransmissionFee = 8m,
-            TaxRate = 0.19m,
+            CountryName = "Netherlands",
+            DistributorName = "Liander",
+            DistributionFee = 25m,
+            TransmissionFee = 7m,
+            TaxRate = 0.21m,
             Currency = "EUR",
             IsActive = true
         };
@@ -89,29 +90,29 @@ public class GetFacilityTariffsTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Filter Active Tenant", Identifier = "filter-active-tenant" };
+        var tenant = new Tenant { Name = "Demo Filter Active FT Energy Holding", Identifier = "demo-filter-active-ft-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Filter Active Firm",
+            Name = "Demo Filter Active FT Wind BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Zuid-Holland",
+            City = "Leiden",
+            Address = "Breestraat 100",
+            ContactEmail = "info@demo-filter-active-ft-wind.nl",
+            ContactPhone = "+31711234567",
+            TaxNumber = "NL987654321B01",
+            TaxOffice = "Leiden"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Filter Active Facility"
+            Name = "Demo Wind Farm Katwijk"
         };
         await Testing.AddAsync(facility);
 
@@ -160,29 +161,29 @@ public class GetFacilityTariffsTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "No Tariffs Tenant", Identifier = "no-tariffs-tenant" };
+        var tenant = new Tenant { Name = "Demo No Tariffs FT Energy Holding", Identifier = "demo-no-tariffs-ft-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "No Tariffs Firm",
+            Name = "Demo No Tariffs FT Solar BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Gelderland",
+            City = "Apeldoorn",
+            Address = "Hoofdstraat 50",
+            ContactEmail = "info@demo-no-tariffs-ft-solar.nl",
+            ContactPhone = "+31551234567",
+            TaxNumber = "NL555555555B01",
+            TaxOffice = "Apeldoorn"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "No Tariffs Facility"
+            Name = "Demo Solar Farm Eerbeek"
         };
         await Testing.AddAsync(facility);
 
@@ -212,29 +213,29 @@ public class GetFacilityTariffsTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Contract List Tenant", Identifier = "contract-list-tenant" };
+        var tenant = new Tenant { Name = "Demo Contract List FT Energy Holding", Identifier = "demo-contract-list-ft-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Contract List Firm",
+            Name = "Demo Contract List FT Wind BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Overijssel",
+            City = "Enschede",
+            Address = "Oude Markt 20",
+            ContactEmail = "info@demo-contract-list-ft-wind.nl",
+            ContactPhone = "+31531234567",
+            TaxNumber = "NL666666666B01",
+            TaxOffice = "Enschede"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Contract List Facility"
+            Name = "Demo Wind Park Twente"
         };
         await Testing.AddAsync(facility);
 
@@ -276,29 +277,29 @@ public class GetFacilityTariffsTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Paginate FT Tenant", Identifier = "paginate-ft-tenant" };
+        var tenant = new Tenant { Name = "Demo Paginate FT Energy Holding", Identifier = "demo-paginate-ft-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Paginate FT Firm",
+            Name = "Demo Paginate FT Solar BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Friesland",
+            City = "Leeuwarden",
+            Address = "Zaailand 100",
+            ContactEmail = "info@demo-paginate-ft-solar.nl",
+            ContactPhone = "+31581234567",
+            TaxNumber = "NL777777777B01",
+            TaxOffice = "Leeuwarden"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Paginate FT Facility"
+            Name = "Demo Solar Farm Harlingen"
         };
         await Testing.AddAsync(facility);
 
@@ -345,27 +346,27 @@ public class GetFacilityTariffsTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Filter TariffId Tenant", Identifier = "filter-tariffid-tenant" };
+        var tenant = new Tenant { Name = "Demo Filter TariffId Energy Holding", Identifier = "demo-filter-tariffid-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Filter TariffId Firm",
+            Name = "Demo Filter TariffId Wind BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Groningen",
+            City = "Groningen",
+            Address = "Grote Markt 30",
+            ContactEmail = "info@demo-filter-tariffid-wind.nl",
+            ContactPhone = "+31501234567",
+            TaxNumber = "NL888888888B01",
+            TaxOffice = "Groningen"
         };
         await Testing.AddAsync(firm);
 
-        var facility1 = new Facility { FirmId = firm.Id, Name = "Facility 1" };
-        var facility2 = new Facility { FirmId = firm.Id, Name = "Facility 2" };
+        var facility1 = new Facility { FirmId = firm.Id, Name = "Demo Wind Farm Eemshaven" };
+        var facility2 = new Facility { FirmId = firm.Id, Name = "Demo Wind Farm Delfzijl" };
         await Testing.AddAsync(facility1);
         await Testing.AddAsync(facility2);
 
@@ -380,10 +381,11 @@ public class GetFacilityTariffsTests : BaseTestFixture
         };
         var tariff2 = new Tariff
         {
-            CountryName = "Germany",
-            DistributionFee = 30m,
-            TransmissionFee = 8m,
-            TaxRate = 0.19m,
+            CountryName = "Netherlands",
+            DistributorName = "Enexis",
+            DistributionFee = 25m,
+            TransmissionFee = 7m,
+            TaxRate = 0.21m,
             Currency = "EUR",
             IsActive = true
         };

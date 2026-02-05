@@ -10,19 +10,19 @@ public class GetFirmTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Get Firm Tenant", Identifier = "get-firm-tenant" };
+        var tenant = new Tenant { Name = "Demo Energy Holding", Identifier = "demo-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Energy Solutions BV",
+            Name = "Demo Energy Solutions BV",
             Type = "Standard",
             Country = "Netherlands",
             State = "Zuid-Holland",
             City = "Rotterdam",
-            Address = "Harbor Street 1",
-            ContactEmail = "contact@energysolutions.nl",
+            Address = "Wilhelminakade 123",
+            ContactEmail = "contact@demo-energy-solutions.nl",
             ContactPhone = "+31101234567",
             TaxNumber = "NL987654321B01",
             TaxOffice = "Rotterdam"
@@ -35,7 +35,7 @@ public class GetFirmTests : BaseTestFixture
         // Assert
         result.Should().NotBeNull();
         result!.Id.Should().Be(firm.Id);
-        result.Name.Should().Be("Energy Solutions BV");
+        result.Name.Should().Be("Demo Energy Solutions BV");
         result.Country.Should().Be("Netherlands");
         result.City.Should().Be("Rotterdam");
     }
@@ -58,26 +58,26 @@ public class GetFirmTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Full Properties Tenant", Identifier = "full-props-tenant" };
+        var tenant = new Tenant { Name = "Demo Full Properties Holding", Identifier = "demo-full-properties-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Complete Firm",
-            LogoUrl = "https://logo.com/complete.png",
+            Name = "Demo Complete Solar BV",
+            LogoUrl = "https://demo.nl/complete-logo.png",
             Type = "Solar Provider",
-            Country = "Germany",
-            State = "Bavaria",
-            City = "Munich",
-            District = "Schwabing",
-            PostalCode = "80802",
-            Address = "Leopoldstrasse 1",
-            ContactEmail = "info@complete.de",
-            ContactPhone = "+49891234567",
-            Fax = "+49891234568",
-            TaxNumber = "DE123456789",
-            TaxOffice = "Munich Central"
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            District = "Centrum",
+            PostalCode = "1017BM",
+            Address = "Leidseplein 26",
+            ContactEmail = "info@demo-complete-solar.nl",
+            ContactPhone = "+31201234567",
+            Fax = "+31201234568",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam Centrum"
         };
         await Testing.AddAsync(firm);
 
@@ -86,10 +86,10 @@ public class GetFirmTests : BaseTestFixture
 
         // Assert
         result.Should().NotBeNull();
-        result!.LogoUrl.Should().Be("https://logo.com/complete.png");
+        result!.LogoUrl.Should().Be("https://demo.nl/complete-logo.png");
         result.Type.Should().Be("Solar Provider");
-        result.District.Should().Be("Schwabing");
-        result.PostalCode.Should().Be("80802");
-        result.Fax.Should().Be("+49891234568");
+        result.District.Should().Be("Centrum");
+        result.PostalCode.Should().Be("1017BM");
+        result.Fax.Should().Be("+31201234568");
     }
 }

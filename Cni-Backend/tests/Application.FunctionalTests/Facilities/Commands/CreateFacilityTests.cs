@@ -24,7 +24,7 @@ public class CreateFacilityTests : BaseTestFixture
         var command = new CreateFacilityCommand
         {
             FirmId = 0,
-            Name = "Test Facility"
+            Name = "Demo Solar Facility"
         };
 
         await FluentActions.Invoking(() =>
@@ -35,11 +35,23 @@ public class CreateFacilityTests : BaseTestFixture
     public async Task ShouldRequireName()
     {
         await Testing.RunAsAdministratorAsync();
-        // First create a tenant and firm
-        var tenant = new Tenant { Name = "Test Tenant", Identifier = "test-tenant" };
+        var tenant = new Tenant { Name = "Demo Facility Validation Holding", Identifier = "demo-facility-validation-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Test Firm", Type = "Standard", Country = "Netherlands", State = "NH", City = "Amsterdam", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "AMS" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Validation Firm BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Keizersgracht 123",
+            ContactEmail = "info@demo-validation.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
+        };
         await Testing.AddAsync(firm);
 
         var command = new CreateFacilityCommand
@@ -57,21 +69,34 @@ public class CreateFacilityTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Test Tenant", Identifier = "test-tenant-create" };
+        var tenant = new Tenant { Name = "Demo Solar Holding", Identifier = "demo-solar-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Test Firm", Type = "Standard", Country = "Netherlands", State = "NH", City = "Amsterdam", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "AMS" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Solar Energy BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Herengracht 456",
+            ContactEmail = "info@demo-solar-energy.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
+        };
         await Testing.AddAsync(firm);
 
         var command = new CreateFacilityCommand
         {
             FirmId = firm.Id,
-            Name = "Solar Farm Alpha",
-            Address = "123 Solar Street",
+            Name = "Demo Solar Park Zeewolde",
+            Address = "Zeewolderweg 100, Zeewolde",
             EnergyCapacity = 5000,
             EnergyUnit = EnergyUnit.KWh,
-            Longitude = 4.9,
-            Latitude = 52.4
+            Longitude = 5.5422,
+            Latitude = 52.3274
         };
 
         // Act
@@ -86,8 +111,8 @@ public class CreateFacilityTests : BaseTestFixture
         facility.EnergyCapacity.Should().Be(command.EnergyCapacity);
         facility.EnergyUnit.Should().Be(EnergyUnit.KWh);
         facility.FirmId.Should().Be(firm.Id);
-        facility.Longitude.Should().Be(4.9);
-        facility.Latitude.Should().Be(52.4);
+        facility.Longitude.Should().Be(5.5422);
+        facility.Latitude.Should().Be(52.3274);
     }
 
     [Test]
@@ -95,16 +120,29 @@ public class CreateFacilityTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Test Tenant MWh", Identifier = "test-tenant-mwh" };
+        var tenant = new Tenant { Name = "Demo Wind Holding", Identifier = "demo-wind-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Test Firm MWh", Type = "Standard", Country = "Germany", State = "BY", City = "Munich", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "MUC" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Wind Power BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Flevoland",
+            City = "Lelystad",
+            Address = "Stadhuisplein 2",
+            ContactEmail = "info@demo-wind-power.nl",
+            ContactPhone = "+31320123456",
+            TaxNumber = "NL987654321B01",
+            TaxOffice = "Lelystad"
+        };
         await Testing.AddAsync(firm);
 
         var command = new CreateFacilityCommand
         {
             FirmId = firm.Id,
-            Name = "Wind Farm Beta",
+            Name = "Demo Wind Park Noordoostpolder",
             EnergyCapacity = 100,
             EnergyUnit = EnergyUnit.MWh
         };
@@ -122,16 +160,29 @@ public class CreateFacilityTests : BaseTestFixture
     public async Task ShouldRejectNegativeEnergyCapacity()
     {
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Test Tenant Neg", Identifier = "test-tenant-neg" };
+        var tenant = new Tenant { Name = "Demo Negative Validation Holding", Identifier = "demo-negative-validation-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Test Firm", Type = "Standard", Country = "Netherlands", State = "NH", City = "Amsterdam", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "AMS" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Negative Test BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Prinsengracht 789",
+            ContactEmail = "info@demo-negative.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
+        };
         await Testing.AddAsync(firm);
 
         var command = new CreateFacilityCommand
         {
             FirmId = firm.Id,
-            Name = "Invalid Facility",
+            Name = "Demo Invalid Capacity Facility",
             EnergyCapacity = -100
         };
 
@@ -143,10 +194,23 @@ public class CreateFacilityTests : BaseTestFixture
     public async Task ShouldRejectNameExceedingMaxLength()
     {
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Test Tenant MaxLen", Identifier = "test-tenant-maxlen" };
+        var tenant = new Tenant { Name = "Demo Max Length Holding", Identifier = "demo-max-length-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Test Firm", Type = "Standard", Country = "Netherlands", State = "NH", City = "Amsterdam", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "AMS" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Max Length Test BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Singel 500",
+            ContactEmail = "info@demo-maxlength.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
+        };
         await Testing.AddAsync(firm);
 
         var command = new CreateFacilityCommand

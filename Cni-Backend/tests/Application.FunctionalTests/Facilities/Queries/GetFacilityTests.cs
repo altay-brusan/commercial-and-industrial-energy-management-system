@@ -11,21 +11,34 @@ public class GetFacilityTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Get Facility Tenant", Identifier = "get-facility-tenant" };
+        var tenant = new Tenant { Name = "Demo Get Facility Holding", Identifier = "demo-get-facility-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Get Facility Firm", Type = "Standard", Country = "Netherlands", State = "NH", City = "Amsterdam", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "AMS" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Get Facility Firm BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Prinsengracht 500",
+            ContactEmail = "info@demo-get-facility.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
+        };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Test Solar Farm",
-            Address = "123 Solar Road",
+            Name = "Demo Solar Farm Flevoland",
+            Address = "Flevopolder 123, Dronten",
             EnergyCapacity = 5000,
             EnergyUnit = EnergyUnit.KWh,
-            Longitude = 4.9,
-            Latitude = 52.4
+            Longitude = 5.7167,
+            Latitude = 52.5167
         };
         await Testing.AddAsync(facility);
 
@@ -35,8 +48,8 @@ public class GetFacilityTests : BaseTestFixture
         // Assert
         result.Should().NotBeNull();
         result!.Id.Should().Be(facility.Id);
-        result.Name.Should().Be("Test Solar Farm");
-        result.Address.Should().Be("123 Solar Road");
+        result.Name.Should().Be("Demo Solar Farm Flevoland");
+        result.Address.Should().Be("Flevopolder 123, Dronten");
         result.EnergyCapacity.Should().Be(5000);
     }
 
@@ -58,29 +71,29 @@ public class GetFacilityTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Firm Info Tenant", Identifier = "firm-info-tenant" };
+        var tenant = new Tenant { Name = "Demo Firm Info Holding", Identifier = "demo-firm-info-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Green Energy Corp",
+            Name = "Demo Green Energy Corp BV",
             Type = "Standard",
-            Country = "Germany",
-            State = "BY",
-            City = "Munich",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "MUC"
+            Country = "Netherlands",
+            State = "Zuid-Holland",
+            City = "Den Haag",
+            Address = "Binnenhof 1",
+            ContactEmail = "info@demo-green-energy-corp.nl",
+            ContactPhone = "+31701234567",
+            TaxNumber = "NL555555555B01",
+            TaxOffice = "Den Haag"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Munich Solar Plant"
+            Name = "Demo Wind Park Westland"
         };
         await Testing.AddAsync(facility);
 

@@ -14,7 +14,7 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         {
             FirmId = 0,
             MarketOperatorId = 1,
-            AreaCode = "TR"
+            AreaCode = "10YNL----------L"
         };
 
         await FluentActions.Invoking(() =>
@@ -29,7 +29,7 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         {
             FirmId = 1,
             MarketOperatorId = 0,
-            AreaCode = "TR"
+            AreaCode = "10YNL----------L"
         };
 
         await FluentActions.Invoking(() =>
@@ -57,33 +57,33 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "FMO Tenant", Identifier = "fmo-tenant" };
+        var tenant = new Tenant { Name = "Demo FMO Holding", Identifier = "demo-fmo-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "FMO Test Firm",
+            Name = "Demo FMO Energy BV",
             Type = "Standard",
-            Country = "Türkiye",
-            State = "Istanbul",
-            City = "Istanbul",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "IST"
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Keizersgracht 500",
+            ContactEmail = "info@demo-fmo-energy.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
         };
         await Testing.AddAsync(firm);
 
-        var uniqueMoCode = $"EPI_{Guid.NewGuid():N}";
+        var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "EPIAS",
+            Name = "Demo ENTSO-E NL",
             Code = uniqueMoCode,
-            BaseUrl = "https://seffaflik.epias.com.tr/transparency",
+            BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },
-            AreaCodes = new List<string> { "TR" },
+            AreaCodes = new List<string> { "10YNL----------L" },
             IsActive = true
         };
         await Testing.AddAsync(marketOperator);
@@ -92,7 +92,7 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         {
             FirmId = firm.Id,
             MarketOperatorId = marketOperator.Id,
-            AreaCode = "TR",
+            AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 60
         };
 
@@ -105,7 +105,7 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         firmMarketOperator.Should().NotBeNull();
         firmMarketOperator!.FirmId.Should().Be(firm.Id);
         firmMarketOperator.MarketOperatorId.Should().Be(marketOperator.Id);
-        firmMarketOperator.AreaCode.Should().Be("TR");
+        firmMarketOperator.AreaCode.Should().Be("10YNL----------L");
         firmMarketOperator.SamplingPeriodMinutes.Should().Be(60);
         firmMarketOperator.IsActive.Should().BeTrue();
     }
@@ -116,29 +116,29 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "FMO Default Tenant", Identifier = "fmo-default-tenant" };
+        var tenant = new Tenant { Name = "Demo Default FMO Holding", Identifier = "demo-default-fmo-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "FMO Default Firm",
+            Name = "Demo Default FMO Firm BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Zuid-Holland",
+            City = "Rotterdam",
+            Address = "Coolsingel 200",
+            ContactEmail = "info@demo-default-fmo.nl",
+            ContactPhone = "+31101234567",
+            TaxNumber = "NL987654321B01",
+            TaxOffice = "Rotterdam"
         };
         await Testing.AddAsync(firm);
 
         var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E",
+            Name = "Demo ENTSO-E Default",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 15, 60 },
@@ -170,33 +170,33 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "FMO 15Min Tenant", Identifier = "fmo-15min-tenant" };
+        var tenant = new Tenant { Name = "Demo 15Min FMO Holding", Identifier = "demo-15min-fmo-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "FMO 15Min Firm",
+            Name = "Demo 15Min FMO Firm BV",
             Type = "Standard",
-            Country = "Germany",
-            State = "BY",
-            City = "Munich",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "MUC"
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Haarlem",
+            Address = "Grote Markt 15",
+            ContactEmail = "info@demo-15min-fmo.nl",
+            ContactPhone = "+31235678901",
+            TaxNumber = "NL555555555B01",
+            TaxOffice = "Haarlem"
         };
         await Testing.AddAsync(firm);
 
-        var uniqueMoCode = $"ENTDE_{Guid.NewGuid():N}";
+        var uniqueMoCode = $"ENT15_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E Germany",
+            Name = "Demo ENTSO-E 15Min",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 15, 60 },
-            AreaCodes = new List<string> { "10YDE-VE-------2" },
+            AreaCodes = new List<string> { "10YNL----------L" },
             IsActive = true
         };
         await Testing.AddAsync(marketOperator);
@@ -205,7 +205,7 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         {
             FirmId = firm.Id,
             MarketOperatorId = marketOperator.Id,
-            AreaCode = "10YDE-VE-------2",
+            AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 15
         };
 

@@ -14,7 +14,7 @@ public class UpdateFacilityTests : BaseTestFixture
         var command = new UpdateFacilityCommand
         {
             Id = 99999,
-            Name = "Updated Name"
+            Name = "Demo Updated Facility"
         };
 
         await FluentActions.Invoking(() =>
@@ -26,17 +26,30 @@ public class UpdateFacilityTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Update Test Tenant", Identifier = "update-test-tenant" };
+        var tenant = new Tenant { Name = "Demo Update Facility Holding", Identifier = "demo-update-facility-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Update Test Firm", Type = "Standard", Country = "Netherlands", State = "NH", City = "Amsterdam", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "AMS" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Update Facility Firm BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Keizersgracht 200",
+            ContactEmail = "info@demo-update-facility.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
+        };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Original Name",
-            Address = "Original Address",
+            Name = "Demo Original Solar Park",
+            Address = "Oude Weg 1, Almere",
             EnergyCapacity = 1000,
             EnergyUnit = EnergyUnit.KWh
         };
@@ -46,12 +59,12 @@ public class UpdateFacilityTests : BaseTestFixture
         {
             Id = facility.Id,
             FirmId = firm.Id,
-            Name = "Updated Name",
-            Address = "Updated Address",
+            Name = "Demo Updated Solar Park",
+            Address = "Nieuwe Weg 50, Almere",
             EnergyCapacity = 2000,
             EnergyUnit = EnergyUnit.MWh,
-            Longitude = 5.0,
-            Latitude = 53.0
+            Longitude = 5.2647,
+            Latitude = 52.3508
         };
 
         // Act
@@ -61,12 +74,12 @@ public class UpdateFacilityTests : BaseTestFixture
         var updatedFacility = await Testing.FindAsync<Facility>(facility.Id);
 
         updatedFacility.Should().NotBeNull();
-        updatedFacility!.Name.Should().Be("Updated Name");
-        updatedFacility.Address.Should().Be("Updated Address");
+        updatedFacility!.Name.Should().Be("Demo Updated Solar Park");
+        updatedFacility.Address.Should().Be("Nieuwe Weg 50, Almere");
         updatedFacility.EnergyCapacity.Should().Be(2000);
         updatedFacility.EnergyUnit.Should().Be(EnergyUnit.MWh);
-        updatedFacility.Longitude.Should().Be(5.0);
-        updatedFacility.Latitude.Should().Be(53.0);
+        updatedFacility.Longitude.Should().Be(5.2647);
+        updatedFacility.Latitude.Should().Be(52.3508);
     }
 
     [Test]
@@ -74,16 +87,29 @@ public class UpdateFacilityTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Topology Test Tenant", Identifier = "topology-test-tenant" };
+        var tenant = new Tenant { Name = "Demo Topology Holding", Identifier = "demo-topology-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Topology Test Firm", Type = "Standard", Country = "Germany", State = "BY", City = "Munich", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "MUC" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Topology Firm BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Zuid-Holland",
+            City = "Rotterdam",
+            Address = "Coolsingel 100",
+            ContactEmail = "info@demo-topology.nl",
+            ContactPhone = "+31101234567",
+            TaxNumber = "NL987654321B01",
+            TaxOffice = "Rotterdam"
+        };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Facility With Topology",
+            Name = "Demo Topology Solar Facility",
             EnergyCapacity = 500
         };
         await Testing.AddAsync(facility);
@@ -113,13 +139,26 @@ public class UpdateFacilityTests : BaseTestFixture
     public async Task ShouldRejectEmptyName()
     {
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Empty Name Tenant", Identifier = "empty-name-tenant" };
+        var tenant = new Tenant { Name = "Demo Empty Name Holding", Identifier = "demo-empty-name-holding" };
         await Testing.AddAsync(tenant);
 
-        var firm = new Firm { TenantId = tenant.Id, Name = "Test Firm", Type = "Standard", Country = "Netherlands", State = "NH", City = "Amsterdam", Address = "Test St", ContactEmail = "test@test.com", ContactPhone = "123", TaxNumber = "123", TaxOffice = "AMS" };
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Demo Empty Name Firm BV",
+            Type = "Standard",
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Herengracht 300",
+            ContactEmail = "info@demo-empty-name.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
+        };
         await Testing.AddAsync(firm);
 
-        var facility = new Facility { FirmId = firm.Id, Name = "Test Facility", EnergyCapacity = 100 };
+        var facility = new Facility { FirmId = firm.Id, Name = "Demo Test Facility", EnergyCapacity = 100 };
         await Testing.AddAsync(facility);
 
         var command = new UpdateFacilityCommand

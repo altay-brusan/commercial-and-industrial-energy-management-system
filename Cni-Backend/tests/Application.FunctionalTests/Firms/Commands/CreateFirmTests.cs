@@ -20,7 +20,7 @@ public class CreateFirmTests : BaseTestFixture
     public async Task ShouldRequireName()
     {
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Firm Name Test Tenant", Identifier = "firm-name-test" };
+        var tenant = new Tenant { Name = "Demo Validation Tenant", Identifier = "demo-validation-tenant" };
         await Testing.AddAsync(tenant);
 
         var command = new CreateFirmCommand
@@ -28,12 +28,12 @@ public class CreateFirmTests : BaseTestFixture
             TenantId = tenant.Id,
             Name = "",
             Country = "Netherlands",
-            State = "NH",
+            State = "Noord-Holland",
             City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123456",
-            TaxNumber = "NL123456789",
+            Address = "Keizersgracht 123",
+            ContactEmail = "info@demo.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
             TaxOffice = "Amsterdam"
         };
 
@@ -45,20 +45,20 @@ public class CreateFirmTests : BaseTestFixture
     public async Task ShouldRequireValidEmail()
     {
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Firm Email Test Tenant", Identifier = "firm-email-test" };
+        var tenant = new Tenant { Name = "Demo Email Validation Tenant", Identifier = "demo-email-validation-tenant" };
         await Testing.AddAsync(tenant);
 
         var command = new CreateFirmCommand
         {
             TenantId = tenant.Id,
-            Name = "Test Firm",
+            Name = "Demo Energy Firm",
             Country = "Netherlands",
-            State = "NH",
+            State = "Noord-Holland",
             City = "Amsterdam",
-            Address = "Test St",
+            Address = "Prinsengracht 456",
             ContactEmail = "invalid-email",
-            ContactPhone = "123456",
-            TaxNumber = "NL123456789",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
             TaxOffice = "Amsterdam"
         };
 
@@ -71,22 +71,22 @@ public class CreateFirmTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Create Firm Tenant", Identifier = "create-firm-tenant" };
+        var tenant = new Tenant { Name = "Demo Energy Holding", Identifier = "demo-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var command = new CreateFirmCommand
         {
             TenantId = tenant.Id,
-            Name = "Green Energy BV",
-            LogoUrl = "https://example.com/logo.png",
+            Name = "Demo Green Energy BV",
+            LogoUrl = "https://demo.nl/logo.png",
             Type = "Energy Provider",
             Country = "Netherlands",
             State = "Noord-Holland",
             City = "Amsterdam",
             District = "Centrum",
-            PostalCode = "1012AB",
-            Address = "Damrak 1",
-            ContactEmail = "contact@greenenergy.nl",
+            PostalCode = "1016EA",
+            Address = "Herengracht 182",
+            ContactEmail = "contact@demo-green-energy.nl",
             ContactPhone = "+31201234567",
             Fax = "+31201234568",
             TaxNumber = "NL123456789B01",
@@ -100,11 +100,11 @@ public class CreateFirmTests : BaseTestFixture
         var firm = await Testing.FindAsync<Firm>(firmId);
 
         firm.Should().NotBeNull();
-        firm!.Name.Should().Be("Green Energy BV");
+        firm!.Name.Should().Be("Demo Green Energy BV");
         firm.TenantId.Should().Be(tenant.Id);
         firm.Country.Should().Be("Netherlands");
         firm.City.Should().Be("Amsterdam");
-        firm.ContactEmail.Should().Be("contact@greenenergy.nl");
+        firm.ContactEmail.Should().Be("contact@demo-green-energy.nl");
         firm.TaxNumber.Should().Be("NL123456789B01");
     }
 
@@ -113,22 +113,22 @@ public class CreateFirmTests : BaseTestFixture
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Minimal Firm Tenant", Identifier = "minimal-firm-tenant" };
+        var tenant = new Tenant { Name = "Demo Minimal Holding", Identifier = "demo-minimal-holding" };
         await Testing.AddAsync(tenant);
 
         var command = new CreateFirmCommand
         {
             TenantId = tenant.Id,
-            Name = "Minimal Firm",
+            Name = "Demo Solar Solutions BV",
             Type = "Standard",
-            Country = "Germany",
-            State = "Bavaria",
-            City = "Munich",
-            Address = "Test Street 1",
-            ContactEmail = "min@firm.de",
-            ContactPhone = "+49123456",
-            TaxNumber = "DE123456789",
-            TaxOffice = "Munich"
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Haarlem",
+            Address = "Grote Markt 10",
+            ContactEmail = "info@demo-solar.nl",
+            ContactPhone = "+31235678901",
+            TaxNumber = "NL987654321B01",
+            TaxOffice = "Haarlem"
         };
 
         // Act
@@ -137,14 +137,14 @@ public class CreateFirmTests : BaseTestFixture
         // Assert
         var firm = await Testing.FindAsync<Firm>(firmId);
         firm.Should().NotBeNull();
-        firm!.Name.Should().Be("Minimal Firm");
+        firm!.Name.Should().Be("Demo Solar Solutions BV");
     }
 
     [Test]
     public async Task ShouldRejectNameExceedingMaxLength()
     {
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "Long Name Tenant", Identifier = "long-name-tenant" };
+        var tenant = new Tenant { Name = "Demo Max Length Tenant", Identifier = "demo-max-length-tenant" };
         await Testing.AddAsync(tenant);
 
         var command = new CreateFirmCommand
@@ -152,12 +152,12 @@ public class CreateFirmTests : BaseTestFixture
             TenantId = tenant.Id,
             Name = new string('A', 501),
             Country = "Netherlands",
-            State = "NH",
+            State = "Noord-Holland",
             City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123456",
-            TaxNumber = "NL123456789",
+            Address = "Singel 100",
+            ContactEmail = "info@demo.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
             TaxOffice = "Amsterdam"
         };
 
@@ -169,20 +169,20 @@ public class CreateFirmTests : BaseTestFixture
     public async Task ShouldRequireCountry()
     {
         await Testing.RunAsAdministratorAsync();
-        var tenant = new Tenant { Name = "No Country Tenant", Identifier = "no-country-tenant" };
+        var tenant = new Tenant { Name = "Demo Country Validation Tenant", Identifier = "demo-country-validation-tenant" };
         await Testing.AddAsync(tenant);
 
         var command = new CreateFirmCommand
         {
             TenantId = tenant.Id,
-            Name = "Test Firm",
+            Name = "Demo Wind Power BV",
             Country = "",
-            State = "NH",
+            State = "Noord-Holland",
             City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123456",
-            TaxNumber = "NL123456789",
+            Address = "Amstel 200",
+            ContactEmail = "info@demo-wind.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
             TaxOffice = "Amsterdam"
         };
 

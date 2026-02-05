@@ -77,10 +77,10 @@ public class UpdateTariffTests : BaseTestFixture
 
         var inactiveTariff = new Tariff
         {
-            CountryName = "Germany",
+            CountryName = "Netherlands",
             DistributionFee = 20m,
             TransmissionFee = 5m,
-            TaxRate = 0.19m,
+            TaxRate = 0.21m,
             Currency = "EUR",
             IsActive = false
         };
@@ -89,10 +89,10 @@ public class UpdateTariffTests : BaseTestFixture
         var command = new UpdateTariffCommand
         {
             Id = inactiveTariff.Id,
-            CountryName = "Germany",
+            CountryName = "Netherlands",
             DistributionFee = 25m,
             TransmissionFee = 7m,
-            TaxRate = 0.19m,
+            TaxRate = 0.21m,
             Currency = "EUR"
         };
 
@@ -108,29 +108,29 @@ public class UpdateTariffTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Migration Tenant", Identifier = "migration-tenant" };
+        var tenant = new Tenant { Name = "Demo Migration Tariff Energy Holding", Identifier = "demo-migration-tariff-energy-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Migration Firm",
+            Name = "Demo Migration Tariff Solar BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
+            State = "Noord-Holland",
             City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            Address = "Vijzelstraat 100",
+            ContactEmail = "info@demo-migration-tariff-solar.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
         };
         await Testing.AddAsync(firm);
 
         var facility = new Facility
         {
             FirmId = firm.Id,
-            Name = "Migration Facility"
+            Name = "Demo Solar Park Schiphol"
         };
         await Testing.AddAsync(facility);
 
@@ -181,7 +181,8 @@ public class UpdateTariffTests : BaseTestFixture
 
         var existingTariff = new Tariff
         {
-            CountryName = "Belgium",
+            CountryName = "Netherlands",
+            DistributorName = "Stedin",
             DistributionFee = 20m,
             TransmissionFee = 5m,
             TaxRate = 0.21m,
@@ -193,7 +194,8 @@ public class UpdateTariffTests : BaseTestFixture
         var command = new UpdateTariffCommand
         {
             Id = existingTariff.Id,
-            CountryName = "Belgium",
+            CountryName = "Netherlands",
+            DistributorName = "Stedin",
             DistributionFee = 25m,
             TransmissionFee = 7m,
             TaxRate = 0.21m,

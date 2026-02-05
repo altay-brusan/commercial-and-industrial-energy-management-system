@@ -12,14 +12,14 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
 
         // Create a valid MarketOperator so validation passes
-        var uniqueMoCode = $"EPI_{Guid.NewGuid():N}";
+        var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "EPIAS Test",
+            Name = "Demo ENTSO-E Validation",
             Code = uniqueMoCode,
-            BaseUrl = "https://seffaflik.epias.com.tr/transparency",
+            BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },
-            AreaCodes = new List<string> { "TR" },
+            AreaCodes = new List<string> { "10YNL----------L" },
             IsActive = true
         };
         await Testing.AddAsync(marketOperator);
@@ -28,7 +28,7 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         {
             Id = 99999,
             MarketOperatorId = marketOperator.Id,
-            AreaCode = "TR",
+            AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 60
         };
 
@@ -42,45 +42,45 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Update FMO Tenant", Identifier = "update-fmo-tenant" };
+        var tenant = new Tenant { Name = "Demo Update FMO Holding", Identifier = "demo-update-fmo-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Update FMO Firm",
+            Name = "Demo Update FMO Firm BV",
             Type = "Standard",
-            Country = "Türkiye",
-            State = "Istanbul",
-            City = "Istanbul",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "IST"
+            Country = "Netherlands",
+            State = "Noord-Holland",
+            City = "Amsterdam",
+            Address = "Herengracht 600",
+            ContactEmail = "info@demo-update-fmo.nl",
+            ContactPhone = "+31201234567",
+            TaxNumber = "NL123456789B01",
+            TaxOffice = "Amsterdam"
         };
         await Testing.AddAsync(firm);
 
-        var uniqueMoCode1 = $"EPI_{Guid.NewGuid():N}";
+        var uniqueMoCode1 = $"ENT1_{Guid.NewGuid():N}";
         var marketOperator1 = new MarketOperator
         {
-            Name = "EPIAS",
+            Name = "Demo ENTSO-E Original",
             Code = uniqueMoCode1,
-            BaseUrl = "https://seffaflik.epias.com.tr/transparency",
+            BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },
-            AreaCodes = new List<string> { "TR" },
+            AreaCodes = new List<string> { "10YNL----------L" },
             IsActive = true
         };
         await Testing.AddAsync(marketOperator1);
 
-        var uniqueMoCode2 = $"ENT_{Guid.NewGuid():N}";
+        var uniqueMoCode2 = $"ENT2_{Guid.NewGuid():N}";
         var marketOperator2 = new MarketOperator
         {
-            Name = "ENTSO-E",
+            Name = "Demo ENTSO-E Updated",
             Code = uniqueMoCode2,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 15, 60 },
-            AreaCodes = new List<string> { "10YTR-TEIAS----W" },
+            AreaCodes = new List<string> { "10YNL----------L" },
             IsActive = true
         };
         await Testing.AddAsync(marketOperator2);
@@ -89,7 +89,7 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         {
             FirmId = firm.Id,
             MarketOperatorId = marketOperator1.Id,
-            AreaCode = "TR",
+            AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 60,
             IsActive = true
         };
@@ -99,7 +99,7 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         {
             Id = firmMarketOperator.Id,
             MarketOperatorId = marketOperator2.Id,
-            AreaCode = "10YTR-TEIAS----W",
+            AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 15,
             IsActive = true
         };
@@ -112,7 +112,7 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
 
         updatedFmo.Should().NotBeNull();
         updatedFmo!.MarketOperatorId.Should().Be(marketOperator2.Id);
-        updatedFmo.AreaCode.Should().Be("10YTR-TEIAS----W");
+        updatedFmo.AreaCode.Should().Be("10YNL----------L");
         updatedFmo.SamplingPeriodMinutes.Should().Be(15);
     }
 
@@ -122,29 +122,29 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Deactivate FMO Tenant", Identifier = "deactivate-fmo-tenant" };
+        var tenant = new Tenant { Name = "Demo Deactivate FMO Holding", Identifier = "demo-deactivate-fmo-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Deactivate FMO Firm",
+            Name = "Demo Deactivate FMO Firm BV",
             Type = "Standard",
             Country = "Netherlands",
-            State = "NH",
-            City = "Amsterdam",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "AMS"
+            State = "Zuid-Holland",
+            City = "Rotterdam",
+            Address = "Wilhelminakade 100",
+            ContactEmail = "info@demo-deactivate-fmo.nl",
+            ContactPhone = "+31101234567",
+            TaxNumber = "NL987654321B01",
+            TaxOffice = "Rotterdam"
         };
         await Testing.AddAsync(firm);
 
         var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E",
+            Name = "Demo ENTSO-E Deactivate",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },
@@ -186,33 +186,33 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Reactivate FMO Tenant", Identifier = "reactivate-fmo-tenant" };
+        var tenant = new Tenant { Name = "Demo Reactivate FMO Holding", Identifier = "demo-reactivate-fmo-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Reactivate FMO Firm",
+            Name = "Demo Reactivate FMO Firm BV",
             Type = "Standard",
-            Country = "Germany",
-            State = "BY",
-            City = "Munich",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "MUC"
+            Country = "Netherlands",
+            State = "Noord-Brabant",
+            City = "Eindhoven",
+            Address = "Stationsplein 10",
+            ContactEmail = "info@demo-reactivate-fmo.nl",
+            ContactPhone = "+31401234567",
+            TaxNumber = "NL444444444B01",
+            TaxOffice = "Eindhoven"
         };
         await Testing.AddAsync(firm);
 
-        var uniqueMoCode = $"ENTDE_{Guid.NewGuid():N}";
+        var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E DE",
+            Name = "Demo ENTSO-E Reactivate",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 60 },
-            AreaCodes = new List<string> { "10YDE-VE-------2" },
+            AreaCodes = new List<string> { "10YNL----------L" },
             IsActive = true
         };
         await Testing.AddAsync(marketOperator);
@@ -221,7 +221,7 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         {
             FirmId = firm.Id,
             MarketOperatorId = marketOperator.Id,
-            AreaCode = "10YDE-VE-------2",
+            AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 60,
             IsActive = false
         };
@@ -250,33 +250,33 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var tenant = new Tenant { Name = "Sampling FMO Tenant", Identifier = "sampling-fmo-tenant" };
+        var tenant = new Tenant { Name = "Demo Sampling FMO Holding", Identifier = "demo-sampling-fmo-holding" };
         await Testing.AddAsync(tenant);
 
         var firm = new Firm
         {
             TenantId = tenant.Id,
-            Name = "Sampling FMO Firm",
+            Name = "Demo Sampling FMO Firm BV",
             Type = "Standard",
-            Country = "Belgium",
-            State = "Brussels",
-            City = "Brussels",
-            Address = "Test St",
-            ContactEmail = "test@test.com",
-            ContactPhone = "123",
-            TaxNumber = "123",
-            TaxOffice = "BRU"
+            Country = "Netherlands",
+            State = "Utrecht",
+            City = "Utrecht",
+            Address = "Vredenburg 50",
+            ContactEmail = "info@demo-sampling-fmo.nl",
+            ContactPhone = "+31301234567",
+            TaxNumber = "NL333333333B01",
+            TaxOffice = "Utrecht"
         };
         await Testing.AddAsync(firm);
 
-        var uniqueMoCode = $"ENTBE_{Guid.NewGuid():N}";
+        var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
         var marketOperator = new MarketOperator
         {
-            Name = "ENTSO-E BE",
+            Name = "Demo ENTSO-E Sampling",
             Code = uniqueMoCode,
             BaseUrl = "https://web-api.tp.entsoe.eu/api",
             SupportedResolutions = new List<int> { 15, 30, 60 },
-            AreaCodes = new List<string> { "10YBE----------2" },
+            AreaCodes = new List<string> { "10YNL----------L" },
             IsActive = true
         };
         await Testing.AddAsync(marketOperator);
@@ -285,7 +285,7 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
         {
             FirmId = firm.Id,
             MarketOperatorId = marketOperator.Id,
-            AreaCode = "10YBE----------2",
+            AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 60,
             IsActive = true
         };
