@@ -333,6 +333,65 @@ public class ApplicationDbContextInitializer
         }
         #endregion
 
+        #region MarketOperators
+
+        // Seed Market Operators (global entities - no tenant filter)
+        if (!_context.MarketOperators.Any())
+        {
+            var marketOperators = new List<MarketOperator>
+            {
+                new MarketOperator
+                {
+                    Name = "ENTSO-E Transparency Platform",
+                    Code = "ENTSOE",
+                    BaseUrl = "https://web-api.tp.entsoe.eu/api",
+                    ApiKey = "***REMOVED***",
+                    SupportedResolutions = new List<int> { 15, 60 },
+                    AreaCodes = new List<string>
+                    {
+                        "10YNL----------L", // Netherlands
+                        "10YDE-VE-------2", // Germany
+                        "10YFR-RTE------C", // France
+                        "10YBE----------2", // Belgium
+                        "10YAT-APG------L"  // Austria
+                    },
+                    IsActive = true,
+                    Created = DateTime.UtcNow
+                },
+                new MarketOperator
+                {
+                    Name = "EPİAŞ (Turkish Energy Exchange)",
+                    Code = "EPIAS",
+                    BaseUrl = "https://seffaflik.epias.com.tr",
+                    ApiKey = "technology@oklidis.com.tr:***REMOVED***",
+                    SupportedResolutions = new List<int> { 60 },
+                    AreaCodes = new List<string> { "TR" },
+                    IsActive = true,
+                    Created = DateTime.UtcNow
+                }
+            };
+            _context.MarketOperators.AddRange(marketOperators);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Demo market operators created (ENTSO-E, EPIAS)");
+
+            // Assign ENTSO-E to demo firm with Netherlands area code
+            var entsoe = marketOperators.First(mo => mo.Code == "ENTSOE");
+            var firmMarketOperator = new FirmMarketOperator
+            {
+                FirmId = firmId,
+                MarketOperatorId = entsoe.Id,
+                AreaCode = "10YNL----------L", // Netherlands
+                SamplingPeriodMinutes = 60,
+                IsActive = true,
+                Created = DateTime.UtcNow
+            };
+            _context.FirmMarketOperators.Add(firmMarketOperator);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Demo firm assigned to ENTSO-E market operator (Netherlands area)");
+        }
+
+        #endregion
+
         #region Tariffs
 
         // Seed default tariffs
