@@ -1,10 +1,11 @@
 namespace Backend.Domain.Entities;
 
 /// <summary>
-/// Stores historical energy price data from Market Operators.
+/// Stores historical Day-Ahead energy price data from Market Operators.
+/// Day-Ahead prices are published one day before delivery.
 /// Global entity - shared across all tenants for the same Market Operator and country.
 /// </summary>
-public class EnergyPriceHistory : BaseAuditableEntity
+public class DayAheadEnergyPriceHistory : BaseAuditableEntity
 {
     /// <summary>
     /// Reference to the Market Operator

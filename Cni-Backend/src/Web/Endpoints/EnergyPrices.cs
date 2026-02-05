@@ -1,7 +1,5 @@
 using Backend.Application.Common.Models;
-using Backend.Application.EnergyPrices.Queries.GetEnergyPricesWithRange;
-using Backend.Application.EnergyPrices.Queries.GetEnergyPriceStatistics;
-using Backend.Application.EnergyPrices.Queries.GetHistoricalEnergyPrices;
+using Backend.Application.EnergyPrices.Queries.GetDayAheadPrices;
 using Backend.Application.EnergyPrices.Queries.GetLiveEnergyPrices;
 using Backend.Application.FacilityTariffs;
 using Backend.Application.FacilityTariffs.Commands.AssignTariffToFacility;
@@ -23,10 +21,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace Backend.Web.Endpoints;
 
 /// <summary>
-/// Energy Prices API endpoints organized into Live, History, Tariffs, and FacilityTariffs categories.
+/// Energy Prices API endpoints organized into Day-Ahead, Tariffs, and FacilityTariffs categories.
 ///
-/// Live endpoints: Fetch real-time prices from Market Operator APIs
-/// History endpoints: Query stored historical price data from the database
+/// Day-Ahead endpoints:
+///   - GET /Day-Ahead: Query stored Day-Ahead price data by facility from database
+///   - GET /Day-Ahead/Live: Fetch real-time Day-Ahead prices directly from Market Operator API
+///
 /// Tariffs endpoints: Manage tariff configurations (Administrator only)
 /// FacilityTariffs endpoints: Manage facility-tariff assignments (Administrator only)
 /// </summary>
@@ -37,13 +37,9 @@ public class EnergyPrices : EndpointGroupBase
         var group = app.MapGroup(this)
             .RequireAuthorization();
 
-        // Live endpoints - real-time data from Market Operator
-        group.MapGet(GetLiveEnergyPrices, "Live");
-
-        // History endpoints - stored data from database
-        group.MapGet(GetHistoricalEnergyPrices, "History");
-        group.MapGet(GetHistoricalEnergyPricesForTenant, "History/Tenant");
-        group.MapGet(GetEnergyPriceStatistics, "History/Statistics");
+        // Day-Ahead endpoints
+        group.MapGet(GetDayAheadPrices, "Day-Ahead");
+        group.MapGet(GetLiveDayAheadPrices, "Day-Ahead/Live");
 
         // Tariffs endpoints - Administrator only
         group.MapGet(GetTariffs, "Tariffs");
@@ -62,15 +58,49 @@ public class EnergyPrices : EndpointGroupBase
         group.MapDelete(DeactivateFacilityTariff, "FacilityTariffs/{id}");
     }
 
+    #region Day-Ahead Endpoints
+
     /// <summary>
-    /// Fetches live day-ahead prices directly from a firm's configured Market Operator API.
+    /// Gets Day-Ahead energy prices for a facility within a date range from the database.
+    /// Uses the facility's country (via Firm's MarketOperator configuration) to fetch historical prices.
+    /// Includes the facility's tariff information including any contract discounts.
+    /// </summary>
+    /// <param name="sender">MediatR sender</param>
+    /// <param name="facilityId">Facility ID to get prices for</param>
+    /// <param name="startDate">Start date (inclusive)</param>
+    /// <param name="endDate">End date (inclusive). If null, only startDate's data is returned.</param>
+    public async Task<Results<Ok<DayAheadPricesDto>, NotFound>> GetDayAheadPrices(
+        ISender sender,
+        [FromQuery] int facilityId,
+        [FromQuery] DateTimeOffset startDate,
+        [FromQuery] DateTimeOffset? endDate = null)
+    {
+        var query = new GetDayAheadPricesQuery
+        {
+            FacilityId = facilityId,
+            StartDate = startDate,
+            EndDate = endDate
+        };
+        var result = await sender.Send(query);
+
+        if (result == null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        return TypedResults.Ok(result);
+    }
+
+    /// <summary>
+    /// Fetches live Day-Ahead prices directly from the Market Operator API.
     /// Returns current/tomorrow's prices with tax and distribution fees applied based on firm's tariff.
+    /// This does NOT store data - use this for real-time display.
     /// </summary>
     /// <param name="sender">MediatR sender</param>
     /// <param name="firmId">Firm ID to fetch prices for.</param>
-    /// <param name="date">Optional date to fetch prices for</param>
+    /// <param name="date">Optional date to fetch prices for. If not specified, uses today or tomorrow based on MO publication rules.</param>
     /// <param name="period">Resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).</param>
-    public async Task<Ok<LiveEnergyPricesDto>> GetLiveEnergyPrices(
+    public async Task<Ok<LiveEnergyPricesDto>> GetLiveDayAheadPrices(
         ISender sender,
         [FromQuery] int firmId,
         [FromQuery] DateTimeOffset? date = null,
@@ -86,57 +116,7 @@ public class EnergyPrices : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    /// <summary>
-    /// Gets historical energy prices by country and date range from the database.
-    /// This endpoint queries stored price history directly by country name.
-    /// Returns null if no data is found for the specified criteria.
-    /// </summary>
-    /// <param name="sender">MediatR sender</param>
-    /// <param name="country">Country name (e.g., "Netherlands", "Germany", "Turkey")</param>
-    /// <param name="startDate">Start date of the range (inclusive)</param>
-    /// <param name="endDate">End date of the range (inclusive). If not provided, only startDate's data is returned.</param>
-    public async Task<Results<Ok<HistoricalEnergyPricesDto>, NotFound>> GetHistoricalEnergyPrices(
-        ISender sender,
-        [FromQuery] string country,
-        [FromQuery] DateTimeOffset startDate,
-        [FromQuery] DateTimeOffset? endDate = null)
-    {
-        var query = new GetHistoricalEnergyPricesQuery
-        {
-            Country = country,
-            StartDate = startDate,
-            EndDate = endDate
-        };
-        var result = await sender.Send(query);
-
-        if (result == null)
-        {
-            return TypedResults.NotFound();
-        }
-
-        return TypedResults.Ok(result);
-    }
-
-    /// <summary>
-    /// Gets historical energy prices for a specific tenant's configuration.
-    /// Uses the tenant's area code to determine the country and queries historical data.
-    /// Returns a time series of prices with timestamps.
-    /// </summary>
-    public async Task<Ok<EnergyPriceRangeDto>> GetHistoricalEnergyPricesForTenant(ISender sender, [AsParameters] GetEnergyPricesWithRangeQuery query)
-    {
-        var result = await sender.Send(query);
-        return TypedResults.Ok(result);
-    }
-
-    /// <summary>
-    /// Gets statistical values (min, max, average) for historical energy prices within a date range.
-    /// Uses the tenant's configured Market Operator and area code.
-    /// </summary>
-    public async Task<Ok<EnergyPriceStatisticsDto>> GetEnergyPriceStatistics(ISender sender, [AsParameters] GetEnergyPriceStatisticsQuery query)
-    {
-        var result = await sender.Send(query);
-        return TypedResults.Ok(result);
-    }
+    #endregion
 
     #region Tariffs Endpoints
 

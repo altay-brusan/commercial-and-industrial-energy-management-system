@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Infrastructure.Data.Configurations;
 
-public class EnergyPriceHistoryConfiguration : IEntityTypeConfiguration<EnergyPriceHistory>
+public class DayAheadEnergyPriceHistoryConfiguration : IEntityTypeConfiguration<DayAheadEnergyPriceHistory>
 {
-    public void Configure(EntityTypeBuilder<EnergyPriceHistory> builder)
+    public void Configure(EntityTypeBuilder<DayAheadEnergyPriceHistory> builder)
     {
-        builder.ToTable("EnergyPriceHistories");
+        builder.ToTable("DayAheadEnergyPriceHistories");
 
         builder.Property(p => p.Country)
             .HasMaxLength(100)
@@ -27,7 +27,7 @@ public class EnergyPriceHistoryConfiguration : IEntityTypeConfiguration<EnergyPr
 
         // Foreign key to MarketOperator
         builder.HasOne(p => p.MarketOperator)
-            .WithMany(m => m.PriceHistories)
+            .WithMany(m => m.DayAheadPriceHistories)
             .HasForeignKey(p => p.MarketOperatorId)
             .OnDelete(DeleteBehavior.Cascade);
 

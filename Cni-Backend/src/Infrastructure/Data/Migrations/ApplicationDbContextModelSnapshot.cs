@@ -110,6 +110,55 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.ToTable("AppUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.DayAheadEnergyPriceHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("GrossPrice")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("MarketOperatorId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("NetPrice")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("numeric(18,6)");
+
+                    b.Property<DateTimeOffset>("PriceLocalTimestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MarketOperatorId", "Country");
+
+                    b.HasIndex("MarketOperatorId", "Country", "PriceLocalTimestamp")
+                        .IsUnique();
+
+                    b.ToTable("DayAheadEnergyPriceHistories", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Device", b =>
                 {
                     b.Property<int>("Id")
@@ -449,55 +498,6 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.ToTable("DeviceTypes", (string)null);
                 });
 
-            modelBuilder.Entity("Backend.Domain.Entities.EnergyPriceHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("GrossPrice")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)");
-
-                    b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<int>("MarketOperatorId")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("NetPrice")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("numeric(18,6)");
-
-                    b.Property<DateTimeOffset>("PriceLocalTimestamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MarketOperatorId", "Country");
-
-                    b.HasIndex("MarketOperatorId", "Country", "PriceLocalTimestamp")
-                        .IsUnique();
-
-                    b.ToTable("EnergyPriceHistories", (string)null);
-                });
-
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
                 {
                     b.Property<int>("Id")
@@ -561,11 +561,27 @@ namespace Backend.Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTimeOffset?>("ContractEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContractNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("ContractStartDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
+
+                    b.Property<decimal>("DiscountRate")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 4)
+                        .HasColumnType("numeric(5,4)")
+                        .HasDefaultValue(0m);
 
                     b.Property<int>("FacilityId")
                         .HasColumnType("integer");
@@ -580,6 +596,10 @@ namespace Backend.Infrastructure.Data.Migrations
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<int>("TariffId")
                         .HasColumnType("integer");
@@ -1111,6 +1131,17 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.ToTable("AppUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.DayAheadEnergyPriceHistory", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.MarketOperator", "MarketOperator")
+                        .WithMany("DayAheadPriceHistories")
+                        .HasForeignKey("MarketOperatorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MarketOperator");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Device", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.DeviceType", "DeviceType")
@@ -1215,17 +1246,6 @@ namespace Backend.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Facility");
-                });
-
-            modelBuilder.Entity("Backend.Domain.Entities.EnergyPriceHistory", b =>
-                {
-                    b.HasOne("Backend.Domain.Entities.MarketOperator", "MarketOperator")
-                        .WithMany("PriceHistories")
-                        .HasForeignKey("MarketOperatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MarketOperator");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
@@ -1386,9 +1406,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.MarketOperator", b =>
                 {
-                    b.Navigation("FirmMarketOperators");
+                    b.Navigation("DayAheadPriceHistories");
 
-                    b.Navigation("PriceHistories");
+                    b.Navigation("FirmMarketOperators");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Tariff", b =>

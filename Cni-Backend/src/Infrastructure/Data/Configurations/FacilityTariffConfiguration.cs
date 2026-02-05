@@ -23,6 +23,17 @@ public class FacilityTariffConfiguration : IEntityTypeConfiguration<FacilityTari
         builder.Property(ft => ft.IsActive)
             .HasDefaultValue(true);
 
+        // Contract details
+        builder.Property(ft => ft.ContractNumber)
+            .HasMaxLength(100);
+
+        builder.Property(ft => ft.DiscountRate)
+            .HasPrecision(5, 4)
+            .HasDefaultValue(0m);
+
+        builder.Property(ft => ft.Notes)
+            .HasMaxLength(1000);
+
         // Relationship to Facility
         builder.HasOne(ft => ft.Facility)
             .WithMany(f => f.FacilityTariffs)

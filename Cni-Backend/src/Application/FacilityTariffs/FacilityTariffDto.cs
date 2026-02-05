@@ -15,6 +15,14 @@ public class FacilityTariffDto
     public decimal TaxRate { get; set; }
     public string Currency { get; set; } = "EUR";
     public bool IsActive { get; set; }
+
+    // Contract details
+    public string? ContractNumber { get; set; }
+    public decimal DiscountRate { get; set; }
+    public DateTimeOffset? ContractStartDate { get; set; }
+    public DateTimeOffset? ContractEndDate { get; set; }
+    public string? Notes { get; set; }
+
     public DateTimeOffset Created { get; set; }
     public string? CreatedBy { get; set; }
     public DateTimeOffset LastModified { get; set; }
@@ -45,6 +53,8 @@ public class FacilityTariffBriefDto
     public string TariffCountryName { get; set; } = string.Empty;
     public string? TariffDistributorName { get; set; }
     public bool IsActive { get; set; }
+    public string? ContractNumber { get; set; }
+    public decimal DiscountRate { get; set; }
 
     private class Mapping : Profile
     {

@@ -25,7 +25,7 @@ public interface IApplicationDbContext
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }
     DbSet<FirmMarketOperator> FirmMarketOperators { get; }
-    DbSet<EnergyPriceHistory> EnergyPriceHistories { get; }
+    DbSet<DayAheadEnergyPriceHistory> DayAheadEnergyPriceHistories { get; }
     DbSet<Tariff> Tariffs { get; }
     DbSet<FacilityTariff> FacilityTariffs { get; }
 

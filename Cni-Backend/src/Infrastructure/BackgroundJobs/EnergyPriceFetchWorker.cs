@@ -194,7 +194,7 @@ public class EnergyPriceFetchWorker
         foreach (var pricePoint in result.Prices)
         {
             // Check if this price point already exists (deduplication by country name)
-            var exists = await _context.EnergyPriceHistories
+            var exists = await _context.DayAheadEnergyPriceHistories
                 .AnyAsync(e =>
                     e.MarketOperatorId == mo.Id &&
                     e.Country == countryName &&
@@ -207,7 +207,7 @@ public class EnergyPriceFetchWorker
             }
 
             // Store with country name instead of area code
-            var entity = new EnergyPriceHistory
+            var entity = new DayAheadEnergyPriceHistory
             {
                 MarketOperatorId = mo.Id,
                 Country = countryName,
@@ -216,7 +216,7 @@ public class EnergyPriceFetchWorker
                 PriceLocalTimestamp = pricePoint.LocalTimestamp
             };
 
-            _context.EnergyPriceHistories.Add(entity);
+            _context.DayAheadEnergyPriceHistories.Add(entity);
             insertedCount++;
         }
 

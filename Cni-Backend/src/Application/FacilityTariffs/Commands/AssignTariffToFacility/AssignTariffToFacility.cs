@@ -14,6 +14,13 @@ public record AssignTariffToFacilityCommand : IRequest<int>
 {
     public int FacilityId { get; init; }
     public int TariffId { get; init; }
+
+    // Optional contract details for special arrangements
+    public string? ContractNumber { get; init; }
+    public decimal DiscountRate { get; init; } = 0m;
+    public DateTimeOffset? ContractStartDate { get; init; }
+    public DateTimeOffset? ContractEndDate { get; init; }
+    public string? Notes { get; init; }
 }
 
 public class AssignTariffToFacilityCommandValidator : AbstractValidator<AssignTariffToFacilityCommand>
@@ -27,6 +34,25 @@ public class AssignTariffToFacilityCommandValidator : AbstractValidator<AssignTa
         RuleFor(x => x.TariffId)
             .GreaterThan(0)
             .WithMessage("Tariff ID must be greater than 0.");
+
+        RuleFor(x => x.DiscountRate)
+            .InclusiveBetween(0m, 1m)
+            .WithMessage("Discount rate must be between 0 and 1 (0% to 100%).");
+
+        RuleFor(x => x.ContractNumber)
+            .MaximumLength(100)
+            .When(x => x.ContractNumber != null)
+            .WithMessage("Contract number cannot exceed 100 characters.");
+
+        RuleFor(x => x.Notes)
+            .MaximumLength(1000)
+            .When(x => x.Notes != null)
+            .WithMessage("Notes cannot exceed 1000 characters.");
+
+        RuleFor(x => x.ContractEndDate)
+            .GreaterThan(x => x.ContractStartDate)
+            .When(x => x.ContractStartDate.HasValue && x.ContractEndDate.HasValue)
+            .WithMessage("Contract end date must be after the start date.");
     }
 }
 
@@ -73,12 +99,17 @@ public class AssignTariffToFacilityCommandHandler : IRequestHandler<AssignTariff
                 existingAssignment.IsActive = false;
             }
 
-            // Create the new assignment
+            // Create the new assignment with contract details
             var facilityTariff = new FacilityTariff
             {
                 FacilityId = request.FacilityId,
                 TariffId = request.TariffId,
-                IsActive = true
+                IsActive = true,
+                ContractNumber = request.ContractNumber,
+                DiscountRate = request.DiscountRate,
+                ContractStartDate = request.ContractStartDate,
+                ContractEndDate = request.ContractEndDate,
+                Notes = request.Notes
             };
 
             _context.FacilityTariffs.Add(facilityTariff);
