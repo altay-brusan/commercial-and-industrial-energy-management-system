@@ -95,14 +95,14 @@ public class ApplicationDbContextInitialiser
         {
             var tenant = new Tenant
             {
-                Identifier = "default",
-                Name = "Default Tenant",
+                Identifier = "demo",
+                Name = "Demo Tenant",
                 Created = DateTime.UtcNow
             };
             _context.Tenants.Add(tenant);
             await _context.SaveChangesAsync();
             tenantId = tenant.Id;
-            _logger.LogInformation("Default tenant created with ID {TenantId}", tenantId);
+            _logger.LogInformation("Demo tenant created with ID {TenantId}", tenantId);
         }
         else
         {
@@ -118,25 +118,25 @@ public class ApplicationDbContextInitialiser
             var firm = new Firm
             {
                 TenantId = tenantId,
-                Name = "Default Firm",
-                Type = "Default",
-                Country = "Default",
-                State = "",
-                City = "",
-                District = "",
-                PostalCode = "",
-                Address = "",
-                ContactEmail = "",
-                ContactPhone = "",
-                Fax = "",
-                TaxNumber = "",
-                TaxOffice = "",
+                Name = "Demo Energy Solutions",
+                Type = "Energy Management",
+                Country = "Netherlands",
+                State = "North Holland",
+                City = "Amsterdam",
+                District = "Centrum",
+                PostalCode = "1012 JS",
+                Address = "Damrak 123",
+                ContactEmail = "contact@demo-energy.nl",
+                ContactPhone = "+31 20 123 4567",
+                Fax = "+31 20 123 4568",
+                TaxNumber = "NL123456789B01",
+                TaxOffice = "Amsterdam",
                 Created = DateTime.UtcNow
             };
             _context.Firms.Add(firm);
             await _context.SaveChangesAsync();
             firmId = firm.Id;
-            _logger.LogInformation("Default firm created with ID {FirmId}", firmId);
+            _logger.LogInformation("Demo firm created with ID {FirmId}", firmId);
         }
         else
         {
@@ -152,18 +152,18 @@ public class ApplicationDbContextInitialiser
             var facility = new Facility
             {
                 FirmId = firmId,
-                Name = "Default Facility",
-                Address = "Default Address",
+                Name = "Demo Solar Park Amsterdam",
+                Address = "Westpoort Industrial Area 456, 1014 AK Amsterdam, Netherlands",
                 EnergyCapacity = 100,
                 EnergyUnit = Backend.Domain.Enums.EnergyUnit.KWh,
-                Longitude = 0,
-                Latitude = 0,
+                Longitude = 4.8945, // Amsterdam coordinates
+                Latitude = 52.3676,
                 Created = DateTime.UtcNow
             };
             _context.Facilities.Add(facility);
             await _context.SaveChangesAsync();
             facilitiyId = facility.Id;
-            _logger.LogInformation("Default facility created with ID {FacilityId}", facilitiyId);
+            _logger.LogInformation("Demo facility created with ID {FacilityId}", facilitiyId);
         }
         else
         {
@@ -206,7 +206,7 @@ public class ApplicationDbContextInitialiser
             Name = "Admin",
             Surname = "User",
             Title = "System Administrator",
-            Description = "Default system administrator account"
+            Description = "Demo system administrator account"
         };
 
         if (_userManager.Users.All(u => u.UserName != administrator.UserName))
@@ -228,11 +228,11 @@ public class ApplicationDbContextInitialiser
                 _context.UserFirmFacilities.Add(userFirmFacility);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Administrator user created successfully");
+                _logger.LogInformation("Demo administrator user created successfully");
             }
             else
             {
-                _logger.LogWarning("Failed to create administrator user: {Errors}",
+                _logger.LogWarning("Failed to create demo administrator user: {Errors}",
                     string.Join(", ", result.Errors.Select(e => e.Description)));
             }
         }
@@ -376,9 +376,9 @@ public class ApplicationDbContextInitialiser
             };
             _context.Tariffs.AddRange(tariffs);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Default tariffs created");
+            _logger.LogInformation("Demo tariffs created");
 
-            // Assign Netherlands tariff to the default facility
+            // Assign Netherlands tariff to the demo facility
             var nlTariff = tariffs.First(t => t.CountryName == "Netherlands");
             var facilityTariff = new FacilityTariff
             {
@@ -389,7 +389,7 @@ public class ApplicationDbContextInitialiser
             };
             _context.FacilityTariffs.Add(facilityTariff);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Default facility tariff assignment created");
+            _logger.LogInformation("Demo facility tariff assignment created");
         }
 
         #endregion
