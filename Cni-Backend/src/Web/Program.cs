@@ -42,12 +42,12 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Test"
     var lineArgs = Environment.GetCommandLineArgs();
     if (!lineArgs.Any(p => p.Contains("NSwag.AspNetCore.Launcher.dll")))
     {
-        await app.InitialiseDatabaseAsync();
+        await app.InitializeDatabaseAsync();
     }
 }
 else
 {
-    await app.InitialiseDatabaseAsync();
+    await app.InitializeDatabaseAsync();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

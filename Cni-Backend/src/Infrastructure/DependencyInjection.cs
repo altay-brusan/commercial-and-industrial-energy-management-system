@@ -45,7 +45,7 @@ public static class DependencyInjection
 
         builder.Services.AddAutoMapper(typeof(GrpcMappingProfile).Assembly);
 
-        builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+        builder.Services.AddScoped<ApplicationDbContextInitializer>();
 
         builder.Services.AddAuthentication()
             .AddBearerToken(IdentityConstants.BearerScheme);
