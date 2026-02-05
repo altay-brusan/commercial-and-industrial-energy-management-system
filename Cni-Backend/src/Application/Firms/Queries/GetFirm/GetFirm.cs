@@ -8,13 +8,6 @@ public record GetFirmQuery : IRequest<FirmDto?>
     public int Id { get; set; }
 }
 
-public class GetFirmQueryValidator : AbstractValidator<GetFirmQuery>
-{
-    public GetFirmQueryValidator()
-    {
-    }
-}
-
 public class GetFirmQueryHandler : IRequestHandler<GetFirmQuery, FirmDto?>
 {
     private readonly IApplicationDbContext _context; 

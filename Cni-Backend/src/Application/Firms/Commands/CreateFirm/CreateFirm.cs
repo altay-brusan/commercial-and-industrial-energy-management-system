@@ -1,4 +1,4 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Backend.Domain.Entities;
 using Backend.Domain.Events;
@@ -24,88 +24,24 @@ public record CreateFirmCommand : IRequest<int>
     public string? TaxOffice { get; set; }
 }
 
-public class CreateFirmCommandValidator : AbstractValidator<CreateFirmCommand>
-{
-    public CreateFirmCommandValidator()
-    {
-        RuleFor(v => v.Name)
-             .NotEmpty()
-             .MaximumLength(500);
-
-        RuleFor(v => v.LogoUrl)
-            .MaximumLength(1000);
-
-        RuleFor(v => v.Type)
-            .MaximumLength(100);
-
-        RuleFor(v => v.Country)
-            .MaximumLength(100)
-            .NotEmpty();
-
-        RuleFor(v => v.State)
-            .MaximumLength(100)
-            .NotEmpty();
-
-        RuleFor(v => v.City)
-            .MaximumLength(100)
-            .NotEmpty();
-
-        RuleFor(v => v.District)
-            .MaximumLength(100);
-
-        RuleFor(v => v.PostalCode)
-            .MaximumLength(20);
-
-        RuleFor(v => v.Address)
-            .NotEmpty()
-            .MaximumLength(1000);
-
-        RuleFor(v => v.ContactEmail)
-            .NotEmpty()
-            .MaximumLength(255)
-            .EmailAddress();
-
-        RuleFor(v => v.ContactPhone)
-            .NotEmpty()
-            .MaximumLength(50);
-
-        RuleFor(v => v.Fax)
-            .MaximumLength(50);
-
-        RuleFor(v => v.TaxNumber)
-            .NotEmpty()
-            .MaximumLength(50);
-
-        RuleFor(v => v.TaxOffice)
-            .NotEmpty()
-            .MaximumLength(100);
-    }
-}
-
 public class CreateFirmCommandHandler : IRequestHandler<CreateFirmCommand, int>
 {
     private readonly IApplicationDbContext _context;
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly IMultiTenantService _multiTenantService;
+
     public CreateFirmCommandHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
     {
         _context = context;
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<int> Handle(CreateFirmCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = _isSuperAdmin ? request.TenantId : _tenantId;
-
-        if (tenantId is null)
-        {
-            throw new ArgumentNullException(nameof(tenantId));
-        }
+        var tenantId = _multiTenantService.GetTenantIdForCreation(request.TenantId > 0 ? request.TenantId : null);
 
         var entity = new Firm
         {
-            TenantId = (int)tenantId,
+            TenantId = tenantId,
             Name = request.Name,
             LogoUrl = request.LogoUrl,
             Type = request.Type,

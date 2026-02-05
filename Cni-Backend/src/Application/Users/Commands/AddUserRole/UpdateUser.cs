@@ -12,15 +12,6 @@ public record AddUserRoleCommand : IRequest<Unit>
     public string RoleName { get; set; } = default!;
 }
 
-public class AddUserRoleCommandValidator : AbstractValidator<AddUserRoleCommand>
-{
-    public AddUserRoleCommandValidator()
-    {
-        RuleFor(x => x.UserId).NotEmpty();
-        RuleFor(x => x.RoleName).NotEmpty();
-    }
-}
-
 public class AddUserRoleCommandHandler : IRequestHandler<AddUserRoleCommand, Unit>
 {
     private readonly UserManager<ApplicationUser> _userManager;

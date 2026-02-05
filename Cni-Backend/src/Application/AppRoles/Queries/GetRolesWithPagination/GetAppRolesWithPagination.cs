@@ -1,4 +1,4 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Mappings;
 using Backend.Application.Common.Models;
 using Backend.Application.Common.Security;
@@ -16,20 +16,20 @@ public class GetAppRolesWithPaginationQueryHandler : IRequestHandler<GetAppRoles
 {
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly IMapper _mapper;
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly IMultiTenantService _multiTenantService;
+
     public GetAppRolesWithPaginationQueryHandler(RoleManager<IdentityRole> roleManager, IMapper mapper, IMultiTenantService multiTenantService)
     {
         _roleManager = roleManager;
-        _mapper = mapper; 
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _mapper = mapper;
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<PaginatedList<AppRoleBriefDto>> Handle(GetAppRolesWithPaginationQuery request, CancellationToken cancellationToken)
     {
-        
-        return await _roleManager.Roles.Where(x => _isSuperAdmin || x.Name != "Administrator")
+        var isSuperAdmin = _multiTenantService.IsSuperAdmin();
+
+        return await _roleManager.Roles.Where(x => isSuperAdmin || x.Name != "Administrator")
             .OrderBy(x => x.Name)
              .ProjectTo<AppRoleBriefDto>(_mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);

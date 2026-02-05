@@ -1,8 +1,7 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Backend.Application.Common.Interfaces;
 using Backend.Domain.Entities;
-using Backend.Domain.Entities.Proto;
-using Backend.Domain.Entities.Topology;
+using Backend.Domain.Entities.DeviceData;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -12,42 +11,60 @@ namespace Backend.Infrastructure.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole, string>, IApplicationDbContext
 {
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
+    private readonly int? _effectiveTenantId;
+    private readonly bool _isTenantScoped;
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IMultiTenantService multiTenantService) : base(options)
     {
-
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
+        _effectiveTenantId = multiTenantService.GetEffectiveTenantId();
+        _isTenantScoped = multiTenantService.IsTenantScoped();
     }
+
+    // Core entities
     public DbSet<Plan> Plans => Set<Plan>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Firm> Firms => Set<Firm>();
     public DbSet<Facility> Facilities => Set<Facility>();
     public DbSet<UserFirmFacility> UserFirmFacilities => Set<UserFirmFacility>();
-    public DbSet<TopologyNode> TopologyNodes => Set<TopologyNode>();
-    public DbSet<TopologyEdge> TopologyEdges => Set<TopologyEdge>();
 
     public DbSet<Device> Devices => Set<Device>();
     public DbSet<DeviceType> DeviceTypes => Set<DeviceType>();
-    public DbSet<AppSolarData> SolarDatas => Set<AppSolarData>();
-    public DbSet<AppBESSData> BESSDatas => Set<AppBESSData>();
-    public DbSet<AppGrpcSystemData> GrpcFacilityDatas => Set<AppGrpcSystemData>();
-    public DbSet<AppPCSData> PCSDatas => Set<AppPCSData>();
-    public DbSet<AppSmartMeterData> SmartMeterDatas => Set<AppSmartMeterData>();
+    public DbSet<DeviceLink> DeviceLinks => Set<DeviceLink>();
 
+    // Device telemetry data (time-series with JSON payload)
+    public DbSet<DeviceBessData> DeviceBessData => Set<DeviceBessData>();
+    public DbSet<DeviceSolarData> DeviceSolarData => Set<DeviceSolarData>();
+    public DbSet<DevicePcsData> DevicePcsData => Set<DevicePcsData>();
+    public DbSet<DeviceSmartMeterData> DeviceSmartMeterData => Set<DeviceSmartMeterData>();
 
-    public DbSet<TodoList> TodoLists => Set<TodoList>();
+    // Market and tariff entities
+    public DbSet<MarketOperator> MarketOperators => Set<MarketOperator>();
+    public DbSet<FirmMarketOperator> FirmMarketOperators => Set<FirmMarketOperator>();
+    public DbSet<DayAheadEnergyPriceHistory> DayAheadEnergyPriceHistories => Set<DayAheadEnergyPriceHistory>();
+    public DbSet<Tariff> Tariffs => Set<Tariff>();
+    public DbSet<FacilityTariff> FacilityTariffs => Set<FacilityTariff>();
 
-    public DbSet<TodoItem> TodoItems => Set<TodoItem>();
-    
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        builder.Entity<Tenant>().HasQueryFilter(x => _isSuperAdmin || x.Id == _tenantId);
-        builder.Entity<Firm>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
-        builder.Entity<Facility>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
-        builder.Entity<TodoList>().HasQueryFilter(x => _isSuperAdmin || x.TenantId == _tenantId);
+        // Query filters use effective tenant ID when scoped
+        // !_isTenantScoped = admin without selection -> shows ALL data
+        // _isTenantScoped = regular user OR admin with selection -> scoped to effective tenant
+        builder.Entity<Tenant>().HasQueryFilter(x => !_isTenantScoped || x.Id == _effectiveTenantId);
+        builder.Entity<Firm>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
+        // Entities that access tenant through Firm relationship need matching filters
+        builder.Entity<Facility>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<FirmMarketOperator>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
+        // Entities that access tenant through Facility → Firm need matching filters
+        builder.Entity<Device>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DeviceLink>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<FacilityTariff>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        // Device telemetry data - filter by denormalized FirmId
+        builder.Entity<DeviceBessData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DeviceSolarData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DevicePcsData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DeviceSmartMeterData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
+        // Note: Tariffs, MarketOperators, DayAheadEnergyPriceHistories are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         builder.Entity<ApplicationUser>().ToTable("AppUsers");

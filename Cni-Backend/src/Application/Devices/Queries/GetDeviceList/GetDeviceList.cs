@@ -58,7 +58,7 @@ public class GetDevicesWithPaginationQueryHandler : IRequestHandler<GetDevicesWi
 
 
         return await query
-            .OrderBy(x => x.DeviceName)
+            .OrderBy(x => x.Name)
             .ProjectTo<DeviceDto>(_mapper.ConfigurationProvider)
             .PaginatedListAsync(request.PageNumber, request.PageSize);
     }

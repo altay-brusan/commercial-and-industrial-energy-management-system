@@ -1,13 +1,8 @@
-﻿using Backend.Application.Common.Models;
-using Backend.Application.Devices.Commands;
-using Backend.Application.Devices.Queries.GetDevice;
-using Backend.Application.Devices.Queries.GetDeviceList;
-using Backend.Application.Devices.Queries;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Backend.Application.Scada.DTOs;
 using Backend.Application.Scada.Queries.GetScadaData;
-using Backend.Domain.Entities.Proto.DTO;
 using Backend.Application.Scada.Commands.ChangeTime;
 using Backend.Application.Scada.Queries.GetScadaDataMinimal;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Web.Endpoints;
 

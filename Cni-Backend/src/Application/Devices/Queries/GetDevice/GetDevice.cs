@@ -14,13 +14,6 @@ public record GetDeviceQuery : IRequest<DeviceDto?>
     public int Id { get; set; }
 }
 
-public class GetDeviceQueryValidator : AbstractValidator<GetDeviceQuery>
-{
-    public GetDeviceQueryValidator()
-    {
-    }
-}
-
 public class GetDeviceQueryHandler : IRequestHandler<GetDeviceQuery, DeviceDto?>
 {
     private readonly IApplicationDbContext _context;

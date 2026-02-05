@@ -1,62 +1,41 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Backend.Domain.Entities;
+using Backend.Domain.Enums;
 using Backend.Domain.Events;
 
 namespace Backend.Application.Facilities.Commands.CreateFacility;
+
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record CreateFacilityCommand : IRequest<int>
 {
-    public int TenantId { get; set; }
     public int FirmId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
-    public int Capacity { get; set; }
+    public int EnergyCapacity { get; set; }
+    public EnergyUnit EnergyUnit { get; set; } = EnergyUnit.KWh;
     public double Longitude { get; set; }
     public double Latitude { get; set; }
-
-}
-
-public class CreateFacilityCommandValidator : AbstractValidator<CreateFacilityCommand>
-{
-    public CreateFacilityCommandValidator()
-    {
-        RuleFor(v => v.Name)
-             .NotEmpty()
-             .MaximumLength(500);
-        RuleFor(v => v.Address).MaximumLength(1000);
-        RuleFor(v=> v.Capacity).GreaterThanOrEqualTo(0);
-    }
 }
 
 public class CreateFacilityCommandHandler : IRequestHandler<CreateFacilityCommand, int>
 {
     private readonly IApplicationDbContext _context;
-    private readonly int? _tenantId;
-    private readonly bool _isSuperAdmin;
-    public CreateFacilityCommandHandler(IApplicationDbContext context, IMultiTenantService multiTenantService)
+
+    public CreateFacilityCommandHandler(IApplicationDbContext context)
     {
         _context = context;
-        _tenantId = multiTenantService.GetCurrentTenantId();
-        _isSuperAdmin = multiTenantService.IsSuperAdmin();
     }
 
     public async Task<int> Handle(CreateFacilityCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = _isSuperAdmin ? request.TenantId : _tenantId;
-
-        if (tenantId is null)
-        {
-            throw new ArgumentNullException(nameof(tenantId));
-        }
-
         var entity = new Facility
         {
-            TenantId = (int)tenantId,
             FirmId = request.FirmId,
             Name = request.Name,
             Address = request.Address,
-            Capacity = request.Capacity,
+            EnergyCapacity = request.EnergyCapacity,
+            EnergyUnit = request.EnergyUnit,
             Longitude = request.Longitude,
             Latitude = request.Latitude
         };

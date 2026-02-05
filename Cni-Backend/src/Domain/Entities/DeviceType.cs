@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Backend.Domain.Entities;
+
+/// <summary>
+/// Represents a type/category of device.
+/// Examples: Solar, Generator, Wind Turbine, Battery (BESS), Inverter, PCS,
+/// Smart Meter, Grid, DC Bus, Transformer, Load
+/// </summary>
 public class DeviceType : BaseAuditableEntity
 {
+    /// <summary>
+    /// Name of the device type (e.g., "Inverter", "Battery", "Solar")
+    /// </summary>
     public required string Name { get; set; }
-    public bool HasGrpcStream { get; set; }
-    public bool IsDataCollectedViaOtherDevice { get; set; }
 }

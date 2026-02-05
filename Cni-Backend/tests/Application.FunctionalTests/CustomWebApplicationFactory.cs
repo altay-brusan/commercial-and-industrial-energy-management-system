@@ -43,13 +43,23 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .RemoveAll<IUser>()
                 .AddTransient(provider => Mock.Of<IUser>(s => s.Id == GetUserId()));
 
-            // Mock multi-tenant service for tests (always return tenant 1, not super admin)
+            // Mock multi-tenant service for tests (super admin, not tenant scoped - can see all data)
             services
                 .RemoveAll<IMultiTenantService>()
                 .AddScoped<IMultiTenantService>(provider =>
-                    Mock.Of<IMultiTenantService>(s =>
-                        s.GetCurrentTenantId() == 1 &&
-                        s.IsSuperAdmin() == false));
+                {
+                    var mock = new Mock<IMultiTenantService>();
+                    mock.Setup(s => s.GetAuthenticatedTenantId()).Returns((int?)null);
+                    mock.Setup(s => s.GetSelectedTenantId()).Returns((int?)null);
+                    mock.Setup(s => s.GetEffectiveTenantId()).Returns((int?)null);
+                    mock.Setup(s => s.IsSuperAdmin()).Returns(true);
+                    mock.Setup(s => s.IsTenantScoped()).Returns(false);
+                    mock.Setup(s => s.IsImpersonating()).Returns(false);
+                    // Return the requested tenant ID when creating entities (super admin can create for any tenant)
+                    mock.Setup(s => s.GetTenantIdForCreation(It.IsAny<int?>()))
+                        .Returns((int? requestedTenantId) => requestedTenantId ?? 1);
+                    return mock.Object;
+                });
 
             // Remove existing ApplicationDbContext and all related services
             var descriptorToRemove = services.SingleOrDefault(

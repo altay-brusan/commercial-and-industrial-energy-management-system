@@ -22,16 +22,6 @@ public sealed class UpdateUserFirmFacilityDto
     public int? FirmId { get; set; }
     public int? FacilityId { get; set; }
 }
-public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
-{
-    public UpdateUserCommandValidator()
-    {
-        RuleFor(v => v.Name)
-             .NotEmpty()
-             .MaximumLength(100);
-    }
-}
-
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>  // Değişiklik: IRequestHandler<UpdateUserCommand, Unit>
 {
     private readonly UserManager<ApplicationUser> _userManager;

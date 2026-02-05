@@ -8,13 +8,6 @@ public record GetTenantQuery : IRequest<TenantDto?>
     public int Id { get; set; }
 }
 
-public class GetTenantQueryValidator : AbstractValidator<GetTenantQuery>
-{
-    public GetTenantQueryValidator()
-    {
-    }
-}
-
 public class GetTenantQueryHandler : IRequestHandler<GetTenantQuery, TenantDto?>
 {
     private readonly IApplicationDbContext _context; 

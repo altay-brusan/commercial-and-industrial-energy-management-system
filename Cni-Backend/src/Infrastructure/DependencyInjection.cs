@@ -43,9 +43,9 @@ public static class DependencyInjection
             builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         }
 
-        builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(GrpcMappingProfile).Assembly));
+        builder.Services.AddAutoMapper(typeof(GrpcMappingProfile).Assembly);
 
-        builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+        builder.Services.AddScoped<ApplicationDbContextInitializer>();
 
         builder.Services.AddAuthentication()
             .AddBearerToken(IdentityConstants.BearerScheme);
@@ -78,6 +78,13 @@ public static class DependencyInjection
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityEmailAdapter<ApplicationUser>>();
         builder.Services.AddSingleton<ILogEventEnricher, UserEnricher>();
         builder.Services.AddSingleton<IExternalDataService, ExternalDataService>();
-        builder.Services.AddSingleton<GrpcStreamManager>();
+        // gRPC disabled
+        // builder.Services.AddSingleton<GrpcStreamManager>();
+
+        // Energy Price Service for fetching prices from Market Operators
+        builder.Services.AddHttpClient<IEnergyPriceService, EnergyPriceService>();
+
+        // Country mapping service for area codes and timezones
+        builder.Services.AddSingleton<ICountryMappingService, CountryMappingService>();
     }
 }

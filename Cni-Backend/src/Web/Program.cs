@@ -42,12 +42,12 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Test"
     var lineArgs = Environment.GetCommandLineArgs();
     if (!lineArgs.Any(p => p.Contains("NSwag.AspNetCore.Launcher.dll")))
     {
-        await app.InitialiseDatabaseAsync();
+        await app.InitializeDatabaseAsync();
     }
 }
 else
 {
-    await app.InitialiseDatabaseAsync();
+    await app.InitializeDatabaseAsync();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -73,10 +73,24 @@ app.MapEndpoints();
 if (app.Environment.EnvironmentName != "Test")
 {
     app.UseHangfireDashboard("/jobs-dashboard");
-    RecurringJob.AddOrUpdate<GrpcFacilityWorker>(
-        "grpc-facility-job",
-        worker => worker.CheckFacilities(),
-        "*/10 * * * *");
+    // gRPC disabled
+    // RecurringJob.AddOrUpdate<GrpcFacilityWorker>(
+    //     "grpc-facility-job",
+    //     worker => worker.CheckFacilities(),
+    //     "*/10 * * * *");
+
+    // Energy price fetch jobs
+    // Morning job - fetch current day prices (0:01 AM UTC)
+    RecurringJob.AddOrUpdate<EnergyPriceFetchWorker>(
+        "energy-price-morning-job",
+        worker => worker.FetchMorningPrices(),
+        "1 0 * * *");
+
+    // Afternoon job - fetch tomorrow prices (12:01 PM UTC = 13:01 CET)
+    RecurringJob.AddOrUpdate<EnergyPriceFetchWorker>(
+        "energy-price-afternoon-job",
+        worker => worker.FetchAfternoonPrices(),
+        "1 12 * * *");
 }
 app.Run();
 
