@@ -101,7 +101,14 @@ ORDER BY "Table";
 -- After running this script:
 -- 1. Run the application: cd src/Web && dotnet run
 --    (This triggers SeedAsync to recreate demo data:
---     Demo Tenant, Demo Energy Solutions Firm, Demo Solar Park Amsterdam,
---     Roles, Admin user, Devices, Tariffs)
--- 2. If needed, run additional seed scripts for market operators
+--     - Demo Tenant
+--     - Demo Energy Solutions Firm
+--     - Demo Solar Park Amsterdam Facility
+--     - Roles (Administrator, Tenant.Admin, Tenant.User)
+--     - Admin user (administrator@localhost)
+--     - DeviceTypes and demo Devices
+--     - MarketOperators (ENTSO-E, EPIAS)
+--     - FirmMarketOperators (links Demo Firm to ENTSO-E with Netherlands area code)
+--     - Tariffs (Netherlands distributors: Liander, Stedin, Enexis)
+--     - FacilityTariffs (assigns Liander tariff to Demo facility)
 -- =====================================================
