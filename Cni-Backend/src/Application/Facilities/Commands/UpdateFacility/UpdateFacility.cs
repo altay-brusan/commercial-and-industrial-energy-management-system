@@ -18,22 +18,6 @@ public record UpdateFacilityCommand : IRequest
     public string? Topology { get; set; }
 }
 
-public class UpdateFacilityCommandValidator : AbstractValidator<UpdateFacilityCommand>
-{
-    public UpdateFacilityCommandValidator()
-    {
-        RuleFor(v => v.Name)
-            .NotEmpty()
-            .MaximumLength(500);
-        RuleFor(v => v.Address)
-            .MaximumLength(1000);
-        RuleFor(v => v.EnergyCapacity)
-            .GreaterThanOrEqualTo(0);
-        RuleFor(v => v.EnergyUnit)
-            .IsInEnum();
-    }
-}
-
 public class UpdateFacilityCommandHandler : IRequestHandler<UpdateFacilityCommand>
 {
     private readonly IApplicationDbContext _context;

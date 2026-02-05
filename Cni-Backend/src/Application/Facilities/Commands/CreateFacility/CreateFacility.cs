@@ -18,25 +18,6 @@ public record CreateFacilityCommand : IRequest<int>
     public double Latitude { get; set; }
 }
 
-public class CreateFacilityCommandValidator : AbstractValidator<CreateFacilityCommand>
-{
-    public CreateFacilityCommandValidator()
-    {
-        RuleFor(v => v.FirmId)
-            .GreaterThan(0)
-            .WithMessage("FirmId is required.");
-        RuleFor(v => v.Name)
-            .NotEmpty()
-            .MaximumLength(500);
-        RuleFor(v => v.Address)
-            .MaximumLength(1000);
-        RuleFor(v => v.EnergyCapacity)
-            .GreaterThanOrEqualTo(0);
-        RuleFor(v => v.EnergyUnit)
-            .IsInEnum();
-    }
-}
-
 public class CreateFacilityCommandHandler : IRequestHandler<CreateFacilityCommand, int>
 {
     private readonly IApplicationDbContext _context;

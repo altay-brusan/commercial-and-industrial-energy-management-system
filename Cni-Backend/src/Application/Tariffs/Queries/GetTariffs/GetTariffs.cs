@@ -25,21 +25,6 @@ public record GetTariffsQuery : IRequest<PaginatedList<TariffBriefDto>>
     public string? CountryName { get; init; }
 }
 
-public class GetTariffsQueryValidator : AbstractValidator<GetTariffsQuery>
-{
-    public GetTariffsQueryValidator()
-    {
-        RuleFor(x => x.PageNumber)
-            .GreaterThanOrEqualTo(1)
-            .WithMessage("PageNumber must be at least 1.");
-
-        RuleFor(x => x.PageSize)
-            .GreaterThanOrEqualTo(1)
-            .LessThanOrEqualTo(100)
-            .WithMessage("PageSize must be between 1 and 100.");
-    }
-}
-
 public class GetTariffsQueryHandler : IRequestHandler<GetTariffsQuery, PaginatedList<TariffBriefDto>>
 {
     private readonly IApplicationDbContext _context;

@@ -12,16 +12,6 @@ public record CreateTenantCommand : IRequest<int>
     public string? Identifier { get; init; }
 }
 
-public class CreateTenantCommandValidator : AbstractValidator<CreateTenantCommand>
-{
-    public CreateTenantCommandValidator()
-    {
-        RuleFor(v => v.Name)
-            .NotEmpty()
-            .MaximumLength(500);
-    }
-}
-
 public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, int>
 {
     private readonly IApplicationDbContext _context;

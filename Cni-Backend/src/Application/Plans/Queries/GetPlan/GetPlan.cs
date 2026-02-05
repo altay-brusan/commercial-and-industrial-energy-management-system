@@ -8,13 +8,6 @@ public record GetPlanQuery : IRequest<PlanDto?>
     public int Id { get; set; }
 }
 
-public class GetPlanQueryValidator : AbstractValidator<GetPlanQuery>
-{
-    public GetPlanQueryValidator()
-    {
-    }
-}
-
 public class GetPlanQueryHandler : IRequestHandler<GetPlanQuery, PlanDto?>
 {
     private readonly IApplicationDbContext _context; 

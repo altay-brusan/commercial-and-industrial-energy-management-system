@@ -12,16 +12,6 @@ public record GetFacilityTariffQuery : IRequest<FacilityTariffDto?>
     public int Id { get; init; }
 }
 
-public class GetFacilityTariffQueryValidator : AbstractValidator<GetFacilityTariffQuery>
-{
-    public GetFacilityTariffQueryValidator()
-    {
-        RuleFor(x => x.Id)
-            .GreaterThan(0)
-            .WithMessage("FacilityTariff ID must be greater than 0.");
-    }
-}
-
 public class GetFacilityTariffQueryHandler : IRequestHandler<GetFacilityTariffQuery, FacilityTariffDto?>
 {
     private readonly IApplicationDbContext _context;

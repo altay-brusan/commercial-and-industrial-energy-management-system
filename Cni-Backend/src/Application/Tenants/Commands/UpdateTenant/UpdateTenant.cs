@@ -11,18 +11,6 @@ public record UpdateTenantCommand : IRequest
     public string? Identifier { get; init; }
 }
 
-public class UpdateTenantCommandValidator : AbstractValidator<UpdateTenantCommand>
-{
-    public UpdateTenantCommandValidator()
-    {
-        RuleFor(v => v.Name)
-            .MaximumLength(500)
-            .NotEmpty();
-        RuleFor(v => v.Identifier)
-            .MaximumLength(250);
-    }
-}
-
 public class UpdateTenantCommandHandler : IRequestHandler<UpdateTenantCommand>
 {
     private readonly IApplicationDbContext _context;

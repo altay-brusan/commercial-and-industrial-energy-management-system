@@ -11,13 +11,6 @@ public record GetPowerGeneralGraphQuery : IRequest<List<PowerGeneralGraphDto>>
     public DateTime? EndDate { get; set; }
 }
 
-public class GetPowerGeneralGraphQueryValidator : AbstractValidator<GetPowerGeneralGraphQuery>
-{
-    public GetPowerGeneralGraphQueryValidator()
-    {
-    }
-}
-
 public class GetPowerGeneralGraphQueryHandler : IRequestHandler<GetPowerGeneralGraphQuery, List<PowerGeneralGraphDto>>
 {
     private readonly IApplicationDbContext _context;

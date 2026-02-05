@@ -15,14 +15,6 @@ public record AddRoleClaimCommand : IRequest<bool>
     public string ClaimType { get; init; } = "Permission"; // Varsayılan olarak "Permission"
     public string ClaimValue { get; init; } = string.Empty;
 }
-public class AddRoleClaimCommandValidator : AbstractValidator<AddRoleClaimCommand>
-{
-    public AddRoleClaimCommandValidator()
-    {
-        RuleFor(x => x.RoleName).NotEmpty().WithMessage("Role adı boş olamaz.");
-        RuleFor(x => x.ClaimValue).NotEmpty().WithMessage("Claim değeri boş olamaz.");
-    }
-}
 public class AddRoleClaimCommandHandler : IRequestHandler<AddRoleClaimCommand, bool>
 {
     private readonly RoleManager<IdentityRole> _roleManager;

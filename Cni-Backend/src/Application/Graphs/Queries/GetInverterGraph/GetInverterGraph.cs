@@ -12,13 +12,6 @@ public record GetInverterGraphQuery : IRequest<List<InverterGraphDto>>
     public DateTime? EndDate { get; set; }
 }
 
-public class GetInverterGraphQueryValidator : AbstractValidator<GetInverterGraphQuery>
-{
-    public GetInverterGraphQueryValidator()
-    {
-    }
-}
-
 public class GetInverterGraphQueryHandler : IRequestHandler<GetInverterGraphQuery, List<InverterGraphDto>>
 {
     private readonly IApplicationDbContext _context;

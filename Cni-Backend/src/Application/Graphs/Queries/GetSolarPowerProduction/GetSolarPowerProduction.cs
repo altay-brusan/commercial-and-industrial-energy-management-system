@@ -12,13 +12,6 @@ public record GetSolarPowerProductionQuery : IRequest<SolarGraphDto?>
     public DateTime? EndDate { get; set; }
 }
 
-public class GetSolarPowerProductionQueryValidator : AbstractValidator<GetSolarPowerProductionQuery>
-{
-    public GetSolarPowerProductionQueryValidator()
-    {
-    }
-}
-
 public class GetSolarPowerProductionQueryHandler : IRequestHandler<GetSolarPowerProductionQuery, SolarGraphDto?>
 {
     private readonly IApplicationDbContext _context;

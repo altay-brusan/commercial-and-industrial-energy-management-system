@@ -11,15 +11,6 @@ public record GetUserQuery : IRequest<UserDto?>
     public required string Id { get; set; }
 }
 
-public class GetUserQueryValidator : AbstractValidator<GetUserQuery>
-{
-    public GetUserQueryValidator()
-    {
-        RuleFor(x => x.Id)
-            .NotEmpty().WithMessage("UserId is required.");
-    }
-}
-
 public class GetUserQueryHandler : IRequestHandler<GetUserQuery, UserDto?>
 {
     private readonly UserManager<ApplicationUser> _userManager;

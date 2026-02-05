@@ -13,17 +13,6 @@ public record GetActiveTariffByCountryQuery : IRequest<TariffDto?>
     public string CountryName { get; init; } = string.Empty;
 }
 
-public class GetActiveTariffByCountryQueryValidator : AbstractValidator<GetActiveTariffByCountryQuery>
-{
-    public GetActiveTariffByCountryQueryValidator()
-    {
-        RuleFor(x => x.CountryName)
-            .NotEmpty()
-            .MaximumLength(100)
-            .WithMessage("Country name is required and must be at most 100 characters.");
-    }
-}
-
 public class GetActiveTariffByCountryQueryHandler : IRequestHandler<GetActiveTariffByCountryQuery, TariffDto?>
 {
     private readonly IApplicationDbContext _context;

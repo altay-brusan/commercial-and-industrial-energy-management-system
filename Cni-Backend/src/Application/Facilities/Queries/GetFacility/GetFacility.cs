@@ -8,13 +8,6 @@ public record GetFacilityQuery : IRequest<FacilityDto?>
     public int Id { get; set; }
 }
 
-public class GetFacilityQueryValidator : AbstractValidator<GetFacilityQuery>
-{
-    public GetFacilityQueryValidator()
-    {
-    }
-}
-
 public class GetFacilityQueryHandler : IRequestHandler<GetFacilityQuery, FacilityDto?>
 {
     private readonly IApplicationDbContext _context; 

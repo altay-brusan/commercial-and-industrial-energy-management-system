@@ -8,14 +8,6 @@ public record ChangeTimeCommand : IRequest<bool>
     public DateTime Time { get; set; }
 }
 
-public class ChangeTimeCommandValidator : AbstractValidator<ChangeTimeCommand>
-{
-    public ChangeTimeCommandValidator()
-    {
-    }
-}
-
-
 public class ChangeTimeCommandHandler : IRequestHandler<ChangeTimeCommand, bool>
 {
     private readonly IApplicationDbContext _context;

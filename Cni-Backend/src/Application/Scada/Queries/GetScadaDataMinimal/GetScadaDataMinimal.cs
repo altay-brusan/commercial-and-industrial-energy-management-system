@@ -7,13 +7,6 @@ public record GetScadaDataMinimalQuery : IRequest<ScadaDataMinimalDto?>
 {
 }
 
-public class GetScadaDataMinimalQueryValidator : AbstractValidator<GetScadaDataMinimalQuery>
-{
-    public GetScadaDataMinimalQueryValidator()
-    {
-    }
-}
-
 public class GetScadaDataMinimalQueryHandler : IRequestHandler<GetScadaDataMinimalQuery, ScadaDataMinimalDto?>
 {
     private readonly IApplicationDbContext _context;

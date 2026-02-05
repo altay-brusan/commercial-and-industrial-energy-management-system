@@ -17,16 +17,6 @@ public record DeactivateTariffCommand : IRequest<bool>
     public int Id { get; init; }
 }
 
-public class DeactivateTariffCommandValidator : AbstractValidator<DeactivateTariffCommand>
-{
-    public DeactivateTariffCommandValidator()
-    {
-        RuleFor(x => x.Id)
-            .GreaterThan(0)
-            .WithMessage("Tariff ID must be greater than 0.");
-    }
-}
-
 public class DeactivateTariffCommandHandler : IRequestHandler<DeactivateTariffCommand, bool>
 {
     private readonly IApplicationDbContext _context;

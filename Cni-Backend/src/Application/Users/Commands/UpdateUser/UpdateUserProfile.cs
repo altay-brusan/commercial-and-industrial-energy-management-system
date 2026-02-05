@@ -23,20 +23,6 @@ public record UpdateUserProfileCommand : IRequest<Unit>  // Değişiklik: IReque
     
 }
 
-public class UpdateUserProfileCommandValidator : AbstractValidator<UpdateUserProfileCommand>
-{
-    public UpdateUserProfileCommandValidator()
-    {
-        RuleFor(v => v.Name)
-             .NotEmpty()
-             .MaximumLength(100);
-        RuleFor(v => v.Email)
-           .NotEmpty()
-           .When(v => !string.IsNullOrEmpty(v.Email)) 
-           .EmailAddress().WithMessage("Geçerli bir e-posta adresi giriniz.");
-    }
-}
-
 public class UpdateUserProfileCommandHandler : IRequestHandler<UpdateUserProfileCommand, Unit>  // Değişiklik: IRequestHandler<UpdateUserCommand, Unit>
 {
     private readonly UserManager<ApplicationUser> _userManager;

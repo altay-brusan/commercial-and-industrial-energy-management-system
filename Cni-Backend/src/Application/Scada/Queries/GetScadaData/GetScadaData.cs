@@ -12,13 +12,6 @@ public record GetScadaQuery : IRequest<FacilityHubDto>
     public DateTime Time { get; set; }
 }
 
-public class GetScadaQueryValidator : AbstractValidator<GetScadaQuery>
-{
-    public GetScadaQueryValidator()
-    {
-    }
-}
-
 public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDto>
 {
     private readonly IApplicationDbContext _context;
