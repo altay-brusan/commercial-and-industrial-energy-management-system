@@ -1,4 +1,4 @@
-﻿using Backend.Domain.Entities;
+using Backend.Domain.Entities;
 
 namespace Backend.Application.Common.Models;
 
@@ -12,8 +12,8 @@ public class LookupDto
     {
         public Mapping()
         {
-            CreateMap<TodoList, LookupDto>();
-            CreateMap<TodoItem, LookupDto>();
+            // Add mappings for entities that need lookup functionality
+            // Example: CreateMap<SomeEntity, LookupDto>();
         }
     }
 }

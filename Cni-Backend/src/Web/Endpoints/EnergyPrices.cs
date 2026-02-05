@@ -30,22 +30,22 @@ public class EnergyPrices : EndpointGroupBase
     }
 
     /// <summary>
-    /// Fetches live day-ahead prices directly from a tenant's configured Market Operator API.
-    /// Returns current/tomorrow's prices with tax and distribution fees applied based on tenant's tariff.
+    /// Fetches live day-ahead prices directly from a firm's configured Market Operator API.
+    /// Returns current/tomorrow's prices with tax and distribution fees applied based on firm's tariff.
     /// </summary>
     /// <param name="sender">MediatR sender</param>
-    /// <param name="tenantId">Optional tenant ID. If provided (admin only), fetches for that tenant. Otherwise uses current tenant context.</param>
+    /// <param name="firmId">Firm ID to fetch prices for.</param>
     /// <param name="date">Optional date to fetch prices for</param>
     /// <param name="period">Resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).</param>
     public async Task<Ok<LiveEnergyPricesDto>> GetLiveEnergyPrices(
         ISender sender,
-        [FromQuery] int? tenantId = null,
+        [FromQuery] int firmId,
         [FromQuery] DateTimeOffset? date = null,
         [FromQuery] int? period = null)
     {
         var query = new GetLiveEnergyPricesQuery
         {
-            TenantId = tenantId,
+            FirmId = firmId,
             Date = date,
             Period = period
         };

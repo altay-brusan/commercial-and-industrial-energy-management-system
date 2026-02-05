@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Backend.Infrastructure.BackgroundJobs;
 
 /// <summary>
-/// Background worker that fetches energy prices for all active tenant configurations.
-/// Fetches data for all unique (MarketOperator, AreaCode) combinations from TenantMarketOperators.
+/// Background worker that fetches energy prices for all active firm configurations.
+/// Fetches data for all unique (MarketOperator, AreaCode) combinations from FirmMarketOperators.
 /// Runs twice daily:
 /// - Morning (0:01 AM UTC): Fetch current day prices
 /// - Afternoon (12:01 PM UTC / ~13:01 CET): Fetch tomorrow's prices after ENTSO-E publishes
@@ -33,14 +33,14 @@ public class EnergyPriceFetchWorker
     }
 
     /// <summary>
-    /// Morning job - fetches current day prices for all tenant configurations.
+    /// Morning job - fetches current day prices for all firm configurations.
     /// Scheduled to run at 0:01 AM UTC.
     /// </summary>
     public async Task FetchMorningPrices()
     {
         var targetDate = DateTimeOffset.UtcNow.Date;
         _logger.LogInformation("Starting morning price fetch for {Date}", targetDate.ToString("yyyy-MM-dd"));
-        await FetchPricesForAllTenantsAsync(targetDate);
+        await FetchPricesForAllFirmsAsync(targetDate);
     }
 
     /// <summary>
@@ -51,39 +51,39 @@ public class EnergyPriceFetchWorker
     {
         var targetDate = DateTimeOffset.UtcNow.Date.AddDays(1);
         _logger.LogInformation("Starting afternoon price fetch for {Date}", targetDate.ToString("yyyy-MM-dd"));
-        await FetchPricesForAllTenantsAsync(targetDate);
+        await FetchPricesForAllFirmsAsync(targetDate);
     }
 
     /// <summary>
-    /// Fetches prices for all unique (MarketOperator, AreaCode) combinations from active tenant configurations.
+    /// Fetches prices for all unique (MarketOperator, AreaCode) combinations from active firm configurations.
     /// </summary>
-    private async Task FetchPricesForAllTenantsAsync(DateTimeOffset targetDate)
+    private async Task FetchPricesForAllFirmsAsync(DateTimeOffset targetDate)
     {
         try
         {
-            // Get all unique (MarketOperatorId, AreaCode) combinations from active tenant configurations
-            var tenantConfigs = await _context.TenantMarketOperators
-                .Include(tmo => tmo.MarketOperator)
-                .Where(tmo => tmo.IsActive && tmo.MarketOperator != null && tmo.MarketOperator.IsActive)
+            // Get all unique (MarketOperatorId, AreaCode) combinations from active firm configurations
+            var firmConfigs = await _context.FirmMarketOperators
+                .Include(fmo => fmo.MarketOperator)
+                .Where(fmo => fmo.IsActive && fmo.MarketOperator != null && fmo.MarketOperator.IsActive)
                 .ToListAsync();
 
             // Group by (MarketOperatorId, AreaCode) to avoid duplicate fetches
-            var uniqueConfigs = tenantConfigs
-                .GroupBy(tmo => new { tmo.MarketOperatorId, tmo.AreaCode })
+            var uniqueConfigs = firmConfigs
+                .GroupBy(fmo => new { fmo.MarketOperatorId, fmo.AreaCode })
                 .Select(g => g.First())
                 .ToList();
 
-            _logger.LogInformation("Found {TotalCount} tenant configurations, {UniqueCount} unique (MO, AreaCode) combinations",
-                tenantConfigs.Count, uniqueConfigs.Count);
+            _logger.LogInformation("Found {TotalCount} firm configurations, {UniqueCount} unique (MO, AreaCode) combinations",
+                firmConfigs.Count, uniqueConfigs.Count);
 
-            var failedConfigs = new List<(TenantMarketOperator Config, string Error)>();
+            var failedConfigs = new List<(FirmMarketOperator Config, string Error)>();
 
-            foreach (var tmo in uniqueConfigs)
+            foreach (var fmo in uniqueConfigs)
             {
-                var success = await FetchPricesForConfigWithRetryAsync(tmo, targetDate);
+                var success = await FetchPricesForConfigWithRetryAsync(fmo, targetDate);
                 if (!success)
                 {
-                    failedConfigs.Add((tmo, "Failed after retries"));
+                    failedConfigs.Add((fmo, "Failed after retries"));
                 }
             }
 
@@ -105,17 +105,17 @@ public class EnergyPriceFetchWorker
     }
 
     /// <summary>
-    /// Fetches prices for a tenant configuration with retry logic.
+    /// Fetches prices for a firm configuration with retry logic.
     /// </summary>
-    private async Task<bool> FetchPricesForConfigWithRetryAsync(TenantMarketOperator tmo, DateTimeOffset targetDate)
+    private async Task<bool> FetchPricesForConfigWithRetryAsync(FirmMarketOperator fmo, DateTimeOffset targetDate)
     {
-        var mo = tmo.MarketOperator!;
+        var mo = fmo.MarketOperator!;
 
         for (int attempt = 1; attempt <= MaxRetryAttempts; attempt++)
         {
             try
             {
-                var success = await FetchPricesForAreaAsync(mo, tmo.AreaCode, targetDate);
+                var success = await FetchPricesForAreaAsync(mo, fmo.AreaCode, targetDate);
                 if (success)
                 {
                     return true;
@@ -124,14 +124,14 @@ public class EnergyPriceFetchWorker
                 if (attempt < MaxRetryAttempts)
                 {
                     _logger.LogWarning("Fetch attempt {Attempt}/{MaxAttempts} failed for {MoCode}/{AreaCode}. Retrying in {Delay}...",
-                        attempt, MaxRetryAttempts, mo.Code, tmo.AreaCode, RetryDelay);
+                        attempt, MaxRetryAttempts, mo.Code, fmo.AreaCode, RetryDelay);
                     await Task.Delay(RetryDelay);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error on attempt {Attempt}/{MaxAttempts} fetching prices from {MoCode} for area {AreaCode}",
-                    attempt, MaxRetryAttempts, mo.Code, tmo.AreaCode);
+                    attempt, MaxRetryAttempts, mo.Code, fmo.AreaCode);
 
                 if (attempt < MaxRetryAttempts)
                 {
@@ -141,7 +141,7 @@ public class EnergyPriceFetchWorker
         }
 
         _logger.LogError("Failed to fetch prices from {MoCode} for area {AreaCode} after {MaxAttempts} attempts",
-            mo.Code, tmo.AreaCode, MaxRetryAttempts);
+            mo.Code, fmo.AreaCode, MaxRetryAttempts);
         return false;
     }
 

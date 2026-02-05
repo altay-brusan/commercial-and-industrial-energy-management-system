@@ -5,11 +5,12 @@ namespace Backend.Application.EnergyPrices.Queries.GetEnergyPriceStatistics;
 
 /// <summary>
 /// Gets statistical values (min, max, average) for energy prices within a date range.
-/// Uses the tenant's configured Market Operator.
+/// Uses the firm's configured Market Operator.
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record GetEnergyPriceStatisticsQuery : IRequest<EnergyPriceStatisticsDto?>
 {
+    public int FirmId { get; set; }
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset EndDate { get; set; }
 }
@@ -18,6 +19,10 @@ public class GetEnergyPriceStatisticsQueryValidator : AbstractValidator<GetEnerg
 {
     public GetEnergyPriceStatisticsQueryValidator()
     {
+        RuleFor(v => v.FirmId)
+            .GreaterThan(0)
+            .WithMessage("FirmId is required.");
+
         RuleFor(v => v.StartDate)
             .NotEmpty();
 
@@ -31,43 +36,33 @@ public class GetEnergyPriceStatisticsQueryValidator : AbstractValidator<GetEnerg
 public class GetEnergyPriceStatisticsQueryHandler : IRequestHandler<GetEnergyPriceStatisticsQuery, EnergyPriceStatisticsDto?>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IMultiTenantService _multiTenantService;
     private readonly ICountryMappingService _countryMappingService;
 
     public GetEnergyPriceStatisticsQueryHandler(
         IApplicationDbContext context,
-        IMultiTenantService multiTenantService,
         ICountryMappingService countryMappingService)
     {
         _context = context;
-        _multiTenantService = multiTenantService;
         _countryMappingService = countryMappingService;
     }
 
     public async Task<EnergyPriceStatisticsDto?> Handle(GetEnergyPriceStatisticsQuery request, CancellationToken cancellationToken)
     {
-        if (!_multiTenantService.IsTenantScoped())
-        {
-            return null;
-        }
-
-        var tenantId = _multiTenantService.GetEffectiveTenantId()!.Value;
-
-        // Get tenant's Market Operator configuration
-        var tenantMo = await _context.TenantMarketOperators
+        // Get firm's Market Operator configuration
+        var firmMo = await _context.FirmMarketOperators
             .Include(x => x.MarketOperator)
-            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .Where(x => x.FirmId == request.FirmId && x.IsActive)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (tenantMo?.MarketOperator == null)
+        if (firmMo?.MarketOperator == null)
         {
             return null;
         }
 
-        var mo = tenantMo.MarketOperator;
+        var mo = firmMo.MarketOperator;
 
-        // Convert tenant's AreaCode to Country name for querying history
-        var countryName = _countryMappingService.GetCountryNameFromAreaCode(tenantMo.AreaCode);
+        // Convert firm's AreaCode to Country name for querying history
+        var countryName = _countryMappingService.GetCountryNameFromAreaCode(firmMo.AreaCode);
         if (string.IsNullOrEmpty(countryName))
         {
             return null;

@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Backend.Domain.Entities.Topology;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore;
 using Backend.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Infrastructure.Data.Configurations;
 
@@ -16,48 +10,43 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
     {
         builder.ToTable("Devices");
 
-        // Temel özellikler
-        builder.Property(n => n.TenantId)
-            .IsRequired();
-        builder.Property(n => n.DeviceTypeId)
+        builder.Property(d => d.FacilityId)
             .IsRequired();
 
-        builder.Property(n => n.MachineId)
-            .IsRequired()
+        builder.Property(d => d.DeviceTypeId)
+            .IsRequired();
+
+        builder.Property(d => d.Name)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(d => d.Model)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        builder.Property(d => d.SerialNumber)
             .HasMaxLength(100);
 
-        builder.Property(n => n.DeviceName)
-            .HasMaxLength(100);
+        builder.Property(d => d.Manufacturer)
+            .HasMaxLength(200);
 
-        builder.Property(n => n.GrpcConnection)
+        builder.Property(d => d.Ports)
+            .HasColumnType("text")
             .IsRequired();
 
-        builder.Property(n => n.GrpcDeviceStatus)
-            .IsRequired();
-
-        // Facility ile ilişki
-        builder.HasOne(n => n.Facility)
-            .WithMany()
-            .HasForeignKey(n => n.FacilityId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Tenant ile ilişki
-        builder.HasOne(n => n.Tenant)
-            .WithMany()
-            .HasForeignKey(n => n.TenantId)
+        // Relationship to Facility
+        builder.HasOne(d => d.Facility)
+            .WithMany(f => f.Devices)
+            .HasForeignKey(d => d.FacilityId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(n => n.DeviceType)
+        // Relationship to DeviceType
+        builder.HasOne(d => d.DeviceType)
             .WithMany()
-            .HasForeignKey(n => n.DeviceTypeId)
+            .HasForeignKey(d => d.DeviceTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(d => d.SourceDevice)
-             .WithOne(d => d.ConnectedDevice) // Ters ilişkiyi tanımlıyoruz
-             .HasForeignKey<Device>(d => d.SourceDeviceId)
-             .OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne(d => d.TopologyNode)
-           .WithOne(t => t.Device)
-           .HasForeignKey<TopologyNode>(t => t.DeviceId);
+        // Note: SerialNumber uniqueness not enforced at DB level due to existing duplicate data
+        // Add unique constraint later after data cleanup if needed
     }
 }

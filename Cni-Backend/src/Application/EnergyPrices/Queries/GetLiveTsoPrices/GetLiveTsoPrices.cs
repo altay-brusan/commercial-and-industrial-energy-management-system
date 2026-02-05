@@ -7,17 +7,16 @@ namespace Backend.Application.EnergyPrices.Queries.GetLiveTsoPrices;
 
 /// <summary>
 /// Fetches live/current day-ahead prices directly from a Market Operator API.
-/// Uses the tenant's configured Market Operator or falls back to default based on Firm's country.
+/// Uses the firm's configured Market Operator or falls back to default based on Firm's country.
 /// This does NOT store the data - it's for real-time display.
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record GetLiveEnergyPricesQuery : IRequest<LiveEnergyPricesDto>
 {
     /// <summary>
-    /// Optional tenant ID. If provided (admin only), fetches prices for that tenant's configuration.
-    /// If not provided, uses the current tenant context.
+    /// Firm ID to fetch prices for. Required.
     /// </summary>
-    public int? TenantId { get; set; }
+    public int FirmId { get; set; }
 
     /// <summary>
     /// The date to fetch prices for. If not specified, uses today or tomorrow based on MO rules.
@@ -35,6 +34,10 @@ public class GetLiveEnergyPricesQueryValidator : AbstractValidator<GetLiveEnergy
 {
     public GetLiveEnergyPricesQueryValidator()
     {
+        RuleFor(v => v.FirmId)
+            .GreaterThan(0)
+            .WithMessage("FirmId is required.");
+
         RuleFor(v => v.Period)
             .Must(p => p == null || new[] { 15, 30, 60 }.Contains(p.Value))
             .WithMessage("Period must be 15, 30, or 60 minutes");
@@ -46,85 +49,53 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
     private readonly IApplicationDbContext _context;
     private readonly ITsoService _tsoService;
     private readonly ICountryMappingService _countryMappingService;
-    private readonly IMultiTenantService _multiTenantService;
 
     public GetLiveEnergyPricesQueryHandler(
         IApplicationDbContext context,
         ITsoService tsoService,
-        ICountryMappingService countryMappingService,
-        IMultiTenantService multiTenantService)
+        ICountryMappingService countryMappingService)
     {
         _context = context;
         _tsoService = tsoService;
         _countryMappingService = countryMappingService;
-        _multiTenantService = multiTenantService;
     }
 
     public async Task<LiveEnergyPricesDto> Handle(GetLiveEnergyPricesQuery request, CancellationToken cancellationToken)
     {
-        int tenantId;
-
-        // If TenantId is explicitly provided in the request
-        if (request.TenantId.HasValue)
-        {
-            // Verify the user has admin access to query other tenants
-            if (!_multiTenantService.IsSuperAdmin())
-            {
-                return new LiveEnergyPricesDto
-                {
-                    Success = false,
-                    ErrorMessage = "Only administrators can query prices for other tenants"
-                };
-            }
-
-            // Verify the tenant exists
-            var tenantExists = await _context.Tenants.AnyAsync(t => t.Id == request.TenantId.Value, cancellationToken);
-            if (!tenantExists)
-            {
-                return new LiveEnergyPricesDto
-                {
-                    Success = false,
-                    ErrorMessage = $"Tenant with ID {request.TenantId.Value} not found"
-                };
-            }
-
-            tenantId = request.TenantId.Value;
-        }
-        else
-        {
-            // Use the current tenant context
-            if (!_multiTenantService.IsTenantScoped())
-            {
-                return new LiveEnergyPricesDto
-                {
-                    Success = false,
-                    ErrorMessage = "Please select a tenant or provide TenantId to view energy prices"
-                };
-            }
-
-            tenantId = _multiTenantService.GetEffectiveTenantId()!.Value;
-        }
-
-        // Get tenant's Market Operator configuration
-        var tenantMo = await _context.TenantMarketOperators
-            .Include(x => x.MarketOperator)
-            .Where(x => x.TenantId == tenantId && x.IsActive)
+        // Verify the firm exists
+        var firm = await _context.Firms
+            .Where(f => f.Id == request.FirmId)
             .FirstOrDefaultAsync(cancellationToken);
 
-        // If no tenant MO configured, try to determine default based on Firm's country
-        if (tenantMo?.MarketOperator == null)
+        if (firm == null)
         {
-            var fallbackResult = await GetFallbackMarketOperatorAsync(tenantId, cancellationToken);
+            return new LiveEnergyPricesDto
+            {
+                Success = false,
+                ErrorMessage = $"Firm with ID {request.FirmId} not found"
+            };
+        }
+
+        // Get firm's Market Operator configuration
+        var firmMo = await _context.FirmMarketOperators
+            .Include(x => x.MarketOperator)
+            .Where(x => x.FirmId == request.FirmId && x.IsActive)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        // If no firm MO configured, try to determine default based on Firm's country
+        if (firmMo?.MarketOperator == null)
+        {
+            var fallbackResult = await GetFallbackMarketOperatorAsync(firm, cancellationToken);
             if (!fallbackResult.Result.Success)
             {
                 return fallbackResult.Result;
             }
             // If fallback found, use that MO
-            tenantMo = fallbackResult.TenantMarketOperator;
+            firmMo = fallbackResult.FirmMarketOperator;
         }
 
-        var mo = tenantMo!.MarketOperator!;
-        var areaCode = tenantMo.AreaCode;
+        var mo = firmMo!.MarketOperator!;
+        var areaCode = firmMo.AreaCode;
 
         // Determine the date to fetch
         var targetDate = request.Date ?? DetermineTargetDate(mo.Code);
@@ -139,7 +110,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             mo.ApiKey,
             countryName,
             targetDate,
-            request.Period ?? tenantMo.SamplingPeriodMinutes,
+            request.Period ?? firmMo.SamplingPeriodMinutes,
             cancellationToken);
 
         if (!result.Success)
@@ -159,8 +130,9 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         }
 
         // Fetch country tariff from database (or use defaults)
+        // For tariffs, we'll use the first facility of this firm (or use defaults)
         var (distributionFee, transmissionFee, taxRate, currency, usingDefaultTariff) =
-            await GetTariffForCountryAsync(tenantId, countryName, cancellationToken);
+            await GetTariffForCountryAsync(request.FirmId, countryName, cancellationToken);
 
         // Calculate prices with formula: (NetPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
         var prices = result.Prices.Select(p =>
@@ -198,7 +170,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         return new LiveEnergyPricesDto
         {
             Success = true,
-            TenantId = tenantId,
+            FirmId = request.FirmId,
             MarketOperatorId = mo.Id,
             MarketOperatorName = mo.Name,
             MarketOperatorCode = mo.Code,
@@ -217,19 +189,14 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         };
     }
 
-    private async Task<(LiveEnergyPricesDto Result, Domain.Entities.TenantMarketOperator? TenantMarketOperator)> GetFallbackMarketOperatorAsync(int tenantId, CancellationToken cancellationToken)
+    private async Task<(LiveEnergyPricesDto Result, Domain.Entities.FirmMarketOperator? FirmMarketOperator)> GetFallbackMarketOperatorAsync(Domain.Entities.Firm firm, CancellationToken cancellationToken)
     {
-        // Try to get tenant's firm to determine country
-        var firm = await _context.Firms
-            .Where(f => f.TenantId == tenantId)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (firm?.Country == null)
+        if (firm.Country == null)
         {
             return (new LiveEnergyPricesDto
             {
                 Success = false,
-                ErrorMessage = "No Market Operator configured for this tenant and no firm country found for fallback"
+                ErrorMessage = "No Market Operator configured for this firm and no firm country found for fallback"
             }, null);
         }
 
@@ -256,10 +223,10 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         // Get the first area code from the MO or map from country
         var areaCode = _countryMappingService.GetAreaCode(moCode, firm.Country) ?? mo.AreaCodes.FirstOrDefault() ?? "";
 
-        // Create a virtual TenantMarketOperator for the fallback
-        var virtualTmo = new Domain.Entities.TenantMarketOperator
+        // Create a virtual FirmMarketOperator for the fallback
+        var virtualFmo = new Domain.Entities.FirmMarketOperator
         {
-            TenantId = tenantId,
+            FirmId = firm.Id,
             MarketOperatorId = mo.Id,
             MarketOperator = mo,
             AreaCode = areaCode,
@@ -269,11 +236,11 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             IsActive = true
         };
 
-        return (new LiveEnergyPricesDto { Success = true }, virtualTmo);
+        return (new LiveEnergyPricesDto { Success = true }, virtualFmo);
     }
 
     private async Task<(decimal distributionFee, decimal transmissionFee, decimal taxRate, string currency, bool usingDefault)> GetTariffForCountryAsync(
-        int tenantId,
+        int firmId,
         string? countryName,
         CancellationToken cancellationToken)
     {
@@ -282,15 +249,26 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             return (TariffDefaults.DistributionFee, TariffDefaults.TransmissionFee, TariffDefaults.TaxRate, "EUR", true);
         }
 
-        // Try to find tariff by country name (case-insensitive match)
-        var tariff = await _context.CountryTariffs
-            .Where(t => t.TenantId == tenantId && t.IsActive)
-            .Where(t => t.CountryName.ToLower() == countryName.ToLower())
-            .FirstOrDefaultAsync(cancellationToken);
+        // Get facilities for this firm and find matching tariff through junction table
+        var facilityIds = await _context.Facilities
+            .Where(f => f.FirmId == firmId)
+            .Select(f => f.Id)
+            .ToListAsync(cancellationToken);
 
-        if (tariff != null)
+        if (facilityIds.Count > 0)
         {
-            return (tariff.DistributionFee, tariff.TransmissionFee, tariff.TaxRate, tariff.Currency, false);
+            // Try to find tariff by country name (case-insensitive match) from any facility
+            var tariff = await _context.FacilityTariffs
+                .Include(ft => ft.Tariff)
+                .Where(ft => facilityIds.Contains(ft.FacilityId) && ft.IsActive)
+                .Where(ft => ft.Tariff != null && ft.Tariff.CountryName.ToLower() == countryName.ToLower() && ft.Tariff.IsActive)
+                .Select(ft => ft.Tariff)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (tariff != null)
+            {
+                return (tariff.DistributionFee, tariff.TransmissionFee, tariff.TaxRate, tariff.Currency, false);
+            }
         }
 
         // Fall back to defaults

@@ -1,172 +1,206 @@
-﻿using System.Net.NetworkInformation;
+using System.Text.Json;
 using AutoMapper;
-using Backend.Domain.Entities.Proto;
-using Backend.Domain.Entities.Proto.DTO;
-using Backend.Domain.Entities.Proto.Shared;
+using Backend.Domain.Entities.DeviceData;
 using Ems.Bess.Stream;
 using Ems.Pcs.Stream;
 using Ems.Smartmeter.Stream;
 using Ems.Solar.Stream;
-using Ems.System.Stream;
 using Ems.Types.Generic;
 
 namespace Backend.Infrastructure.Mappings;
 
+/// <summary>
+/// Mappings from gRPC Protobuf messages to device data entities.
+/// All telemetry data is serialized to JSON and stored in the Payload field.
+/// </summary>
 public class GrpcMappingProfile : Profile
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false
+    };
+
     public GrpcMappingProfile()
     {
-        #region DbEntity Mappings
-        CreateMap<AC_Power, AppACPower>();  // Alan isimleri aynı, direkt eşleşir.
-        CreateMap<DC_Power, AppDCPower>();  // Tüm double alanlar nullable, isimler aynı.
-        CreateMap<Status, AppDeviceStatus>()
-            .ForMember(dest => dest.OperatingMode, opt => opt.MapFrom(src => (AppOperatingMode)src.OperatingMode))
-            .ForMember(dest => dest.WarningStatus,opt => opt.MapFrom(src => src.WarningStatus))
-            .ForMember(dest => dest.FaultStatus,opt => opt.MapFrom(src => src.FaultStatus));
-
-        // BESS Mapping
-        CreateMap<BESSData, AppBESSData>()
+        // BESS Mapping - serialize entire message to JSON payload
+        CreateMap<BESSData, DeviceBessData>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
-            .ForMember(dest => dest.BESSId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.DcPower, opt => opt.MapFrom(src => src.DcPower))
-            .ForMember(dest => dest.Status,opt => opt.MapFrom(src => src.Status))
-            .ForMember(dest => dest.ChargeStatus, opt => opt.MapFrom(src => (AppBESSStatus)src.ChargeStatus));
+            .ForMember(dest => dest.DeviceId, opt => opt.Ignore()) // Set by caller
+            .ForMember(dest => dest.FirmId, opt => opt.Ignore())   // Set by caller
+            .ForMember(dest => dest.DeviceLocalTime, opt => opt.MapFrom(_ => DateTimeOffset.UtcNow))
+            .ForMember(dest => dest.Payload, opt => opt.MapFrom(src => SerializeBessData(src)))
+            .ForMember(dest => dest.Device, opt => opt.Ignore())
+            .ForMember(dest => dest.Firm, opt => opt.Ignore());
 
-        //PCS Mapping
-        CreateMap<PCSData, AppPCSData>()
+        // PCS Mapping
+        CreateMap<PCSData, DevicePcsData>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
-           .ForMember(dest => dest.PCSId, opt => opt.MapFrom(src => src.Id))
-           .ForMember(dest => dest.DcPower, opt => opt.MapFrom(src => src.DcPower))
-           .ForMember(dest => dest.AcPower, opt => opt.MapFrom(src => src.AcPower))
-           .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+            .ForMember(dest => dest.DeviceId, opt => opt.Ignore())
+            .ForMember(dest => dest.FirmId, opt => opt.Ignore())
+            .ForMember(dest => dest.DeviceLocalTime, opt => opt.MapFrom(_ => DateTimeOffset.UtcNow))
+            .ForMember(dest => dest.Payload, opt => opt.MapFrom(src => SerializePcsData(src)))
+            .ForMember(dest => dest.Device, opt => opt.Ignore())
+            .ForMember(dest => dest.Firm, opt => opt.Ignore());
 
-        //SmartMeter Mapping
-        CreateMap<SmartMeterData, AppSmartMeterData>()
+        // SmartMeter Mapping
+        CreateMap<SmartMeterData, DeviceSmartMeterData>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.DeviceId, opt => opt.Ignore())
+            .ForMember(dest => dest.FirmId, opt => opt.Ignore())
+            .ForMember(dest => dest.DeviceLocalTime, opt => opt.MapFrom(_ => DateTimeOffset.UtcNow))
+            .ForMember(dest => dest.Payload, opt => opt.MapFrom(src => SerializeSmartMeterData(src)))
+            .ForMember(dest => dest.Device, opt => opt.Ignore())
+            .ForMember(dest => dest.Firm, opt => opt.Ignore());
 
-            .ForMember(dest => dest.SmartMeterId,
-                       opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.AcPower,
-                       opt => opt.MapFrom(src => src.AcPower))
-            .ForMember(dest => dest.Status,
-                       opt => opt.MapFrom(src => src.Status));
-
-        //Solar Mapping
-        CreateMap<SolarData, AppSolarData>()
+        // Solar Mapping
+        CreateMap<SolarData, DeviceSolarData>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
-
-                 .ForMember(dest => dest.SolarId, opt => opt.MapFrom(src => src.Id))
-                 .ForMember(dest => dest.PanelPower,
-                       opt => opt.MapFrom(src => src.PanelPower))  
-                 .ForMember(dest => dest.ChargerPower,
-                       opt => opt.MapFrom(src => src.ChargerPower))
-                 .ForMember(dest => dest.DCOutput,
-                       opt => opt.MapFrom(src => src.DCOutput))
-                 .ForMember(dest => dest.ACOutput,
-                       opt => opt.MapFrom(src => src.ACOutput))
-                  .ForMember(dest => dest.Status,
-                       opt => opt.MapFrom(src => src.Status));
-
-        CreateMap<SystemData, AppGrpcSystemData>()
-            .ForMember(dest => dest.Id, opt => opt.Ignore())
-            .ForMember(dest => dest.GeneratorPower, opt => opt.MapFrom(src => src.GeneratorPower))
-           .ForMember(dest => dest.GridPower, opt => opt.MapFrom(src => src.GridPower));
-
-
-
-        #endregion
-
-
-
-        // Ortak mapping fonksiyonları
-        CreateMap<DC_Power, DCPowerDto>()
-         .ConvertUsing((src, dest) => MapDCPower(src));
-
-        CreateMap<AC_Power, ACPowerDto>()
-            .ConvertUsing((src, dest) => MapACPower(src));
-
-        CreateMap<Status, DeviceStatusDto>()
-            .ConvertUsing((src, dest) => MapDeviceStatus(src));
-
-        // BESSData -> BESSDeviceDto
-        CreateMap<BESSData, BESSDeviceDto>()
-            .ForMember(dest => dest.DeviceId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.DcPower, opt => opt.MapFrom(src => src.DcPower))
-            .ForMember(dest => dest.ChargeStatus, opt => opt.MapFrom(src => (BESSStatusDto)src.ChargeStatus))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-            // Diğer property'ler...
-            ;
-
-        // PCSData -> PCSDeviceDto
-        CreateMap<PCSData, PCSDeviceDto>()
-            .ForMember(dest => dest.DeviceId, opt => opt.MapFrom(src => src.Id))
-            .ForMember(dest => dest.AcPower, opt => opt.MapFrom(src => src.AcPower))
-            .ForMember(dest => dest.DcPower, opt => opt.MapFrom(src => src.DcPower))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-            // Diğer property'ler...
-            ;
-
-
-        CreateMap<SolarData, SolarDeviceDto>()
-           .ForMember(dest => dest.DeviceId, opt => opt.MapFrom(src => src.Id))
-           .ForMember(dest => dest.DCOutput, opt => opt.MapFrom(src => src.DCOutput))
-           .ForMember(dest => dest.PanelPower, opt => opt.MapFrom(src => src.PanelPower))
-           .ForMember(dest => dest.PerformanceRatio, opt => opt.MapFrom(src => src.PerformanceRatio))
-           .ForMember(dest => dest.PvPanelTemperature, opt => opt.MapFrom(src => src.PvPanelTemperature))
-           .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
-
-
-
-        // SmartMeterData -> GridPowerDto
-        CreateMap<SmartMeterData, GridPowerDto>()
-            .ForMember(dest => dest.AcPower, opt => opt.MapFrom(src => src.AcPower))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
-
-        // SmartMeterData -> FacilityPowerDto
-        CreateMap<SmartMeterData, FacilityPowerDto>()
-            .ForMember(dest => dest.AcPower, opt => opt.MapFrom(src => src.AcPower))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
-
-        // SystemData -> SystemDataDto
-        CreateMap<SystemData, SystemDataDto>()
-                 .ForMember(dest => dest.GeneratorPower, opt => opt.MapFrom(src => src.GeneratorPower))
-           .ForMember(dest => dest.GridPower, opt => opt.MapFrom(src => src.GridPower));
+            .ForMember(dest => dest.DeviceId, opt => opt.Ignore())
+            .ForMember(dest => dest.FirmId, opt => opt.Ignore())
+            .ForMember(dest => dest.DeviceLocalTime, opt => opt.MapFrom(_ => DateTimeOffset.UtcNow))
+            .ForMember(dest => dest.Payload, opt => opt.MapFrom(src => SerializeSolarData(src)))
+            .ForMember(dest => dest.Device, opt => opt.Ignore())
+            .ForMember(dest => dest.Firm, opt => opt.Ignore());
     }
 
-    private static DCPowerDto MapDCPower(DC_Power src)
+    private static string SerializeBessData(BESSData src)
     {
-        return new DCPowerDto
+        var payload = new
         {
-            Voltage = src.Voltage,
-            Current = src.Current,
-            Power = src.Power,
-            TotalEnergyDaily = src.TotalEnergyDaily,
-            TotalEnergyLifetime = src.TotalEnergyLifetime
+            bessId = src.Id,
+            stateOfCharge = src.StateOfCharge,
+            stateOfHealth = src.StateOfHealth,
+            batteryTemperature = src.BatteryTemperature,
+            totalEnergyStored = src.TotalEnergyStored,
+            energyThroughput = src.EnergyThroughput,
+            chargeLimit = src.ChargeLimit,
+            dischargeLimit = src.DischargeLimit,
+            numberOfPacks = src.NumberOfPacks,
+            numberOfModules = src.NumberOfModules,
+            numberOfCells = src.NumberOfCells,
+            capacity = src.Capacity,
+            coolingActive = src.CoolingActive,
+            chargeStatus = src.ChargeStatus.ToString(),
+            dcPower = MapDcPower(src.DcPower),
+            status = MapStatus(src.Status)
+        };
+        return JsonSerializer.Serialize(payload, JsonOptions);
+    }
+
+    private static string SerializePcsData(PCSData src)
+    {
+        var payload = new
+        {
+            pcsId = src.Id,
+            temperaturePcs = src.TemperaturePcs,
+            efficiency = src.Efficiency,
+            totalEnergyDelivered = src.TotalEnergyDelivered,
+            totalEnergyAbsorbed = src.TotalEnergyAbsorbed,
+            dcPower = MapDcPower(src.DcPower),
+            acPower = MapAcPower(src.AcPower),
+            status = MapStatus(src.Status)
+        };
+        return JsonSerializer.Serialize(payload, JsonOptions);
+    }
+
+    private static string SerializeSmartMeterData(SmartMeterData src)
+    {
+        var payload = new
+        {
+            smartMeterId = src.Id,
+            activeEnergyImport = src.ActiveEnergyImport,
+            activeEnergyExport = src.ActiveEnergyExport,
+            reactiveEnergyImport = src.ReactiveEnergyImport,
+            reactiveEnergyExport = src.ReactiveEnergyExport,
+            totalActiveEnergy = src.TotalActiveEnergy,
+            totalReactiveEnergy = src.TotalReactiveEnergy,
+            currentDemand = src.CurrentDemand,
+            powerDemand = src.PowerDemand,
+            acPower = MapAcPower(src.AcPower),
+            status = MapStatus(src.Status)
+        };
+        return JsonSerializer.Serialize(payload, JsonOptions);
+    }
+
+    private static string SerializeSolarData(SolarData src)
+    {
+        var payload = new
+        {
+            solarId = src.Id,
+            performanceRatio = src.PerformanceRatio,
+            pvPanelTemperature = src.PvPanelTemperature,
+            solarEnergyProduced = src.SolarEnergyProduced,
+            panelPower = MapDcPower(src.PanelPower),
+            chargerPower = MapDcPower(src.ChargerPower),
+            dcOutput = MapDcPower(src.DCOutput),
+            acOutput = MapAcPower(src.ACOutput),
+            status = MapStatus(src.Status)
+        };
+        return JsonSerializer.Serialize(payload, JsonOptions);
+    }
+
+    private static object? MapDcPower(DC_Power? src)
+    {
+        if (src == null) return null;
+        return new
+        {
+            voltage = src.Voltage,
+            current = src.Current,
+            power = src.Power,
+            totalEnergyDaily = src.TotalEnergyDaily,
+            totalEnergyLifetime = src.TotalEnergyLifetime
         };
     }
 
-    private static ACPowerDto MapACPower(AC_Power src)
+    private static object? MapAcPower(AC_Power? src)
     {
-        return new ACPowerDto
+        if (src == null) return null;
+        return new
         {
-            TotalActivePower = src.TotalActivePower,
-            TotalReactivePower = src.TotalReactivePower,
-            TotalPowerFactor = src.TotalPowerFactor,
-            VoltageRms = src.VoltageRms,
-            CurrentRms = src.CurrentRms,
-            TotalEnergyDaily = src.TotalEnergyDaily
+            voltagePhase1 = src.VoltagePhase1,
+            voltagePhase2 = src.VoltagePhase2,
+            voltagePhase3 = src.VoltagePhase3,
+            lineToLineVoltagePhase1 = src.LineToLineVoltagePhase1,
+            lineToLineVoltagePhase2 = src.LineToLineVoltagePhase2,
+            lineToLineVoltagePhase3 = src.LineToLineVoltagePhase3,
+            voltageRms = src.VoltageRms,
+            currentPhase1 = src.CurrentPhase1,
+            currentPhase2 = src.CurrentPhase2,
+            currentPhase3 = src.CurrentPhase3,
+            currentRms = src.CurrentRms,
+            activePowerPhase1 = src.ActivePowerPhase1,
+            activePowerPhase2 = src.ActivePowerPhase2,
+            activePowerPhase3 = src.ActivePowerPhase3,
+            totalActivePower = src.TotalActivePower,
+            reactivePowerPhase1 = src.ReactivePowerPhase1,
+            reactivePowerPhase2 = src.ReactivePowerPhase2,
+            reactivePowerPhase3 = src.ReactivePowerPhase3,
+            totalReactivePower = src.TotalReactivePower,
+            apparentPowerPhase1 = src.ApparentPowerPhase1,
+            apparentPowerPhase2 = src.ApparentPowerPhase2,
+            apparentPowerPhase3 = src.ApparentPowerPhase3,
+            totalApparentPower = src.TotalApparentPower,
+            powerFactorPhase1 = src.PowerFactorPhase1,
+            powerFactorPhase2 = src.PowerFactorPhase2,
+            powerFactorPhase3 = src.PowerFactorPhase3,
+            totalPowerFactor = src.TotalPowerFactor,
+            totalEnergyDaily = src.TotalEnergyDaily,
+            totalEnergyLifetime = src.TotalEnergyLifetime,
+            frequency = src.Frequency
         };
     }
 
-    private static DeviceStatusDto MapDeviceStatus(Status src)
+    private static object? MapStatus(Status? src)
     {
-        return new DeviceStatusDto
+        if (src == null) return null;
+        return new
         {
-            OperatingMode = (Domain.Entities.Proto.DTO.OperatingMode)src.OperatingMode,
-            WarningStatus = src.WarningStatus,
-            WarningMessages = src.WarningMessages.ToList(),
-            FaultStatus = src.FaultStatus,
-            FaultMessages = src.FaultMessages.ToList()
+            operatingMode = src.OperatingMode.ToString(),
+            warningStatus = src.WarningStatus,
+            warningMessages = src.WarningMessages.ToList(),
+            faultStatus = src.FaultStatus,
+            faultMessages = src.FaultMessages.ToList()
         };
     }
 }

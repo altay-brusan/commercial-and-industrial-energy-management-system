@@ -4,12 +4,13 @@ using Backend.Application.Common.Security;
 namespace Backend.Application.EnergyPrices.Queries.GetEnergyPricesWithRange;
 
 /// <summary>
-/// Gets energy prices for a date range from the tenant's configured Market Operator.
+/// Gets energy prices for a date range from the firm's configured Market Operator.
 /// Returns a time series of prices with timestamps.
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record GetEnergyPricesWithRangeQuery : IRequest<EnergyPriceRangeDto?>
 {
+    public int FirmId { get; set; }
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset EndDate { get; set; }
 }
@@ -18,6 +19,10 @@ public class GetEnergyPricesWithRangeQueryValidator : AbstractValidator<GetEnerg
 {
     public GetEnergyPricesWithRangeQueryValidator()
     {
+        RuleFor(v => v.FirmId)
+            .GreaterThan(0)
+            .WithMessage("FirmId is required.");
+
         RuleFor(v => v.StartDate)
             .NotEmpty();
 
@@ -31,43 +36,33 @@ public class GetEnergyPricesWithRangeQueryValidator : AbstractValidator<GetEnerg
 public class GetEnergyPricesWithRangeQueryHandler : IRequestHandler<GetEnergyPricesWithRangeQuery, EnergyPriceRangeDto?>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IMultiTenantService _multiTenantService;
     private readonly ICountryMappingService _countryMappingService;
 
     public GetEnergyPricesWithRangeQueryHandler(
         IApplicationDbContext context,
-        IMultiTenantService multiTenantService,
         ICountryMappingService countryMappingService)
     {
         _context = context;
-        _multiTenantService = multiTenantService;
         _countryMappingService = countryMappingService;
     }
 
     public async Task<EnergyPriceRangeDto?> Handle(GetEnergyPricesWithRangeQuery request, CancellationToken cancellationToken)
     {
-        if (!_multiTenantService.IsTenantScoped())
-        {
-            return null;
-        }
-
-        var tenantId = _multiTenantService.GetEffectiveTenantId()!.Value;
-
-        // Get tenant's Market Operator configuration
-        var tenantMo = await _context.TenantMarketOperators
+        // Get firm's Market Operator configuration
+        var firmMo = await _context.FirmMarketOperators
             .Include(x => x.MarketOperator)
-            .Where(x => x.TenantId == tenantId && x.IsActive)
+            .Where(x => x.FirmId == request.FirmId && x.IsActive)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (tenantMo?.MarketOperator == null)
+        if (firmMo?.MarketOperator == null)
         {
             return null;
         }
 
-        var mo = tenantMo.MarketOperator;
+        var mo = firmMo.MarketOperator;
 
-        // Convert tenant's AreaCode to Country name for querying history
-        var countryName = _countryMappingService.GetCountryNameFromAreaCode(tenantMo.AreaCode);
+        // Convert firm's AreaCode to Country name for querying history
+        var countryName = _countryMappingService.GetCountryNameFromAreaCode(firmMo.AreaCode);
         if (string.IsNullOrEmpty(countryName))
         {
             return null;

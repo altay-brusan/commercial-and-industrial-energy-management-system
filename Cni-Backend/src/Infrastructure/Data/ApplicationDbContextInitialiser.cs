@@ -1,9 +1,8 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Backend.Domain.Constants;
 using Backend.Domain.Entities;
-using Backend.Domain.Entities.Topology;
 using Backend.Domain.Enums;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Builder;
@@ -91,7 +90,7 @@ public class ApplicationDbContextInitialiser
 
         // Create Tenant first (required for multi-tenancy)
         // Use IgnoreQueryFilters to check ALL tenants regardless of current tenant context
-        var existingTenant = await _context.Tenants.IgnoreQueryFilters().FirstOrDefaultAsync();
+        var existingTenant = await _context.Tenants.IgnoreQueryFilters().OrderBy(x => x.Id).FirstOrDefaultAsync();
         if (existingTenant == null)
         {
             var tenant = new Tenant
@@ -113,7 +112,7 @@ public class ApplicationDbContextInitialiser
 
         // Create Firm (required for Facility foreign key)
         // Use IgnoreQueryFilters to check ALL firms regardless of current tenant context
-        var existingFirm = await _context.Firms.IgnoreQueryFilters().FirstOrDefaultAsync();
+        var existingFirm = await _context.Firms.IgnoreQueryFilters().OrderBy(x => x.Id).FirstOrDefaultAsync();
         if (existingFirm == null)
         {
             var firm = new Firm
@@ -147,20 +146,18 @@ public class ApplicationDbContextInitialiser
 
         // Create Facility (required for Device foreign key)
         // Use IgnoreQueryFilters to check ALL facilities regardless of current tenant context
-        var existingFacility = await _context.Facilities.IgnoreQueryFilters().FirstOrDefaultAsync();
+        var existingFacility = await _context.Facilities.IgnoreQueryFilters().OrderBy(x => x.Id).FirstOrDefaultAsync();
         if (existingFacility == null)
         {
             var facility = new Facility
             {
-                TenantId = tenantId,
                 FirmId = firmId,
                 Name = "Default Facility",
                 Address = "Default Address",
-                Capacity = 100,
+                EnergyCapacity = 100,
+                EnergyUnit = Backend.Domain.Enums.EnergyUnit.KWh,
                 Longitude = 0,
                 Latitude = 0,
-                GrpcStatus = true,
-                GrpcChannel = "",
                 Created = DateTime.UtcNow
             };
             _context.Facilities.Add(facility);
@@ -244,84 +241,21 @@ public class ApplicationDbContextInitialiser
 
         #region DeviceConf
 
-
         var deviceTypes = new List<DeviceType>
         {
-              new DeviceType
-            {
-                Name = "Bess",
-                HasGrpcStream = true,
-                IsDataCollectedViaOtherDevice = false,
-                Created = DateTime.UtcNow // BaseAuditableEntity için
-            },
-            new DeviceType
-            {
-                Name = "SolarPanel",
-                HasGrpcStream = true,
-                IsDataCollectedViaOtherDevice = false,
-                Created = DateTime.UtcNow
-            },
-            new DeviceType
-            {
-                Name = "PCS",
-                HasGrpcStream = true,
-                IsDataCollectedViaOtherDevice = false,
-                Created = DateTime.UtcNow
-            },
-            new DeviceType
-            {
-                Name = "SmartMeter",
-                HasGrpcStream = true,
-                IsDataCollectedViaOtherDevice = false,
-                Created = DateTime.UtcNow
-            },
-            new DeviceType
-            {
-                Name = "PPC",
-                HasGrpcStream = true,
-                IsDataCollectedViaOtherDevice = false,
-                Created = DateTime.UtcNow
-            },
-            new DeviceType
-            {
-                Name = "EV Charger",
-                HasGrpcStream = false,
-                IsDataCollectedViaOtherDevice = true,
-                Created = DateTime.UtcNow
-            },
-            new DeviceType
-            {
-                Name = "Heat Pump",
-                HasGrpcStream = false,
-                IsDataCollectedViaOtherDevice = true,
-                Created = DateTime.UtcNow
-            },
-            new DeviceType
-            {
-                Name = "Generator",
-                HasGrpcStream = false,
-                IsDataCollectedViaOtherDevice = false,
-                Created = DateTime.UtcNow
-            }, new DeviceType
-            {
-                Name = "Grid",
-                HasGrpcStream = false,
-                IsDataCollectedViaOtherDevice = true,
-                Created = DateTime.UtcNow
-            }, new DeviceType
-            {
-                Name = "MPTT",
-                HasGrpcStream = false,
-                IsDataCollectedViaOtherDevice = true,
-                Created = DateTime.UtcNow
-            },new DeviceType
-            {
-                Name = "FacilitySmartMeter",
-                HasGrpcStream = true,
-                IsDataCollectedViaOtherDevice = false,
-                Created = DateTime.UtcNow
-            }
-
+            new DeviceType { Name = "Solar", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Generator", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Wind Turbine", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Battery", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Inverter", Created = DateTime.UtcNow },
+            new DeviceType { Name = "PCS", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Smart Meter", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Grid", Created = DateTime.UtcNow },
+            new DeviceType { Name = "DC Bus", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Transformer", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Load", Created = DateTime.UtcNow },
+            new DeviceType { Name = "EV Charger", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Heat Pump", Created = DateTime.UtcNow }
         };
         if (!_context.DeviceTypes.Any())
         {
@@ -329,777 +263,135 @@ public class ApplicationDbContextInitialiser
             await _context.SaveChangesAsync();
         }
 
-        var devies = new List<Device> {
+        var devices = new List<Device>
+        {
             new Device
             {
-                TenantId = 1,
                 FacilityId = facilitiyId,
-                DeviceTypeId = 1,
-                MachineId = "1",
-                DeviceName = "BESS-1",
-                GrpcConnection = true,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
-            },
-
-            new Device
-            {
-                TenantId = 1,
-                FacilityId = facilitiyId,
-                DeviceTypeId = 2,
-                MachineId = "1",
-                DeviceName = "PV-1",
-                GrpcConnection = true,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
-            },
-
-
-            new Device
-            {
-                TenantId = 1,
-                FacilityId = facilitiyId,
-                DeviceTypeId = 3,
-                MachineId = "1",
-                DeviceName = "PCS",
-                GrpcConnection = true,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
+                DeviceTypeId = 4, // Battery
+                Name = "BESS_001",
+                Model = "Tesla Megapack",
+                SerialNumber = "BESS-SN-001",
+                Manufacturer = "Tesla",
+                Ports = "[{\"id\":\"DC\",\"type\":\"DC\",\"config\":{\"voltage_max\":1500,\"current_max\":100}}]"
             },
             new Device
             {
-                TenantId = 1,
                 FacilityId = facilitiyId,
-                DeviceTypeId = 4,
-                MachineId = "1",
-                DeviceName = "SM",
-                GrpcConnection = true,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
+                DeviceTypeId = 1, // Solar
+                Name = "PV_001",
+                Model = "SunPower Maxeon 6",
+                SerialNumber = "PV-SN-001",
+                Manufacturer = "SunPower",
+                Ports = "[{\"id\":\"DC\",\"type\":\"DC\",\"config\":{\"voltage_max\":600,\"current_max\":15}}]"
             },
             new Device
             {
-                TenantId = 1,
                 FacilityId = facilitiyId,
-                DeviceTypeId = 11,
-                MachineId = "2",
-                DeviceName = "FacilitySmartMeter",
-                GrpcConnection = true,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
-            },   new Device
-            {
-                TenantId = 1,
-                FacilityId = facilitiyId,
-                DeviceTypeId = 4,
-                MachineId = "3",
-                DeviceName = "SM",
-                GrpcConnection = false,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
-            },   new Device
-            {
-                TenantId = 1,
-                FacilityId = facilitiyId,
-                DeviceTypeId = 4,
-                MachineId = "4",
-                DeviceName = "SM",
-                GrpcConnection = false,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
+                DeviceTypeId = 5, // Inverter
+                Name = "INVERTER_001",
+                Model = "SMA Sunny Tripower",
+                SerialNumber = "INV-SN-001",
+                Manufacturer = "SMA",
+                Ports = "[{\"id\":\"Grid\",\"type\":\"AC\",\"config\":{\"voltage\":230,\"frequency\":50}},{\"id\":\"MPPT\",\"type\":\"DC\",\"config\":{\"voltage_max\":1000}}]"
             },
             new Device
             {
-                TenantId = 1,
                 FacilityId = facilitiyId,
-                DeviceTypeId = 8,
-                MachineId = "1",
-                DeviceName = "Generator",
-                GrpcConnection = true,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
+                DeviceTypeId = 7, // Smart Meter
+                Name = "SM_001",
+                Model = "Schneider PM5560",
+                SerialNumber = "SM-SN-001",
+                Manufacturer = "Schneider Electric",
+                Ports = "[{\"id\":\"Main\",\"type\":\"AC\",\"config\":{\"voltage\":230,\"frequency\":50}}]"
+            },
+            new Device
+            {
+                FacilityId = facilitiyId,
+                DeviceTypeId = 8, // Grid
+                Name = "GRID_001",
+                Model = "Grid Connection",
+                SerialNumber = "GRID-SN-001",
+                Ports = "[{\"id\":\"Main\",\"type\":\"AC\",\"config\":{\"voltage\":230,\"frequency\":50}}]"
+            },
+            new Device
+            {
+                FacilityId = facilitiyId,
+                DeviceTypeId = 2, // Generator
+                Name = "GEN_001",
+                Model = "Caterpillar C18",
+                SerialNumber = "GEN-SN-001",
+                Manufacturer = "Caterpillar",
+                Ports = "[{\"id\":\"Output\",\"type\":\"AC\",\"config\":{\"voltage\":480,\"frequency\":50}}]"
             }
-
-    };
+        };
 
         if (!_context.Devices.Any())
         {
-            _context.Devices.AddRange(devies);
-            await _context.SaveChangesAsync();
-        }
-        var nonstreamableDevices = new List<Device> {
-             new Device
-            {
-                TenantId = 1,
-                FacilityId = facilitiyId,
-                DeviceTypeId = 10,
-                MachineId = "MPTT",
-                DeviceName = "MPTT",
-                GrpcConnection = false,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
-                SourceDeviceId=2
-
-            }
-            ,new Device
-            {
-                TenantId = 1,
-                FacilityId = facilitiyId,
-                DeviceTypeId = 9,
-                MachineId = "Grid",
-                DeviceName = "Grid",
-                GrpcConnection = false,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
-                SourceDeviceId=4
-
-
-            },//arada facility var
-                new Device
-            {
-                TenantId = 1,
-                FacilityId = facilitiyId,
-                DeviceTypeId = 6,
-                MachineId = "EV Charger",
-                DeviceName = "EV Charger",
-                GrpcConnection = false,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
-                SourceDeviceId=6
-            },
-            new Device
-            {
-                TenantId = 1,
-                FacilityId = facilitiyId,
-                DeviceTypeId = 7,
-                MachineId = "Heat Pump",
-                DeviceName = "Heat Pump",
-                GrpcConnection = false,
-                GrpcDeviceStatus = 0,
-                GrpcLastDataReviceDate = null,
-                SourceDeviceId=7
-            }
-
-        };
-        if (!_context.Devices.Include(d => d.DeviceType).Any(d => d.DeviceType!.IsDataCollectedViaOtherDevice))
-        {
-            _context.Devices.AddRange(nonstreamableDevices);
+            _context.Devices.AddRange(devices);
             await _context.SaveChangesAsync();
         }
         #endregion
 
+        #region Tariffs
 
-        #region topology 
-
-        var parentNodes = new List<TopologyNode>
+        // Seed default tariffs
+        if (!_context.Tariffs.Any())
         {
-            // Grup Node'ları
-            new TopologyNode
+            var tariffs = new List<Tariff>
             {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.labeledGroupNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"bess-group\", \"label\": \"Energy Storage Units\"}",
-                Position = "{\"x\": 150, \"y\": -200}",
-                Style = "{\"width\": 420, \"height\": 300, \"backgroundColor\": \"transparent\", \"borderStyle\": \"dashed\", \"fontSize\": \"1.2rem\", \"fontWeight\": \"600\"}",
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.labeledGroupNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"solar-gess-group\", \"label\": \"PV\"}",
-                Position = "{\"x\": 830, \"y\": -200}",
-                Style = "{\"width\": 500, \"height\": 300, \"backgroundColor\": \"transparent\", \"borderStyle\": \"dashed\", \"fontSize\": \"1.2rem\", \"fontWeight\": \"600\"}",
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.labeledGroupNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"grid-group\", \"label\": \"Grid\"}",
-                Position = "{\"x\": -375, \"y\": 800}",
-                Style = "{\"width\": 450, \"height\": 400, \"backgroundColor\": \"transparent\", \"borderStyle\": \"dashed\", \"fontSize\": \"1.2rem\", \"fontWeight\": \"600\"}",
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.labeledGroupNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"generator-group\", \"label\": \"Generator\"}",
-                Position = "{\"x\": 112.5, \"y\": 800}",
-                Style = "{\"width\": 380, \"height\": 400, \"backgroundColor\": \"transparent\", \"borderStyle\": \"dashed\", \"fontSize\": \"1.2rem\", \"fontWeight\": \"600\"}",
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.labeledGroupNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"demand-group\", \"label\": \"Demand\"}",
-                Position = "{\"x\": 528, \"y\": 800}",
-                Style = "{\"width\": 1350, \"height\": 400, \"backgroundColor\": \"transparent\", \"borderStyle\": \"dashed\", \"fontSize\": \"1.2rem\", \"fontWeight\": \"600\"}",
-                FacilityId = facilitiyId
-            },
-        
-            // Hiçbir gruba bağlı olmayan node'lar
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.lineNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = 2,
-                SourceHandleCount = 4,
-                Data = "{\"id\": \"ac-line\", \"value\": 500}",
-                Position = "{\"x\": -150, \"y\": 535}",
-                Style = "{\"width\": 1800}",
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.keyNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"key-1\", \"status\": \"opened\"}",
-                Position = "{\"x\": 355, \"y\": 220}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.keyNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"key-5\", \"status\": \"closed\"}",
-                Position = "{\"x\": 1076, \"y\": 220}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.keyNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"key-6\", \"status\": \"opened\"}",
-                Position = "{\"x\": 294, \"y\": 620}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = 9,
-                TenantId = 1,
-                Type = TopologyNodeTypes.transformerNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"transformer-5\", \"label\": \"E2.5\", \"value\": \"22 kW\"}",
-                Position = "{\"x\": 1028, \"y\": 100}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.capacitorNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"capacitor-1\", \"label\": \"Grid Transformator\", \"value\": \"Temperature: 60°C\"}",
-                Position = "{\"x\": -170, \"y\": 700}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.capacitorNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"capacitor-2\"}",
-                Position = "{\"x\": 280, \"y\": 715}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = 7,
-                TenantId = 1,
-                Type = TopologyNodeTypes.smartMeterNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"smart-meter-3\"}",
-                Position = "{\"x\": 1165, \"y\": 620}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = 6,
-                TenantId = 1,
-                Type = TopologyNodeTypes.smartMeterNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"smart-meter-4\"}",
-                Position = "{\"x\": 1615, \"y\": 620}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = null,
-                TenantId = 1,
-                Type = TopologyNodeTypes.smartMeterNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"smart-meter-5\"}",
-                Position = "{\"x\": 715, \"y\": 620}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            new TopologyNode
-            {
-                DeviceId = 4,
-                TenantId = 1,
-                Type = TopologyNodeTypes.smartMeterNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"smart-meter-6\"}",
-                Position = "{\"x\": -185, \"y\": 580}",
-                Style = null,
-                FacilityId = facilitiyId
-            }
-        };
-
-        if (!_context.TopologyNodes.Where(x => x.ParentId == null).Any())
-        {
-            _context.TopologyNodes.AddRange(parentNodes);
-            await _context.SaveChangesAsync();
-        }
-
-        // Parent Id'lerini saklamak için bir sözlük
-        var parentIds = parentNodes.ToDictionary(p => p.Data!, p => p.Id);
-
-        // Child kayıtlar (parent'lara bağlı node'lar)
-        var childNodes = new List<TopologyNode>
-        {
-            // BESS-1
-            new TopologyNode
-            {
-                DeviceId = 1,
-                TenantId = 1,
-                Type = TopologyNodeTypes.bessNode,
-                Extent = "parent",
-                ParentId = parentIds["{\"id\": \"bess-group\", \"label\": \"Energy Storage Units\"}"],
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"bess-1\", \"label\": \"BESS-1\", \"soc\": 82, \"temperature\": 39, \"state\": \"standby\"}",
-                Position = "{\"x\": 25, \"y\": 60}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            // PV 1
-            new TopologyNode
-            {
-                DeviceId = 2,
-                TenantId = 1,
-                Type = TopologyNodeTypes.gessNode,
-                Extent = "parent",
-                ParentId = parentIds["{\"id\": \"solar-gess-group\", \"label\": \"PV\"}"],
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"gess-3\", \"label\": \"PV 1\", \"performance\": 5, \"temperature\": 68, \"generation\": 100}",
-                Position = "{\"x\": 30, \"y\": 40}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            // PCS
-            new TopologyNode
-            {
-                DeviceId = 3,
-                TenantId = 1,
-                Type = TopologyNodeTypes.pcsNode,
-                Extent = null,
-                ParentId = null,
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"pcs\", \"powerConsumption\": 120}",
-                Position = "{\"x\": 672, \"y\": 350}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            // Grid
-            new TopologyNode
-            {
-                DeviceId = 10,
-                TenantId = 1,
-                Type = TopologyNodeTypes.gridNode,
-                Extent = "parent",
-                ParentId = parentIds["{\"id\": \"grid-group\", \"label\": \"Grid\"}"],
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"grid\", \"temperature\": 60}",
-                Position = "{\"x\": 40, \"y\": 40}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            // Generator
-            new TopologyNode
-            {
-                DeviceId = 8,
-                TenantId = 1,
-                Type = TopologyNodeTypes.generatorNode,
-                Extent = "parent",
-                ParentId = parentIds["{\"id\": \"generator-group\", \"label\": \"Generator\"}"],
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"generator\", \"generation\": 12, \"fuel\": 82}",
-                Position = "{\"x\": 40, \"y\": 40}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            // EV Charger
-            new TopologyNode
-            {
-                DeviceId = 11,
-                TenantId = 1,
-                Type = TopologyNodeTypes.evChargerNode,
-                Extent = "parent",
-                ParentId = parentIds["{\"id\": \"demand-group\", \"label\": \"Demand\"}"],
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"ev-charger\", \"powerConsumption\": 120}",
-                Position = "{\"x\": 465, \"y\": 40}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            // Heat Pump
-            new TopologyNode
-            {
-                DeviceId = 12,
-                TenantId = 1,
-                Type = TopologyNodeTypes.heatPumpNode,
-                Extent = "parent",
-                ParentId = parentIds["{\"id\": \"demand-group\", \"label\": \"Demand\"}"],
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"id\": \"heat-pump\", \"powerConsumption\": 120}",
-                Position = "{\"x\": 916, \"y\": 40}",
-                Style = null,
-                FacilityId = facilitiyId
-            },
-            // Facility 1
-            new TopologyNode
-            {
-                DeviceId = 5,
-                TenantId = 1,
-                Type = TopologyNodeTypes.facilityNode,
-                Extent = "parent",
-                ParentId = parentIds["{\"id\": \"demand-group\", \"label\": \"Demand\"}"],
-                TargetHandleCount = null,
-                SourceHandleCount = null,
-                Data = "{\"label\": \"Facility 1\", \"powerConsumption\": 120, \"powerFactor\": 0.94}",
-                Position = "{\"x\": 15, \"y\": 40}",
-                Style = null,
-                FacilityId = facilitiyId
-            }
-        };
-
-        if (!_context.TopologyNodes.Where(x => x.ParentId != null).Any())
-        {
-            _context.TopologyNodes.AddRange(childNodes);
-            await _context.SaveChangesAsync();
-        }
-
-        // TopologyNode tablosundaki tüm kayıtları al
-        var nodes = _context.TopologyNodes.ToList();
-
-        // Node'ların Data özelliğine göre Id'lerini saklamak için bir sözlük
-        var nodeIds = nodes
-            .Where(n => n.Data != null)
-            .ToDictionary(n => n.Data!, n => n.Id);
-
-        // JSON'daki tüm bağlantıları TopologyEdge listesine dönüştürme
-        var edges = new List<TopologyEdge>
-
+                new Tariff
                 {
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"bess-1\", \"label\": \"BESS-1\", \"soc\": 82, \"temperature\": 39, \"state\": \"standby\"}"],
-                TargetId = nodeIds["{\"id\": \"key-1\", \"status\": \"opened\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"bess-transformer-1\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e1-2
-            
-            // e1-10
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"key-1\", \"status\": \"opened\"}"],
-                TargetId = nodeIds["{\"id\": \"pcs\", \"powerConsumption\": 120}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e1-10\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // gess-transformer-3
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"gess-3\", \"label\": \"PV 1\", \"performance\": 5, \"temperature\": 68, \"generation\": 100}"],
-                TargetId = nodeIds["{\"id\": \"transformer-5\", \"label\": \"E2.5\", \"value\": \"22 kW\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"gess-transformer-3\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e5-pcs
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"transformer-5\", \"label\": \"E2.5\", \"value\": \"22 kW\"}"],
-                TargetId = nodeIds["{\"id\": \"key-5\", \"status\": \"closed\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e5-pcs\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e5-pcs (key to pcs)
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"key-5\", \"status\": \"closed\"}"],
-                TargetId = nodeIds["{\"id\": \"pcs\", \"powerConsumption\": 120}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e5-pcs\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e-ppc-grid
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"pcs\", \"powerConsumption\": 120}"],
-                TargetId = nodeIds["{\"id\": \"ac-line\", \"value\": 500}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-ppc-grid\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = "target-1",
-                SourceHandle = null
-            },
-            // ac-line-capacitor-1
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"ac-line\", \"value\": 500}"],
-                TargetId = nodeIds["{\"id\": \"smart-meter-6\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"ac-line-capacitor-1\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = "source-1"
-            },
-            // ac-line-capacitor-1 (smart-meter to capacitor)
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"smart-meter-6\"}"],
-                TargetId = nodeIds["{\"id\": \"capacitor-1\", \"label\": \"Grid Transformator\", \"value\": \"Temperature: 60°C\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"ac-line-capacitor-1\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e-pcs-grid
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"capacitor-1\", \"label\": \"Grid Transformator\", \"value\": \"Temperature: 60°C\"}"],
-                TargetId = nodeIds["{\"id\": \"grid\", \"temperature\": 60}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-pcs-grid\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e-pcs-generator
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"ac-line\", \"value\": 500}"],
-                TargetId = nodeIds["{\"id\": \"key-6\", \"status\": \"opened\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-pcs-generator\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = "source-2"
-            },
-            // e-pcs-generator (ac-line to smart-meter-5)
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"ac-line\", \"value\": 500}"],
-                TargetId = nodeIds["{\"id\": \"smart-meter-5\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-pcs-generator\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = "source-3"
-            },
-            // e-pcs-generator (smart-meter-5 to facility)
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"smart-meter-5\"}"],
-                TargetId = nodeIds["{\"label\": \"Facility 1\", \"powerConsumption\": 120, \"powerFactor\": 0.94}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-pcs-generator\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e-pcs-generator-2
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"key-6\", \"status\": \"opened\"}"],
-                TargetId = nodeIds["{\"id\": \"capacitor-2\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-pcs-generator-2\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e-pcs-generator-3
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"capacitor-2\"}"],
-                TargetId = nodeIds["{\"id\": \"generator\", \"generation\": 12, \"fuel\": 82}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-pcs-generator-3\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e-ev-charger
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"ac-line\", \"value\": 500}"],
-                TargetId = nodeIds["{\"id\": \"smart-meter-3\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-ev-charger\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = "source-4"
-            },
-            // e-ev-charger-2
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"smart-meter-3\"}"],
-                TargetId = nodeIds["{\"id\": \"ev-charger\", \"powerConsumption\": 120}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-ev-charger-2\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            },
-            // e-heat-pump
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"ac-line\", \"value\": 500}"],
-                TargetId = nodeIds["{\"id\": \"smart-meter-4\"}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-heat-pump\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = "source-5"
-            },
-            // e-heat-pump-2
-            new TopologyEdge
-            {
-                TenantId = 1,
-                SourceId = nodeIds["{\"id\": \"smart-meter-4\"}"],
-                TargetId = nodeIds["{\"id\": \"heat-pump\", \"powerConsumption\": 120}"],
-                Type = TopologyEdgeTypes.smoothstep,
-                Data = "{\"id\": \"e-heat-pump-2\"}",
-                FacilityId = facilitiyId,
-                TargetHandle = null,
-                SourceHandle = null
-            }
-        };
-
-
-        if (!_context.TopologyEdges.Any())
-        {
-            _context.TopologyEdges.AddRange(edges);
+                    CountryName = "Netherlands",
+                    DistributorName = "Liander",
+                    DistributionFee = 25m,
+                    TransmissionFee = 5m,
+                    TaxRate = 0.21m,
+                    Currency = "EUR",
+                    IsActive = true,
+                    Created = DateTime.UtcNow
+                },
+                new Tariff
+                {
+                    CountryName = "Germany",
+                    DistributorName = "E.ON",
+                    DistributionFee = 30m,
+                    TransmissionFee = 6m,
+                    TaxRate = 0.19m,
+                    Currency = "EUR",
+                    IsActive = true,
+                    Created = DateTime.UtcNow
+                },
+                new Tariff
+                {
+                    CountryName = "Türkiye",
+                    DistributorName = "TEDAŞ",
+                    DistributionFee = 150m,
+                    TransmissionFee = 30m,
+                    TaxRate = 0.20m,
+                    Currency = "TRY",
+                    IsActive = true,
+                    Created = DateTime.UtcNow
+                }
+            };
+            _context.Tariffs.AddRange(tariffs);
             await _context.SaveChangesAsync();
-        }
-        #endregion
+            _logger.LogInformation("Default tariffs created");
 
+            // Assign Netherlands tariff to the default facility
+            var nlTariff = tariffs.First(t => t.CountryName == "Netherlands");
+            var facilityTariff = new FacilityTariff
+            {
+                FacilityId = facilitiyId,
+                TariffId = nlTariff.Id,
+                IsActive = true,
+                Created = DateTime.UtcNow
+            };
+            _context.FacilityTariffs.Add(facilityTariff);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Default facility tariff assignment created");
+        }
+
+        #endregion
     }
 }

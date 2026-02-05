@@ -46,5 +46,5 @@ public class MarketOperator : BaseAuditableEntity
 
     // Navigation properties
     public ICollection<EnergyPriceHistory> PriceHistories { get; set; } = new List<EnergyPriceHistory>();
-    public ICollection<TenantMarketOperator> TenantMarketOperators { get; set; } = new List<TenantMarketOperator>();
+    public ICollection<FirmMarketOperator> FirmMarketOperators { get; set; } = new List<FirmMarketOperator>();
 }

@@ -4,7 +4,7 @@ public class LiveEnergyPricesDto
 {
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
-    public int? TenantId { get; set; }
+    public int? FirmId { get; set; }
     public int MarketOperatorId { get; set; }
     public string MarketOperatorName { get; set; } = string.Empty;
     public string MarketOperatorCode { get; set; } = string.Empty;

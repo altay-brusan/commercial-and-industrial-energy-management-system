@@ -1,10 +1,21 @@
-﻿namespace Backend.Domain.Entities;
+namespace Backend.Domain.Entities;
 
+/// <summary>
+/// Represents a Tenant (Holding Company) - the top-level organizational unit.
+/// A Tenant owns multiple Firms (Sites/Factories).
+/// </summary>
 public class Tenant : BaseAuditableEntity
 {
+    /// <summary>
+    /// Unique identifier for the tenant (e.g., "acme-corp")
+    /// </summary>
     public string? Identifier { get; set; }
+
+    /// <summary>
+    /// Display name of the tenant (e.g., "ACME Corporation")
+    /// </summary>
     public string? Name { get; set; }
-    public string? ConnectionString { get; set; } // Aynı veritabanını kullandığınız için boş kalabilir
-    public string? Items { get; set; } // Ek bilgiler için kullanılabilir.
+
+    // Navigation properties
     public ICollection<Firm>? Firms { get; set; }
 }

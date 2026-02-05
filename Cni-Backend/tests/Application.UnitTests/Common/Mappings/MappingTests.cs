@@ -1,10 +1,10 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using AutoMapper;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models;
-using Backend.Application.TodoItems.Queries.GetTodoItemsWithPagination;
-using Backend.Application.TodoLists.Queries.GetTodos;
+using Backend.Application.Devices.Queries;
+using Backend.Application.Facilities.Queries.GetFacility;
 using Backend.Domain.Entities;
 using NUnit.Framework;
 
@@ -32,11 +32,8 @@ public class MappingTests
     }
 
     [Test]
-    [TestCase(typeof(TodoList), typeof(TodoListDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemDto))]
-    [TestCase(typeof(TodoList), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemBriefDto))]
+    [TestCase(typeof(Device), typeof(DeviceDto))]
+    [TestCase(typeof(Facility), typeof(FacilityDto))]
     public void ShouldSupportMappingFromSourceToDestination(Type source, Type destination)
     {
         var instance = GetInstanceOf(source);

@@ -241,215 +241,6 @@
         ]
       }
     },
-    "/api/CountryTariffs/{id}": {
-      "get": {
-        "tags": [
-          "CountryTariffs"
-        ],
-        "operationId": "GetCountryTariff",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CountryTariffDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "put": {
-        "tags": [
-          "CountryTariffs"
-        ],
-        "operationId": "UpdateCountryTariff",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateCountryTariffCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
-        "responses": {
-          "204": {
-            "description": ""
-          },
-          "400": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "CountryTariffs"
-        ],
-        "operationId": "DeleteCountryTariff",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/CountryTariffs": {
-      "get": {
-        "tags": [
-          "CountryTariffs"
-        ],
-        "operationId": "GetCountryTariffs",
-        "parameters": [
-          {
-            "name": "PageNumber",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          },
-          {
-            "name": "PageSize",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 2
-          },
-          {
-            "name": "IsActive",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "nullable": true
-            },
-            "x-position": 3
-          },
-          {
-            "name": "CountryCode",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "nullable": true
-            },
-            "x-position": 4
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedListOfCountryTariffDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "CountryTariffs"
-        ],
-        "operationId": "CreateCountryTariff",
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCountryTariffCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
     "/api/Devices/{id}": {
       "get": {
         "tags": [
@@ -596,12 +387,12 @@
         "operationId": "GetLiveEnergyPrices",
         "parameters": [
           {
-            "name": "tenantId",
+            "name": "firmId",
             "in": "query",
+            "required": true,
             "schema": {
               "type": "integer",
-              "format": "int32",
-              "nullable": true
+              "format": "int32"
             },
             "x-position": 1
           },
@@ -712,6 +503,16 @@
         "operationId": "GetHistoricalEnergyPricesForTenant",
         "parameters": [
           {
+            "name": "FirmId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
             "name": "StartDate",
             "in": "query",
             "required": true,
@@ -719,7 +520,7 @@
               "type": "string",
               "format": "date-time"
             },
-            "x-position": 1
+            "x-position": 2
           },
           {
             "name": "EndDate",
@@ -729,7 +530,7 @@
               "type": "string",
               "format": "date-time"
             },
-            "x-position": 2
+            "x-position": 3
           }
         ],
         "responses": {
@@ -759,6 +560,16 @@
         "operationId": "GetEnergyPriceStatistics",
         "parameters": [
           {
+            "name": "FirmId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
             "name": "StartDate",
             "in": "query",
             "required": true,
@@ -766,7 +577,7 @@
               "type": "string",
               "format": "date-time"
             },
-            "x-position": 1
+            "x-position": 2
           },
           {
             "name": "EndDate",
@@ -776,7 +587,7 @@
               "type": "string",
               "format": "date-time"
             },
-            "x-position": 2
+            "x-position": 3
           }
         ],
         "responses": {
@@ -989,6 +800,184 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/FirmMarketOperators/Firms/{firmId}/MarketOperator": {
+      "get": {
+        "tags": [
+          "FirmMarketOperators"
+        ],
+        "operationId": "GetFirmMarketOperator",
+        "parameters": [
+          {
+            "name": "firmId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmMarketOperatorDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "FirmMarketOperators"
+        ],
+        "operationId": "CreateFirmMarketOperator",
+        "parameters": [
+          {
+            "name": "firmId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFirmMarketOperatorCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/FirmMarketOperators/Firms/{firmId}/MarketOperator/{id}": {
+      "put": {
+        "tags": [
+          "FirmMarketOperators"
+        ],
+        "operationId": "UpdateFirmMarketOperator",
+        "parameters": [
+          {
+            "name": "firmId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFirmMarketOperatorCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 3
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "FirmMarketOperators"
+        ],
+        "operationId": "DeleteFirmMarketOperator",
+        "parameters": [
+          {
+            "name": "firmId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
           }
         },
         "security": [
@@ -1908,184 +1897,6 @@
         }
       }
     },
-    "/api/TenantMarketOperators/Tenants/{tenantId}/MarketOperator": {
-      "get": {
-        "tags": [
-          "TenantMarketOperators"
-        ],
-        "operationId": "GetTenantMarketOperator",
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TenantMarketOperatorDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "TenantMarketOperators"
-        ],
-        "operationId": "CreateTenantMarketOperator",
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTenantMarketOperatorCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/TenantMarketOperators/Tenants/{tenantId}/MarketOperator/{id}": {
-      "put": {
-        "tags": [
-          "TenantMarketOperators"
-        ],
-        "operationId": "UpdateTenantMarketOperator",
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 2
-          }
-        ],
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTenantMarketOperatorCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 3
-        },
-        "responses": {
-          "204": {
-            "description": ""
-          },
-          "400": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "TenantMarketOperators"
-        ],
-        "operationId": "DeleteTenantMarketOperator",
-        "parameters": [
-          {
-            "name": "tenantId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 2
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
     "/api/Tenants/{id}": {
       "get": {
         "tags": [
@@ -2265,388 +2076,6 @@
                 "schema": {
                   "type": "integer",
                   "format": "int32"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/TodoItems": {
-      "get": {
-        "tags": [
-          "TodoItems"
-        ],
-        "operationId": "GetTodoItemsWithPagination",
-        "parameters": [
-          {
-            "name": "ListId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          },
-          {
-            "name": "PageNumber",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 2
-          },
-          {
-            "name": "PageSize",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 3
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaginatedListOfTodoItemBriefDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "TodoItems"
-        ],
-        "operationId": "CreateTodoItem",
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTodoItemCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/TodoItems/{id}": {
-      "put": {
-        "tags": [
-          "TodoItems"
-        ],
-        "operationId": "UpdateTodoItem",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTodoItemCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
-        "responses": {
-          "204": {
-            "description": ""
-          },
-          "400": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "TodoItems"
-        ],
-        "operationId": "DeleteTodoItem",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/TodoItems/UpdateDetail/{id}": {
-      "put": {
-        "tags": [
-          "TodoItems"
-        ],
-        "operationId": "UpdateTodoItemDetail",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTodoItemDetailCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
-        "responses": {
-          "204": {
-            "description": ""
-          },
-          "400": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/TodoLists": {
-      "get": {
-        "tags": [
-          "TodoLists"
-        ],
-        "operationId": "GetTodoLists",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TodosVm"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "TodoLists"
-        ],
-        "operationId": "CreateTodoList",
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTodoListCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
-        "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "integer",
-                  "format": "int32"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/TodoLists/{id}": {
-      "put": {
-        "tags": [
-          "TodoLists"
-        ],
-        "operationId": "UpdateTodoList",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTodoListCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
-        "responses": {
-          "204": {
-            "description": ""
-          },
-          "400": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "TodoLists"
-        ],
-        "operationId": "DeleteTodoList",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/Topologies/{facilityId}": {
-      "get": {
-        "tags": [
-          "Topologies"
-        ],
-        "operationId": "GetTopology",
-        "parameters": [
-          {
-            "name": "facilityId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TopologyDto"
                 }
               }
             }
@@ -3556,130 +2985,6 @@
           }
         }
       },
-      "CountryTariffDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "tenantId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "countryCode": {
-            "type": "string"
-          },
-          "countryName": {
-            "type": "string"
-          },
-          "distributionFee": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "transmissionFee": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "taxRate": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PaginatedListOfCountryTariffDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CountryTariffDto"
-            }
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "hasPreviousPage": {
-            "type": "boolean"
-          },
-          "hasNextPage": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CreateCountryTariffCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "tenantId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "countryCode": {
-            "type": "string"
-          },
-          "countryName": {
-            "type": "string"
-          },
-          "distributionFee": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "transmissionFee": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "taxRate": {
-            "type": "number",
-            "format": "decimal"
-          }
-        }
-      },
-      "UpdateCountryTariffCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "countryCode": {
-            "type": "string"
-          },
-          "countryName": {
-            "type": "string"
-          },
-          "distributionFee": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "transmissionFee": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "taxRate": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        }
-      },
       "DeviceDto": {
         "type": "object",
         "additionalProperties": false,
@@ -3688,28 +2993,29 @@
             "type": "integer",
             "format": "int32"
           },
-          "machineId": {
-            "type": "string"
-          },
-          "deviceName": {
-            "type": "string",
-            "nullable": true
+          "facilityId": {
+            "type": "integer",
+            "format": "int32"
           },
           "deviceTypeId": {
             "type": "integer",
             "format": "int32"
           },
-          "grpcConnection": {
-            "type": "boolean"
+          "name": {
+            "type": "string"
           },
-          "grpcDeviceStatus": {
-            "type": "integer",
-            "format": "int32"
+          "model": {
+            "type": "string"
           },
-          "grpcLastDataReviceDate": {
+          "serialNumber": {
+            "type": "string"
+          },
+          "manufacturer": {
             "type": "string",
-            "format": "date-time",
             "nullable": true
+          },
+          "ports": {
+            "type": "string"
           }
         }
       },
@@ -3747,55 +3053,31 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "machineId": {
-            "type": "string"
-          },
-          "tenantId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "type": {
-            "$ref": "#/components/schemas/DeviceTypeEnum"
-          },
-          "deviceName": {
-            "type": "string",
-            "nullable": true
-          },
           "facilityId": {
             "type": "integer",
             "format": "int32"
+          },
+          "deviceTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "ports": {
+            "type": "string"
           }
         }
-      },
-      "DeviceTypeEnum": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "Bess",
-          "SolarPanel",
-          "PCS",
-          "SmartMeter",
-          "PPC",
-          "EV_Chanrger",
-          "Heat_Pump",
-          "Generator",
-          "Grid",
-          "MPTT",
-          "FacilitySmartMeter"
-        ],
-        "enum": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11
-        ]
       },
       "LiveEnergyPricesDto": {
         "type": "object",
@@ -3808,7 +3090,7 @@
             "type": "string",
             "nullable": true
           },
-          "tenantId": {
+          "firmId": {
             "type": "integer",
             "format": "int32",
             "nullable": true
@@ -4123,10 +3405,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "tenantId": {
-            "type": "integer",
-            "format": "int32"
-          },
           "firmId": {
             "type": "integer",
             "format": "int32"
@@ -4137,9 +3415,12 @@
           "address": {
             "type": "string"
           },
-          "capacity": {
+          "energyCapacity": {
             "type": "integer",
             "format": "int32"
+          },
+          "energyUnit": {
+            "$ref": "#/components/schemas/EnergyUnit"
           },
           "longitude": {
             "type": "number",
@@ -4148,8 +3429,26 @@
           "latitude": {
             "type": "number",
             "format": "double"
+          },
+          "topology": {
+            "type": "string",
+            "nullable": true
           }
         }
+      },
+      "EnergyUnit": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "KWh",
+          "Wh",
+          "MWh"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
       },
       "PaginatedListOfFacilityBriefDto": {
         "type": "object",
@@ -4189,10 +3488,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "tenantId": {
-            "type": "integer",
-            "format": "int32"
-          },
           "firmId": {
             "type": "integer",
             "format": "int32"
@@ -4203,9 +3498,12 @@
           "address": {
             "type": "string"
           },
-          "capacity": {
+          "energyCapacity": {
             "type": "integer",
             "format": "int32"
+          },
+          "energyUnit": {
+            "$ref": "#/components/schemas/EnergyUnit"
           },
           "longitude": {
             "type": "number",
@@ -4214,12 +3512,6 @@
           "latitude": {
             "type": "number",
             "format": "double"
-          },
-          "grpcStatus": {
-            "type": "boolean"
-          },
-          "grpcChannel": {
-            "type": "string"
           }
         }
       },
@@ -4227,10 +3519,6 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "tenantId": {
-            "type": "integer",
-            "format": "int32"
-          },
           "firmId": {
             "type": "integer",
             "format": "int32"
@@ -4241,9 +3529,12 @@
           "address": {
             "type": "string"
           },
-          "capacity": {
+          "energyCapacity": {
             "type": "integer",
             "format": "int32"
+          },
+          "energyUnit": {
+            "$ref": "#/components/schemas/EnergyUnit"
           },
           "longitude": {
             "type": "number",
@@ -4273,9 +3564,12 @@
           "address": {
             "type": "string"
           },
-          "capacity": {
+          "energyCapacity": {
             "type": "integer",
             "format": "int32"
+          },
+          "energyUnit": {
+            "$ref": "#/components/schemas/EnergyUnit"
           },
           "longitude": {
             "type": "number",
@@ -4284,6 +3578,89 @@
           "latitude": {
             "type": "number",
             "format": "double"
+          },
+          "topology": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "FirmMarketOperatorDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firmId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "marketOperatorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "marketOperatorName": {
+            "type": "string"
+          },
+          "marketOperatorCode": {
+            "type": "string"
+          },
+          "areaCode": {
+            "type": "string"
+          },
+          "samplingPeriodMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateFirmMarketOperatorCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "firmId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "marketOperatorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "areaCode": {
+            "type": "string"
+          },
+          "samplingPeriodMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UpdateFirmMarketOperatorCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "marketOperatorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "areaCode": {
+            "type": "string"
+          },
+          "samplingPeriodMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
           }
         }
       },
@@ -5048,16 +4425,16 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "bessDevices": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BESSDeviceDto"
-            }
-          },
           "solarDevices": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SolarDeviceDto"
+            }
+          },
+          "bessDevices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BESSDeviceDto"
             }
           },
           "pcsDevices": {
@@ -5066,76 +4443,89 @@
               "$ref": "#/components/schemas/PCSDeviceDto"
             }
           },
-          "generatorDevices": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GeneratorDeviceDto"
-            }
-          },
           "gridDevices": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GridPowerDto"
             }
           },
+          "generatorDevices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GeneratorDeviceDto"
+            }
+          },
           "facilityData": {
-            "$ref": "#/components/schemas/FacilityPowerDto"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FacilityPowerDto"
+              }
+            ]
           },
           "systemData": {
-            "$ref": "#/components/schemas/SystemDataDto"
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SystemDataDto"
+              }
+            ]
           }
         }
       },
-      "BESSDeviceDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "integer",
-            "format": "int32"
+      "SolarDeviceDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeviceDataDtoBase"
           },
-          "nodeId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "deviceName": {
-            "type": "string",
-            "nullable": true
-          },
-          "stateOfCharge": {
-            "type": "number",
-            "format": "double"
-          },
-          "stateOfHealth": {
-            "type": "number",
-            "format": "double"
-          },
-          "dcPower": {
-            "$ref": "#/components/schemas/DCPowerDto"
-          },
-          "batteryTemperature": {
-            "type": "number",
-            "format": "double"
-          },
-          "totalEnergyStored": {
-            "type": "number",
-            "format": "double"
-          },
-          "coolingActive": {
-            "type": "boolean"
-          },
-          "capacity": {
-            "type": "number",
-            "format": "double"
-          },
-          "chargeStatus": {
-            "$ref": "#/components/schemas/BESSStatusDto"
-          },
-          "status": {
-            "$ref": "#/components/schemas/DeviceStatusDto"
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "panelPower": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/DCPowerDto"
+                  }
+                ]
+              },
+              "dcOutput": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/DCPowerDto"
+                  }
+                ]
+              },
+              "performanceRatio": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "pvPanelTemperature": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "solarEnergyProduced": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "weather": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "irradiance": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              }
+            }
           }
-        }
+        ]
       },
       "DCPowerDto": {
         "type": "object",
@@ -5168,28 +4558,45 @@
           }
         }
       },
-      "BESSStatusDto": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "Standby",
-          "Charging",
-          "Discharging",
-          "Error"
-        ],
-        "enum": [
-          0,
-          1,
-          2,
-          3
-        ]
+      "DeviceDataDtoBase": {
+        "type": "object",
+        "x-abstract": true,
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deviceName": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DeviceStatusDto"
+              }
+            ]
+          }
+        }
       },
       "DeviceStatusDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "operatingMode": {
-            "$ref": "#/components/schemas/OperatingMode"
+            "type": "string",
+            "nullable": true
           },
           "warningStatus": {
             "type": "boolean"
@@ -5211,101 +4618,109 @@
           }
         }
       },
-      "OperatingMode": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "Standby",
-          "Active",
-          "Fault"
-        ],
-        "enum": [
-          0,
-          1,
-          2
+      "BESSDeviceDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeviceDataDtoBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stateOfCharge": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "stateOfHealth": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "dcPower": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/DCPowerDto"
+                  }
+                ]
+              },
+              "batteryTemperature": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "totalEnergyStored": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "chargeLimit": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "dischargeLimit": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "chargeStatus": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
         ]
       },
-      "SolarDeviceDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "nodeId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "deviceName": {
-            "type": "string",
-            "nullable": true
-          },
-          "dcOutput": {
-            "$ref": "#/components/schemas/DCPowerDto"
-          },
-          "panelPower": {
-            "$ref": "#/components/schemas/DCPowerDto"
-          },
-          "performanceRatio": {
-            "type": "number",
-            "format": "double"
-          },
-          "pvPanelTemperature": {
-            "type": "number",
-            "format": "double"
-          },
-          "status": {
-            "$ref": "#/components/schemas/DeviceStatusDto"
-          },
-          "weather": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "irradiance": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          }
-        }
-      },
       "PCSDeviceDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "integer",
-            "format": "int32"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeviceDataDtoBase"
           },
-          "nodeId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "deviceName": {
-            "type": "string",
-            "nullable": true
-          },
-          "efficiency": {
-            "type": "number",
-            "format": "double"
-          },
-          "temperaturePcs": {
-            "type": "number",
-            "format": "double"
-          },
-          "acPower": {
-            "$ref": "#/components/schemas/ACPowerDto"
-          },
-          "dcPower": {
-            "$ref": "#/components/schemas/DCPowerDto"
-          },
-          "status": {
-            "$ref": "#/components/schemas/DeviceStatusDto"
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "dcPower": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/DCPowerDto"
+                  }
+                ]
+              },
+              "acPower": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ACPowerDto"
+                  }
+                ]
+              },
+              "temperaturePcs": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "efficiency": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "totalEnergyDelivered": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "totalEnergyAbsorbed": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              }
+            }
           }
-        }
+        ]
       },
       "ACPowerDto": {
         "type": "object",
@@ -5326,7 +4741,7 @@
             "format": "double",
             "nullable": true
           },
-          "totalEnergyDaily": {
+          "voltageRms": {
             "type": "number",
             "format": "double",
             "nullable": true
@@ -5336,81 +4751,97 @@
             "format": "double",
             "nullable": true
           },
-          "voltageRms": {
+          "totalEnergyDaily": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "frequency": {
             "type": "number",
             "format": "double",
             "nullable": true
           }
         }
       },
-      "GeneratorDeviceDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "nodeId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "totalPower": {
-            "type": "number",
-            "format": "double"
-          },
-          "loadGeneratorContribution": {
-            "type": "number",
-            "format": "double"
-          }
-        }
-      },
       "GridPowerDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "nodeId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeviceDataDtoBase"
           },
-          "deviceId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "deviceName": {
-            "type": "string",
-            "nullable": true
-          },
-          "acPower": {
-            "$ref": "#/components/schemas/ACPowerDto"
-          },
-          "status": {
-            "$ref": "#/components/schemas/DeviceStatusDto"
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "acPower": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ACPowerDto"
+                  }
+                ]
+              },
+              "activeEnergyImport": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "activeEnergyExport": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              }
+            }
           }
-        }
+        ]
+      },
+      "GeneratorDeviceDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeviceDataDtoBase"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "totalPower": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "loadGeneratorContribution": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              }
+            }
+          }
+        ]
       },
       "FacilityPowerDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "deviceId": {
-            "type": "integer",
-            "format": "int32"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DeviceDataDtoBase"
           },
-          "nodeId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "acPower": {
-            "$ref": "#/components/schemas/ACPowerDto"
-          },
-          "status": {
-            "$ref": "#/components/schemas/DeviceStatusDto"
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "acPower": {
+                "nullable": true,
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ACPowerDto"
+                  }
+                ]
+              },
+              "totalActiveEnergy": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              }
+            }
           }
-        }
+        ]
       },
       "SystemDataDto": {
         "type": "object",
@@ -5418,35 +4849,43 @@
         "properties": {
           "generatorPower": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "gridPower": {
             "type": "number",
-            "format": "double"
-          },
-          "loadGeneratorContribution": {
-            "type": "number",
-            "format": "double"
-          },
-          "loadGridContribution": {
-            "type": "number",
-            "format": "double"
-          },
-          "loadPcsContribution": {
-            "type": "number",
-            "format": "double"
-          },
-          "loadSolarContribution": {
-            "type": "number",
-            "format": "double"
-          },
-          "pcsPower": {
-            "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "solarPower": {
             "type": "number",
-            "format": "double"
+            "format": "double",
+            "nullable": true
+          },
+          "bessPower": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "loadGeneratorContribution": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "loadGridContribution": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "loadPcsContribution": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "loadSolarContribution": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           },
           "cost_Saving_TL_Daily": {
             "type": "number",
@@ -5575,85 +5014,6 @@
           }
         }
       },
-      "TenantMarketOperatorDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "tenantId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "marketOperatorId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "marketOperatorName": {
-            "type": "string"
-          },
-          "marketOperatorCode": {
-            "type": "string"
-          },
-          "areaCode": {
-            "type": "string"
-          },
-          "samplingPeriodMinutes": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CreateTenantMarketOperatorCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "tenantId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "marketOperatorId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "areaCode": {
-            "type": "string"
-          },
-          "samplingPeriodMinutes": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "UpdateTenantMarketOperatorCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "marketOperatorId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "areaCode": {
-            "type": "string"
-          },
-          "samplingPeriodMinutes": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        }
-      },
       "TenantDto": {
         "type": "object",
         "additionalProperties": false,
@@ -5744,11 +5104,7 @@
             "type": "string",
             "nullable": true
           },
-          "connectionString": {
-            "type": "string",
-            "nullable": true
-          },
-          "items": {
+          "identifier": {
             "type": "string",
             "nullable": true
           }
@@ -5766,334 +5122,7 @@
             "type": "string",
             "nullable": true
           },
-          "connectionString": {
-            "type": "string",
-            "nullable": true
-          },
-          "items": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "PaginatedListOfTodoItemBriefDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TodoItemBriefDto"
-            }
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "hasPreviousPage": {
-            "type": "boolean"
-          },
-          "hasNextPage": {
-            "type": "boolean"
-          }
-        }
-      },
-      "TodoItemBriefDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "listId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "done": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CreateTodoItemCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "listId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "UpdateTodoItemCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "done": {
-            "type": "boolean"
-          }
-        }
-      },
-      "UpdateTodoItemDetailCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "listId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "priority": {
-            "$ref": "#/components/schemas/PriorityLevel"
-          },
-          "note": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "PriorityLevel": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "None",
-          "Low",
-          "Medium",
-          "High"
-        ],
-        "enum": [
-          0,
-          1,
-          2,
-          3
-        ]
-      },
-      "TodosVm": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "priorityLevels": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LookupDto"
-            }
-          },
-          "lists": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TodoListDto"
-            }
-          }
-        }
-      },
-      "LookupDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "TodoListDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "colour": {
-            "type": "string",
-            "nullable": true
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TodoItemDto"
-            }
-          }
-        }
-      },
-      "TodoItemDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "listId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          },
-          "done": {
-            "type": "boolean"
-          },
-          "priority": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "note": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "CreateTodoListCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "title": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "UpdateTodoListCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "TopologyDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "nodes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TopologyNodeDto"
-            }
-          },
-          "edges": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TopologyEdgeDto"
-            }
-          }
-        }
-      },
-      "TopologyNodeDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "type": {
-            "type": "string",
-            "nullable": true
-          },
-          "extent": {
-            "type": "string",
-            "nullable": true
-          },
-          "parentId": {
-            "type": "string",
-            "nullable": true
-          },
-          "data": {
-            "nullable": true
-          },
-          "position": {
-            "nullable": true
-          },
-          "style": {
-            "nullable": true
-          },
-          "targetHandleCount": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "sourceHandleCount": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        }
-      },
-      "TopologyEdgeDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "source": {
-            "type": "string",
-            "nullable": true
-          },
-          "target": {
-            "type": "string",
-            "nullable": true
-          },
-          "type": {
-            "type": "string",
-            "nullable": true
-          },
-          "data": {
-            "nullable": true
-          },
-          "style": {
-            "nullable": true
-          },
-          "sourceHandle": {
-            "type": "string",
-            "nullable": true
-          },
-          "targetHandle": {
+          "identifier": {
             "type": "string",
             "nullable": true
           }

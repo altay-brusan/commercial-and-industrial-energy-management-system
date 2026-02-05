@@ -1,7 +1,6 @@
 ﻿using Backend.Application.Common.Interfaces;
-using Backend.Domain.Entities.Proto.DTO;
+using Backend.Application.Scada.DTOs;
 using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json;
 
 namespace Backend.Web.Hubs.Implementations;
 

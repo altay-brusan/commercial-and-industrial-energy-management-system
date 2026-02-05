@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
-using Backend.Application.Graphs.Queries.GetSolarPowerProduction;
 
 namespace Backend.Application.Graphs.Queries.GetSolarPowerProduction;
 
@@ -27,12 +22,16 @@ public class GetSolarPowerProductionQueryValidator : AbstractValidator<GetSolarP
 public class GetSolarPowerProductionQueryHandler : IRequestHandler<GetSolarPowerProductionQuery, SolarGraphDto?>
 {
     private readonly IApplicationDbContext _context;
-    private readonly IMapper _mapper;
     private readonly IExternalDataService _externalDataService;
-    public GetSolarPowerProductionQueryHandler(IApplicationDbContext context, IMapper mapper, IExternalDataService externalDataService)
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    public GetSolarPowerProductionQueryHandler(IApplicationDbContext context, IExternalDataService externalDataService)
     {
         _context = context;
-        _mapper = mapper;
         _externalDataService = externalDataService;
     }
 
@@ -47,34 +46,39 @@ public class GetSolarPowerProductionQueryHandler : IRequestHandler<GetSolarPower
             request.EndDate = request.EndDate.Value.ToLocalTime();
         }
         request.StartDate = request.StartDate.ToLocalTime();
-        var realData = await _context.SolarDatas
-              .Where(f => f.SolarId == request.Id &&
-                        f.Created >= request.StartDate &&
-                 f.Created <= request.EndDate &&
-                (f.Created.Minute % 5) == 0)
-              .Select(f => new TimeSeriesData
-              {
-                  Timestamp = f.Created.ToLocalTime().DateTime,
-                  Value = f.DCOutput.Power
-              })
-              .ToListAsync(cancellationToken);
 
+        var solarDataRaw = await _context.DeviceSolarData
+            .Where(f => f.DeviceId == request.Id &&
+                      f.Created >= request.StartDate &&
+                      f.Created <= request.EndDate &&
+                      (f.Created.Minute % 5) == 0)
+            .Select(f => new { f.Created, f.Payload })
+            .ToListAsync(cancellationToken);
+
+        var realData = solarDataRaw.Select(f =>
+        {
+            var payload = DeserializePayload(f.Payload);
+            return new TimeSeriesData
+            {
+                Timestamp = f.Created.ToLocalTime().DateTime,
+                Value = payload?.DcOutput?.Power
+            };
+        }).ToList();
 
         var predictionData = (await _externalDataService.GetTimeSeriesDataAsync("external_solar_power_prediction"))
             .ToList();
 
-        // Tüm dakikaları içeren bir zaman listesi oluştur
         var allMinutes = Enumerable.Range(0, (int)(request.EndDate!.Value - request.StartDate).TotalMinutes)
-             .Select(i => request.StartDate.AddMinutes(i))
-             .ToList();
-        // Sonuçları oluştur
+            .Select(i => request.StartDate.AddMinutes(i))
+            .ToList();
+
         var result = new SolarGraphDto
         {
             DataPoints = allMinutes.Where(minute => minute.Minute % 15 == 0).Select(minute => new TimeDataPoint
             {
                 Time = minute,
                 Production = realData
-                    .Where(r => r.Timestamp.Hour == minute.Hour&&r.Timestamp.Minute==minute.Minute)
+                    .Where(r => r.Timestamp.Hour == minute.Hour && r.Timestamp.Minute == minute.Minute)
                     .Select(r => r.Value)
                     .FirstOrDefault(),
                 Prediction = predictionData
@@ -85,5 +89,30 @@ public class GetSolarPowerProductionQueryHandler : IRequestHandler<GetSolarPower
         };
 
         return result;
+    }
+
+    private static SolarPayload? DeserializePayload(string payload)
+    {
+        if (string.IsNullOrWhiteSpace(payload) || payload == "{}")
+            return null;
+
+        try
+        {
+            return JsonSerializer.Deserialize<SolarPayload>(payload, JsonOptions);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private class SolarPayload
+    {
+        public DcPowerDto? DcOutput { get; set; }
+    }
+
+    private class DcPowerDto
+    {
+        public double? Power { get; set; }
     }
 }
