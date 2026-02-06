@@ -40,7 +40,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     // Market and tariff entities
     public DbSet<MarketOperator> MarketOperators => Set<MarketOperator>();
     public DbSet<FirmMarketOperator> FirmMarketOperators => Set<FirmMarketOperator>();
-    public DbSet<DayAheadEnergyPriceHistory> DayAheadEnergyPriceHistories => Set<DayAheadEnergyPriceHistory>();
+    public DbSet<DayAheadNetEnergyPriceHistory> DayAheadNetEnergyPriceHistories => Set<DayAheadNetEnergyPriceHistory>();
     public DbSet<Tariff> Tariffs => Set<Tariff>();
     public DbSet<FacilityTariff> FacilityTariffs => Set<FacilityTariff>();
 
@@ -64,7 +64,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<DeviceSolarData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<DevicePcsData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<DeviceSmartMeterData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
-        // Note: Tariffs, MarketOperators, DayAheadEnergyPriceHistories are global - no tenant query filter
+        // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         builder.Entity<ApplicationUser>().ToTable("AppUsers");

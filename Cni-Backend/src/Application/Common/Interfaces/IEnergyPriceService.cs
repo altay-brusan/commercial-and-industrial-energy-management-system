@@ -7,13 +7,13 @@ public interface IEnergyPriceService
 {
     /// <summary>
     /// Fetches day-ahead prices from a Market Operator for a specific date and country.
+    /// Resolution is determined by the Market Operator (e.g., ENTSO-E returns PT15M or PT60M based on market).
     /// </summary>
     /// <param name="moCode">Market Operator code (e.g., "ENTSOE", "EPIAS")</param>
     /// <param name="baseUrl">Base URL of the Market Operator API</param>
     /// <param name="apiKey">API key or credentials</param>
     /// <param name="country">Country name (e.g., "Netherlands", "Germany", "Türkiye")</param>
     /// <param name="date">The date to fetch prices for</param>
-    /// <param name="periodMinutes">Requested resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result containing prices or error message</returns>
     Task<EnergyPriceResult> GetDayAheadPricesAsync(
@@ -22,7 +22,6 @@ public interface IEnergyPriceService
         string? apiKey,
         string? country,
         DateTimeOffset date,
-        int? periodMinutes = null,
         CancellationToken cancellationToken = default);
 }
 

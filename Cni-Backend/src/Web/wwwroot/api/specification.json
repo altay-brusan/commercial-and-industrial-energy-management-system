@@ -423,7 +423,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DayAheadPricesDto"
+                  "$ref": "#/components/schemas/DayAheadEnergyPricesDto"
                 }
               }
             }
@@ -475,16 +475,6 @@
               "nullable": true
             },
             "x-position": 3
-          },
-          {
-            "name": "period",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "nullable": true
-            },
-            "x-position": 4
           }
         ],
         "responses": {
@@ -493,7 +483,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LiveEnergyPricesDto"
+                  "$ref": "#/components/schemas/LiveDayAheadEnergyPricesDto"
                 }
               }
             }
@@ -3505,7 +3495,7 @@
           }
         }
       },
-      "DayAheadPricesDto": {
+      "DayAheadEnergyPricesDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -3560,16 +3550,16 @@
           "prices": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DayAheadPricePointDto"
+              "$ref": "#/components/schemas/DayAheadEnergyPricePointDto"
             }
           }
         }
       },
-      "DayAheadPricePointDto": {
+      "DayAheadEnergyPricePointDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "timestamp": {
+          "timestampUtc": {
             "type": "string",
             "format": "date-time"
           },
@@ -3588,7 +3578,7 @@
           }
         }
       },
-      "LiveEnergyPricesDto": {
+      "LiveDayAheadEnergyPricesDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -3649,14 +3639,14 @@
           "prices": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/LivePricePointDto"
+              "$ref": "#/components/schemas/LiveDayAheadPricePointDto"
             }
           },
           "statistics": {
             "nullable": true,
             "oneOf": [
               {
-                "$ref": "#/components/schemas/LivePriceStatisticsDto"
+                "$ref": "#/components/schemas/LiveDayAheadPriceStatisticsDto"
               }
             ]
           },
@@ -3674,7 +3664,7 @@
           }
         }
       },
-      "LivePricePointDto": {
+      "LiveDayAheadPricePointDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -3696,7 +3686,7 @@
           }
         }
       },
-      "LivePriceStatisticsDto": {
+      "LiveDayAheadPriceStatisticsDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -4489,10 +4479,6 @@
           "taxOffice": {
             "type": "string",
             "nullable": true
-          },
-          "plan": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
@@ -4591,10 +4577,6 @@
             "nullable": true
           },
           "taxOffice": {
-            "type": "string",
-            "nullable": true
-          },
-          "plan": {
             "type": "string",
             "nullable": true
           }
@@ -5787,14 +5769,6 @@
           "name": {
             "type": "string",
             "nullable": true
-          },
-          "connectionString": {
-            "type": "string",
-            "nullable": true
-          },
-          "items": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
@@ -5841,14 +5815,6 @@
             "nullable": true
           },
           "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "connectionString": {
-            "type": "string",
-            "nullable": true
-          },
-          "items": {
             "type": "string",
             "nullable": true
           }

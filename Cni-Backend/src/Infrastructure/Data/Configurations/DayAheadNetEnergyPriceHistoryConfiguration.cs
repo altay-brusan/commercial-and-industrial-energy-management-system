@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Infrastructure.Data.Configurations;
 
-public class DayAheadEnergyPriceHistoryConfiguration : IEntityTypeConfiguration<DayAheadEnergyPriceHistory>
+public class DayAheadNetEnergyPriceHistoryConfiguration : IEntityTypeConfiguration<DayAheadNetEnergyPriceHistory>
 {
-    public void Configure(EntityTypeBuilder<DayAheadEnergyPriceHistory> builder)
+    public void Configure(EntityTypeBuilder<DayAheadNetEnergyPriceHistory> builder)
     {
-        builder.ToTable("DayAheadEnergyPriceHistories");
+        builder.ToTable("DayAheadNetEnergyPriceHistories");
 
         builder.Property(p => p.Country)
             .HasMaxLength(100)
@@ -18,11 +18,7 @@ public class DayAheadEnergyPriceHistoryConfiguration : IEntityTypeConfiguration<
             .HasPrecision(18, 6)
             .IsRequired();
 
-        builder.Property(p => p.GrossPrice)
-            .HasPrecision(18, 6)
-            .IsRequired();
-
-        builder.Property(p => p.PriceLocalTimestamp)
+        builder.Property(p => p.TimestampUtc)
             .IsRequired();
 
         // Foreign key to MarketOperator
@@ -31,8 +27,8 @@ public class DayAheadEnergyPriceHistoryConfiguration : IEntityTypeConfiguration<
             .HasForeignKey(p => p.MarketOperatorId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Unique index on (MarketOperatorId, Country, PriceLocalTimestamp) to prevent duplicates
-        builder.HasIndex(p => new { p.MarketOperatorId, p.Country, p.PriceLocalTimestamp })
+        // Unique index on (MarketOperatorId, Country, TimestampUtc) to prevent duplicates
+        builder.HasIndex(p => new { p.MarketOperatorId, p.Country, p.TimestampUtc })
             .IsUnique();
 
         // Index for efficient range queries

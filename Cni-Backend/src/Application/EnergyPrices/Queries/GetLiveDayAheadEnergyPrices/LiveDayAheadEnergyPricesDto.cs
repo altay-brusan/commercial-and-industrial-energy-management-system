@@ -1,6 +1,6 @@
-namespace Backend.Application.EnergyPrices.Queries.GetLiveEnergyPrices;
+namespace Backend.Application.EnergyPrices.Queries.GetLiveDayAheadEnergyPrices;
 
-public class LiveEnergyPricesDto
+public class LiveDayAheadEnergyPricesDto
 {
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
@@ -17,8 +17,8 @@ public class LiveEnergyPricesDto
     public decimal TransmissionFee { get; set; }
     public decimal TaxRate { get; set; }
     public bool UsingDefaultTariff { get; set; }
-    public List<LivePricePointDto> Prices { get; set; } = new();
-    public LivePriceStatisticsDto? Statistics { get; set; }
+    public List<LiveDayAheadPricePointDto> Prices { get; set; } = new();
+    public LiveDayAheadPriceStatisticsDto? Statistics { get; set; }
 
     /// <summary>
     /// Total number of price data points returned.
@@ -27,6 +27,7 @@ public class LiveEnergyPricesDto
 
     /// <summary>
     /// The resolution of the returned prices in minutes (15, 30, or 60).
+    /// Determined by the Market Operator (e.g., ENTSO-E returns PT15M or PT60M based on market).
     /// </summary>
     public int ResolutionMinutes { get; set; } = 60;
 
@@ -36,7 +37,7 @@ public class LiveEnergyPricesDto
     public string? Timezone { get; set; }
 }
 
-public class LivePricePointDto
+public class LiveDayAheadPricePointDto
 {
     /// <summary>
     /// UTC timestamp of the price point.
@@ -59,7 +60,7 @@ public class LivePricePointDto
     public decimal GrossPrice { get; set; }
 }
 
-public class LivePriceStatisticsDto
+public class LiveDayAheadPriceStatisticsDto
 {
     public decimal MinNetPrice { get; set; }
     public decimal MaxNetPrice { get; set; }

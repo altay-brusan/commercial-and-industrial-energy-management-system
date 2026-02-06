@@ -1,6 +1,6 @@
 using Backend.Application.Common.Models;
 using Backend.Application.EnergyPrices.Queries.GetDayAheadPrices;
-using Backend.Application.EnergyPrices.Queries.GetLiveEnergyPrices;
+using Backend.Application.EnergyPrices.Queries.GetLiveDayAheadEnergyPrices;
 using Backend.Application.FacilityTariffs;
 using Backend.Application.FacilityTariffs.Commands.AssignTariffToFacility;
 using Backend.Application.FacilityTariffs.Commands.ChangeFacilityTariff;
@@ -69,7 +69,7 @@ public class EnergyPrices : EndpointGroupBase
     /// <param name="facilityId">Facility ID to get prices for</param>
     /// <param name="startDate">Start date (inclusive)</param>
     /// <param name="endDate">End date (inclusive). If null, only startDate's data is returned.</param>
-    public async Task<Results<Ok<DayAheadPricesDto>, NotFound>> GetDayAheadPrices(
+    public async Task<Results<Ok<DayAheadEnergyPricesDto>, NotFound>> GetDayAheadPrices(
         ISender sender,
         [FromQuery] int facilityId,
         [FromQuery] DateTimeOffset startDate,
@@ -94,26 +94,24 @@ public class EnergyPrices : EndpointGroupBase
     /// <summary>
     /// Fetches live Day-Ahead prices directly from the Market Operator API.
     /// Returns prices with tax and distribution fees applied based on firm's tariff.
+    /// Resolution is determined by the Market Operator (e.g., ENTSO-E returns PT15M or PT60M based on market).
     /// This does NOT store data - use this for real-time display.
     /// </summary>
     /// <param name="sender">MediatR sender</param>
     /// <param name="firmId">Firm ID to fetch prices for.</param>
     /// <param name="startDate">Start date (inclusive). If not specified, uses today or tomorrow based on MO publication rules.</param>
     /// <param name="endDate">End date (inclusive). If not specified, defaults to startDate + 1 day.</param>
-    /// <param name="period">Resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).</param>
-    public async Task<Ok<LiveEnergyPricesDto>> GetLiveDayAheadPrices(
+    public async Task<Ok<LiveDayAheadEnergyPricesDto>> GetLiveDayAheadPrices(
         ISender sender,
         [FromQuery] int firmId,
         [FromQuery] DateTimeOffset? startDate = null,
-        [FromQuery] DateTimeOffset? endDate = null,
-        [FromQuery] int? period = null)
+        [FromQuery] DateTimeOffset? endDate = null)
     {
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = firmId,
             StartDate = startDate,
-            EndDate = endDate,
-            Period = period
+            EndDate = endDate
         };
         var result = await sender.Send(query);
         return TypedResults.Ok(result);

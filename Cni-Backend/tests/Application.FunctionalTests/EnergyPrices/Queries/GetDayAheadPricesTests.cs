@@ -194,13 +194,12 @@ public class GetDayAheadPricesTests : BaseTestFixture
         var baseDate = DateTimeOffset.UtcNow.Date;
         for (int hour = 0; hour < 24; hour++)
         {
-            var priceHistory = new DayAheadEnergyPriceHistory
+            var priceHistory = new DayAheadNetEnergyPriceHistory
             {
                 MarketOperatorId = marketOperator.Id,
                 Country = "Netherlands",
                 NetPrice = 50m + hour,
-                GrossPrice = 60m + hour,
-                PriceLocalTimestamp = baseDate.AddHours(hour)
+                TimestampUtc = baseDate.AddHours(hour)
             };
             await Testing.AddAsync(priceHistory);
         }
@@ -285,13 +284,12 @@ public class GetDayAheadPricesTests : BaseTestFixture
         {
             for (int hour = 0; hour < 24; hour++)
             {
-                var priceHistory = new DayAheadEnergyPriceHistory
+                var priceHistory = new DayAheadNetEnergyPriceHistory
                 {
                     MarketOperatorId = marketOperator.Id,
                     Country = "Netherlands",
                     NetPrice = 40m + day * 10 + hour,
-                    GrossPrice = 50m + day * 10 + hour,
-                    PriceLocalTimestamp = baseDate.AddDays(day).AddHours(hour)
+                    TimestampUtc = baseDate.AddDays(day).AddHours(hour)
                 };
                 await Testing.AddAsync(priceHistory);
             }
@@ -388,13 +386,12 @@ public class GetDayAheadPricesTests : BaseTestFixture
 
         // Add price data
         var baseDate = DateTimeOffset.UtcNow.Date;
-        var priceHistory = new DayAheadEnergyPriceHistory
+        var priceHistory = new DayAheadNetEnergyPriceHistory
         {
             MarketOperatorId = marketOperator.Id,
             Country = "Netherlands",
             NetPrice = 100m,
-            GrossPrice = 125m,
-            PriceLocalTimestamp = baseDate
+            TimestampUtc = baseDate
         };
         await Testing.AddAsync(priceHistory);
 
@@ -413,7 +410,7 @@ public class GetDayAheadPricesTests : BaseTestFixture
         result.DistributionFee.Should().Be(20m);
         result.TransmissionFee.Should().Be(5m);
         result.TaxRate.Should().Be(0.21m);
-        // Discounted price should be 125 * 0.90 = 112.5
-        result.Prices.First().DiscountedGrossPrice.Should().Be(112.5m);
+        // GrossPrice = (100 + 20 + 5) * 1.21 = 151.25, Discounted = 151.25 * 0.90 = 136.125
+        result.Prices.First().DiscountedGrossPrice.Should().Be(136.125m);
     }
 }

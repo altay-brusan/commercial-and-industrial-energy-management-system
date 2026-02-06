@@ -3,15 +3,16 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Microsoft.EntityFrameworkCore;
 
-namespace Backend.Application.EnergyPrices.Queries.GetLiveEnergyPrices;
+namespace Backend.Application.EnergyPrices.Queries.GetLiveDayAheadEnergyPrices;
 
 /// <summary>
 /// Fetches live/current day-ahead prices directly from a Market Operator API.
 /// Uses the firm's configured Market Operator or falls back to default based on Firm's country.
 /// This does NOT store the data - it's for real-time display.
+/// Resolution is determined by the Market Operator (e.g., ENTSO-E returns PT15M or PT60M based on market).
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
-public record GetLiveEnergyPricesQuery : IRequest<LiveEnergyPricesDto>
+public record GetLiveDayAheadEnergyPricesQuery : IRequest<LiveDayAheadEnergyPricesDto>
 {
     /// <summary>
     /// Firm ID to fetch prices for. Required.
@@ -27,21 +28,15 @@ public record GetLiveEnergyPricesQuery : IRequest<LiveEnergyPricesDto>
     /// End date (inclusive). If not specified, defaults to StartDate + 1 day.
     /// </summary>
     public DateTimeOffset? EndDate { get; set; }
-
-    /// <summary>
-    /// Requested resolution in minutes (15, 30, or 60). Defaults to 60 (hourly).
-    /// If the source data has higher resolution, it will be aggregated.
-    /// </summary>
-    public int? Period { get; set; }
 }
 
-public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPricesQuery, LiveEnergyPricesDto>
+public class GetLiveDayAheadEnergyPricesQueryHandler : IRequestHandler<GetLiveDayAheadEnergyPricesQuery, LiveDayAheadEnergyPricesDto>
 {
     private readonly IApplicationDbContext _context;
     private readonly IEnergyPriceService _energyPriceService;
     private readonly ICountryMappingService _countryMappingService;
 
-    public GetLiveEnergyPricesQueryHandler(
+    public GetLiveDayAheadEnergyPricesQueryHandler(
         IApplicationDbContext context,
         IEnergyPriceService energyPriceService,
         ICountryMappingService countryMappingService)
@@ -51,7 +46,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         _countryMappingService = countryMappingService;
     }
 
-    public async Task<LiveEnergyPricesDto> Handle(GetLiveEnergyPricesQuery request, CancellationToken cancellationToken)
+    public async Task<LiveDayAheadEnergyPricesDto> Handle(GetLiveDayAheadEnergyPricesQuery request, CancellationToken cancellationToken)
     {
         // Verify the firm exists
         var firm = await _context.Firms
@@ -60,7 +55,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
 
         if (firm == null)
         {
-            return new LiveEnergyPricesDto
+            return new LiveDayAheadEnergyPricesDto
             {
                 Success = false,
                 ErrorMessage = $"Firm with ID {request.FirmId} not found"
@@ -101,9 +96,9 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             await GetTariffForCountryAsync(request.FirmId, countryName, cancellationToken);
 
         // Fetch prices for each day in the range
-        var allPrices = new List<LivePricePointDto>();
+        var allPrices = new List<LiveDayAheadPricePointDto>();
         var errors = new List<string>();
-        int resolutionMinutes = 60;
+        int resolutionMinutes = 60; // Will be updated from API response
         string? timezone = null;
 
         var currentDate = startDate.Date;
@@ -111,14 +106,14 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
 
         while (currentDate <= endDateValue)
         {
+            // Resolution is determined by the Market Operator, not requested by us
             var result = await _energyPriceService.GetDayAheadPricesAsync(
                 mo.Code,
                 mo.BaseUrl,
                 mo.ApiKey,
                 countryName,
                 currentDate,
-                request.Period ?? firmMo.SamplingPeriodMinutes,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
             if (result.Success && result.Prices.Count > 0)
             {
@@ -129,7 +124,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
                 var dayPrices = result.Prices.Select(p =>
                 {
                     var grossPrice = (p.PricePerMWh + distributionFee + transmissionFee) * (1 + taxRate);
-                    return new LivePricePointDto
+                    return new LiveDayAheadPricePointDto
                     {
                         Timestamp = p.Timestamp,
                         LocalTimestamp = p.LocalTimestamp,
@@ -151,7 +146,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         // If no prices were fetched at all, return error
         if (allPrices.Count == 0)
         {
-            return new LiveEnergyPricesDto
+            return new LiveDayAheadEnergyPricesDto
             {
                 Success = false,
                 ErrorMessage = errors.Count > 0 ? string.Join("; ", errors) : "No price data found for the specified date range",
@@ -170,13 +165,13 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         allPrices = allPrices.OrderBy(p => p.Timestamp).ToList();
 
         // Calculate statistics across all days
-        LivePriceStatisticsDto? statistics = null;
+        LiveDayAheadPriceStatisticsDto? statistics = null;
         if (allPrices.Count > 0)
         {
             var minNetPrice = allPrices.Min(p => p.NetPrice);
             var maxNetPrice = allPrices.Max(p => p.NetPrice);
 
-            statistics = new LivePriceStatisticsDto
+            statistics = new LiveDayAheadPriceStatisticsDto
             {
                 MinNetPrice = minNetPrice,
                 MaxNetPrice = maxNetPrice,
@@ -189,7 +184,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             };
         }
 
-        return new LiveEnergyPricesDto
+        return new LiveDayAheadEnergyPricesDto
         {
             Success = true,
             FirmId = request.FirmId,
@@ -213,11 +208,11 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
         };
     }
 
-    private async Task<(LiveEnergyPricesDto Result, Domain.Entities.FirmMarketOperator? FirmMarketOperator)> GetFallbackMarketOperatorAsync(Domain.Entities.Firm firm, CancellationToken cancellationToken)
+    private async Task<(LiveDayAheadEnergyPricesDto Result, Domain.Entities.FirmMarketOperator? FirmMarketOperator)> GetFallbackMarketOperatorAsync(Domain.Entities.Firm firm, CancellationToken cancellationToken)
     {
         if (firm.Country == null)
         {
-            return (new LiveEnergyPricesDto
+            return (new LiveDayAheadEnergyPricesDto
             {
                 Success = false,
                 ErrorMessage = "No Market Operator configured for this firm and no firm country found for fallback"
@@ -237,7 +232,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
 
         if (mo == null)
         {
-            return (new LiveEnergyPricesDto
+            return (new LiveDayAheadEnergyPricesDto
             {
                 Success = false,
                 ErrorMessage = $"Default Market Operator '{moCode}' not found"
@@ -260,7 +255,7 @@ public class GetLiveEnergyPricesQueryHandler : IRequestHandler<GetLiveEnergyPric
             IsActive = true
         };
 
-        return (new LiveEnergyPricesDto { Success = true }, virtualFmo);
+        return (new LiveDayAheadEnergyPricesDto { Success = true }, virtualFmo);
     }
 
     private async Task<(decimal distributionFee, decimal transmissionFee, decimal taxRate, string currency, bool usingDefault)> GetTariffForCountryAsync(

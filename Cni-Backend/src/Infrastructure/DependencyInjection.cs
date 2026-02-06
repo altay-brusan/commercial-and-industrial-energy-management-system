@@ -15,6 +15,7 @@ using Backend.Infrastructure.Logging;
 using Serilog.Core;
 using Backend.Infrastructure.Services;
 using Backend.Infrastructure.Mappings;
+using Backend.Infrastructure.BackgroundJobs;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -86,5 +87,8 @@ public static class DependencyInjection
 
         // Country mapping service for area codes and timezones
         builder.Services.AddSingleton<ICountryMappingService, CountryMappingService>();
+
+        // Background job workers for Hangfire
+        builder.Services.AddScoped<EnergyPriceFetchWorker>();
     }
 }

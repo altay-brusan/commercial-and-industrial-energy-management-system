@@ -30,7 +30,6 @@ public class EnergyPriceService : IEnergyPriceService
         string? apiKey,
         string? country,
         DateTimeOffset date,
-        int? periodMinutes = null,
         CancellationToken cancellationToken = default)
     {
         var upperMoCode = moCode.ToUpperInvariant();
@@ -51,13 +50,11 @@ public class EnergyPriceService : IEnergyPriceService
             areaCode = AreaCodeMapping.GetAreaCode(upperMoCode, country);
         }
 
-        // Default to hourly if not specified
-        var targetResolution = periodMinutes ?? 60;
-
+        // Resolution is determined by the Market Operator, not requested by us
         return upperMoCode switch
         {
-            "ENTSOE" => await GetEntsoepricesAsync(baseUrl, apiKey, areaCode, country, date, targetResolution, cancellationToken),
-            "EPIAS" => await GetEpiasPricesAsync(baseUrl, apiKey, date, targetResolution, cancellationToken),
+            "ENTSOE" => await GetEntsoepricesAsync(baseUrl, apiKey, areaCode, country, date, cancellationToken),
+            "EPIAS" => await GetEpiasPricesAsync(baseUrl, apiKey, date, cancellationToken),
             _ => new EnergyPriceResult
             {
                 Success = false,
@@ -75,7 +72,6 @@ public class EnergyPriceService : IEnergyPriceService
         string? areaCode,
         string? country,
         DateTimeOffset date,
-        int targetResolution,
         CancellationToken cancellationToken)
     {
         var timezone = AreaCodeMapping.GetTimezone(country);
@@ -85,7 +81,7 @@ public class EnergyPriceService : IEnergyPriceService
             Currency = "EUR",
             Date = date,
             Timezone = timezone,
-            ResolutionMinutes = targetResolution
+            ResolutionMinutes = 60 // Will be updated from API response
         };
 
         if (string.IsNullOrEmpty(apiKey))
@@ -143,21 +139,11 @@ public class EnergyPriceService : IEnergyPriceService
                 return result;
             }
 
-            // Parse XML response
+            // Parse XML response - resolution is determined by the API response
             var (prices, sourceResolution) = ParseEntsoeXml(content, date, country);
 
-            // Aggregate to target resolution if needed
-            if (sourceResolution < targetResolution)
-            {
-                prices = AggregateToLargerPeriod(prices, sourceResolution, targetResolution);
-                result.ResolutionMinutes = targetResolution;
-            }
-            else
-            {
-                result.ResolutionMinutes = sourceResolution;
-            }
-
             result.Prices = prices;
+            result.ResolutionMinutes = sourceResolution;
             result.Success = result.Prices.Count > 0;
 
             if (!result.Success)
@@ -288,62 +274,6 @@ public class EnergyPriceService : IEnergyPriceService
         return (prices, sourceResolution);
     }
 
-    /// <summary>
-    /// Aggregates prices from a smaller period to a larger period.
-    /// Takes the first value of each larger period (e.g., 00:00, 00:15, 00:30, 00:45 → 00:00).
-    /// </summary>
-    private static List<EnergyPricePoint> AggregateToLargerPeriod(
-        List<EnergyPricePoint> prices,
-        int sourceResolution,
-        int targetResolution)
-    {
-        if (prices.Count == 0 || sourceResolution >= targetResolution)
-            return prices;
-
-        var aggregated = new List<EnergyPricePoint>();
-
-        // Group by the start of each target period
-        var grouped = prices
-            .GroupBy(p =>
-            {
-                // Calculate which target period this price belongs to
-                var totalMinutes = p.LocalTimestamp.Hour * 60 + p.LocalTimestamp.Minute;
-                var periodIndex = totalMinutes / targetResolution;
-                return periodIndex;
-            })
-            .OrderBy(g => g.Key);
-
-        foreach (var group in grouped)
-        {
-            // Take the first price in each period
-            var firstPrice = group.OrderBy(p => p.Timestamp).First();
-
-            // Adjust the local timestamp to the start of the period
-            var periodStartMinutes = group.Key * targetResolution;
-            var periodHour = periodStartMinutes / 60;
-            var periodMinute = periodStartMinutes % 60;
-
-            // Calculate the UTC timestamp for the period start
-            var localPeriodStart = new DateTimeOffset(
-                firstPrice.LocalTimestamp.Year,
-                firstPrice.LocalTimestamp.Month,
-                firstPrice.LocalTimestamp.Day,
-                periodHour,
-                periodMinute,
-                0,
-                firstPrice.LocalTimestamp.Offset);
-
-            aggregated.Add(new EnergyPricePoint
-            {
-                Timestamp = localPeriodStart.ToUniversalTime(),
-                LocalTimestamp = localPeriodStart,
-                PricePerMWh = firstPrice.PricePerMWh
-            });
-        }
-
-        return aggregated;
-    }
-
     #endregion
 
     #region EPIAS Implementation
@@ -352,7 +282,6 @@ public class EnergyPriceService : IEnergyPriceService
         string baseUrl,
         string? apiKey,
         DateTimeOffset date,
-        int targetResolution,
         CancellationToken cancellationToken)
     {
         var result = new EnergyPriceResult
