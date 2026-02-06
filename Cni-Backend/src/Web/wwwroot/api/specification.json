@@ -4479,10 +4479,6 @@
           "taxOffice": {
             "type": "string",
             "nullable": true
-          },
-          "plan": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
@@ -4581,10 +4577,6 @@
             "nullable": true
           },
           "taxOffice": {
-            "type": "string",
-            "nullable": true
-          },
-          "plan": {
             "type": "string",
             "nullable": true
           }
@@ -5777,14 +5769,6 @@
           "name": {
             "type": "string",
             "nullable": true
-          },
-          "connectionString": {
-            "type": "string",
-            "nullable": true
-          },
-          "items": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
@@ -5831,14 +5815,6 @@
             "nullable": true
           },
           "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "connectionString": {
-            "type": "string",
-            "nullable": true
-          },
-          "items": {
             "type": "string",
             "nullable": true
           }

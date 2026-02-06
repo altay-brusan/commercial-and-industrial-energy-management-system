@@ -20,7 +20,6 @@ public class FirmBriefDto
     public string? Fax { get; set; }
     public string? TaxNumber { get; set; }
     public string? TaxOffice { get; set; }
-    public string? Plan { get; set; }
 
     private class Mapping : Profile
     {

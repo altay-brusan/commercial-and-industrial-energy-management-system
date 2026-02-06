@@ -21,7 +21,9 @@ public class UserDto
     {
         public Mapping()
         {
-            CreateMap<ApplicationUser, UserDto>();
+            CreateMap<ApplicationUser, UserDto>()
+                .ForMember(dest => dest.Tenant, opt => opt.Ignore())
+                .ForMember(dest => dest.Roles, opt => opt.Ignore());
         }
     }
 }
