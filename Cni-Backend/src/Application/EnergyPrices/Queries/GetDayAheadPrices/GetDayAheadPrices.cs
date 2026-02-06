@@ -8,7 +8,7 @@ namespace Backend.Application.EnergyPrices.Queries.GetDayAheadPrices;
 /// Uses the facility's country (via Firm's MarketOperator configuration) to fetch historical prices.
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
-public record GetDayAheadPricesQuery : IRequest<DayAheadPricesDto?>
+public record GetDayAheadPricesQuery : IRequest<DayAheadEnergyPricesDto?>
 {
     /// <summary>
     /// The facility to get prices for. The country is determined from the facility's firm configuration.
@@ -26,7 +26,7 @@ public record GetDayAheadPricesQuery : IRequest<DayAheadPricesDto?>
     public DateTimeOffset? EndDate { get; set; }
 }
 
-public class GetDayAheadPricesQueryHandler : IRequestHandler<GetDayAheadPricesQuery, DayAheadPricesDto?>
+public class GetDayAheadPricesQueryHandler : IRequestHandler<GetDayAheadPricesQuery, DayAheadEnergyPricesDto?>
 {
     private readonly IApplicationDbContext _context;
     private readonly ICountryMappingService _countryMappingService;
@@ -39,7 +39,7 @@ public class GetDayAheadPricesQueryHandler : IRequestHandler<GetDayAheadPricesQu
         _countryMappingService = countryMappingService;
     }
 
-    public async Task<DayAheadPricesDto?> Handle(GetDayAheadPricesQuery request, CancellationToken cancellationToken)
+    public async Task<DayAheadEnergyPricesDto?> Handle(GetDayAheadPricesQuery request, CancellationToken cancellationToken)
     {
         // Get facility with its firm relationship
         var facility = await _context.Facilities
@@ -82,7 +82,7 @@ public class GetDayAheadPricesQueryHandler : IRequestHandler<GetDayAheadPricesQu
                 && x.PriceLocalTimestamp >= startDate
                 && x.PriceLocalTimestamp <= endDate)
             .OrderBy(x => x.PriceLocalTimestamp)
-            .Select(x => new DayAheadPricePointDto
+            .Select(x => new DayAheadEnergyPricePointDto
             {
                 Timestamp = x.PriceLocalTimestamp,
                 NetPrice = x.NetPrice,
@@ -115,7 +115,7 @@ public class GetDayAheadPricesQueryHandler : IRequestHandler<GetDayAheadPricesQu
             }
         }
 
-        return new DayAheadPricesDto
+        return new DayAheadEnergyPricesDto
         {
             FacilityId = request.FacilityId,
             FacilityName = facility.Name,

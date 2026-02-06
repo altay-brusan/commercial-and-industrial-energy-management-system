@@ -3,7 +3,7 @@ namespace Backend.Application.EnergyPrices.Queries.GetDayAheadPrices;
 /// <summary>
 /// DTO for Day-Ahead energy prices response.
 /// </summary>
-public class DayAheadPricesDto
+public class DayAheadEnergyPricesDto
 {
     public int FacilityId { get; set; }
     public string FacilityName { get; set; } = string.Empty;
@@ -21,13 +21,13 @@ public class DayAheadPricesDto
     public decimal TaxRate { get; set; }
     public string Currency { get; set; } = "EUR";
 
-    public List<DayAheadPricePointDto> Prices { get; set; } = new();
+    public List<DayAheadEnergyPricePointDto> Prices { get; set; } = new();
 }
 
 /// <summary>
 /// Individual price point in the Day-Ahead time series.
 /// </summary>
-public class DayAheadPricePointDto
+public class DayAheadEnergyPricePointDto
 {
     public DateTimeOffset Timestamp { get; set; }
 

@@ -1,10 +1,10 @@
 using Backend.Application.Common.Exceptions;
-using Backend.Application.EnergyPrices.Queries.GetLiveEnergyPrices;
+using Backend.Application.EnergyPrices.Queries.GetLiveDayAheadEnergyPrices;
 using Backend.Domain.Entities;
 
 namespace Backend.Application.FunctionalTests.EnergyPrices.Queries;
 
-public class GetLiveEnergyPricesTests : BaseTestFixture
+public class GetLiveDayAheadEnergyPricesTests : BaseTestFixture
 {
     [Test]
     public async Task ShouldReturnErrorForNonExistentFirm()
@@ -12,7 +12,7 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = 99999
         };
@@ -52,7 +52,7 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         };
         await Testing.AddAsync(firm);
 
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = firm.Id
         };
@@ -113,7 +113,7 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         };
         await Testing.AddAsync(firmMarketOperator);
 
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = firm.Id
         };
@@ -137,7 +137,7 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = 0 // Invalid
         };
@@ -194,7 +194,7 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         };
         await Testing.AddAsync(firmMarketOperator);
 
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = firm.Id
         };
@@ -210,67 +210,6 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         {
             result.FirmId.Should().Be(firm.Id);
         }
-    }
-
-    [Test]
-    public async Task ShouldUseCustomResolutionWhenSpecified()
-    {
-        // Arrange
-        await Testing.RunAsAdministratorAsync();
-
-        var tenant = new Tenant { Name = "Demo Resolution Holding", Identifier = "demo-resolution-holding" };
-        await Testing.AddAsync(tenant);
-
-        var firm = new Firm
-        {
-            TenantId = tenant.Id,
-            Name = "Demo Resolution Firm BV",
-            Type = "Standard",
-            Country = "Netherlands",
-            State = "Noord-Brabant",
-            City = "Eindhoven",
-            Address = "Stationsplein 20",
-            ContactEmail = "info@demo-resolution.nl",
-            ContactPhone = "+31401234567",
-            TaxNumber = "NL444444444B01",
-            TaxOffice = "Eindhoven"
-        };
-        await Testing.AddAsync(firm);
-
-        var uniqueMoCode = $"ENT_{Guid.NewGuid():N}";
-        var marketOperator = new MarketOperator
-        {
-            Name = "Demo ENTSO-E Resolution",
-            Code = uniqueMoCode,
-            BaseUrl = "https://web-api.tp.entsoe.eu/api",
-            AreaCodes = new List<string> { "10YNL----------L" },
-            SupportedResolutions = new List<int> { 15, 30, 60 },
-            IsActive = true
-        };
-        await Testing.AddAsync(marketOperator);
-
-        var firmMarketOperator = new FirmMarketOperator
-        {
-            FirmId = firm.Id,
-            MarketOperatorId = marketOperator.Id,
-            AreaCode = "10YNL----------L",
-            SamplingPeriodMinutes = 60,
-            IsActive = true
-        };
-        await Testing.AddAsync(firmMarketOperator);
-
-        var query = new GetLiveEnergyPricesQuery
-        {
-            FirmId = firm.Id,
-            Period = 15 // Request 15-minute resolution
-        };
-
-        // Act
-        var result = await Testing.SendAsync(query);
-
-        // Assert
-        result.Should().NotBeNull();
-        // If successful, resolution should be 15 or as returned by the MO
     }
 
     [Test]
@@ -323,7 +262,7 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
         var startDate = DateTimeOffset.UtcNow.Date;
         var endDate = startDate.AddDays(2);
 
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = firm.Id,
             StartDate = startDate,
@@ -391,7 +330,7 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
 
         var startDate = DateTimeOffset.UtcNow.Date;
 
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = firm.Id,
             StartDate = startDate
@@ -408,15 +347,15 @@ public class GetLiveEnergyPricesTests : BaseTestFixture
     }
 
     [Test]
-    public async Task ShouldRejectDateRangeExceeding7Days()
+    public async Task ShouldRejectDateRangeExceeding1Year()
     {
         // Arrange
         await Testing.RunAsAdministratorAsync();
 
         var startDate = DateTimeOffset.UtcNow.Date;
-        var endDate = startDate.AddDays(10); // 10 days exceeds limit
+        var endDate = startDate.AddDays(400); // 400 days exceeds 365 day (1 year) limit
 
-        var query = new GetLiveEnergyPricesQuery
+        var query = new GetLiveDayAheadEnergyPricesQuery
         {
             FirmId = 1,
             StartDate = startDate,

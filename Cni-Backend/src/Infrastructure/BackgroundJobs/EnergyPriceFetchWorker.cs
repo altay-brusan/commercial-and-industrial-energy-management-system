@@ -160,18 +160,13 @@ public class EnergyPriceFetchWorker
             return false;
         }
 
-        // Use the first supported resolution (typically 60 for hourly data)
-        var resolution = mo.SupportedResolutions.FirstOrDefault(r => r == 60) != 0
-            ? 60
-            : mo.SupportedResolutions.FirstOrDefault();
-
+        // Resolution is determined by the Market Operator API response
         var result = await _energyPriceService.GetDayAheadPricesAsync(
             mo.Code,
             mo.BaseUrl,
             mo.ApiKey,
             countryName,
             targetDate,
-            resolution,
             CancellationToken.None);
 
         if (!result.Success)
