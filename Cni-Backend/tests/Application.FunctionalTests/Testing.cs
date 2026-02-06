@@ -169,6 +169,40 @@ public partial class Testing
         return await context.Set<TEntity>().FirstOrDefaultAsync(predicate);
     }
 
+    public static async Task<List<TEntity>> GetAllAsync<TEntity>(System.Linq.Expressions.Expression<Func<TEntity, bool>>? predicate = null)
+        where TEntity : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var query = context.Set<TEntity>().AsQueryable();
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+
+        return await query.ToListAsync();
+    }
+
+    public static async Task ExecuteWithServiceAsync<TService>(Func<TService, Task> action) where TService : notnull
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<TService>();
+
+        await action(service);
+    }
+
+    public static async Task<TResult> ExecuteWithServiceAsync<TService, TResult>(Func<TService, Task<TResult>> action) where TService : notnull
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var service = scope.ServiceProvider.GetRequiredService<TService>();
+
+        return await action(service);
+    }
+
     [OneTimeTearDown]
     public async Task RunAfterAnyTests()
     {

@@ -186,16 +186,24 @@ public class EnergyPriceFetchWorker
         var insertedCount = 0;
         var skippedCount = 0;
 
+        // Batch-fetch existing timestamps to avoid N+1 queries
+        var incomingTimestamps = result.Prices
+            .Select(p => p.LocalTimestamp.ToUniversalTime())
+            .ToList();
+
+        var existingTimestampsList = await _context.DayAheadEnergyPriceHistories
+            .Where(e => e.MarketOperatorId == mo.Id && e.Country == countryName &&
+                        incomingTimestamps.Contains(e.PriceLocalTimestamp))
+            .Select(e => e.PriceLocalTimestamp)
+            .ToListAsync();
+        var existingTimestamps = existingTimestampsList.ToHashSet();
+
         foreach (var pricePoint in result.Prices)
         {
-            // Check if this price point already exists (deduplication by country name)
-            var exists = await _context.DayAheadEnergyPriceHistories
-                .AnyAsync(e =>
-                    e.MarketOperatorId == mo.Id &&
-                    e.Country == countryName &&
-                    e.PriceLocalTimestamp == pricePoint.LocalTimestamp);
+            // DateTimeOffset must be UTC for Npgsql timestamptz parameters
+            var utcTimestamp = pricePoint.LocalTimestamp.ToUniversalTime();
 
-            if (exists)
+            if (existingTimestamps.Contains(utcTimestamp))
             {
                 skippedCount++;
                 continue;
@@ -208,7 +216,7 @@ public class EnergyPriceFetchWorker
                 Country = countryName,
                 NetPrice = pricePoint.PricePerMWh,
                 GrossPrice = pricePoint.PricePerMWh, // Gross price calculated at query time with tenant tariffs
-                PriceLocalTimestamp = pricePoint.LocalTimestamp
+                PriceLocalTimestamp = utcTimestamp
             };
 
             _context.DayAheadEnergyPriceHistories.Add(entity);
