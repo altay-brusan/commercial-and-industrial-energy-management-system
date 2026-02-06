@@ -23,7 +23,7 @@ TRUNCATE TABLE "DeviceSolarData" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "DeviceBessData" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "DevicePcsData" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "DeviceSmartMeterData" RESTART IDENTITY CASCADE;
-TRUNCATE TABLE "DayAheadEnergyPriceHistories" RESTART IDENTITY CASCADE;
+TRUNCATE TABLE "DayAheadNetEnergyPriceHistories" RESTART IDENTITY CASCADE;
 
 -- =====================================================
 -- 2. Truncate Junction/Association Tables
@@ -88,7 +88,7 @@ UNION ALL SELECT 'AppUsers', COUNT(*) FROM "AppUsers"
 UNION ALL SELECT 'AppRoles', COUNT(*) FROM "AppRoles"
 UNION ALL SELECT 'MarketOperators', COUNT(*) FROM "MarketOperators"
 UNION ALL SELECT 'FirmMarketOperators', COUNT(*) FROM "FirmMarketOperators"
-UNION ALL SELECT 'DayAheadEnergyPriceHistories', COUNT(*) FROM "DayAheadEnergyPriceHistories"
+UNION ALL SELECT 'DayAheadNetEnergyPriceHistories', COUNT(*) FROM "DayAheadNetEnergyPriceHistories"
 UNION ALL SELECT 'Tariffs', COUNT(*) FROM "Tariffs"
 UNION ALL SELECT 'FacilityTariffs', COUNT(*) FROM "FacilityTariffs"
 UNION ALL SELECT 'DeviceSolarData', COUNT(*) FROM "DeviceSolarData"

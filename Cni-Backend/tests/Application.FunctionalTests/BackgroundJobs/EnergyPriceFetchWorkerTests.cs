@@ -8,7 +8,7 @@ public class EnergyPriceFetchWorkerTests : BaseTestFixture
 {
     /// <summary>
     /// Integration test that verifies the EnergyPriceFetchWorker can fetch prices from EPIAS
-    /// and store them in the DayAheadEnergyPriceHistories table.
+    /// and store them in the DayAheadNetEnergyPriceHistories table.
     /// Uses the EnergyPriceService directly first to verify API connectivity,
     /// then tests the worker.
     /// </summary>
@@ -81,25 +81,25 @@ public class EnergyPriceFetchWorkerTests : BaseTestFixture
         apiResult.Success.Should().BeTrue($"EPIAS API should be accessible. Error: {apiResult.ErrorMessage}");
 
         // Get initial count of price history records
-        var initialCount = await Testing.CountAsync<DayAheadEnergyPriceHistory>();
+        var initialCount = await Testing.CountAsync<DayAheadNetEnergyPriceHistory>();
         Console.WriteLine($"Initial price history count: {initialCount}");
 
         // Act - Execute the worker's morning fetch (fetches current day)
-        Console.WriteLine("Executing EnergyPriceFetchWorker.FetchMorningPrices()...");
+        Console.WriteLine("Executing EnergyPriceFetchWorker.FetchDailyPrices()...");
         await Testing.ExecuteWithServiceAsync<EnergyPriceFetchWorker>(async worker =>
         {
-            await worker.FetchMorningPrices();
+            await worker.FetchDailyPrices();
         });
 
         // Assert - Verify prices were stored
-        var finalCount = await Testing.CountAsync<DayAheadEnergyPriceHistory>();
+        var finalCount = await Testing.CountAsync<DayAheadNetEnergyPriceHistory>();
         var newRecords = finalCount - initialCount;
         Console.WriteLine($"Final price history count: {finalCount}, New records: {newRecords}");
 
         newRecords.Should().BeGreaterThan(0, "Worker should have fetched and stored price data");
 
         // Debug: Get ALL stored prices to see what countries are stored
-        var allStoredPrices = await Testing.GetAllAsync<DayAheadEnergyPriceHistory>();
+        var allStoredPrices = await Testing.GetAllAsync<DayAheadNetEnergyPriceHistory>();
         var countrySummary = allStoredPrices
             .GroupBy(p => p.Country ?? "<null>")
             .Select(g => $"{g.Key}: {g.Count()}")
@@ -107,7 +107,7 @@ public class EnergyPriceFetchWorkerTests : BaseTestFixture
         Console.WriteLine($"All stored prices by country: {string.Join(", ", countrySummary)}");
 
         // Verify the stored records for Turkey (don't filter by MO ID since it might differ)
-        var storedPrices = await Testing.GetAllAsync<DayAheadEnergyPriceHistory>(
+        var storedPrices = await Testing.GetAllAsync<DayAheadNetEnergyPriceHistory>(
             p => p.Country == "Turkey");
 
         Console.WriteLine($"Stored prices for Turkey: {storedPrices.Count}");
@@ -181,17 +181,17 @@ public class EnergyPriceFetchWorkerTests : BaseTestFixture
         // Act - Run the worker twice
         await Testing.ExecuteWithServiceAsync<EnergyPriceFetchWorker>(async worker =>
         {
-            await worker.FetchMorningPrices();
+            await worker.FetchDailyPrices();
         });
 
-        var countAfterFirstFetch = await Testing.CountAsync<DayAheadEnergyPriceHistory>();
+        var countAfterFirstFetch = await Testing.CountAsync<DayAheadNetEnergyPriceHistory>();
 
         await Testing.ExecuteWithServiceAsync<EnergyPriceFetchWorker>(async worker =>
         {
-            await worker.FetchMorningPrices();
+            await worker.FetchDailyPrices();
         });
 
-        var countAfterSecondFetch = await Testing.CountAsync<DayAheadEnergyPriceHistory>();
+        var countAfterSecondFetch = await Testing.CountAsync<DayAheadNetEnergyPriceHistory>();
 
         // Assert - Count should be the same (no duplicates)
         countAfterSecondFetch.Should().Be(countAfterFirstFetch,
@@ -256,16 +256,16 @@ public class EnergyPriceFetchWorkerTests : BaseTestFixture
         };
         await Testing.AddAsync(firmMarketOperator);
 
-        var initialCount = await Testing.CountAsync<DayAheadEnergyPriceHistory>();
+        var initialCount = await Testing.CountAsync<DayAheadNetEnergyPriceHistory>();
 
         // Act - Execute the afternoon fetch (fetches tomorrow's prices)
         await Testing.ExecuteWithServiceAsync<EnergyPriceFetchWorker>(async worker =>
         {
-            await worker.FetchAfternoonPrices();
+            await worker.FetchDailyPrices();
         });
 
         // Assert
-        var finalCount = await Testing.CountAsync<DayAheadEnergyPriceHistory>();
+        var finalCount = await Testing.CountAsync<DayAheadNetEnergyPriceHistory>();
 
         // Note: Tomorrow's prices may not be available yet depending on when the test runs
         // EPIAS publishes around 14:00 Turkey time
@@ -275,10 +275,10 @@ public class EnergyPriceFetchWorkerTests : BaseTestFixture
 
             // Verify the stored records are for tomorrow
             var tomorrow = DateTimeOffset.UtcNow.Date.AddDays(1);
-            var tomorrowPrices = await Testing.GetAllAsync<DayAheadEnergyPriceHistory>(
+            var tomorrowPrices = await Testing.GetAllAsync<DayAheadNetEnergyPriceHistory>(
                 p => p.MarketOperatorId == marketOperator.Id &&
                      p.Country == "Turkey" &&
-                     p.PriceLocalTimestamp.Date == tomorrow);
+                     p.TimestampUtc.Date == tomorrow);
 
             if (tomorrowPrices.Count > 0)
             {
@@ -343,16 +343,16 @@ public class EnergyPriceFetchWorkerTests : BaseTestFixture
         };
         await Testing.AddAsync(firmMarketOperator);
 
-        var initialCount = await Testing.CountAsync<DayAheadEnergyPriceHistory>();
+        var initialCount = await Testing.CountAsync<DayAheadNetEnergyPriceHistory>();
 
         // Act - Execute the worker
         await Testing.ExecuteWithServiceAsync<EnergyPriceFetchWorker>(async worker =>
         {
-            await worker.FetchMorningPrices();
+            await worker.FetchDailyPrices();
         });
 
         // Assert - No new records should be created for the inactive configuration
-        var pricesForTestMO = await Testing.GetAllAsync<DayAheadEnergyPriceHistory>(
+        var pricesForTestMO = await Testing.GetAllAsync<DayAheadNetEnergyPriceHistory>(
             p => p.MarketOperatorId == marketOperator.Id);
 
         pricesForTestMO.Should().BeEmpty("Inactive firm market operators should be skipped");

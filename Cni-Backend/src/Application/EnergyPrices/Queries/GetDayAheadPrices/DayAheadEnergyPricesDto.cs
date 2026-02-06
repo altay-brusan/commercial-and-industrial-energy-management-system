@@ -29,7 +29,7 @@ public class DayAheadEnergyPricesDto
 /// </summary>
 public class DayAheadEnergyPricePointDto
 {
-    public DateTimeOffset Timestamp { get; set; }
+    public DateTimeOffset TimestampUtc { get; set; }
 
     /// <summary>
     /// Net price per MWh (before taxes and fees).

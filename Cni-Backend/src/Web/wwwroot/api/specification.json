@@ -3559,7 +3559,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "timestamp": {
+          "timestampUtc": {
             "type": "string",
             "format": "date-time"
           },

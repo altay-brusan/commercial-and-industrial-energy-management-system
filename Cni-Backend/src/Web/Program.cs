@@ -73,24 +73,26 @@ app.MapEndpoints();
 if (app.Environment.EnvironmentName != "Test")
 {
     app.UseHangfireDashboard("/jobs-dashboard");
-    // gRPC disabled
-    // RecurringJob.AddOrUpdate<GrpcFacilityWorker>(
-    //     "grpc-facility-job",
-    //     worker => worker.CheckFacilities(),
-    //     "*/10 * * * *");
 
-    // Energy price fetch jobs
-    // Morning job - fetch current day prices (0:01 AM UTC)
+    // Hangfire retry: 2 min, 5 min, 10 min delays between attempts
+    GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute
+    {
+        Attempts = 3,
+        DelaysInSeconds = [120, 300, 600]
+    });
+
+    // Energy price fetch jobs — both fetch today's prices, dedup ensures no duplicates
+    // Early morning run (00:01 UTC)
     RecurringJob.AddOrUpdate<EnergyPriceFetchWorker>(
-        "energy-price-morning-job",
-        worker => worker.FetchMorningPrices(),
+        "energy-price-early-morning",
+        worker => worker.FetchDailyPrices(),
         "1 0 * * *");
 
-    // Afternoon job - fetch tomorrow prices (12:01 PM UTC = 13:01 CET)
+    // Afternoon run (13:01 UTC / ~14:01 CET) — catches any updates after ENTSO-E publishes
     RecurringJob.AddOrUpdate<EnergyPriceFetchWorker>(
-        "energy-price-afternoon-job",
-        worker => worker.FetchAfternoonPrices(),
-        "1 12 * * *");
+        "energy-price-afternoon",
+        worker => worker.FetchDailyPrices(),
+        "1 13 * * *");
 }
 app.Run();
 

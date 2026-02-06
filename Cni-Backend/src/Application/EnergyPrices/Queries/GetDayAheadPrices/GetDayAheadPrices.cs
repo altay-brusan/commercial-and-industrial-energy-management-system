@@ -71,31 +71,12 @@ public class GetDayAheadPricesQueryHandler : IRequestHandler<GetDayAheadPricesQu
             return null;
         }
 
-        // Determine the date range
-        var startDate = request.StartDate.Date;
-        var endDate = request.EndDate?.Date.AddDays(1).AddTicks(-1) ?? startDate.AddDays(1).AddTicks(-1);
+        // Determine the UTC date range
+        var startDate = request.StartDate.ToUniversalTime();
+        var endDate = request.EndDate?.ToUniversalTime().AddDays(1).AddTicks(-1)
+                      ?? startDate.AddDays(1).AddTicks(-1);
 
-        // Query Day-Ahead prices
-        var prices = await _context.DayAheadEnergyPriceHistories
-            .Where(x => x.MarketOperatorId == mo.Id
-                && x.Country == countryName
-                && x.PriceLocalTimestamp >= startDate
-                && x.PriceLocalTimestamp <= endDate)
-            .OrderBy(x => x.PriceLocalTimestamp)
-            .Select(x => new DayAheadEnergyPricePointDto
-            {
-                Timestamp = x.PriceLocalTimestamp,
-                NetPrice = x.NetPrice,
-                GrossPrice = x.GrossPrice
-            })
-            .ToListAsync(cancellationToken);
-
-        if (prices.Count == 0)
-        {
-            return null;
-        }
-
-        // Get facility's active tariff for discount information
+        // Get facility's active tariff for gross price calculation
         var facilityTariff = await _context.FacilityTariffs
             .Include(ft => ft.Tariff)
             .Where(ft => ft.FacilityId == request.FacilityId && ft.IsActive)
@@ -106,14 +87,33 @@ public class GetDayAheadPricesQueryHandler : IRequestHandler<GetDayAheadPricesQu
         decimal transmissionFee = facilityTariff?.Tariff?.TransmissionFee ?? 0m;
         decimal taxRate = facilityTariff?.Tariff?.TaxRate ?? 0m;
 
-        // Apply facility discount if any
-        if (discountRate > 0)
+        // Query Day-Ahead prices and calculate gross at query time
+        var rawPrices = await _context.DayAheadNetEnergyPriceHistories
+            .Where(x => x.MarketOperatorId == mo.Id
+                && x.Country == countryName
+                && x.TimestampUtc >= startDate
+                && x.TimestampUtc <= endDate)
+            .OrderBy(x => x.TimestampUtc)
+            .Select(x => new { x.TimestampUtc, x.NetPrice })
+            .ToListAsync(cancellationToken);
+
+        if (rawPrices.Count == 0)
         {
-            foreach (var price in prices)
-            {
-                price.DiscountedGrossPrice = price.GrossPrice * (1 - discountRate);
-            }
+            return null;
         }
+
+        // Calculate gross price: (NetPrice + DistributionFee + TransmissionFee) × (1 + TaxRate)
+        var prices = rawPrices.Select(x =>
+        {
+            var grossPrice = (x.NetPrice + distributionFee + transmissionFee) * (1 + taxRate);
+            return new DayAheadEnergyPricePointDto
+            {
+                TimestampUtc = x.TimestampUtc,
+                NetPrice = x.NetPrice,
+                GrossPrice = grossPrice,
+                DiscountedGrossPrice = discountRate > 0 ? grossPrice * (1 - discountRate) : null
+            };
+        }).ToList();
 
         return new DayAheadEnergyPricesDto
         {
