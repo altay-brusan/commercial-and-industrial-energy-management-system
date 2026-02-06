@@ -159,6 +159,16 @@ public partial class Testing
         return await context.Set<TEntity>().CountAsync();
     }
 
+    public static async Task<TEntity?> FirstOrDefaultAsync<TEntity>(System.Linq.Expressions.Expression<Func<TEntity, bool>> predicate)
+        where TEntity : class
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        return await context.Set<TEntity>().FirstOrDefaultAsync(predicate);
+    }
+
     [OneTimeTearDown]
     public async Task RunAfterAnyTests()
     {

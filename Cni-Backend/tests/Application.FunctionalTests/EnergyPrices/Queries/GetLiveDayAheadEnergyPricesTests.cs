@@ -366,4 +366,270 @@ public class GetLiveDayAheadEnergyPricesTests : BaseTestFixture
         await FluentActions.Invoking(() =>
             Testing.SendAsync(query)).Should().ThrowAsync<ValidationException>();
     }
+
+    /// <summary>
+    /// Integration test that connects to the real EPIAS API to fetch Turkey day-ahead prices.
+    /// This test requires network access and uses real EPIAS credentials.
+    /// </summary>
+    [Test]
+    [Category("Integration")]
+    [Category("ExternalApi")]
+    public async Task ShouldFetchRealPricesFromEpiasForTurkey()
+    {
+        // Arrange
+        await Testing.RunAsAdministratorAsync();
+
+        var tenant = new Tenant { Name = "Turkey Energy Holding", Identifier = "turkey-energy-holding" };
+        await Testing.AddAsync(tenant);
+
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Turkey Solar AŞ",
+            Type = "Standard",
+            Country = "Turkey",
+            State = "İstanbul",
+            City = "İstanbul",
+            Address = "Maslak Mah. Büyükdere Cad. No:123",
+            ContactEmail = "info@turkey-solar.com.tr",
+            ContactPhone = "+902121234567",
+            TaxNumber = "1234567890",
+            TaxOffice = "Maslak"
+        };
+        await Testing.AddAsync(firm);
+
+        // Check if EPIAS market operator already exists, or create a new one
+        var marketOperator = await Testing.FirstOrDefaultAsync<MarketOperator>(mo => mo.Code == "EPIAS");
+        if (marketOperator == null)
+        {
+            marketOperator = new MarketOperator
+            {
+                Name = "EPİAŞ (Turkish Energy Exchange)",
+                Code = "EPIAS",
+                BaseUrl = "https://seffaflik.epias.com.tr",
+                ApiKey = "technology@oklidis.com.tr:***REMOVED***",
+                SupportedResolutions = new List<int> { 60 },
+                AreaCodes = new List<string> { "TR" },
+                IsActive = true
+            };
+            await Testing.AddAsync(marketOperator);
+        }
+
+        var firmMarketOperator = new FirmMarketOperator
+        {
+            FirmId = firm.Id,
+            MarketOperatorId = marketOperator.Id,
+            AreaCode = "TR",
+            SamplingPeriodMinutes = 60,
+            IsActive = true
+        };
+        await Testing.AddAsync(firmMarketOperator);
+
+        // Create a facility to link to Turkey tariff
+        var facility = new Facility
+        {
+            FirmId = firm.Id,
+            Name = "Turkey Solar Park"
+        };
+        await Testing.AddAsync(facility);
+
+        // Create Turkey tariff with TRY currency
+        var turkeyTariff = await Testing.FirstOrDefaultAsync<Tariff>(t => t.CountryName == "Turkey" && t.IsActive);
+        if (turkeyTariff == null)
+        {
+            turkeyTariff = new Tariff
+            {
+                CountryName = "Turkey",
+                DistributionFee = 50m,
+                TransmissionFee = 25m,
+                TaxRate = 0.20m,
+                Currency = "TRY",
+                IsActive = true
+            };
+            await Testing.AddAsync(turkeyTariff);
+        }
+
+        // Assign tariff to facility
+        var facilityTariff = new FacilityTariff
+        {
+            FacilityId = facility.Id,
+            TariffId = turkeyTariff.Id,
+            IsActive = true,
+            DiscountRate = 0m
+        };
+        await Testing.AddAsync(facilityTariff);
+
+        // Use yesterday's date to ensure data is available
+        var targetDate = DateTimeOffset.UtcNow.Date.AddDays(-1);
+
+        var query = new GetLiveDayAheadEnergyPricesQuery
+        {
+            FirmId = firm.Id,
+            StartDate = targetDate,
+            EndDate = targetDate
+        };
+
+        // Act
+        var result = await Testing.SendAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue($"EPIAS API call should succeed. Error: {result.ErrorMessage}");
+        result.MarketOperatorCode.Should().Be("EPIAS");
+        result.Country.Should().Be("Turkey");
+        result.Currency.Should().Be("TRY");
+        result.ResolutionMinutes.Should().Be(60); // EPIAS always returns hourly data
+        result.Timezone.Should().Be("Europe/Istanbul");
+
+        // EPIAS should return 24 hourly price points for a single day
+        result.Prices.Should().HaveCount(24, "EPIAS should return 24 hourly prices for one day");
+        result.DataPointCount.Should().Be(24);
+
+        // Verify price data structure
+        foreach (var price in result.Prices)
+        {
+            price.NetPrice.Should().BeGreaterThan(0, "Net price should be positive");
+            price.GrossPrice.Should().BeGreaterThan(0, "Gross price should be positive");
+            price.Timestamp.Should().NotBe(default);
+            price.LocalTimestamp.Should().NotBe(default);
+        }
+
+        // Verify statistics are calculated
+        result.Statistics.Should().NotBeNull();
+        result.Statistics!.MinNetPrice.Should().BeGreaterThan(0);
+        result.Statistics.MaxNetPrice.Should().BeGreaterThanOrEqualTo(result.Statistics.MinNetPrice);
+        result.Statistics.AvgNetPrice.Should().BeGreaterThan(0);
+
+        // Log the actual prices for debugging/visibility
+        Console.WriteLine($"EPIAS Turkey Day-Ahead Prices for {targetDate:yyyy-MM-dd}:");
+        Console.WriteLine($"  Currency: {result.Currency}");
+        Console.WriteLine($"  Data Points: {result.DataPointCount}");
+        Console.WriteLine($"  Min Price: {result.Statistics.MinNetPrice:N2} {result.Currency}/MWh at hour {result.Statistics.MinPriceHour}");
+        Console.WriteLine($"  Max Price: {result.Statistics.MaxNetPrice:N2} {result.Currency}/MWh at hour {result.Statistics.MaxPriceHour}");
+        Console.WriteLine($"  Avg Price: {result.Statistics.AvgNetPrice:N2} {result.Currency}/MWh");
+    }
+
+    /// <summary>
+    /// Integration test that fetches multiple days of real prices from EPIAS.
+    /// </summary>
+    [Test]
+    [Category("Integration")]
+    [Category("ExternalApi")]
+    public async Task ShouldFetchMultipleDaysFromEpiasForTurkey()
+    {
+        // Arrange
+        await Testing.RunAsAdministratorAsync();
+
+        var tenant = new Tenant { Name = "Turkey Multi-Day Holding", Identifier = "turkey-multiday-holding" };
+        await Testing.AddAsync(tenant);
+
+        var firm = new Firm
+        {
+            TenantId = tenant.Id,
+            Name = "Turkey Wind AŞ",
+            Type = "Standard",
+            Country = "Turkey",
+            State = "İzmir",
+            City = "İzmir",
+            Address = "Alsancak Mah. Kordon Cad. No:50",
+            ContactEmail = "info@turkey-wind.com.tr",
+            ContactPhone = "+902321234567",
+            TaxNumber = "9876543210",
+            TaxOffice = "Alsancak"
+        };
+        await Testing.AddAsync(firm);
+
+        // Check if EPIAS market operator already exists, or create a new one
+        var marketOperator = await Testing.FirstOrDefaultAsync<MarketOperator>(mo => mo.Code == "EPIAS");
+        if (marketOperator == null)
+        {
+            marketOperator = new MarketOperator
+            {
+                Name = "EPİAŞ (Turkish Energy Exchange)",
+                Code = "EPIAS",
+                BaseUrl = "https://seffaflik.epias.com.tr",
+                ApiKey = "technology@oklidis.com.tr:***REMOVED***",
+                SupportedResolutions = new List<int> { 60 },
+                AreaCodes = new List<string> { "TR" },
+                IsActive = true
+            };
+            await Testing.AddAsync(marketOperator);
+        }
+
+        var firmMarketOperator = new FirmMarketOperator
+        {
+            FirmId = firm.Id,
+            MarketOperatorId = marketOperator.Id,
+            AreaCode = "TR",
+            SamplingPeriodMinutes = 60,
+            IsActive = true
+        };
+        await Testing.AddAsync(firmMarketOperator);
+
+        // Create a facility to link to Turkey tariff
+        var facility = new Facility
+        {
+            FirmId = firm.Id,
+            Name = "Turkey Wind Park Izmir"
+        };
+        await Testing.AddAsync(facility);
+
+        // Create Turkey tariff with TRY currency
+        var turkeyTariff = await Testing.FirstOrDefaultAsync<Tariff>(t => t.CountryName == "Turkey" && t.IsActive);
+        if (turkeyTariff == null)
+        {
+            turkeyTariff = new Tariff
+            {
+                CountryName = "Turkey",
+                DistributionFee = 50m,
+                TransmissionFee = 25m,
+                TaxRate = 0.20m,
+                Currency = "TRY",
+                IsActive = true
+            };
+            await Testing.AddAsync(turkeyTariff);
+        }
+
+        // Assign tariff to facility
+        var facilityTariff = new FacilityTariff
+        {
+            FacilityId = facility.Id,
+            TariffId = turkeyTariff.Id,
+            IsActive = true,
+            DiscountRate = 0m
+        };
+        await Testing.AddAsync(facilityTariff);
+
+        // Fetch 3 days of historical data
+        var endDate = DateTimeOffset.UtcNow.Date.AddDays(-1);
+        var startDate = endDate.AddDays(-2); // 3 days total
+
+        var query = new GetLiveDayAheadEnergyPricesQuery
+        {
+            FirmId = firm.Id,
+            StartDate = startDate,
+            EndDate = endDate
+        };
+
+        // Act
+        var result = await Testing.SendAsync(query);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue($"EPIAS API call should succeed. Error: {result.ErrorMessage}");
+
+        // Should have 72 price points (24 hours * 3 days)
+        result.Prices.Should().HaveCount(72, "EPIAS should return 72 hourly prices for 3 days");
+        result.DataPointCount.Should().Be(72);
+
+        // Verify dates in response
+        result.StartDate.Date.Should().Be(startDate.Date);
+        result.EndDate.Date.Should().Be(endDate.Date);
+
+        Console.WriteLine($"EPIAS Turkey Multi-Day Prices from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}:");
+        Console.WriteLine($"  Total Data Points: {result.DataPointCount}");
+        Console.WriteLine($"  Min Price: {result.Statistics!.MinNetPrice:N2} TRY/MWh");
+        Console.WriteLine($"  Max Price: {result.Statistics.MaxNetPrice:N2} TRY/MWh");
+        Console.WriteLine($"  Avg Price: {result.Statistics.AvgNetPrice:N2} TRY/MWh");
+    }
 }
