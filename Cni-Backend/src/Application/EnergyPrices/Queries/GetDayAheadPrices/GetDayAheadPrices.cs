@@ -77,6 +77,8 @@ public class GetDayAheadPricesQueryHandler : IRequestHandler<GetDayAheadPricesQu
                       ?? startDate.AddDays(1).AddTicks(-1);
 
         // Get facility's active tariff for gross price calculation
+        // TODO: each facility could have special discount rates and contracts,
+        // so we need to consider that in the price calculation
         var facilityTariff = await _context.FacilityTariffs
             .Include(ft => ft.Tariff)
             .Where(ft => ft.FacilityId == request.FacilityId && ft.IsActive)
