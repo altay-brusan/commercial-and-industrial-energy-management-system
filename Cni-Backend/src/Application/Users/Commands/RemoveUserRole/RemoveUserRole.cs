@@ -1,9 +1,10 @@
-﻿using Backend.Application.Common.Security;
+using Backend.Application.Common.Security;
 using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Application.Users.Commands.RemoveUserRole;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.UserManagementEdit)]
 public record RemoveUserRoleCommand : IRequest<bool>
 {
     public string UserId { get; set; } = default!;

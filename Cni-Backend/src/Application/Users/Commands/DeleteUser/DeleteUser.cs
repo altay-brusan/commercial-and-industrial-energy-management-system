@@ -1,13 +1,14 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Application.Users.Commands.DeleteUser;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
-public record DeleteUserCommand(string Id) : IRequest<Unit>;  // Değişiklik: IRequest<Unit> olmalı
+[RequirePermission(Backend.Domain.Constants.Permissions.UserManagementDelete)]
+public record DeleteUserCommand(string Id) : IRequest<Unit>;  // Degisiklik: IRequest<Unit> olmali
 
-public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, Unit>  // Değişiklik: IRequestHandler<DeleteUserCommand, Unit>
+public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, Unit>  // Degisiklik: IRequestHandler<DeleteUserCommand, Unit>
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUnitOfWork _unitOfWork;
@@ -20,14 +21,14 @@ public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, Unit>
 
     public async Task<Unit> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
-        // Kullanıcıyı bul
+        // Kullaniciyi bul
         using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
             var user = await _userManager.FindByIdAsync(request.Id);
             Guard.Against.NotFound(request.Id, user);
 
-            // Kullanıcının bağlı olduğu UserFirmFacilities verisini sil
+            // Kullanicinin bagli oldugu UserFirmFacilities verisini sil
             var userFirmFacilities = _unitOfWork.DbContext.UserFirmFacilities
                 .Where(uf => uf.UserId == user.Id)
                 .ToList();
@@ -35,18 +36,18 @@ public class DeleteUserCommandHandler : IRequestHandler<DeleteUserCommand, Unit>
             _unitOfWork.DbContext.UserFirmFacilities.RemoveRange(userFirmFacilities);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Kullanıcıyı sil
+            // Kullaniciyi sil
             var deleteResult = await _userManager.DeleteAsync(user);
             if (!deleteResult.Succeeded)
             {
                 throw new Exception(string.Join(", ", deleteResult.Errors.Select(e => e.Description)));
             }
 
-            // Eğer her şey başarılıysa, transaction commit edilir
+            // Eger her sey basariliysa, transaction commit edilir
             await transaction.CommitAsync(cancellationToken);
 
-            // İşlem tamamlandığında "Unit" dönüyoruz
-            return Unit.Value;  // Burada "Unit.Value" ile işlem tamamlanır.
+            // Islem tamamlandiginda "Unit" d�n�yoruz
+            return Unit.Value;  // Burada "Unit.Value" ile islem tamamlanir.
         }
         catch (Exception ex)
         {

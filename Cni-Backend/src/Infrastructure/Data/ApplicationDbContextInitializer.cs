@@ -239,6 +239,115 @@ public class ApplicationDbContextInitializer
 
         #endregion
 
+        #region FeaturesAndPermissions
+
+        // Seed Features and Permissions
+        if (!_context.Set<Feature>().IgnoreQueryFilters().Any())
+        {
+            var features = new Dictionary<string, Feature>
+            {
+                [Features.Portfolio] = new Feature { Key = Features.Portfolio, Name = "Portfolio", Category = "Core", Created = DateTime.UtcNow },
+                [Features.Dashboard] = new Feature { Key = Features.Dashboard, Name = "Dashboard", Category = "Core", Created = DateTime.UtcNow },
+                [Features.Monitoring] = new Feature { Key = Features.Monitoring, Name = "Monitoring", Category = "Core", Created = DateTime.UtcNow },
+                [Features.Solar] = new Feature { Key = Features.Solar, Name = "Solar", Category = "Energy", Created = DateTime.UtcNow },
+                [Features.Bess] = new Feature { Key = Features.Bess, Name = "BESS", Category = "Energy", Created = DateTime.UtcNow },
+                [Features.GridAndLoads] = new Feature { Key = Features.GridAndLoads, Name = "Grid & Loads", Category = "Energy", Created = DateTime.UtcNow },
+                [Features.Scada] = new Feature { Key = Features.Scada, Name = "SCADA", Category = "Energy", Created = DateTime.UtcNow },
+                [Features.Analytics] = new Feature { Key = Features.Analytics, Name = "Analytics", Category = "Intelligence", Created = DateTime.UtcNow },
+                [Features.Financials] = new Feature { Key = Features.Financials, Name = "Financials", Category = "Intelligence", Created = DateTime.UtcNow },
+                [Features.Reporting] = new Feature { Key = Features.Reporting, Name = "Reporting", Category = "Intelligence", Created = DateTime.UtcNow },
+                [Features.Operations] = new Feature { Key = Features.Operations, Name = "Operations", Category = "Management", Created = DateTime.UtcNow },
+                [Features.Settings] = new Feature { Key = Features.Settings, Name = "Settings", Category = "Management", Created = DateTime.UtcNow },
+                [Features.UserManagement] = new Feature { Key = Features.UserManagement, Name = "User Management", Category = "Management", Created = DateTime.UtcNow },
+                [Features.Audit] = new Feature { Key = Features.Audit, Name = "Audit", Category = "Management", Created = DateTime.UtcNow },
+                [Features.FacilityMap] = new Feature { Key = Features.FacilityMap, Name = "Facility Map", Category = "Core", Created = DateTime.UtcNow },
+            };
+
+            _context.Set<Feature>().AddRange(features.Values);
+            await _context.SaveChangesAsync();
+
+            // Seed Permissions mapped to features
+            var permissions = new List<Permission>
+            {
+                new() { Key = Permissions.PortfolioView, Name = "View Portfolio", FeatureId = features[Features.Portfolio].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.DashboardView, Name = "View Dashboard", FeatureId = features[Features.Dashboard].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.MonitoringView, Name = "View Monitoring", FeatureId = features[Features.Monitoring].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.SolarView, Name = "View Solar", FeatureId = features[Features.Solar].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.BessView, Name = "View BESS", FeatureId = features[Features.Bess].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.GridAndLoadsView, Name = "View Grid & Loads", FeatureId = features[Features.GridAndLoads].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.ScadaView, Name = "View SCADA", FeatureId = features[Features.Scada].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.ScadaControl, Name = "Control SCADA", FeatureId = features[Features.Scada].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.AnalyticsView, Name = "View Analytics", FeatureId = features[Features.Analytics].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FinancialsView, Name = "View Financials", FeatureId = features[Features.Financials].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.ReportingView, Name = "View Reporting", FeatureId = features[Features.Reporting].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.ReportingExport, Name = "Export Reports", FeatureId = features[Features.Reporting].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.OperationsView, Name = "View Operations", FeatureId = features[Features.Operations].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.OperationsManage, Name = "Manage Operations", FeatureId = features[Features.Operations].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FirmView, Name = "View Firms", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FirmCreate, Name = "Create Firms", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FirmEdit, Name = "Edit Firms", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FirmDelete, Name = "Delete Firms", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FacilityView, Name = "View Facilities", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FacilityCreate, Name = "Create Facilities", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FacilityEdit, Name = "Edit Facilities", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FacilityDelete, Name = "Delete Facilities", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.DeviceView, Name = "View Devices", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.DeviceCreate, Name = "Create Devices", FeatureId = features[Features.Settings].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.UserManagementView, Name = "View Users", FeatureId = features[Features.UserManagement].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.UserManagementCreate, Name = "Create Users", FeatureId = features[Features.UserManagement].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.UserManagementEdit, Name = "Edit Users", FeatureId = features[Features.UserManagement].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.UserManagementDelete, Name = "Delete Users", FeatureId = features[Features.UserManagement].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.AuditView, Name = "View Audit Logs", FeatureId = features[Features.Audit].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.FacilityMapView, Name = "View Facility Map", FeatureId = features[Features.FacilityMap].Id, Created = DateTime.UtcNow },
+            };
+
+            _context.Set<Permission>().AddRange(permissions);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {FeatureCount} features and {PermissionCount} permissions", features.Count, permissions.Count);
+
+            // Seed Plans with feature assignments
+            var starterFeatureKeys = new[] { Features.Portfolio, Features.Dashboard, Features.Monitoring, Features.FacilityMap, Features.Settings };
+            var professionalFeatureKeys = starterFeatureKeys.Concat(new[] { Features.Solar, Features.Bess, Features.GridAndLoads, Features.Analytics, Features.Financials, Features.Reporting }).ToArray();
+            var enterpriseFeatureKeys = features.Keys.ToArray();
+
+            if (!_context.Plans.IgnoreQueryFilters().Any(p => p.Name == "Starter"))
+            {
+                var starterPlan = new Plan { Name = "Starter", Modules = "Portfolio,Dashboard,Monitoring,FacilityMap,Settings", ApiAccess = false, MaxFacilities = 5, MaxUsers = 10, Price = 0 };
+                var professionalPlan = new Plan { Name = "Professional", Modules = "All Starter + Solar,Bess,GridAndLoads,Analytics,Financials,Reporting", ApiAccess = true, MaxFacilities = 50, MaxUsers = 100, Price = 499 };
+                var enterprisePlan = new Plan { Name = "Enterprise", Modules = "All Features", ApiAccess = true, MaxFacilities = 999, MaxUsers = 999, Price = 1999 };
+
+                _context.Plans.AddRange(starterPlan, professionalPlan, enterprisePlan);
+                await _context.SaveChangesAsync();
+
+                // Create PlanFeature associations
+                var planFeatures = new List<PlanFeature>();
+
+                foreach (var key in starterFeatureKeys)
+                    planFeatures.Add(new PlanFeature { PlanId = starterPlan.Id, FeatureId = features[key].Id, Created = DateTime.UtcNow });
+
+                foreach (var key in professionalFeatureKeys)
+                    planFeatures.Add(new PlanFeature { PlanId = professionalPlan.Id, FeatureId = features[key].Id, Created = DateTime.UtcNow });
+
+                foreach (var key in enterpriseFeatureKeys)
+                    planFeatures.Add(new PlanFeature { PlanId = enterprisePlan.Id, FeatureId = features[key].Id, Created = DateTime.UtcNow });
+
+                _context.Set<PlanFeature>().AddRange(planFeatures);
+                await _context.SaveChangesAsync();
+
+                // Assign demo tenant to Enterprise plan
+                var demoTenant = await _context.Tenants.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == tenantId);
+                if (demoTenant != null)
+                {
+                    demoTenant.PlanId = enterprisePlan.Id;
+                    await _context.SaveChangesAsync();
+                }
+
+                _logger.LogInformation("Seeded 3 plans (Starter, Professional, Enterprise) with feature assignments");
+            }
+        }
+
+        #endregion
+
         #region DeviceConf
 
         var deviceTypes = new List<DeviceType>

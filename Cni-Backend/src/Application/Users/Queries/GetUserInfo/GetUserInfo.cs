@@ -1,5 +1,6 @@
 ﻿using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
+using Backend.Domain.Constants;
 using Backend.Domain.Entities;
 
 namespace Backend.Application.Users.Queries.GetUserInfo;
@@ -13,12 +14,15 @@ public sealed class UserInfoQueryHandler : IRequestHandler<UserInfoQuery, UserIn
     private readonly IIdentityService _identityService;
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
-    public UserInfoQueryHandler(IIdentityService identityService, IApplicationDbContext context, IMapper mapper)
+    private readonly IPermissionService _permissionService;
+    private readonly IMultiTenantService _multiTenantService;
+    public UserInfoQueryHandler(IIdentityService identityService, IApplicationDbContext context, IMapper mapper, IPermissionService permissionService, IMultiTenantService multiTenantService)
     {
         _identityService = identityService;
         _context = context;
         _mapper = mapper;
-
+        _permissionService = permissionService;
+        _multiTenantService = multiTenantService;
     }
 
     public async Task<UserInfoDto?> Handle(UserInfoQuery request, CancellationToken cancellationToken)
@@ -130,6 +134,39 @@ public sealed class UserInfoQueryHandler : IRequestHandler<UserInfoQuery, UserIn
             });
         }
 
+        // Populate permissions and plan features
+        List<string>? permissions = null;
+        List<string>? planFeatures = null;
+
+        var effectiveTenantId = _multiTenantService.GetEffectiveTenantId()
+            ?? _multiTenantService.GetAuthenticatedTenantId();
+
+        if (effectiveTenantId != null)
+        {
+            planFeatures = await _permissionService.GetTenantFeaturesAsync(effectiveTenantId.Value, cancellationToken);
+
+            if (isAdmin)
+            {
+                // Administrators get all permissions
+                permissions = await _context.Permissions
+                    .Select(p => p.Key)
+                    .ToListAsync(cancellationToken);
+            }
+            else if (isTenantAdmin)
+            {
+                // TenantAdmins get all permissions within their plan features
+                permissions = await _context.Permissions
+                    .Where(p => planFeatures.Contains(p.Feature.Key))
+                    .Select(p => p.Key)
+                    .ToListAsync(cancellationToken);
+            }
+            else
+            {
+                permissions = await _permissionService.GetUserPermissionsAsync(
+                    appUserInfo.UserId, effectiveTenantId.Value, cancellationToken);
+            }
+        }
+
         return new UserInfoDto
         {
             Email = appUserInfo.Email,
@@ -137,9 +174,9 @@ public sealed class UserInfoQueryHandler : IRequestHandler<UserInfoQuery, UserIn
             Surname = appUserInfo.Surname,
             Tenants = userTenants,
             Title = appUserInfo.Title,
-            Roles = appUserInfo.Roles
+            Roles = appUserInfo.Roles,
+            Permissions = permissions,
+            PlanFeatures = planFeatures
         };
     }
-
-
 }

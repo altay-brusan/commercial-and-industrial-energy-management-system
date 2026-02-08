@@ -7,6 +7,7 @@ using Backend.Domain.Events;
 namespace Backend.Application.Devices.Commands;
 
 [Authorize(Roles = "Administrator")]
+[RequirePermission(Backend.Domain.Constants.Permissions.DeviceCreate)]
 public record CreateDeviceCommand : IRequest<int>
 {
     public int FacilityId { get; init; }

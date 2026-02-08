@@ -16,10 +16,20 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(p => p.Name)
             .HasMaxLength(500);
 
+        builder.HasOne(t => t.Plan)
+            .WithMany(p => p.Tenants)
+            .HasForeignKey(t => t.PlanId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Navigation to Firms
         builder.HasMany(t => t.Firms)
             .WithOne(f => f.Tenant)
             .HasForeignKey(f => f.TenantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(t => t.TenantRoles)
+            .WithOne(tr => tr.Tenant)
+            .HasForeignKey(tr => tr.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -66,6 +66,8 @@ public static class DependencyInjection
 
         identityBuilder.AddApiEndpoints();
 
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
+
         builder.Services.AddSingleton(TimeProvider.System);
         // Startup.cs veya Program.cs içinde
         builder.Services.AddTransient<IIdentityService, IdentityService>();

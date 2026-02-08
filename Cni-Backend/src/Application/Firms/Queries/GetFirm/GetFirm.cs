@@ -1,8 +1,9 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 
 namespace Backend.Application.Firms.Queries.GetFirm;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FirmView)]
 public record GetFirmQuery : IRequest<FirmDto?>
 {
     public int Id { get; set; }

@@ -37,6 +37,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<DevicePcsData> DevicePcsData => Set<DevicePcsData>();
     public DbSet<DeviceSmartMeterData> DeviceSmartMeterData => Set<DeviceSmartMeterData>();
 
+    // Authorization entities
+    public DbSet<Feature> Features => Set<Feature>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+    public DbSet<PlanFeature> PlanFeatures => Set<PlanFeature>();
+    public DbSet<TenantRole> TenantRoles => Set<TenantRole>();
+    public DbSet<TenantRolePermission> TenantRolePermissions => Set<TenantRolePermission>();
+    public DbSet<UserTenantRole> UserTenantRoles => Set<UserTenantRole>();
+
     // Market and tariff entities
     public DbSet<MarketOperator> MarketOperators => Set<MarketOperator>();
     public DbSet<FirmMarketOperator> FirmMarketOperators => Set<FirmMarketOperator>();
@@ -64,6 +72,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<DeviceSolarData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<DevicePcsData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<DeviceSmartMeterData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
+        // Authorization entities with tenant scoping
+        builder.Entity<TenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
         // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

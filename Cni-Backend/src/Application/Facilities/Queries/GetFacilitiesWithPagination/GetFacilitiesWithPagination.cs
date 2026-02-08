@@ -1,10 +1,11 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Mappings;
 using Backend.Application.Common.Models;
 using Backend.Application.Common.Security;
 
 namespace Backend.Application.Facilities.Queries.GetFacilitiesWithPagination;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FacilityView)]
 public record GetFacilitiesWithPaginationQuery : IRequest<PaginatedList<FacilityBriefDto>>
 {
     public int PageNumber { get; init; } = 1;
@@ -33,7 +34,7 @@ public class GetFacilitiesWithPaginationQueryHandler : IRequestHandler<GetFacili
         {
             FirmIds = request.FirmIds.Split(',').Select(int.Parse).ToList();
         }
-        if (FirmIds is { Count: > 0 }) // Null değilse ve içinde eleman varsa filtre uygula
+        if (FirmIds is { Count: > 0 }) // Null degilse ve i�inde eleman varsa filtre uygula
         {
             query = query.Where(x => FirmIds.Contains(x.FirmId));
         }

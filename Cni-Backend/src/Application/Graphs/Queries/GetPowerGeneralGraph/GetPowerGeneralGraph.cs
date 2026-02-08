@@ -4,6 +4,7 @@ using Backend.Application.Common.Security;
 namespace Backend.Application.Graphs.Queries.GetPowerGeneralGraph;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.MonitoringView)]
 public record GetPowerGeneralGraphQuery : IRequest<List<PowerGeneralGraphDto>>
 {
     public int Id { get; set; }

@@ -1,9 +1,10 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Backend.Domain.Events;
 
 namespace Backend.Application.Firms.Commands.DeleteFirm;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FirmDelete)]
 public record DeleteFirmCommand(int Id) : IRequest;
 
 public class DeleteFirmCommandHandler : IRequestHandler<DeleteFirmCommand>

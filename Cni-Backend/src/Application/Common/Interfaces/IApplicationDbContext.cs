@@ -22,6 +22,14 @@ public interface IApplicationDbContext
     DbSet<DevicePcsData> DevicePcsData { get; }
     DbSet<DeviceSmartMeterData> DeviceSmartMeterData { get; }
 
+    // Authorization entities
+    DbSet<Feature> Features { get; }
+    DbSet<Permission> Permissions { get; }
+    DbSet<PlanFeature> PlanFeatures { get; }
+    DbSet<TenantRole> TenantRoles { get; }
+    DbSet<TenantRolePermission> TenantRolePermissions { get; }
+    DbSet<UserTenantRole> UserTenantRoles { get; }
+
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }
     DbSet<FirmMarketOperator> FirmMarketOperators { get; }

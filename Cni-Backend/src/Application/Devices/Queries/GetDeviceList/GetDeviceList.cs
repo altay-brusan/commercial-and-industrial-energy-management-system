@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +12,7 @@ using Backend.Domain.Enums;
 namespace Backend.Application.Devices.Queries.GetDeviceList;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.DeviceView)]
 public record GetDevicesWithPaginationQuery : IRequest<PaginatedList<DeviceDto>>
 {
     public int PageNumber { get; init; } = 1;
@@ -43,7 +44,7 @@ public class GetDevicesWithPaginationQueryHandler : IRequestHandler<GetDevicesWi
         {
             facilityIds = request.Facilities.Split(',').Select(int.Parse).ToList();
         }
-        if (facilityIds is { Count: > 0 }) // Null değilse ve içinde eleman varsa filtre uygula
+        if (facilityIds is { Count: > 0 }) // Null degilse ve i�inde eleman varsa filtre uygula
         {
             query = query.Where(x => facilityIds.Contains(x.FacilityId));
         }
@@ -51,7 +52,7 @@ public class GetDevicesWithPaginationQueryHandler : IRequestHandler<GetDevicesWi
         {
             deviceTypes = request.DeviceTypeList.Split(',').Select(int.Parse).ToList();
         }
-        if (deviceTypes is { Count: > 0 }) // Eğer DeviceTypeList doluysa filtre uygula
+        if (deviceTypes is { Count: > 0 }) // Eger DeviceTypeList doluysa filtre uygula
         {
             query = query.Where(x => deviceTypes.Contains(x.DeviceTypeId));
         }

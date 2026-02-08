@@ -1,8 +1,9 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 
 namespace Backend.Application.Firms.Commands.UpdateFirm;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FirmEdit)]
 public record UpdateFirmCommand : IRequest
 {
     public int Id { get; set; }

@@ -5,6 +5,7 @@ using Backend.Domain.Enums;
 namespace Backend.Application.Facilities.Commands.UpdateFacility;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FacilityEdit)]
 public record UpdateFacilityCommand : IRequest
 {
     public int Id { get; set; }
