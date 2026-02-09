@@ -36,6 +36,8 @@ components/
   alarms/               # Alarm table, filters, detail panel
   maintenance/          # Task list, assignment/completion modals
   monitoring/           # Monitoring sidebar
+  bess/                 # Battery storage: hierarchy, overview, alarms, unit/cell detail
+  solar-inverters/      # Solar inverter table, detail, fault/curve tabs
   notifications/        # Notification list, filters
 lib/
   utils.ts              # cn() helper (clsx + tailwind-merge)
@@ -43,6 +45,8 @@ lib/
   alarms/mock-data.ts   # Mock alarms & notifications (imports maintenance data)
   maintenance/types.ts  # MaintenanceTask, User, Asset, AlarmSeverity types
   maintenance/mock-data.ts  # Mock users, assets, tasks (shared across domains)
+  bess/                 # Battery storage types & mock data
+  solar-inverters/      # Solar inverter types & mock data
 hooks/
   use-mobile.ts         # useIsMobile() — 768px breakpoint detection
 ```
