@@ -64,13 +64,6 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
                 <Link href="/monitoring">Monitoring</Link>
               </TabsTrigger>
               <TabsTrigger
-                value="scada"
-                className="data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm"
-                asChild
-              >
-                <Link href="/scada">SCADA</Link>
-              </TabsTrigger>
-              <TabsTrigger
                 value="alarms"
                 className="data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm"
                 asChild

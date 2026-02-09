@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
 
 interface MenuItem {
   label: string;
   href: string;
+  exact?: boolean;
 }
 
 const menuItems: MenuItem[] = [
+  { label: "Overview", href: "/monitoring", exact: true },
   { label: "Solar & Inverters", href: "/monitoring/solar-inverters" },
   { label: "Battery Energy Storage", href: "/monitoring/battery-storage" },
   { label: "Grid & Loads", href: "/monitoring/grid-loads" },
@@ -21,12 +22,11 @@ export function MonitoringSidebar() {
   return (
     <aside className="w-[240px] shrink-0 border-r border-border bg-background overflow-y-auto">
       <div className="p-4">
-        <Button className="w-full mb-4">
-          Scada
-        </Button>
         <nav className="space-y-1">
           {menuItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive = item.exact
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
