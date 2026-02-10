@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown, Search, ArrowUpRight, ArrowDownLeft, Minus } from "lucide-react";
+import { AbbrTooltip } from "@/components/ui/abbr-tooltip";
 import {
   Table,
   TableBody,
@@ -22,7 +23,7 @@ interface BessOverviewTableProps {
 }
 
 interface SortableHeaderProps {
-  label: string;
+  label: React.ReactNode;
   field: BessOverviewSortField;
   currentField: BessOverviewSortField | null;
   direction: SortDirection;
@@ -61,8 +62,8 @@ function UnitStatusBadge({ status }: { status: BessUnit["status"] }) {
   switch (status) {
     case "online":
       return (
-        <Badge className="bg-energy-solar/15 text-energy-solar border-energy-solar/30 hover:bg-energy-solar/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-solar" />
+        <Badge className="bg-sky-500/15 text-sky-600 border-sky-500/30 hover:bg-sky-500/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-sky-500" />
           Online
         </Badge>
       );
@@ -82,8 +83,8 @@ function UnitStatusBadge({ status }: { status: BessUnit["status"] }) {
       );
     case "standby":
       return (
-        <Badge className="bg-energy-battery/15 text-energy-battery border-energy-battery/30 hover:bg-energy-battery/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-battery" />
+        <Badge className="bg-yellow-500/15 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-yellow-500" />
           Standby
         </Badge>
       );
@@ -227,8 +228,8 @@ export function BessOverviewTable({ units, onUnitSelect }: BessOverviewTableProp
               <SortableHeader label="Name" field="name" currentField={sortField} direction={sortDirection} onSort={handleSort} className="pl-6 w-[15%]" />
               <SortableHeader label="Status" field="status" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[10%]" />
               <SortableHeader label="Mode" field="mode" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[12%]" />
-              <SortableHeader label="SoC" field="soc" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[15%]" />
-              <SortableHeader label="SoH" field="soh" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[8%]" />
+              <SortableHeader label={<AbbrTooltip label="SoC" title="State of Charge" description="Current battery charge level as a percentage of total capacity" />} field="soc" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[15%]" />
+              <SortableHeader label={<AbbrTooltip label="SoH" title="State of Health" description="Battery's current capacity compared to its original rated capacity" />} field="soh" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[8%]" />
               <SortableHeader label="Power" field="power" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[14%]" />
               <SortableHeader label="Capacity" field="capacity" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[10%]" />
               <SortableHeader label="Alarms" field="alarms" currentField={sortField} direction={sortDirection} onSort={handleSort} className="pr-6 w-[10%]" />

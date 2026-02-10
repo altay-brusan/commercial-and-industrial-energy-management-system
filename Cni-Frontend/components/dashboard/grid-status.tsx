@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { AbbrTooltip } from "@/components/ui/abbr-tooltip";
 
 type GridQuality = "excellent" | "good" | "fair" | "poor";
 type ConnectionStatus = "connected" | "islanded" | "fault";
@@ -121,7 +122,7 @@ export function GridStatus() {
             <p className="font-medium">{gridData.voltage} V</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-xs">PF</p>
+            <p className="text-muted-foreground text-xs"><AbbrTooltip label="PF" title="Power Factor" description="Ratio of real power to apparent power, indicating electrical efficiency" /></p>
             <p className="font-medium">{gridData.powerFactor}</p>
           </div>
         </div>

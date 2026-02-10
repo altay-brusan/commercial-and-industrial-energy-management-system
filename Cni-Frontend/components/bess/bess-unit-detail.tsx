@@ -20,10 +20,10 @@ type DetailTab = "summary" | "hierarchy" | "monitoring" | "alarms" | "settings";
 
 function UnitStatusBadge({ status }: { status: BessUnit["status"] }) {
   const styles: Record<BessUnit["status"], string> = {
-    online: "bg-energy-solar/15 text-energy-solar border-energy-solar/30",
+    online: "bg-sky-500/15 text-sky-600 border-sky-500/30",
     offline: "bg-muted text-muted-foreground",
     fault: "bg-energy-grid/15 text-energy-grid border-energy-grid/30",
-    standby: "bg-energy-battery/15 text-energy-battery border-energy-battery/30",
+    standby: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30",
   };
   const labels: Record<BessUnit["status"], string> = {
     online: "Online",

@@ -23,7 +23,7 @@ export function CO2Summary() {
   const monthlyData = co2MonthlyData;
 
   return (
-    <div className="rounded-lg bg-muted/30 p-5 flex flex-col h-full">
+    <div className="rounded-lg bg-muted/30 p-5 flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-muted">
@@ -89,7 +89,7 @@ export function CO2Summary() {
                 className="flex items-center justify-between rounded-md bg-background/60 px-3 py-2"
               >
                 <span className="text-xs text-muted-foreground">{d.month}</span>
-                <span className="text-xs font-medium">{d.value.toLocaleString()} kg</span>
+                <span className="text-xs font-medium">{d.value.toLocaleString("en-US")} kg</span>
               </div>
             ))}
           </div>

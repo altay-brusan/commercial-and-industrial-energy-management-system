@@ -1,6 +1,7 @@
 "use client";
 
 import { Activity } from "lucide-react";
+import { AbbrTooltip } from "@/components/ui/abbr-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { BessRack, BessPack, BessModule, BessComponentStatus } from "@/lib/bess/types";
@@ -28,7 +29,7 @@ function getSOCColor(soc: number): string {
   return "[&>[data-slot=progress-indicator]]:bg-energy-grid";
 }
 
-function Metric({ label, value }: { label: string; value: React.ReactNode }) {
+function Metric({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between py-1.5">
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -50,14 +51,14 @@ export function BessHierarchyDetail({ item, label }: BessHierarchyDetailProps) {
 
       <div className="mb-3 space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">SoC</span>
+          <span className="text-xs text-muted-foreground"><AbbrTooltip label="SoC" title="State of Charge" description="Current battery charge level as a percentage of total capacity" /></span>
           <span className="text-sm font-semibold">{item.soc}%</span>
         </div>
         <Progress value={item.soc} className={`h-2 ${getSOCColor(item.soc)}`} />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-6">
-        <Metric label="SoH" value={`${item.soh}%`} />
+        <Metric label={<AbbrTooltip label="SoH" title="State of Health" description="Battery's current capacity compared to its original rated capacity" />} value={`${item.soh}%`} />
         <Metric label="Voltage" value={`${item.voltage} V`} />
         <Metric label="Current" value={`${item.current} A`} />
         {"power" in item && <Metric label="Power" value={`${item.power} kW`} />}

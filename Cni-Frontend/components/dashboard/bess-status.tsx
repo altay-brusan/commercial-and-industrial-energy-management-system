@@ -129,7 +129,7 @@ export function BESSStatus() {
         </div>
 
         <div className="text-xs text-muted-foreground text-right">
-          Cycle count: {bessData.cycleCount.toLocaleString()}
+          Cycle count: {bessData.cycleCount.toLocaleString("en-US")}
         </div>
       </CardContent>
     </Card>

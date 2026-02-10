@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { AbbrTooltip } from "@/components/ui/abbr-tooltip";
 import {
   Table,
   TableBody,
@@ -33,7 +34,7 @@ interface BessHierarchyTableProps {
 }
 
 interface SortableHeaderProps {
-  label: string;
+  label: React.ReactNode;
   field: HierarchySortField;
   currentField: HierarchySortField | null;
   direction: SortDirection;
@@ -184,8 +185,8 @@ export function BessHierarchyTable({ level, items, onItemSelect }: BessHierarchy
             <TableRow className="hover:bg-transparent">
               <SortableHeader label="Name" field="label" currentField={sortField} direction={sortDirection} onSort={handleSort} className="pl-6 w-[14%]" />
               <SortableHeader label="Status" field="status" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[12%]" />
-              <SortableHeader label="SoC" field="soc" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[16%]" />
-              <SortableHeader label="SoH" field="soh" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[8%]" />
+              <SortableHeader label={<AbbrTooltip label="SoC" title="State of Charge" description="Current battery charge level as a percentage of total capacity" />} field="soc" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[16%]" />
+              <SortableHeader label={<AbbrTooltip label="SoH" title="State of Health" description="Battery's current capacity compared to its original rated capacity" />} field="soh" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[8%]" />
               <SortableHeader label="Voltage" field="voltage" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[12%]" />
               <SortableHeader label="Current" field="current" currentField={sortField} direction={sortDirection} onSort={handleSort} className="w-[10%]" />
               {isItemCell ? (

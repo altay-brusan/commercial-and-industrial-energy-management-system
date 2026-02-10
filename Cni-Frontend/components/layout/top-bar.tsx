@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Bell, AlertTriangle, Sun, Moon, Wrench, RefreshCw, CheckCircle2, CalendarClock } from "lucide-react";
+import { useState } from "react";
+import { Bell, AlertTriangle, Sun, Moon, Wrench, RefreshCw, CheckCircle2, CalendarClock, ChevronsUpDown, Check } from "lucide-react";
 import { RiAlarmWarningLine } from "react-icons/ri";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -13,10 +14,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getActiveAlarmCount, getUnreadNotificationCount, alarms, notifications } from "@/lib/alarms/mock-data";
+import { useFacility } from "@/lib/facilities/facility-context";
 import { format } from "date-fns";
 import type { NotificationType } from "@/lib/alarms/types";
 
@@ -26,6 +30,8 @@ interface TopBarProps {
 
 export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
   const { theme, setTheme } = useTheme();
+  const { selectedFacilityId, setSelectedFacilityId, selectedFacility, facilities } = useFacility();
+  const [facilityOpen, setFacilityOpen] = useState(false);
   const activeAlarmCount = getActiveAlarmCount();
   const unreadNotificationCount = getUnreadNotificationCount();
 
@@ -89,6 +95,44 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Facility Selector */}
+          <Popover open={facilityOpen} onOpenChange={setFacilityOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" aria-expanded={facilityOpen} className="w-[260px] h-9 justify-between font-normal">
+                <span className="truncate">{selectedFacility.name}</span>
+                <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[260px] p-0" align="start">
+              <Command>
+                {facilities.length > 4 && <CommandInput placeholder="Tesis ara..." />}
+                <CommandList>
+                  <CommandEmpty>Tesis bulunamadı.</CommandEmpty>
+                  <CommandGroup>
+                    {facilities.map((facility) => (
+                      <CommandItem
+                        key={facility.id}
+                        value={facility.name}
+                        onSelect={() => {
+                          setSelectedFacilityId(facility.id);
+                          setFacilityOpen(false);
+                        }}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span>{facility.name}</span>
+                          <span className="text-xs text-muted-foreground">{facility.location}, {facility.country}</span>
+                        </div>
+                        {selectedFacilityId === facility.id && (
+                          <Check className="ml-auto h-4 w-4 shrink-0" />
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           {/* Maintenance Button */}
           <Button className="bg-sky-600 hover:bg-sky-700 text-white" asChild>
             <Link href="/maintenance">Maintenance</Link>

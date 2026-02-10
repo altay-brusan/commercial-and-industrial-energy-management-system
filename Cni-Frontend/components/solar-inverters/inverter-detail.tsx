@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronLeft, RefreshCw, Activity } from "lucide-react";
+import { AbbrTooltip } from "@/components/ui/abbr-tooltip";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -26,7 +27,7 @@ type DetailTab = "general" | "fault" | "curve" | "settings";
 
 function formatValue(value: number | null, unit: string): string {
   if (value === null) return "--";
-  return `${value.toLocaleString()} ${unit}`;
+  return `${value.toLocaleString("en-US")} ${unit}`;
 }
 
 function MetricItem({ label, value, unit }: { label: string; value: number | null; unit: string }) {
@@ -49,7 +50,7 @@ function MetricGrid({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SectionTitle({ title }: { title: string }) {
+function SectionTitle({ title }: { title: React.ReactNode }) {
   return (
     <h3 className="text-sm font-semibold text-foreground mt-6 mb-2 first:mt-0">
       {title}
@@ -160,7 +161,7 @@ export function InverterDetail({ inverter, onBack, onAlarmOpen }: InverterDetail
           </MetricGrid>
 
           {/* MPPT Information */}
-          <SectionTitle title="MPPT information" />
+          <SectionTitle title={<AbbrTooltip label="MPPT information" title="Maximum Power Point Tracking" description="Algorithm that optimizes power extraction from solar panels" />} />
           <div className="border rounded-md overflow-hidden">
             <Table>
               <TableHeader>
@@ -228,10 +229,14 @@ export function InverterDetail({ inverter, onBack, onAlarmOpen }: InverterDetail
                   className={
                     inverter.status === "normal"
                       ? "bg-energy-solar/15 text-energy-solar border-energy-solar/30"
-                      : "bg-muted text-muted-foreground"
+                      : inverter.status === "warning"
+                        ? "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30"
+                        : inverter.status === "fault"
+                          ? "bg-energy-grid/15 text-energy-grid border-energy-grid/30"
+                          : "bg-muted text-muted-foreground"
                   }
                 >
-                  {inverter.status === "normal" ? "Normal" : inverter.operatingStatus}
+                  {inverter.status.charAt(0).toUpperCase() + inverter.status.slice(1)}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">

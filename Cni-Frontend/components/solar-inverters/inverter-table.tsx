@@ -153,7 +153,7 @@ export function InverterTable({ inverters, onInverterSelect }: InverterTableProp
   }, [inverters, sortField, sortDirection, searchQuery]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Search & filters */}
       <div className="shrink-0 flex items-center gap-3 px-6 py-4 border-b">
         <div className="relative flex-1 max-w-sm">

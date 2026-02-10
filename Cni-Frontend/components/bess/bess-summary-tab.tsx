@@ -1,6 +1,7 @@
 "use client";
 
 import { Activity, ArrowUpRight, ArrowDownLeft, Minus } from "lucide-react";
+import { AbbrTooltip } from "@/components/ui/abbr-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { BessUnit } from "@/lib/bess/types";
@@ -11,10 +12,10 @@ interface BessSummaryTabProps {
 
 function formatValue(value: number | null, unit: string): string {
   if (value === null) return "--";
-  return `${value.toLocaleString()} ${unit}`;
+  return `${value.toLocaleString("en-US")} ${unit}`;
 }
 
-function MetricItem({ label, value, unit }: { label: string; value: number | null | string; unit?: string }) {
+function MetricItem({ label, value, unit }: { label: React.ReactNode; value: number | null | string; unit?: string }) {
   const displayValue = typeof value === "string" ? value : formatValue(value, unit ?? "");
   return (
     <div className="flex items-center justify-between py-2">
@@ -112,7 +113,7 @@ export function BessSummaryTab({ unit }: BessSummaryTabProps) {
       </div>
 
       <MetricGrid>
-        <MetricItem label="SoH" value={live.soh} unit="%" />
+        <MetricItem label={<AbbrTooltip label="SoH" title="State of Health" description="Battery's current capacity compared to its original rated capacity" />} value={live.soh} unit="%" />
         <div className="flex items-center justify-between py-2">
           <span className="text-sm text-muted-foreground">Power</span>
           <div className="flex items-center gap-2">

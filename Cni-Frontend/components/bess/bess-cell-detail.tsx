@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Activity, AlertTriangle } from "lucide-react";
+import { AbbrTooltip } from "@/components/ui/abbr-tooltip";
 import {
   Bar,
   BarChart,
@@ -43,7 +44,7 @@ function getSOCColor(soc: number): string {
   return "[&>[data-slot=progress-indicator]]:bg-energy-grid";
 }
 
-function Metric({ label, value, icon }: { label: string; value: React.ReactNode; icon?: boolean }) {
+function Metric({ label, value, icon }: { label: React.ReactNode; value: React.ReactNode; icon?: boolean }) {
   return (
     <div className="flex items-center justify-between py-1.5">
       <span className="text-sm text-muted-foreground">{label}</span>
@@ -118,7 +119,7 @@ export function BessCellDetail({ cell, module }: BessCellDetailProps) {
 
         <div className="mb-3 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">SoC</span>
+            <span className="text-xs text-muted-foreground"><AbbrTooltip label="SoC" title="State of Charge" description="Current battery charge level as a percentage of total capacity" /></span>
             <span className="text-sm font-semibold">{cell.soc}%</span>
           </div>
           <Progress value={cell.soc} className={`h-2 ${getSOCColor(cell.soc)}`} />
@@ -128,9 +129,9 @@ export function BessCellDetail({ cell, module }: BessCellDetailProps) {
           <Metric label="Voltage" value={`${cell.voltage} V`} />
           <Metric label="Current" value={`${cell.current} A`} />
           <Metric label="Temperature" value={`${cell.temperature}°C`} />
-          <Metric label="SoH" value={`${cell.soh}%`} />
+          <Metric label={<AbbrTooltip label="SoH" title="State of Health" description="Battery's current capacity compared to its original rated capacity" />} value={`${cell.soh}%`} />
           <Metric label="Internal Res." value={`${cell.internalResistance} mΩ`} />
-          <Metric label="Cycle Count" value={cell.cycleCount.toLocaleString()} />
+          <Metric label="Cycle Count" value={cell.cycleCount.toLocaleString("en-US")} />
           <Metric label="Balancing" value={cell.balancing ? "Active" : "Inactive"} icon={false} />
         </div>
       </div>
