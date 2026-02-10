@@ -74,6 +74,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<DeviceSmartMeterData>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
         // Authorization entities with tenant scoping
         builder.Entity<TenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
+        builder.Entity<TenantRolePermission>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
+        builder.Entity<UserTenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
         // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
