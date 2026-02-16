@@ -37,7 +37,11 @@ spec:
         DOCKER_REGISTRY = 'REDACTED_HOST:30500'
         DOCKER_IMAGE_NAME = 'cni-backend'
         GIT_COMMIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-        BUILD_TAG = "dev-${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+        ENV_NAME = "${env.BRANCH_NAME == 'stg' ? 'stg' : 'dev'}"
+        K8S_NAMESPACE = "cni-${ENV_NAME}"
+        BUILD_TAG = "${ENV_NAME}-${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+        IMAGE_LATEST = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${ENV_NAME}-latest"
+        DEPLOY_URL = "${ENV_NAME == 'stg' ? 'cni-api-stg.oklidis.com.tr' : 'cni-api-dev.oklidis.com.tr'}"
     }
 
     stages {
@@ -66,7 +70,7 @@ spec:
                         docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG} \
                             -f ./Dockerfile .
                         docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG} \
-                            ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:dev-latest
+                            ${IMAGE_LATEST}
                     """
                 }
             }
@@ -77,7 +81,7 @@ spec:
                 container('docker') {
                     sh """
                         docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG}
-                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:dev-latest
+                        docker push ${IMAGE_LATEST}
                     """
                 }
             }
@@ -88,17 +92,17 @@ spec:
                 container('kubectl') {
                     sh """
                         kubectl set image deployment/cni-backend \
-                            backend=${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:dev-latest \
-                            -n cni-dev
-                        kubectl rollout restart deployment/cni-backend -n cni-dev
+                            backend=${IMAGE_LATEST} \
+                            -n ${K8S_NAMESPACE}
+                        kubectl rollout restart deployment/cni-backend -n ${K8S_NAMESPACE}
                         kubectl rollout status deployment/cni-backend \
-                            -n cni-dev --timeout=5m
+                            -n ${K8S_NAMESPACE} --timeout=5m
                     """
                 }
             }
             post {
                 success {
-                    echo "Deployed to DEV: http://cni-api-dev.oklidis.com.tr"
+                    echo "Deployed to ${ENV_NAME.toUpperCase()}: http://${DEPLOY_URL}"
                 }
             }
         }
