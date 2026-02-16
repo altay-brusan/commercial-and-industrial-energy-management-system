@@ -75,6 +75,7 @@ spec:
                                     /k:"cni-backend" \
                                     /d:sonar.host.url="http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000" \
                                     /d:sonar.token="\${SONAR_TOKEN}" \
+                                    /d:sonar.branch.name="${ENV_NAME}" \
                                     /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
                                 dotnet build src/Web/Web.csproj -c Release
                                 dotnet sonarscanner end /d:sonar.token="\${SONAR_TOKEN}"
