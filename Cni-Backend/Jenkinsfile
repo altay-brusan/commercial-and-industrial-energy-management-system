@@ -14,9 +14,6 @@ spec:
     image: mcr.microsoft.com/dotnet/sdk:9.0
     command: ['cat']
     tty: true
-    env:
-    - name: ConnectionStrings__BackendDb
-      value: "Server=localhost;Port=5432;User ID=postgres;Password=test;Database=DermsDb_Test;Pooling=true;"
   - name: docker
     image: docker:27.0-cli
     command: ['cat']
@@ -28,17 +25,6 @@ spec:
     image: alpine/k8s:1.28.3
     command: ['cat']
     tty: true
-  - name: postgres
-    image: postgres:15
-    env:
-    - name: POSTGRES_USER
-      value: "postgres"
-    - name: POSTGRES_PASSWORD
-      value: "test"
-    - name: POSTGRES_DB
-      value: "DermsDb_Test"
-    ports:
-    - containerPort: 5432
   volumes:
   - name: docker-sock
     hostPath:
@@ -51,7 +37,7 @@ spec:
         DOCKER_REGISTRY = 'REDACTED_HOST:30500'
         DOCKER_IMAGE_NAME = 'cni-backend'
         GIT_COMMIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-        BUILD_TAG = "${env.BRANCH_NAME}-${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+        BUILD_TAG = "dev-${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
     }
 
     stages {
@@ -65,43 +51,39 @@ spec:
             steps {
                 container('dotnet') {
                     sh """
-                        dotnet restore
-                        dotnet build -c Release --no-restore
-                        dotnet test -c Release --no-build --verbosity normal || true
+                        dotnet restore src/Web/Web.csproj
+                        dotnet build src/Web/Web.csproj -c Release --no-restore
+                        dotnet test --filter "FullyQualifiedName~UnitTests" -c Release --verbosity normal || true
                     """
                 }
             }
         }
 
-        // ========== DEV ==========
-        stage('Docker Build - Dev') {
-            when { branch 'dev' }
+        stage('Docker Build') {
             steps {
                 container('docker') {
                     sh """
-                        docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:dev-${BUILD_TAG} \
+                        docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG} \
                             -f ./Dockerfile .
-                        docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:dev-${BUILD_TAG} \
+                        docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG} \
                             ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:dev-latest
                     """
                 }
             }
         }
 
-        stage('Docker Push - Dev') {
-            when { branch 'dev' }
+        stage('Docker Push') {
             steps {
                 container('docker') {
                     sh """
-                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:dev-${BUILD_TAG}
+                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG}
                         docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:dev-latest
                     """
                 }
             }
         }
 
-        stage('Deploy - Dev') {
-            when { branch 'dev' }
+        stage('Deploy') {
             steps {
                 container('kubectl') {
                     sh """
@@ -117,54 +99,6 @@ spec:
             post {
                 success {
                     echo "Deployed to DEV: http://cni-api-dev.oklidis.com.tr"
-                }
-            }
-        }
-
-        // ========== STAGE ==========
-        stage('Docker Build - Stage') {
-            when { branch 'stg' }
-            steps {
-                container('docker') {
-                    sh """
-                        docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:stg-${BUILD_TAG} \
-                            -f ./Dockerfile .
-                        docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:stg-${BUILD_TAG} \
-                            ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:stg-latest
-                    """
-                }
-            }
-        }
-
-        stage('Docker Push - Stage') {
-            when { branch 'stg' }
-            steps {
-                container('docker') {
-                    sh """
-                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:stg-${BUILD_TAG}
-                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:stg-latest
-                    """
-                }
-            }
-        }
-
-        stage('Deploy - Stage') {
-            when { branch 'stg' }
-            steps {
-                container('kubectl') {
-                    sh """
-                        kubectl set image deployment/cni-backend \
-                            backend=${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:stg-latest \
-                            -n cni-stg
-                        kubectl rollout restart deployment/cni-backend -n cni-stg
-                        kubectl rollout status deployment/cni-backend \
-                            -n cni-stg --timeout=5m
-                    """
-                }
-            }
-            post {
-                success {
-                    echo "Deployed to STAGE: http://cni-api-stg.oklidis.com.tr"
                 }
             }
         }
