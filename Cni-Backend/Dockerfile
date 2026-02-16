@@ -14,14 +14,14 @@ COPY src/Infrastructure/Infrastructure.csproj src/Infrastructure/
 COPY src/Proto/Proto.csproj src/Proto/
 COPY src/Web/Web.csproj src/Web/
 
-# Restore dependencies
-RUN dotnet restore
+# Restore dependencies (only Web project to skip test projects)
+RUN dotnet restore src/Web/Web.csproj
 
 # Copy all source code
 COPY src/ src/
 
 # Build
-RUN dotnet build -c Release --no-restore
+RUN dotnet build src/Web/Web.csproj -c Release --no-restore
 
 # Publish stage
 FROM build AS publish
