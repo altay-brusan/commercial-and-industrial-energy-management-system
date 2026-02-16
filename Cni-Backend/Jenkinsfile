@@ -63,6 +63,28 @@ spec:
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                container('dotnet') {
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                            sh """
+                                dotnet tool install --global dotnet-sonarscanner
+                                export PATH="\$PATH:/root/.dotnet/tools"
+                                dotnet sonarscanner begin \
+                                    /k:"cni-backend" \
+                                    /d:sonar.host.url="http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000" \
+                                    /d:sonar.token="\${SONAR_TOKEN}" \
+                                    /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+                                dotnet build src/Web/Web.csproj -c Release
+                                dotnet sonarscanner end /d:sonar.token="\${SONAR_TOKEN}"
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Docker Build') {
             steps {
                 container('docker') {
