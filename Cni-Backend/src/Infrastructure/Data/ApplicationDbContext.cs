@@ -45,6 +45,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<TenantRolePermission> TenantRolePermissions => Set<TenantRolePermission>();
     public DbSet<UserTenantRole> UserTenantRoles => Set<UserTenantRole>();
 
+    // Auth entities
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     // Market and tariff entities
     public DbSet<MarketOperator> MarketOperators => Set<MarketOperator>();
     public DbSet<FirmMarketOperator> FirmMarketOperators => Set<FirmMarketOperator>();
@@ -79,6 +82,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+        // RefreshToken configuration
+        builder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.Property(e => e.Token).HasMaxLength(256);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
         builder.Entity<ApplicationUser>().ToTable("AppUsers");
         builder.Entity<IdentityRole>().ToTable("AppRoles");
 

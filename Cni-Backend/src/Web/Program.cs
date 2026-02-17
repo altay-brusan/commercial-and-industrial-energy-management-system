@@ -64,6 +64,8 @@ app.UseSwaggerUi(settings =>
 
 app.UseExceptionHandler(options => { });
 
+app.UseRateLimiter();
+
 app.Map("/", () => Results.Redirect("/api"));
 
 app.MapHub<LiveDataHub>("/liveDataHub");

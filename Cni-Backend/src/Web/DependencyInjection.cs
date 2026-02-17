@@ -1,5 +1,8 @@
-﻿using Azure.Identity;
+﻿using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+using Azure.Identity;
 using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Models;
 using Backend.Infrastructure.Data;
 using Backend.Web.Hubs.Implementations;
 using Backend.Web.Services;
@@ -45,6 +48,35 @@ public static class DependencyInjection
         // Customise default API behaviour
         builder.Services.Configure<ApiBehaviorOptions>(options =>
             options.SuppressModelStateInvalidFilter = true);
+
+        var isTestEnv = string.Equals(builder.Environment.EnvironmentName, "Test", StringComparison.OrdinalIgnoreCase);
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.AddFixedWindowLimiter("auth-login", opt =>
+            {
+                opt.PermitLimit = isTestEnv ? 10000 : 5;
+                opt.Window = TimeSpan.FromMinutes(isTestEnv ? 1 : 15);
+                opt.QueueLimit = 0;
+            });
+            options.RejectionStatusCode = 429;
+            options.OnRejected = async (context, cancellationToken) =>
+            {
+                context.HttpContext.Response.ContentType = "application/json";
+
+                var retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfterValue)
+                    ? (int)retryAfterValue.TotalSeconds
+                    : 900;
+
+                context.HttpContext.Response.Headers.RetryAfter = retryAfter.ToString();
+
+                var errorResponse = new AuthErrorResponse(new AuthError(
+                    "RATE_LIMIT_EXCEEDED",
+                    "Too many login attempts. Please try again later.",
+                    RetryAfter: retryAfter));
+
+                await context.HttpContext.Response.WriteAsJsonAsync(errorResponse, cancellationToken);
+            };
+        });
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSingleton<IRealTimeNotifier, SignalRRealTimeNotifier>();

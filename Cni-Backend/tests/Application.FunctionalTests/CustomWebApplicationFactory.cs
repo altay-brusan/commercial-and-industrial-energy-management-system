@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Backend.Application.FunctionalTests;
@@ -32,7 +33,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BackendDb"] = "DataSource=:memory:"
+                ["ConnectionStrings:BackendDb"] = "DataSource=:memory:",
+                ["JwtSettings:Secret"] = "TestSuperSecretKeyThatIsAtLeast32BytesLong!!2024",
+                ["JwtSettings:Issuer"] = "DERMS-Backend-Test",
+                ["JwtSettings:Audience"] = "DERMS-Frontend-Test",
+                ["JwtSettings:AccessTokenExpirationMinutes"] = "15",
+                ["JwtSettings:RefreshTokenExpirationDays"] = "7"
             });
         });
 
@@ -93,6 +99,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.AddIdentityCore<ApplicationUser>()
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            // AddIdentityCore overrides DefaultScheme to Identity cookies — reset to JWT Bearer
+            services.Configure<Microsoft.AspNetCore.Authentication.AuthenticationOptions>(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            });
         });
 
         builder.UseEnvironment("Test");

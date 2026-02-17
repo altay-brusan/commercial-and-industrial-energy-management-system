@@ -21,9 +21,6 @@ public class Users : EndpointGroupBase
         // Grubu tanımla
         var group = app.MapGroup(this);
 
-        // Identity API'yi ekle
-        group.MapIdentityApiOklidis<ApplicationUser>();
-
         // Kullanıcı bilgisi endpoint'ini ekle
         group.MapGet("/userinfo", GetUserInfo).RequireAuthorization(); 
         // Kullanıcı güncelleme endpoint'i

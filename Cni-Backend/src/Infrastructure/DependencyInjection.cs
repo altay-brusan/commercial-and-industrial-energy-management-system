@@ -1,14 +1,17 @@
-﻿using Backend.Application.Common.Interfaces;
+﻿using System.Text;
+using Backend.Application.Common.Interfaces;
 using Backend.Domain.Constants;
 using Backend.Infrastructure.Configurations;
 using Backend.Infrastructure.Data;
 using Backend.Infrastructure.Data.Interceptors;
 using Backend.Domain.Entities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Backend.Infrastructure.Identity;
 using Backend.Infrastructure.Persistence;
 using Backend.Infrastructure.Logging;
@@ -48,14 +51,70 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<ApplicationDbContextInitializer>();
 
-        builder.Services.AddAuthentication()
-            .AddBearerToken(IdentityConstants.BearerScheme);
+        builder.Services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+
+        var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
+        if (jwtSettings != null && !string.IsNullOrEmpty(jwtSettings.Secret))
+        {
+            var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ClockSkew = TimeSpan.Zero
+                };
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        var json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new { error = new { code = "UNAUTHORIZED", message = "Access token is missing or invalid" } });
+                        await context.Response.Body.WriteAsync(json);
+                    }
+                };
+            });
+        }
+        else
+        {
+            // Fallback for test environment where JwtSettings may not be configured
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = async context =>
+                        {
+                            context.HandleResponse();
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+                            var json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new { error = new { code = "UNAUTHORIZED", message = "Access token is missing or invalid" } });
+                            await context.Response.Body.WriteAsync(json);
+                        }
+                    };
+                });
+        }
 
         builder.Services.AddAuthorizationBuilder();
 
         var identityBuilder = builder.Services
             .AddIdentityCore<ApplicationUser>()
-            .AddRoles<IdentityRole>();
+            .AddRoles<IdentityRole>()
+            .AddSignInManager();
 
         // Only add EntityFrameworkStores in non-test environment
         // Tests will configure their own stores with SQLite
@@ -64,8 +123,7 @@ public static class DependencyInjection
             identityBuilder.AddEntityFrameworkStores<ApplicationDbContext>();
         }
 
-        identityBuilder.AddApiEndpoints();
-
+        builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
         builder.Services.AddScoped<IPermissionService, PermissionService>();
 
         builder.Services.AddSingleton(TimeProvider.System);

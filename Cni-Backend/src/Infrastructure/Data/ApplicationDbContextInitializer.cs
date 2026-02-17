@@ -197,6 +197,22 @@ public class ApplicationDbContextInitializer
             _logger.LogInformation("Created role: {Role}", Roles.User);
         }
 
+        // Create Operator role (view + settings control)
+        var operatorRole = new IdentityRole(Roles.Operator);
+        if (_roleManager.Roles.All(r => r.Name != operatorRole.Name))
+        {
+            await _roleManager.CreateAsync(operatorRole);
+            _logger.LogInformation("Created role: {Role}", Roles.Operator);
+        }
+
+        // Create Viewer role (read-only access)
+        var viewerRole = new IdentityRole(Roles.Viewer);
+        if (_roleManager.Roles.All(r => r.Name != viewerRole.Name))
+        {
+            await _roleManager.CreateAsync(viewerRole);
+            _logger.LogInformation("Created role: {Role}", Roles.Viewer);
+        }
+
         // Create Administrator user
         var administrator = new ApplicationUser
         {

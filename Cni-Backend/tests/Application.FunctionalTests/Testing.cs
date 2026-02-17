@@ -203,6 +203,11 @@ public partial class Testing
         return await action(service);
     }
 
+    public static HttpClient CreateClient()
+    {
+        return _factory.CreateClient();
+    }
+
     [OneTimeTearDown]
     public async Task RunAfterAnyTests()
     {
