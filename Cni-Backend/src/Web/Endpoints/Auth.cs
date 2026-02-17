@@ -25,6 +25,9 @@ public class Auth : EndpointGroupBase
             .RequireRateLimiting("auth-login");
 
         group.MapPost("/RefreshToken", RefreshToken);
+
+        group.MapPost("/Logout", Logout)
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> Login(
@@ -255,6 +258,38 @@ public class Auth : EndpointGroupBase
             ExpiresIn: settings.AccessTokenExpirationMinutes * 60);
 
         return Results.Ok(response);
+    }
+
+    private static async Task<IResult> Logout(
+        HttpContext httpContext,
+        ApplicationDbContext dbContext)
+    {
+        // Read refresh token from cookie
+        var refreshTokenValue = httpContext.Request.Cookies["refreshToken"];
+        if (!string.IsNullOrEmpty(refreshTokenValue))
+        {
+            var refreshTokenHash = HashToken(refreshTokenValue);
+            var storedToken = await dbContext.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == refreshTokenHash && !rt.IsRevoked);
+
+            if (storedToken != null)
+            {
+                storedToken.IsRevoked = true;
+                await dbContext.SaveChangesAsync();
+            }
+        }
+
+        // Clear the refresh token cookie
+        httpContext.Response.Cookies.Append("refreshToken", "", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/v1/Auth",
+            MaxAge = TimeSpan.Zero
+        });
+
+        return Results.Ok(new LogoutResponse("Successfully logged out"));
     }
 
     private static string HashToken(string token)

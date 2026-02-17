@@ -76,13 +76,37 @@ public static class DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ClockSkew = TimeSpan.Zero
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        var json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new { error = new { code = "UNAUTHORIZED", message = "Access token is missing or invalid" } });
+                        await context.Response.Body.WriteAsync(json);
+                    }
+                };
             });
         }
         else
         {
             // Fallback for test environment where JwtSettings may not be configured
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer();
+                .AddJwtBearer(options =>
+                {
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = async context =>
+                        {
+                            context.HandleResponse();
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+                            var json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new { error = new { code = "UNAUTHORIZED", message = "Access token is missing or invalid" } });
+                            await context.Response.Body.WriteAsync(json);
+                        }
+                    };
+                });
         }
 
         builder.Services.AddAuthorizationBuilder();

@@ -279,6 +279,24 @@
         }
       }
     },
+    "/api/v1/Auth/Logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "PostApiV1AuthLogout",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/Devices/{id}": {
       "get": {
         "tags": [

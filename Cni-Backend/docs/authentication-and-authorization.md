@@ -163,6 +163,37 @@ Set-Cookie: refreshToken=<new-base64-value>; HttpOnly; Secure; SameSite=Strict; 
 | 401 | `INVALID_REFRESH_TOKEN` | Missing, expired, or revoked refresh token |
 | 401 | `INVALID_TOKEN` | Missing or invalid access token in Authorization header |
 
+---
+
+#### POST `/api/v1/Auth/Logout`
+
+Terminates the current session. Invalidates the refresh token and clears the refresh token cookie.
+
+**Requires:** Valid (non-expired) JWT access token via `Authorization: Bearer <token>` header.
+
+**Request:**
+- `Authorization: Bearer <access-token>` header (required)
+- `Cookie: refreshToken=<value>` cookie (optional — if present, the token is revoked)
+- No request body
+
+**Success Response (200):**
+```json
+{
+  "message": "Successfully logged out"
+}
+```
+
+**Response Headers:**
+```
+Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/Auth; Max-Age=0
+```
+
+**Error Responses:**
+
+| Status | Code | Condition |
+|--------|------|-----------|
+| 401 | `UNAUTHORIZED` | Access token is missing or invalid |
+
 **File:** `src/Web/Endpoints/Auth.cs`
 
 ---

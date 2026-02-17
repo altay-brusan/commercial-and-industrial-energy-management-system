@@ -22,6 +22,8 @@ public record RefreshTokenResponse(
     string TokenType,
     int ExpiresIn);
 
+public record LogoutResponse(string Message);
+
 public record AuthErrorResponse(AuthError Error);
 
 public record AuthError(
