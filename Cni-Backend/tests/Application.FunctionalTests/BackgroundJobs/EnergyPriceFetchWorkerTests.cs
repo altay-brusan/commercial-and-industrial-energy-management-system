@@ -273,17 +273,19 @@ public class EnergyPriceFetchWorkerTests : BaseTestFixture
         {
             Console.WriteLine($"Afternoon job fetched {finalCount - initialCount} price records for tomorrow");
 
-            // Verify the stored records are for tomorrow
-            var tomorrow = DateTimeOffset.UtcNow.Date.AddDays(1);
+            // Verify the stored records are for tomorrow (use range comparison for SQLite compatibility)
+            var tomorrowStart = new DateTimeOffset(DateTimeOffset.UtcNow.Date.AddDays(1), TimeSpan.Zero);
+            var tomorrowEnd = tomorrowStart.AddDays(1);
             var tomorrowPrices = await Testing.GetAllAsync<DayAheadNetEnergyPriceHistory>(
                 p => p.MarketOperatorId == marketOperator.Id &&
                      p.Country == "Turkey" &&
-                     p.TimestampUtc.Date == tomorrow);
+                     p.TimestampUtc >= tomorrowStart &&
+                     p.TimestampUtc < tomorrowEnd);
 
             if (tomorrowPrices.Count > 0)
             {
                 tomorrowPrices.Should().HaveCount(24, "Should have 24 hourly prices for tomorrow");
-                Console.WriteLine($"Verified {tomorrowPrices.Count} price records for {tomorrow:yyyy-MM-dd}");
+                Console.WriteLine($"Verified {tomorrowPrices.Count} price records for {tomorrowStart:yyyy-MM-dd}");
             }
         }
         else
