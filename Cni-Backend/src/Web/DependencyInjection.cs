@@ -49,12 +49,13 @@ public static class DependencyInjection
         builder.Services.Configure<ApiBehaviorOptions>(options =>
             options.SuppressModelStateInvalidFilter = true);
 
+        var isTestEnv = string.Equals(builder.Environment.EnvironmentName, "Test", StringComparison.OrdinalIgnoreCase);
         builder.Services.AddRateLimiter(options =>
         {
             options.AddFixedWindowLimiter("auth-login", opt =>
             {
-                opt.PermitLimit = 5;
-                opt.Window = TimeSpan.FromMinutes(15);
+                opt.PermitLimit = isTestEnv ? 10000 : 5;
+                opt.Window = TimeSpan.FromMinutes(isTestEnv ? 1 : 15);
                 opt.QueueLimit = 0;
             });
             options.RejectionStatusCode = 429;
