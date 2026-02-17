@@ -114,7 +114,8 @@ public static class DependencyInjection
         var identityBuilder = builder.Services
             .AddIdentityCore<ApplicationUser>()
             .AddRoles<IdentityRole>()
-            .AddSignInManager();
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
 
         // Only add EntityFrameworkStores in non-test environment
         // Tests will configure their own stores with SQLite

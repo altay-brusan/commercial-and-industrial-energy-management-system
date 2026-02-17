@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models;
 using Backend.Domain.Entities;
@@ -8,6 +9,7 @@ using Backend.Infrastructure.Data;
 using Backend.Web.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -28,6 +30,9 @@ public class Auth : EndpointGroupBase
 
         group.MapPost("/Logout", Logout)
             .RequireAuthorization();
+
+        group.MapPost("/ForgotPassword", ForgotPassword)
+            .RequireRateLimiting("auth-forgot-password");
 
         group.MapGet("/Me", Me)
             .RequireAuthorization();
@@ -350,6 +355,31 @@ public class Auth : EndpointGroupBase
             CreatedAt: null);
 
         return Results.Ok(response);
+    }
+
+    private static async Task<IResult> ForgotPassword(
+        [FromBody] ForgotPasswordRequest request,
+        UserManager<ApplicationUser> userManager,
+        IEmailSender<ApplicationUser> emailSender)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return Results.Json(new AuthErrorResponse(new AuthError(
+                "VALIDATION_ERROR",
+                "Email is required.")),
+                statusCode: 400);
+        }
+
+        var user = await userManager.FindByEmailAsync(request.Email);
+        if (user is not null && await userManager.IsEmailConfirmedAsync(user))
+        {
+            var code = await userManager.GeneratePasswordResetTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+            await emailSender.SendPasswordResetCodeAsync(user, request.Email, HtmlEncoder.Default.Encode(code));
+        }
+
+        return Results.Ok(new ForgotPasswordResponse("If an account with this email exists, a password reset link has been sent."));
     }
 
     private static string HashToken(string token)

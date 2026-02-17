@@ -44,3 +44,7 @@ public record AuthError(
     string Message,
     List<string>? Details = null,
     int? RetryAfter = null);
+
+public record ForgotPasswordRequest(string Email);
+
+public record ForgotPasswordResponse(string Message);
