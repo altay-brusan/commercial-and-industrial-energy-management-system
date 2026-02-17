@@ -194,6 +194,55 @@ Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/Auth;
 |--------|------|-----------|
 | 401 | `UNAUTHORIZED` | Access token is missing or invalid |
 
+---
+
+#### GET `/api/v1/Auth/Me`
+
+Returns the authenticated user's profile, permissions, and tenant information.
+
+**Requires:** Valid (non-expired) JWT access token via `Authorization: Bearer <token>` header.
+
+**Request:**
+- `Authorization: Bearer <access-token>` header (required)
+- No request body
+
+**Success Response (200):**
+```json
+{
+  "id": "user-001",
+  "email": "john@company.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "role": "Operator",
+  "avatarUrl": null,
+  "permissions": ["Facility.View", "Device.View", "Monitoring.View"],
+  "tenantId": "1",
+  "tenantName": "N2N Energy",
+  "lastLoginAt": null,
+  "createdAt": null
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | User ID |
+| `email` | string | User email |
+| `firstName` | string | User's first name |
+| `lastName` | string | User's last name |
+| `role` | string | Primary role (`Administrator`, `TenantAdmin`, `User`, `Operator`, `Viewer`) |
+| `avatarUrl` | string? | Profile picture URL (currently always `null`) |
+| `permissions` | string[] | List of permission keys |
+| `tenantId` | string? | Tenant ID (null if no tenant) |
+| `tenantName` | string? | Tenant display name (null if no tenant) |
+| `lastLoginAt` | datetime? | Last login timestamp (reserved for future use) |
+| `createdAt` | datetime? | Account creation timestamp (reserved for future use) |
+
+**Error Responses:**
+
+| Status | Code | Condition |
+|--------|------|-----------|
+| 401 | `UNAUTHORIZED` | Access token is missing or invalid |
+
 **File:** `src/Web/Endpoints/Auth.cs`
 
 ---

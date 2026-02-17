@@ -28,6 +28,9 @@ public class Auth : EndpointGroupBase
 
         group.MapPost("/Logout", Logout)
             .RequireAuthorization();
+
+        group.MapGet("/Me", Me)
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> Login(
@@ -290,6 +293,63 @@ public class Auth : EndpointGroupBase
         });
 
         return Results.Ok(new LogoutResponse("Successfully logged out"));
+    }
+
+    private static async Task<IResult> Me(
+        HttpContext httpContext,
+        UserManager<ApplicationUser> userManager,
+        IPermissionService permissionService,
+        ApplicationDbContext dbContext)
+    {
+        var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Results.Json(new AuthErrorResponse(new AuthError(
+                "UNAUTHORIZED",
+                "Access token is missing or invalid")),
+                statusCode: 401);
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return Results.Json(new AuthErrorResponse(new AuthError(
+                "UNAUTHORIZED",
+                "Access token is missing or invalid")),
+                statusCode: 401);
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+
+        var permissions = user.TenantId.HasValue
+            ? await permissionService.GetUserPermissionsAsync(user.Id, user.TenantId.Value)
+            : new List<string>();
+
+        // Get tenant name if user belongs to a tenant
+        string? tenantName = null;
+        if (user.TenantId.HasValue)
+        {
+            var tenant = await dbContext.Tenants
+                .Where(t => t.Id == user.TenantId.Value)
+                .Select(t => t.Name)
+                .FirstOrDefaultAsync();
+            tenantName = tenant;
+        }
+
+        var response = new MeResponse(
+            Id: user.Id,
+            Email: user.Email!,
+            FirstName: user.Name ?? "",
+            LastName: user.Surname ?? "",
+            Role: roles.FirstOrDefault() ?? "User",
+            AvatarUrl: null,
+            Permissions: permissions,
+            TenantId: user.TenantId?.ToString(),
+            TenantName: tenantName,
+            LastLoginAt: null,
+            CreatedAt: null);
+
+        return Results.Ok(response);
     }
 
     private static string HashToken(string token)

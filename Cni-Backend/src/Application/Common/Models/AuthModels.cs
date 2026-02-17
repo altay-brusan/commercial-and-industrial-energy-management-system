@@ -24,6 +24,19 @@ public record RefreshTokenResponse(
 
 public record LogoutResponse(string Message);
 
+public record MeResponse(
+    string Id,
+    string Email,
+    string FirstName,
+    string LastName,
+    string Role,
+    string? AvatarUrl,
+    List<string> Permissions,
+    string? TenantId,
+    string? TenantName,
+    DateTime? LastLoginAt,
+    DateTime? CreatedAt);
+
 public record AuthErrorResponse(AuthError Error);
 
 public record AuthError(
