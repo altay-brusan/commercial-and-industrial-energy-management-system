@@ -2,17 +2,297 @@
 
 ## Overview
 
-The DERMS backend implements a **two-layer authorization model** that combines plan-based feature gating with granular permission-based access control. This system sits on top of the existing ASP.NET Identity role-based authentication.
+The DERMS backend implements **JWT-based authentication** with a **two-layer authorization model** that combines plan-based feature gating with granular permission-based access control.
+
+- **Authentication** is handled via standard JWT access tokens and httpOnly refresh token cookies.
+- **Authorization** uses ASP.NET Identity roles plus a custom permission/feature system.
+
+---
+
+## Part 1: Authentication (JWT)
+
+### Architecture
+
+The system uses **standard JWT access tokens** (signed with HMAC-SHA256) and **httpOnly cookie-based refresh tokens** with token rotation and revocation support.
+
+```
+Client                          Server
+  │                                │
+  ├── POST /api/v1/Auth/Login ────>│  (email + password)
+  │<── 200 { accessToken, user } ──│  + Set-Cookie: refreshToken=<value>; HttpOnly; Secure
+  │                                │
+  ├── GET /api/Facilities ────────>│  Authorization: Bearer <accessToken>
+  │<── 200 { data } ──────────────│
+  │                                │
+  │  ... access token expires ...  │
+  │                                │
+  ├── POST /api/v1/Auth/Refresh ──>│  Authorization: Bearer <expired-token>
+  │   Cookie: refreshToken=<val>   │  + Cookie: refreshToken=<value>
+  │<── 200 { accessToken } ────────│  + Set-Cookie: refreshToken=<new-value>
+  │                                │
+```
+
+### JWT Token Structure
+
+Access tokens contain the following claims:
+
+| Claim | Type | Description |
+|-------|------|-------------|
+| `sub` / `NameIdentifier` | string | User ID (ASP.NET Identity) |
+| `email` | string | User email address |
+| `tenant_id` | string? | Tenant ID (omitted if user has no tenant) |
+| `role` | string[] | One claim per role (e.g. `Administrator`, `User`) |
+| `permission` | string[] | One claim per permission (e.g. `Facility.View`) |
+| `jti` | string | Unique token identifier (GUID) |
+| `exp` | int | Expiration timestamp (Unix) |
+| `iss` | string | Issuer (`DERMS-Backend`) |
+| `aud` | string | Audience (`DERMS-Frontend`) |
+
+**File:** `src/Infrastructure/Services/JwtTokenService.cs`
+
+### Configuration
+
+JWT settings are configured in `appsettings.json`:
+
+```json
+"JwtSettings": {
+  "Secret": "<256-bit-secret-key>",
+  "Issuer": "DERMS-Backend",
+  "Audience": "DERMS-Frontend",
+  "AccessTokenExpirationMinutes": 15,
+  "RefreshTokenExpirationDays": 7
+}
+```
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `Secret` | — | HMAC-SHA256 signing key (min 32 characters) |
+| `Issuer` | `DERMS-Backend` | JWT `iss` claim |
+| `Audience` | `DERMS-Frontend` | JWT `aud` claim |
+| `AccessTokenExpirationMinutes` | `15` | Access token TTL |
+| `RefreshTokenExpirationDays` | `7` | Refresh token TTL |
+
+**File:** `src/Infrastructure/Configurations/JwtSettings.cs`
+
+---
+
+### Auth API Endpoints
+
+#### POST `/api/v1/Auth/Login`
+
+Authenticates a user and returns a JWT access token with a refresh token cookie.
+
+**Rate Limited:** 5 requests per 15 minutes per client (configurable).
+
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "Password1!",
+  "rememberMe": false
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | string | Yes | User email |
+| `password` | string | Yes | User password |
+| `rememberMe` | bool | No | If `true`, sets a persistent cookie with `Max-Age`. If `false` (default), sets a session cookie. |
+
+**Success Response (200):**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "tokenType": "Bearer",
+  "expiresIn": 900,
+  "user": {
+    "id": "abc-123",
+    "email": "user@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "User",
+    "avatarUrl": null,
+    "permissions": ["Facility.View", "Facility.Create", "Device.View"]
+  }
+}
+```
+
+**Response Headers:**
+```
+Set-Cookie: refreshToken=<base64-value>; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/Auth
+```
+
+**Error Responses:**
+
+| Status | Code | Condition |
+|--------|------|-----------|
+| 400 | `VALIDATION_ERROR` | Empty email or password |
+| 401 | `INVALID_CREDENTIALS` | Wrong email or password |
+| 423 | `ACCOUNT_LOCKED` | Too many failed login attempts (Identity lockout) |
+| 429 | `RATE_LIMIT_EXCEEDED` | Rate limit exceeded |
+
+---
+
+#### POST `/api/v1/Auth/RefreshToken`
+
+Exchanges an expired access token + valid refresh cookie for a new token pair. Implements **token rotation** — the old refresh token is revoked and a new one is issued.
+
+**Request:**
+- `Authorization: Bearer <expired-access-token>` header (required)
+- `Cookie: refreshToken=<value>` cookie (required, set automatically by browser)
+- No request body
+
+**Success Response (200):**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "tokenType": "Bearer",
+  "expiresIn": 900
+}
+```
+
+**Response Headers:**
+```
+Set-Cookie: refreshToken=<new-base64-value>; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/Auth; Max-Age=604800
+```
+
+**Error Responses:**
+
+| Status | Code | Condition |
+|--------|------|-----------|
+| 401 | `INVALID_REFRESH_TOKEN` | Missing, expired, or revoked refresh token |
+| 401 | `INVALID_TOKEN` | Missing or invalid access token in Authorization header |
+
+**File:** `src/Web/Endpoints/Auth.cs`
+
+---
+
+### Error Response Format
+
+All auth endpoints use a consistent error format:
+
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable description.",
+    "details": ["Optional additional context"],
+    "retryAfter": 540
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `code` | string | Machine-readable error code |
+| `message` | string | Human-readable message |
+| `details` | string[]? | Optional list of details (e.g. validation errors) |
+| `retryAfter` | int? | Seconds to wait before retrying (rate limit / lockout) |
+
+**File:** `src/Application/Common/Models/AuthModels.cs`
+
+---
+
+### Refresh Token Storage
+
+Refresh tokens are **hashed with SHA-256** before being stored in the database. The raw token is only ever held in the httpOnly cookie.
+
+#### RefreshToken Entity
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Id` | int | Primary key |
+| `UserId` | string | FK to `ApplicationUser` |
+| `Token` | string | SHA-256 hash of the raw refresh token |
+| `ExpiresAt` | DateTime | When the token expires |
+| `IsRevoked` | bool | Whether the token has been revoked |
+| `ReplacedByToken` | string? | Hash of the replacement token (rotation chain) |
+| `CreatedByIp` | string? | IP address that created the token |
+| `Created` | DateTime | Inherited from BaseAuditableEntity |
+| `LastModified` | DateTime | Inherited from BaseAuditableEntity |
+
+**Indexes:**
+- Unique index on `Token`
+- Index on `UserId`
+- Cascade delete when user is deleted
+
+**File:** `src/Domain/Entities/RefreshToken.cs`
+
+#### Token Rotation
+
+When a refresh token is used:
+1. The old token is marked as `IsRevoked = true`
+2. A new token is generated and stored
+3. The old token's `ReplacedByToken` points to the new token's hash
+4. If a revoked token is reused, the request is rejected with 401
+
+This creates a linked chain: `Token A (revoked) → Token B (revoked) → Token C (active)`
+
+---
+
+### Rate Limiting
+
+Login is protected with a **fixed window rate limiter**:
+
+| Setting | Production | Test |
+|---------|-----------|------|
+| Permit Limit | 5 requests | 10,000 requests |
+| Window | 15 minutes | 1 minute |
+| Queue Limit | 0 (reject immediately) | 0 |
+
+When rate limited, a `429 Too Many Requests` response is returned:
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many login attempts. Please try again later.",
+    "retryAfter": 900
+  }
+}
+```
+
+The `Retry-After` HTTP header is also set.
+
+**File:** `src/Web/DependencyInjection.cs`
+
+---
+
+### Cookie Configuration
+
+| Property | Value | Purpose |
+|----------|-------|---------|
+| `HttpOnly` | `true` | Prevents JavaScript access (XSS protection) |
+| `Secure` | `true` | Only sent over HTTPS |
+| `SameSite` | `Strict` | Only sent for same-origin requests (CSRF protection) |
+| `Path` | `/api/v1/Auth` | Only sent to Auth endpoints (minimizes exposure) |
+| `Max-Age` | 7 days (rememberMe) / session | Persistence controlled by `rememberMe` flag |
+
+---
+
+### How Existing Middleware Uses JWT Claims
+
+The JWT claims are designed to be compatible with all existing middleware and services:
+
+| Component | Claim Used | Purpose |
+|-----------|------------|---------|
+| `CurrentUser.cs` | `ClaimTypes.NameIdentifier` | Reads user ID for `IUser` interface |
+| `MultiTenantMiddleware.cs` | `tenant_id` | Sets current tenant context |
+| `AuthorizationBehaviour.cs` | `ClaimTypes.Role` | Checks `[Authorize(Roles = "...")]` attributes |
+| `[RequirePermission]` pipeline | `permission` claims | Checks fine-grained permissions |
+
+---
+
+## Part 2: Authorization
 
 ### Authorization Flow
 
 ```
 Request arrives
   │
-  ├─ [Authorize] check (role-based, existing system)
+  ├─ [Authorize] check (role-based)
   │   └─ User must have one of the specified Identity roles
   │
-  └─ [RequirePermission] check (new system)
+  └─ [RequirePermission] check (permission-based)
       │
       ├─ Is user an Administrator? ──── YES → ALLOW (bypass all)
       │
@@ -46,6 +326,10 @@ Tenant ──< TenantRole ──< TenantRolePermission
 | `Administrator` | Super admin with full system access across all tenants. Bypasses all permission and feature checks. |
 | `TenantAdmin` | Tenant administrator. Gets all permissions within their tenant's plan features. |
 | `User` | Regular user. Access determined by assigned TenantRole permissions. |
+| `Operator` | Can view data and change settings within their tenant. |
+| `Viewer` | Read-only access within their tenant. |
+
+**Constants file:** `src/Domain/Constants/Roles.cs`
 
 ### Entities
 
@@ -419,20 +703,36 @@ public record CreateFacilityCommand : IRequest<int>
 
 ---
 
-## Database Migration
+## Database Migrations
 
-After pulling these changes, run:
+After pulling these changes, apply the migrations:
 
 ```bash
-dotnet ef migrations add AddAuthorizationEntities --project src/Infrastructure --startup-project src/Web
 dotnet ef database update --project src/Infrastructure --startup-project src/Web
 ```
 
-The seed data will automatically create features, permissions, and plans on first startup.
+Relevant migrations:
+- `AddAuthorizationEntities` — Features, Permissions, Plans, TenantRoles, UserTenantRoles
+- `AddRefreshToken` — RefreshTokens table with indexes
+
+The seed data will automatically create features, permissions, plans, and new roles (Operator, Viewer) on first startup.
 
 ---
 
 ## Files Created
+
+### Authentication (JWT)
+
+| File | Purpose |
+|------|---------|
+| `src/Infrastructure/Configurations/JwtSettings.cs` | JWT configuration POCO |
+| `src/Domain/Entities/RefreshToken.cs` | Refresh token entity with rotation chain |
+| `src/Application/Common/Interfaces/IJwtTokenService.cs` | JWT service interface |
+| `src/Application/Common/Models/AuthModels.cs` | Login/Refresh DTOs and error models |
+| `src/Infrastructure/Services/JwtTokenService.cs` | JWT generation, validation, refresh token generation |
+| `src/Web/Endpoints/Auth.cs` | Login and RefreshToken endpoints |
+
+### Authorization (Permissions)
 
 | File | Purpose |
 |------|---------|
@@ -459,6 +759,23 @@ The seed data will automatically create features, permissions, and plans on firs
 | `src/Web/Endpoints/Permissions.cs` | REST endpoints |
 
 ## Files Modified
+
+### Authentication (JWT)
+
+| File | Change |
+|------|--------|
+| `src/Infrastructure/Infrastructure.csproj` | Added `Microsoft.AspNetCore.Authentication.JwtBearer` package |
+| `src/Infrastructure/DependencyInjection.cs` | Replaced opaque tokens with JWT Bearer authentication, registered `IJwtTokenService` |
+| `src/Web/DependencyInjection.cs` | Added rate limiter for login endpoint |
+| `src/Web/Program.cs` | Added `UseRateLimiter()` to pipeline |
+| `src/Web/appsettings.json` | Added `JwtSettings` section |
+| `src/Web/appsettings.Development.json` | Added `JwtSettings` section |
+| `src/Domain/Constants/Roles.cs` | Added `Operator` and `Viewer` roles |
+| `src/Infrastructure/Data/ApplicationDbContext.cs` | Added `DbSet<RefreshToken>` + entity configuration |
+| `src/Infrastructure/Data/ApplicationDbContextInitializer.cs` | Added seeding for Operator and Viewer roles |
+| `src/Web/Endpoints/Users.cs` | Removed `MapIdentityApiOklidis` call (old login/refresh) |
+
+### Authorization (Permissions)
 
 | File | Change |
 |------|--------|
