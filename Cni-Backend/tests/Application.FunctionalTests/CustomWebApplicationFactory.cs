@@ -32,7 +32,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:BackendDb"] = "DataSource=:memory:"
+                ["ConnectionStrings:BackendDb"] = "DataSource=:memory:",
+                ["JwtSettings:Secret"] = "TestSuperSecretKeyThatIsAtLeast32BytesLong!!2024",
+                ["JwtSettings:Issuer"] = "DERMS-Backend-Test",
+                ["JwtSettings:Audience"] = "DERMS-Frontend-Test",
+                ["JwtSettings:AccessTokenExpirationMinutes"] = "15",
+                ["JwtSettings:RefreshTokenExpirationDays"] = "7"
             });
         });
 

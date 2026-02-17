@@ -16,4 +16,14 @@ public abstract class Roles
     /// Regular user with limited access within their tenant
     /// </summary>
     public const string User = nameof(User);
+
+    /// <summary>
+    /// Operator with view and settings control access within their tenant
+    /// </summary>
+    public const string Operator = nameof(Operator);
+
+    /// <summary>
+    /// Viewer with read-only access within their tenant
+    /// </summary>
+    public const string Viewer = nameof(Viewer);
 }
