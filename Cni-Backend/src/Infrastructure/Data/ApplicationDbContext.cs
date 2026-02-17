@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Backend.Infrastructure.Data;
 
@@ -104,6 +105,30 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<IdentityUserToken<string>>().ToTable("AppUserTokens");
         builder.Entity<IdentityUserRole<string>>().ToTable("AppUserRoles");
 
+        // SQLite doesn't support DateTimeOffset in ORDER BY / WHERE — convert to sortable strings
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTimeOffset))
+                    {
+                        property.SetValueConverter(
+                            new ValueConverter<DateTimeOffset, string>(
+                                v => v.ToUniversalTime().ToString("o"),
+                                v => DateTimeOffset.Parse(v)));
+                    }
+                    else if (property.ClrType == typeof(DateTimeOffset?))
+                    {
+                        property.SetValueConverter(
+                            new ValueConverter<DateTimeOffset?, string?>(
+                                v => v.HasValue ? v.Value.ToUniversalTime().ToString("o") : null,
+                                v => v != null ? DateTimeOffset.Parse(v) : null));
+                    }
+                }
+            }
+        }
     }
     public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken)
     {

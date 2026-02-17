@@ -485,20 +485,20 @@ public class GetLiveDayAheadEnergyPricesTests : BaseTestFixture
         result.Prices.Should().HaveCount(24, "EPIAS should return 24 hourly prices for one day");
         result.DataPointCount.Should().Be(24);
 
-        // Verify price data structure
+        // Verify price data structure (energy prices can be 0 during low-demand periods)
         foreach (var price in result.Prices)
         {
-            price.NetPrice.Should().BeGreaterThan(0, "Net price should be positive");
-            price.GrossPrice.Should().BeGreaterThan(0, "Gross price should be positive");
+            price.NetPrice.Should().BeGreaterThanOrEqualTo(0, "Net price should not be negative");
+            price.GrossPrice.Should().BeGreaterThanOrEqualTo(0, "Gross price should not be negative");
             price.Timestamp.Should().NotBe(default);
             price.LocalTimestamp.Should().NotBe(default);
         }
 
-        // Verify statistics are calculated
+        // Verify statistics are calculated (min can be 0 during low-demand periods)
         result.Statistics.Should().NotBeNull();
-        result.Statistics!.MinNetPrice.Should().BeGreaterThan(0);
+        result.Statistics!.MinNetPrice.Should().BeGreaterThanOrEqualTo(0);
         result.Statistics.MaxNetPrice.Should().BeGreaterThanOrEqualTo(result.Statistics.MinNetPrice);
-        result.Statistics.AvgNetPrice.Should().BeGreaterThan(0);
+        result.Statistics.AvgNetPrice.Should().BeGreaterThanOrEqualTo(0);
 
         // Log the actual prices for debugging/visibility
         Console.WriteLine($"EPIAS Turkey Day-Ahead Prices for {targetDate:yyyy-MM-dd}:");
