@@ -1,10 +1,10 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Infrastructure.Configurations;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Net;
-using System.Net.Mail;
-using System.Threading.Tasks;
+using MimeKit;
 
 public class EmailService : IEmailService
 {
@@ -21,28 +21,43 @@ public class EmailService : IEmailService
     {
         try
         {
-            using var smtp = new SmtpClient(_emailSettings.SmtpServer)
-            {
-                Port = _emailSettings.Port,
-                Credentials = new NetworkCredential(_emailSettings.Username, _emailSettings.Password),
-                EnableSsl = _emailSettings.EnableSsl
-            };
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(
+                _emailSettings.FromName ?? _emailSettings.FromEmail,
+                _emailSettings.FromEmail));
+            message.To.Add(MailboxAddress.Parse(to));
+            message.Subject = subject;
+            message.Body = new TextPart("html") { Text = body };
 
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(_emailSettings.FromEmail),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true
-            };
-            mailMessage.To.Add(to);
+            using var client = new SmtpClient();
 
-            await smtp.SendMailAsync(mailMessage);
-            _logger.LogInformation($"Email sent to {to}");
+            // Port 465 uses implicit SSL, port 587 uses STARTTLS
+            var secureSocketOptions = _emailSettings.Port == 465
+                ? SecureSocketOptions.SslOnConnect
+                : SecureSocketOptions.StartTls;
+
+            if (!_emailSettings.EnableSsl)
+            {
+                secureSocketOptions = SecureSocketOptions.None;
+            }
+
+            await client.ConnectAsync(
+                _emailSettings.SmtpServer,
+                _emailSettings.Port,
+                secureSocketOptions);
+
+            await client.AuthenticateAsync(
+                _emailSettings.Username,
+                _emailSettings.Password);
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation("Email sent to {Recipient}", to);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending email");
+            _logger.LogError(ex, "Error sending email to {Recipient}", to);
             throw;
         }
     }
