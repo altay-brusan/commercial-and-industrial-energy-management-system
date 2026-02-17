@@ -31,11 +31,11 @@ public class Auth : EndpointGroupBase
         group.MapPost("/Logout", Logout)
             .RequireAuthorization();
 
-        group.MapGet("/Me", Me)
-            .RequireAuthorization();
-
         group.MapPost("/ForgotPassword", ForgotPassword)
             .RequireRateLimiting("auth-forgot-password");
+
+        group.MapGet("/Me", Me)
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> Login(
