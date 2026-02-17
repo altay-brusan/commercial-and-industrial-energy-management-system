@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Application.Users.Queries.GetUsersWithPagination;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.UserManagementView)]
 public record GetUsersWithPaginationQuery : IRequest<PaginatedList<UserBriefDto>>
 {
     public int PageNumber { get; init; } = 1;

@@ -1,4 +1,4 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models;
 using Backend.Application.Common.Security;
 using Backend.Application.Users.Queries.GetUserInfo;
@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Application.Users.Commands.UpdateUser;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
-public record UpdateUserCommand : IRequest<Unit>  // Değişiklik: IRequest<Unit> olmalı
+[RequirePermission(Backend.Domain.Constants.Permissions.UserManagementEdit)]
+public record UpdateUserCommand : IRequest<Unit>  // Degisiklik: IRequest<Unit> olmali
 {
     public string UserId { get; set; } = default!;
     public string? Email { get; set; }
@@ -22,7 +23,7 @@ public sealed class UpdateUserFirmFacilityDto
     public int? FirmId { get; set; }
     public int? FacilityId { get; set; }
 }
-public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>  // Değişiklik: IRequestHandler<UpdateUserCommand, Unit>
+public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>  // Degisiklik: IRequestHandler<UpdateUserCommand, Unit>
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUnitOfWork _unitOfWork;
@@ -41,7 +42,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
             var user = await _userManager.FindByIdAsync(request.UserId);
             Guard.Against.NotFound(request.UserId, user);
 
-            // Kullanıcı bilgilerini güncelle
+            // Kullanici bilgilerini g�ncelle
             if (!string.IsNullOrEmpty(request.Email))
             {
                 user.Email = request.Email;
@@ -64,7 +65,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
                 throw new Exception(string.Join(", ", updateResult.Errors.Select(e => e.Description)));
             }
 
-            // Kullanıcının firma/tesis yetkilerini güncelle
+            // Kullanicinin firma/tesis yetkilerini g�ncelle
             var existingUserFirmFacilities = await _unitOfWork.DbContext.UserFirmFacilities
                 .Where(uf => uf.UserId == user.Id)
                 .ToListAsync(cancellationToken);
@@ -85,9 +86,9 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
             await _unitOfWork.DbContext.UserFirmFacilities.AddRangeAsync(newUserFirmFacilities, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Eğer her şey başarılıysa, transaction commit edilir
+            // Eger her sey basariliysa, transaction commit edilir
             await transaction.CommitAsync(cancellationToken);
-            return Unit.Value;  // Burada Unit.Value döndürülüyor
+            return Unit.Value;  // Burada Unit.Value d�nd�r�l�yor
         }
         catch (Exception ex)
         {

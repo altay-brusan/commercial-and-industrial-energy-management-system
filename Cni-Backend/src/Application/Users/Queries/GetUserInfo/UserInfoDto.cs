@@ -10,6 +10,8 @@ public sealed class UserInfoDto
     public string? Surname { get; set; }
     public string? Title { get; set; }
     public List<string>? Roles { get; set; }
+    public List<string>? Permissions { get; set; }
+    public List<string>? PlanFeatures { get; set; }
 }
 public sealed class UserInfoTenantDto
 {

@@ -5,6 +5,7 @@ using Backend.Application.Common.Security;
 namespace Backend.Application.Graphs.Queries.GetInverterGraph;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.MonitoringView)]
 public record GetInverterGraphQuery : IRequest<List<InverterGraphDto>>
 {
     public int Id { get; set; }

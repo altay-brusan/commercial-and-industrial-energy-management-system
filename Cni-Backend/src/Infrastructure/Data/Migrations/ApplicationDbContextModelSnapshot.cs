@@ -609,6 +609,55 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.ToTable("FacilityTariffs", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Feature", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Features", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Firm", b =>
                 {
                     b.Property<int>("Id")
@@ -810,6 +859,53 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.ToTable("MarketOperators", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("FeatureId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeatureId");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("Permissions", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Plan", b =>
                 {
                     b.Property<int>("Id")
@@ -855,6 +951,42 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Plans", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.PlanFeature", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("FeatureId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("PlanId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeatureId");
+
+                    b.HasIndex("PlanId", "FeatureId")
+                        .IsUnique();
+
+                    b.ToTable("PlanFeatures", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Tariff", b =>
@@ -945,9 +1077,93 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("PlanId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("PlanId");
+
                     b.ToTable("Tenants", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TenantRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("TenantRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TenantRolePermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TenantRoleId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("TenantRoleId", "PermissionId")
+                        .IsUnique();
+
+                    b.ToTable("TenantRolePermissions", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.UserFirmFacility", b =>
@@ -992,6 +1208,44 @@ namespace Backend.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("UserFirmFacilities", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.UserTenantRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("TenantRoleId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantRoleId");
+
+                    b.HasIndex("UserId", "TenantRoleId")
+                        .IsUnique();
+
+                    b.ToTable("UserTenantRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1303,6 +1557,76 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Navigation("MarketOperator");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Feature", "Feature")
+                        .WithMany("Permissions")
+                        .HasForeignKey("FeatureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Feature");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.PlanFeature", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Feature", "Feature")
+                        .WithMany("PlanFeatures")
+                        .HasForeignKey("FeatureId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.Plan", "Plan")
+                        .WithMany("PlanFeatures")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Feature");
+
+                    b.Navigation("Plan");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Tenant", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Plan", "Plan")
+                        .WithMany("Tenants")
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Plan");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TenantRole", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Tenant", "Tenant")
+                        .WithMany("TenantRoles")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TenantRolePermission", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Permission", "Permission")
+                        .WithMany("TenantRolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.TenantRole", "TenantRole")
+                        .WithMany("TenantRolePermissions")
+                        .HasForeignKey("TenantRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("TenantRole");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.UserFirmFacility", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.Facility", "Facility")
@@ -1321,6 +1645,25 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Navigation("Facility");
 
                     b.Navigation("Firm");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.UserTenantRole", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.TenantRole", "TenantRole")
+                        .WithMany("UserTenantRoles")
+                        .HasForeignKey("TenantRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("UserTenantRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TenantRole");
 
                     b.Navigation("User");
                 });
@@ -1379,6 +1722,8 @@ namespace Backend.Infrastructure.Data.Migrations
             modelBuilder.Entity("Backend.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Navigation("UserFirmFacilities");
+
+                    b.Navigation("UserTenantRoles");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
@@ -1390,6 +1735,13 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Navigation("FacilityTariffs");
 
                     b.Navigation("UserCompanyFacilities");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Feature", b =>
+                {
+                    b.Navigation("Permissions");
+
+                    b.Navigation("PlanFeatures");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Firm", b =>
@@ -1406,6 +1758,18 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Navigation("FirmMarketOperators");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>
+                {
+                    b.Navigation("TenantRolePermissions");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Plan", b =>
+                {
+                    b.Navigation("PlanFeatures");
+
+                    b.Navigation("Tenants");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Tariff", b =>
                 {
                     b.Navigation("FacilityTariffs");
@@ -1414,6 +1778,15 @@ namespace Backend.Infrastructure.Data.Migrations
             modelBuilder.Entity("Backend.Domain.Entities.Tenant", b =>
                 {
                     b.Navigation("Firms");
+
+                    b.Navigation("TenantRoles");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TenantRole", b =>
+                {
+                    b.Navigation("TenantRolePermissions");
+
+                    b.Navigation("UserTenantRoles");
                 });
 #pragma warning restore 612, 618
         }

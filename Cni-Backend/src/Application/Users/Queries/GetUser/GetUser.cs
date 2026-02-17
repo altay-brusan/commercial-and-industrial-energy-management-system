@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Backend.Application.Users.Queries.GetUser;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.UserManagementView)]
 public record GetUserQuery : IRequest<UserDto?>
 {
     public required string Id { get; set; }

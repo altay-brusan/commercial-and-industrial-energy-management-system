@@ -7,4 +7,7 @@ public class Plan : BaseAuditableEntity
     public int MaxFacilities { get; set; }
     public int MaxUsers { get; set; }
     public decimal Price { get; set; }
+
+    public ICollection<PlanFeature> PlanFeatures { get; set; } = new List<PlanFeature>();
+    public ICollection<Tenant> Tenants { get; set; } = new List<Tenant>();
 }

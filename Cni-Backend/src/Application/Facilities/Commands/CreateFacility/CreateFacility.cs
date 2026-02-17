@@ -7,6 +7,7 @@ using Backend.Domain.Events;
 namespace Backend.Application.Facilities.Commands.CreateFacility;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FacilityCreate)]
 public record CreateFacilityCommand : IRequest<int>
 {
     public int FirmId { get; set; }

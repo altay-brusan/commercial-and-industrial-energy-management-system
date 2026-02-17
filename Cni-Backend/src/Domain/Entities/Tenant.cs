@@ -16,6 +16,10 @@ public class Tenant : BaseAuditableEntity
     /// </summary>
     public string? Name { get; set; }
 
+    public int? PlanId { get; set; }
+    public Plan? Plan { get; set; }
+
     // Navigation properties
     public ICollection<Firm>? Firms { get; set; }
+    public ICollection<TenantRole> TenantRoles { get; set; } = new List<TenantRole>();
 }

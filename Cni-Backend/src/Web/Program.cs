@@ -72,7 +72,7 @@ app.MapEndpoints();
 // Skip Hangfire in Test environment
 if (app.Environment.EnvironmentName != "Test")
 {
-    app.UseHangfireDashboard("/jobs-dashboard");
+    app.UseHangfireDashboard("/hangfire/dashboard");
 
     // Hangfire retry: 2 min, 5 min, 10 min delays between attempts
     GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute

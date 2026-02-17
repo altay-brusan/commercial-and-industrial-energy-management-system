@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +9,7 @@ using Backend.Application.Common.Security;
 namespace Backend.Application.Devices.Queries.GetDevice;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.DeviceView)]
 public record GetDeviceQuery : IRequest<DeviceDto?>
 {
     public int Id { get; set; }

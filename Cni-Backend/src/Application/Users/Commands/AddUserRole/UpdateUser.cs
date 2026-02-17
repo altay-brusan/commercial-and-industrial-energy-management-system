@@ -1,4 +1,4 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models;
 using Backend.Application.Common.Security;
 using Backend.Application.Users.Queries.GetUserInfo;
@@ -6,6 +6,7 @@ using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.UserManagementEdit)]
 public record AddUserRoleCommand : IRequest<Unit>
 {
     public string UserId { get; set; } = default!;

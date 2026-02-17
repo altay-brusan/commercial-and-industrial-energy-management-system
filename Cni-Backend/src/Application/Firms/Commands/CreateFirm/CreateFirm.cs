@@ -5,6 +5,7 @@ using Backend.Domain.Events;
 
 namespace Backend.Application.Firms.Commands.CreateFirm;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FirmCreate)]
 public record CreateFirmCommand : IRequest<int>
 {
     public int TenantId { get; set; }

@@ -5,6 +5,7 @@ using Backend.Application.Common.Security;
 namespace Backend.Application.Graphs.Queries.GetSolarPowerProduction;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.SolarView)]
 public record GetSolarPowerProductionQuery : IRequest<SolarGraphDto?>
 {
     public int Id { get; set; }

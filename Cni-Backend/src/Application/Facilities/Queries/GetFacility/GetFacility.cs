@@ -1,8 +1,9 @@
-﻿using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 
 namespace Backend.Application.Facilities.Queries.GetFacility;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FacilityView)]
 public record GetFacilityQuery : IRequest<FacilityDto?>
 {
     public int Id { get; set; }

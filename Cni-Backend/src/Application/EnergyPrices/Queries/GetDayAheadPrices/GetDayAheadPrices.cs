@@ -8,6 +8,7 @@ namespace Backend.Application.EnergyPrices.Queries.GetDayAheadPrices;
 /// Uses the facility's country (via Firm's MarketOperator configuration) to fetch historical prices.
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FinancialsView)]
 public record GetDayAheadPricesQuery : IRequest<DayAheadEnergyPricesDto?>
 {
     /// <summary>

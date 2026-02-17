@@ -12,6 +12,7 @@ namespace Backend.Application.EnergyPrices.Queries.GetLiveDayAheadEnergyPrices;
 /// Resolution is determined by the Market Operator (e.g., ENTSO-E returns PT15M or PT60M based on market).
 /// </summary>
 [Authorize(Roles = "Administrator,Tenant.Admin")]
+[RequirePermission(Backend.Domain.Constants.Permissions.FinancialsView)]
 public record GetLiveDayAheadEnergyPricesQuery : IRequest<LiveDayAheadEnergyPricesDto>
 {
     /// <summary>

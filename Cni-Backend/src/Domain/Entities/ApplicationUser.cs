@@ -12,4 +12,5 @@ public class ApplicationUser : IdentityUser
 
     // Kullanıcının bağlı olduğu firma & tesis bilgileri
     public ICollection<UserFirmFacility> UserFirmFacilities { get; set; } = new List<UserFirmFacility>();
+    public ICollection<UserTenantRole> UserTenantRoles { get; set; } = new List<UserTenantRole>();
 }
