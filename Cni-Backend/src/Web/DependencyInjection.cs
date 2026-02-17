@@ -58,6 +58,12 @@ public static class DependencyInjection
                 opt.Window = TimeSpan.FromMinutes(isTestEnv ? 1 : 15);
                 opt.QueueLimit = 0;
             });
+            options.AddFixedWindowLimiter("auth-forgot-password", opt =>
+            {
+                opt.PermitLimit = isTestEnv ? 10000 : 3;
+                opt.Window = TimeSpan.FromMinutes(isTestEnv ? 1 : 15);
+                opt.QueueLimit = 0;
+            });
             options.RejectionStatusCode = 429;
             options.OnRejected = async (context, cancellationToken) =>
             {
@@ -69,9 +75,13 @@ public static class DependencyInjection
 
                 context.HttpContext.Response.Headers.RetryAfter = retryAfter.ToString();
 
+                var message = context.HttpContext.Request.Path.Value?.Contains("ForgotPassword", StringComparison.OrdinalIgnoreCase) == true
+                    ? "Too many password reset requests. Please try again later."
+                    : "Too many login attempts. Please try again later.";
+
                 var errorResponse = new AuthErrorResponse(new AuthError(
                     "RATE_LIMIT_EXCEEDED",
-                    "Too many login attempts. Please try again later.",
+                    message,
                     RetryAfter: retryAfter));
 
                 await context.HttpContext.Response.WriteAsJsonAsync(errorResponse, cancellationToken);

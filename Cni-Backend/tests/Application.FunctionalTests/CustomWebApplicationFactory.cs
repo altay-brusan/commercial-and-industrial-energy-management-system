@@ -98,7 +98,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             // Add Identity EntityFrameworkStores with SQLite DbContext
             services.AddIdentityCore<ApplicationUser>()
                 .AddRoles<IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
 
             // AddIdentityCore overrides DefaultScheme to Identity cookies — reset to JWT Bearer
             services.Configure<Microsoft.AspNetCore.Authentication.AuthenticationOptions>(options =>
