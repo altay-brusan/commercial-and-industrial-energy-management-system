@@ -22,11 +22,11 @@ public class DeviceLinkConfiguration : IEntityTypeConfiguration<DeviceLink>
             .IsRequired();
 
         builder.Property(dl => dl.Configuration)
-            .HasColumnType("text")
+            .HasColumnType("jsonb")
             .IsRequired();
 
         builder.Property(dl => dl.ConnectedPorts)
-            .HasColumnType("text")
+            .HasColumnType("jsonb")
             .IsRequired();
 
         // Relationship to Facility

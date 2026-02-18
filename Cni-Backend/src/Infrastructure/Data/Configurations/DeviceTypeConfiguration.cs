@@ -14,6 +14,9 @@ public class DeviceTypeConfiguration : IEntityTypeConfiguration<DeviceType>
             .IsRequired()
             .HasMaxLength(50);
 
+        builder.Property(dt => dt.Description)
+            .HasMaxLength(500);
+
         // Unique constraint on Name
         builder.HasIndex(dt => dt.Name)
             .IsUnique();

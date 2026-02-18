@@ -61,4 +61,7 @@ public abstract class Permissions
 
     // FacilityMap
     public const string FacilityMapView = "FacilityMap.View";
+
+    // Pcs
+    public const string PcsView = "Pcs.View";
 }

@@ -29,6 +29,11 @@ public abstract class DeviceDataBase
     public DateTimeOffset DeviceLocalTime { get; set; }
 
     /// <summary>
+    /// Message type discriminator: "ContainerBatteryState", "PcsAcMeasState", etc.
+    /// </summary>
+    public string? Kind { get; set; }
+
+    /// <summary>
     /// All telemetry data as JSON payload
     /// </summary>
     public string Payload { get; set; } = "{}";

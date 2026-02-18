@@ -277,6 +277,7 @@ public class ApplicationDbContextInitializer
                 [Features.UserManagement] = new Feature { Key = Features.UserManagement, Name = "User Management", Category = "Management", Created = DateTime.UtcNow },
                 [Features.Audit] = new Feature { Key = Features.Audit, Name = "Audit", Category = "Management", Created = DateTime.UtcNow },
                 [Features.FacilityMap] = new Feature { Key = Features.FacilityMap, Name = "Facility Map", Category = "Core", Created = DateTime.UtcNow },
+                [Features.Pcs] = new Feature { Key = Features.Pcs, Name = "PCS Monitoring", Category = "Energy", Created = DateTime.UtcNow },
             };
 
             _context.Set<Feature>().AddRange(features.Values);
@@ -315,6 +316,7 @@ public class ApplicationDbContextInitializer
                 new() { Key = Permissions.UserManagementDelete, Name = "Delete Users", FeatureId = features[Features.UserManagement].Id, Created = DateTime.UtcNow },
                 new() { Key = Permissions.AuditView, Name = "View Audit Logs", FeatureId = features[Features.Audit].Id, Created = DateTime.UtcNow },
                 new() { Key = Permissions.FacilityMapView, Name = "View Facility Map", FeatureId = features[Features.FacilityMap].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.PcsView, Name = "View PCS Data", FeatureId = features[Features.Pcs].Id, Created = DateTime.UtcNow },
             };
 
             _context.Set<Permission>().AddRange(permissions);
@@ -323,7 +325,7 @@ public class ApplicationDbContextInitializer
 
             // Seed Plans with feature assignments
             var starterFeatureKeys = new[] { Features.Portfolio, Features.Dashboard, Features.Monitoring, Features.FacilityMap, Features.Settings };
-            var professionalFeatureKeys = starterFeatureKeys.Concat(new[] { Features.Solar, Features.Bess, Features.GridAndLoads, Features.Analytics, Features.Financials, Features.Reporting }).ToArray();
+            var professionalFeatureKeys = starterFeatureKeys.Concat(new[] { Features.Solar, Features.Bess, Features.Pcs, Features.GridAndLoads, Features.Analytics, Features.Financials, Features.Reporting }).ToArray();
             var enterpriseFeatureKeys = features.Keys.ToArray();
 
             if (!_context.Plans.IgnoreQueryFilters().Any(p => p.Name == "Starter"))
