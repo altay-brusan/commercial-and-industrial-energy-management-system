@@ -1,31 +1,45 @@
-import 'primereact/resources/primereact.css';
-import 'primeflex/primeflex.css';
-import 'primeicons/primeicons.css';
-import '@/src/styles/layout/layout.scss';
-import '@xyflow/react/dist/style.css';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import { getLocale } from 'next-intl/server';
-import Providers from './providers';
-import "primereact/resources/themes/lara-light-indigo/theme.css";
-interface RootLayoutProps {
-    children: React.ReactNode;
-}
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { ThemeProvider } from "@/components/theme-provider";
+import { FacilityProvider } from "@/lib/facilities/facility-context";
+import "./globals.css";
 
-export default async function RootLayout({ children }: RootLayoutProps) {
-    const locale = await getLocale();
-    const messages = await getMessages();
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
 
-    return (
-        <html lang="en" suppressHydrationWarning>
-            <head>
-            <link id="theme-css" href={`/themes/lara-light-indigo/theme.css`} rel="stylesheet"></link>
-            </head>
-            <body>
-                <NextIntlClientProvider messages={messages} locale={locale}>
-                    <Providers>{children}</Providers>
-                </NextIntlClientProvider>
-            </body>
-        </html>
-    );
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const cocon = localFont({
+  src: "./fonts/cocon_regular.otf",
+  variable: "--font-cocon",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "Energy Dashboard",
+  description: "Monitor and manage your energy consumption",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${cocon.variable} antialiased`}
+      >
+        <ThemeProvider>
+          <FacilityProvider>{children}</FacilityProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }
