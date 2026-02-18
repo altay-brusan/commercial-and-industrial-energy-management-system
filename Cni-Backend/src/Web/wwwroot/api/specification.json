@@ -297,24 +297,6 @@
         ]
       }
     },
-    "/api/v1/Auth/Me": {
-      "get": {
-        "tags": [
-          "Auth"
-        ],
-        "operationId": "GetApiV1AuthMe",
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
     "/api/v1/Auth/ForgotPassword": {
       "post": {
         "tags": [
@@ -338,6 +320,24 @@
             "description": ""
           }
         }
+      }
+    },
+    "/api/v1/Auth/Me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "GetApiV1AuthMe",
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
       }
     },
     "/api/Devices/{id}": {
