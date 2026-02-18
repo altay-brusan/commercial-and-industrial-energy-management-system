@@ -5,8 +5,10 @@ import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BessSummaryTab } from "./bess-summary-tab";
+import { BessHealthTab } from "./bess-health-tab";
 import { BessHierarchyTab } from "./bess-hierarchy-tab";
 import { BessMonitoringTab } from "./bess-monitoring-tab";
+import { BessFaultTab } from "./bess-fault-tab";
 import { BessAlarmsTab } from "./bess-alarms-tab";
 import type { BessUnit } from "@/lib/bess/types";
 
@@ -16,7 +18,7 @@ interface BessUnitDetailProps {
   onAlarmOpen: (alarmId: string) => void;
 }
 
-type DetailTab = "summary" | "hierarchy" | "monitoring" | "alarms" | "settings";
+type DetailTab = "summary" | "health" | "hierarchy" | "monitoring" | "fault" | "alarms" | "settings";
 
 function UnitStatusBadge({ status }: { status: BessUnit["status"] }) {
   const styles: Record<BessUnit["status"], string> = {
@@ -36,8 +38,10 @@ function UnitStatusBadge({ status }: { status: BessUnit["status"] }) {
 
 const tabs: { id: DetailTab; label: string; disabled?: boolean }[] = [
   { id: "summary", label: "Summary" },
+  { id: "health", label: "Health" },
   { id: "hierarchy", label: "Hierarchy" },
   { id: "monitoring", label: "Monitoring" },
+  { id: "fault", label: "Fault" },
   { id: "alarms", label: "Alarms" },
   { id: "settings", label: "Settings", disabled: true },
 ];
@@ -83,8 +87,10 @@ export function BessUnitDetail({ unit, onBack, onAlarmOpen }: BessUnitDetailProp
 
       {/* Tab content */}
       {activeTab === "summary" && <BessSummaryTab unit={unit} />}
+      {activeTab === "health" && <BessHealthTab unit={unit} />}
       {activeTab === "hierarchy" && <BessHierarchyTab unit={unit} />}
       {activeTab === "monitoring" && <BessMonitoringTab unitId={unit.id} />}
+      {activeTab === "fault" && <BessFaultTab unitId={unit.id} />}
       {activeTab === "alarms" && <BessAlarmsTab unitId={unit.id} onAlarmOpen={onAlarmOpen} />}
     </div>
   );

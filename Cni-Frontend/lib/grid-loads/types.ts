@@ -52,6 +52,24 @@ export interface GridDevice {
   totalImported: number | null; // MWh
   totalExported: number | null; // MWh
 
+  // Transformer lifecycle (null for non-transformers)
+  tapChangerOperationCount: number | null;
+  oilTestDate: string | null;
+  oilCondition: "good" | "fair" | "poor" | null;
+  insulationResistance: number | null; // MOhm
+  totalLoadMVAh: number | null;
+
+  // Breaker lifecycle (null for non-breakers)
+  totalOperationCount: number | null;
+  tripCount: number | null;
+  ratedOperationCount: number | null;
+
+  // Common lifecycle (null for devices that don't need it)
+  designedLifeYears: number | null;
+  lastMaintenanceDate: string | null;
+  nextMaintenanceDue: string | null;
+  warrantyExpiryDate: string | null;
+
   // Device info
   commissioningDate: string;
   manufacturer: string;

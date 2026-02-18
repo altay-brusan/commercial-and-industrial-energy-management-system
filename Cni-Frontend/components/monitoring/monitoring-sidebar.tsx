@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Eye, Sun, Wind, Battery, Network, Zap, type LucideIcon } from "lucide-react";
+import { Eye, Sun, Wind, Battery, Network, Zap, Cable, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -17,6 +17,7 @@ const menuItems: MenuItem[] = [
   { label: "Solar", href: "/monitoring/solar-inverters", icon: Sun },
   { label: "Wind", href: "/monitoring/wind-turbines", icon: Wind },
   { label: "Battery", href: "/monitoring/battery-storage", icon: Battery },
+  { label: "PCS", href: "/monitoring/pcs", icon: Cable },
   { label: "Grid", href: "/monitoring/grid-loads", icon: Network },
   { label: "Consume", href: "/monitoring/consumption", icon: Zap },
 ];

@@ -7,6 +7,12 @@ import type {
   BessFault,
   BessCurveData,
   BessComponentStatus,
+  BatteryFaultFlag,
+  BatteryFaultCategory,
+  ChillerAlarmFlag,
+  ChillerFaultCategory,
+  BessChillerState,
+  BessHvcuState,
 } from "./types";
 
 // --- Seeded random for deterministic data ---
@@ -287,23 +293,88 @@ function generateUnit(spec: UnitSpec): BessUnit {
       modulesPerPack: spec.modulesPerPack,
       cellsPerModule: spec.cellsPerModule,
     },
-    live: {
-      soc: avgSoc,
-      soh: avgSoh,
-      power: spec.mode === "charging" ? -Math.abs(totalPower) : spec.mode === "standby" ? 0 : Math.abs(totalPower),
-      voltage: totalVoltage,
-      current: avgCurrent,
-      frequency: 50,
-      tempAvg,
-      tempMin: round(Math.min(...allTemps), 1),
-      tempMax: round(Math.max(...allTemps), 1),
-    },
-    lifecycle: {
-      cycleCount: Math.floor(1000 + spec.seed * 2.5),
-      lifetimeThroughputMWh: round(spec.capacityKWh * (1000 + spec.seed * 2.5) * 0.0008, 1),
-      dailyChargedKWh: round(38 + rand() * 20, 1),
-      dailyDischargedKWh: round(42 + rand() * 25, 1),
-    },
+    live: (() => {
+      const allVoltages = allCells.map((c) => c.voltage * 1000); // mV
+      const maxVIdx = allVoltages.indexOf(Math.max(...allVoltages));
+      const minVIdx = allVoltages.indexOf(Math.min(...allVoltages));
+      const maxTIdx = allTemps.indexOf(Math.max(...allTemps));
+      const minTIdx = allTemps.indexOf(Math.min(...allTemps));
+      const cellLocFromIdx = (idx: number) => ({
+        bmuLoc: Math.floor(idx / spec.cellsPerModule) + 1,
+        cellLoc: (idx % spec.cellsPerModule) + 1,
+      });
+      return {
+        soc: avgSoc,
+        soh: avgSoh,
+        power: spec.mode === "charging" ? -Math.abs(totalPower) : spec.mode === "standby" ? 0 : Math.abs(totalPower),
+        voltage: totalVoltage,
+        current: avgCurrent,
+        frequency: 50,
+        tempAvg,
+        tempMin: round(Math.min(...allTemps), 1),
+        tempMax: round(Math.max(...allTemps), 1),
+        remainingEnergyKwh: round(spec.capacityKWh * (avgSoc / 100), 1),
+        availableEnergyKwh: round(spec.capacityKWh * (avgSoc / 100) * 0.95, 1),
+        dmccA: round(spec.maxPowerKW * 1000 / totalVoltage * 0.9, 1),
+        dmdcA: round(spec.maxPowerKW * 1000 / totalVoltage * 0.85, 1),
+        contactorPositive: spec.status !== "offline",
+        contactorNegative: spec.status !== "offline",
+        isolationStatus: round(500 + rand() * 300, 0),
+        cellVoltageMaxMv: round(Math.max(...allVoltages), 0),
+        cellVoltageMinMv: round(Math.min(...allVoltages), 0),
+        avgCellVoltageMv: round(allVoltages.reduce((s, v) => s + v, 0) / allVoltages.length, 0),
+        cellVoltageMaxLoc: cellLocFromIdx(maxVIdx),
+        cellVoltageMinLoc: cellLocFromIdx(minVIdx),
+        cellTempMaxC: round(Math.max(...allTemps), 1),
+        cellTempMinC: round(Math.min(...allTemps), 1),
+        cellTempMaxLoc: cellLocFromIdx(maxTIdx),
+        cellTempMinLoc: cellLocFromIdx(minTIdx),
+        outVoltPosV: round(totalVoltage / 2 + rand() * 2, 1),
+        outVoltNegV: round(-(totalVoltage / 2 + rand() * 2), 1),
+        stateCode: spec.status === "online" ? 3 : spec.status === "standby" ? 1 : spec.status === "fault" ? 7 : 0,
+      };
+    })(),
+    lifecycle: (() => {
+      const cycleCount = Math.floor(1000 + spec.seed * 2.5);
+      const designedCycleLife = spec.chemistry === "LFP" ? 6000 : 4000;
+      const equivalentFullCycles = Math.floor(cycleCount * (0.7 + rand() * 0.2));
+      const averageDoD = round(55 + rand() * 25, 1);
+      const initialRTE = spec.chemistry === "LFP" ? 95.5 : 93.0;
+      const rte = round(initialRTE - (cycleCount / designedCycleLife) * 5 - rand() * 1.5, 1);
+      const baseSoh = avgSoh;
+      const sohTrend: number[] = [];
+      for (let i = 11; i >= 0; i--) {
+        sohTrend.push(round(baseSoh + i * 0.15 + (rand() - 0.5) * 0.3, 1));
+      }
+      const lifetimeCharged = round(spec.capacityKWh * equivalentFullCycles * 0.001, 1);
+      const lifetimeDischarged = round(lifetimeCharged * (rte / 100), 1);
+      const commYear = spec.id === "bess-03" ? 2024 : 2024;
+      const commMonth = spec.id === "bess-03" ? 3 : 1;
+
+      return {
+        cycleCount,
+        equivalentFullCycles,
+        designedCycleLife,
+        designedCalendarLifeYears: spec.chemistry === "LFP" ? 15 : 12,
+        averageDoD,
+        sohTrendMonthly: sohTrend,
+        lifetimeChargedMWh: lifetimeCharged,
+        lifetimeDischargedMWh: lifetimeDischarged,
+        dailyChargedKWh: round(38 + rand() * 20, 1),
+        dailyDischargedKWh: round(42 + rand() * 25, 1),
+        roundTripEfficiency: rte,
+        initialRoundTripEfficiency: initialRTE,
+        totalOperatingHours: Math.floor(8000 + spec.seed * 10 + rand() * 2000),
+        totalStandbyHours: Math.floor(2000 + rand() * 1500),
+        lastMaintenanceDate: "15/Dec/2025",
+        nextMaintenanceDue: commMonth <= 3 ? "15/Mar/2026" : "15/Jun/2026",
+        warrantyExpiryDate: `${10 + commMonth}/Jan/${commYear + (spec.chemistry === "LFP" ? 10 : 8)}`,
+        firmwareVersion: spec.id === "bess-03" ? "v3.2.1" : "v4.1.0",
+        maxRecordedTemp: round(42 + rand() * 8, 1),
+        thermalExcursionCount: Math.floor(rand() * 12),
+        avgOperatingTemp: round(26 + rand() * 6, 1),
+      };
+    })(),
     connectedDevices: {
       inverter: `PCS-${spec.id.slice(-2).toUpperCase()}-01`,
       meter: `MTR-${spec.id.slice(-2).toUpperCase()}-01`,
@@ -494,6 +565,184 @@ export const bessFaults: BessFault[] = baseFaults.map((f, i) => ({
 
 export function getFaultsForUnit(unitId: string): BessFault[] {
   return bessFaults.filter((f) => f.unitId === unitId);
+}
+
+// --- Battery Fault Flags ---
+function generateBatteryFaultFlags(seed: number): BatteryFaultFlag[] {
+  const rand = seededRandom(seed + 5000);
+  const defs: { key: string; label: string; category: BatteryFaultCategory; severity: "danger" | "warning" }[] = [
+    { key: "faultPackWarning", label: "Pack Warning", category: "pack", severity: "warning" },
+    { key: "faultPackDanger", label: "Pack Danger", category: "pack", severity: "danger" },
+    { key: "faultPackOverVoltage", label: "Pack Over Voltage", category: "pack", severity: "danger" },
+    { key: "faultPackUnderVoltage", label: "Pack Under Voltage", category: "pack", severity: "danger" },
+    { key: "faultPackOverCurrent", label: "Pack Over Current", category: "pack", severity: "danger" },
+    { key: "faultPackOverTemp", label: "Pack Over Temperature", category: "pack", severity: "danger" },
+    { key: "faultPackUnderTemp", label: "Pack Under Temperature", category: "pack", severity: "warning" },
+    { key: "faultPackSocHigh", label: "Pack SoC High", category: "pack", severity: "warning" },
+    { key: "faultPackSocLow", label: "Pack SoC Low", category: "pack", severity: "warning" },
+    { key: "faultPackInsulationLow", label: "Pack Insulation Low", category: "pack", severity: "danger" },
+    { key: "faultPackVoltageDiff", label: "Pack Voltage Difference", category: "pack", severity: "warning" },
+    { key: "faultPackTempDiff", label: "Pack Temperature Difference", category: "pack", severity: "warning" },
+    { key: "faultCellOverVoltage", label: "Cell Over Voltage", category: "cell", severity: "danger" },
+    { key: "faultCellUnderVoltage", label: "Cell Under Voltage", category: "cell", severity: "danger" },
+    { key: "faultCellOverTemp", label: "Cell Over Temperature", category: "cell", severity: "danger" },
+    { key: "faultCellUnderTemp", label: "Cell Under Temperature", category: "cell", severity: "warning" },
+    { key: "faultCellVoltageDiffHigh", label: "Cell Voltage Diff High", category: "cell", severity: "warning" },
+    { key: "faultCellTempDiffHigh", label: "Cell Temp Diff High", category: "cell", severity: "warning" },
+    { key: "faultCellBalanceFail", label: "Cell Balance Failure", category: "cell", severity: "warning" },
+    { key: "faultCellSohLow", label: "Cell SoH Low", category: "cell", severity: "warning" },
+    { key: "faultModuleCommLoss", label: "Module Communication Loss", category: "module", severity: "danger" },
+    { key: "faultModuleOverVoltage", label: "Module Over Voltage", category: "module", severity: "danger" },
+    { key: "faultModuleUnderVoltage", label: "Module Under Voltage", category: "module", severity: "danger" },
+    { key: "faultModuleOverTemp", label: "Module Over Temperature", category: "module", severity: "danger" },
+    { key: "faultModuleSensorFail", label: "Module Sensor Failure", category: "module", severity: "warning" },
+    { key: "faultModuleVoltageDiff", label: "Module Voltage Difference", category: "module", severity: "warning" },
+    { key: "faultCanCommWarning", label: "CAN Communication Warning", category: "communication", severity: "warning" },
+    { key: "faultCanCommFault", label: "CAN Communication Fault", category: "communication", severity: "danger" },
+    { key: "faultBmuCommTimeout", label: "BMU Communication Timeout", category: "communication", severity: "danger" },
+    { key: "faultBmsCommLoss", label: "BMS Communication Loss", category: "communication", severity: "danger" },
+    { key: "faultModbusCommFail", label: "Modbus Communication Fail", category: "communication", severity: "warning" },
+    { key: "faultEmsCommLoss", label: "EMS Communication Loss", category: "communication", severity: "warning" },
+    { key: "faultPcsCommLoss", label: "PCS Communication Loss", category: "communication", severity: "warning" },
+    { key: "faultBoardOverTemp", label: "Board Over Temperature", category: "board", severity: "danger" },
+    { key: "faultBoardPowerFail", label: "Board Power Supply Failure", category: "board", severity: "danger" },
+    { key: "faultBoardWatchdog", label: "Board Watchdog Fault", category: "board", severity: "danger" },
+    { key: "faultBoardEepromFail", label: "Board EEPROM Failure", category: "board", severity: "warning" },
+    { key: "faultBoardFlashFail", label: "Board Flash Memory Failure", category: "board", severity: "warning" },
+    { key: "faultBoardAdcFail", label: "Board ADC Failure", category: "board", severity: "warning" },
+    { key: "faultBoardRtcFail", label: "Board RTC Failure", category: "board", severity: "warning" },
+    { key: "faultPackContactorFail", label: "Pack Contactor Failure", category: "pack", severity: "danger" },
+    { key: "faultPackFuseBlown", label: "Pack Fuse Blown", category: "pack", severity: "danger" },
+    { key: "faultPackPreChargeFail", label: "Pack Pre-charge Failure", category: "pack", severity: "danger" },
+    { key: "faultCellInternalShort", label: "Cell Internal Short Circuit", category: "cell", severity: "danger" },
+    { key: "faultCellOpenCircuit", label: "Cell Open Circuit", category: "cell", severity: "danger" },
+    { key: "faultModuleCurrentSensorFail", label: "Module Current Sensor Fail", category: "module", severity: "warning" },
+    { key: "faultBoardCanBusOff", label: "Board CAN Bus Off", category: "board", severity: "danger" },
+    { key: "faultPackEmergencyStop", label: "Pack Emergency Stop", category: "pack", severity: "danger" },
+    { key: "faultCellReversePolarity", label: "Cell Reverse Polarity", category: "cell", severity: "danger" },
+    { key: "faultModuleTempSensorOpen", label: "Module Temp Sensor Open", category: "module", severity: "warning" },
+  ];
+
+  return defs.map((d) => ({
+    ...d,
+    active: rand() < 0.06, // ~3 active on average
+  }));
+}
+
+// --- Chiller Alarm Flags ---
+function generateChillerAlarmFlags(seed: number): ChillerAlarmFlag[] {
+  const rand = seededRandom(seed + 6000);
+  const defs: { key: string; label: string; category: ChillerFaultCategory }[] = [
+    { key: "chillerOutletTempSensorFault", label: "Outlet Temp Sensor Fault", category: "sensor" },
+    { key: "chillerInletTempSensorFault", label: "Inlet Temp Sensor Fault", category: "sensor" },
+    { key: "chillerAmbientTempSensorFault", label: "Ambient Temp Sensor Fault", category: "sensor" },
+    { key: "chillerCoolantFlowSensorFault", label: "Coolant Flow Sensor Fault", category: "sensor" },
+    { key: "chillerPressureSensorFault", label: "Pressure Sensor Fault", category: "sensor" },
+    { key: "chillerPowerSupplyFault", label: "Power Supply Fault", category: "power" },
+    { key: "chillerPhaseSequenceFault", label: "Phase Sequence Fault", category: "power" },
+    { key: "chillerOverVoltageFault", label: "Over Voltage Fault", category: "power" },
+    { key: "chillerUnderVoltageFault", label: "Under Voltage Fault", category: "power" },
+    { key: "chillerSystemFault", label: "System General Fault", category: "system" },
+    { key: "chillerControllerFault", label: "Controller Fault", category: "system" },
+    { key: "chillerEepromFault", label: "EEPROM Fault", category: "system" },
+    { key: "chillerPumpOverloadFault", label: "Pump Overload Fault", category: "pump" },
+    { key: "chillerPumpDryRunFault", label: "Pump Dry Run Fault", category: "pump" },
+    { key: "chillerPumpBlockedFault", label: "Pump Blocked Fault", category: "pump" },
+    { key: "chillerPumpLeakFault", label: "Pump Leak Fault", category: "pump" },
+    { key: "chillerHighPressureFault", label: "High Pressure Fault", category: "pressure" },
+    { key: "chillerLowPressureFault", label: "Low Pressure Fault", category: "pressure" },
+    { key: "chillerPressureDiffFault", label: "Pressure Difference Fault", category: "pressure" },
+    { key: "chillerHighTempFault", label: "High Temperature Fault", category: "temperature" },
+    { key: "chillerLowTempFault", label: "Low Temperature Fault", category: "temperature" },
+    { key: "chillerTempDiffFault", label: "Temperature Difference Fault", category: "temperature" },
+    { key: "chillerFreezeProtectionFault", label: "Freeze Protection Fault", category: "temperature" },
+    { key: "chillerCommTimeoutFault", label: "Communication Timeout", category: "communication" },
+    { key: "chillerModbusCommFault", label: "Modbus Communication Fault", category: "communication" },
+    { key: "chillerCanCommFault", label: "CAN Communication Fault", category: "communication" },
+    { key: "chillerCompVfdOverTempFault", label: "Compressor VFD Over Temp", category: "compressor_vfd" },
+    { key: "chillerCompVfdOverCurrentFault", label: "Compressor VFD Over Current", category: "compressor_vfd" },
+    { key: "chillerCompVfdCommFault", label: "Compressor VFD Comm Fault", category: "compressor_vfd" },
+    { key: "chillerCompVfdPhaseFault", label: "Compressor VFD Phase Fault", category: "compressor_vfd" },
+    { key: "chillerRemoteLockFault", label: "Remote Lock Fault", category: "lock" },
+    { key: "chillerLocalLockFault", label: "Local Lock Fault", category: "lock" },
+    { key: "chillerSafetyInterlock", label: "Safety Interlock", category: "lock" },
+    { key: "chillerEmergencyStop", label: "Emergency Stop", category: "lock" },
+  ];
+
+  return defs.map((d) => ({
+    ...d,
+    active: rand() < 0.04, // ~1-2 active on average
+  }));
+}
+
+// --- Chiller State ---
+function generateChillerState(seed: number): BessChillerState {
+  const rand = seededRandom(seed + 7000);
+  const modes = ["Cooling", "Heating", "Standby", "Auto"];
+  const modeIdx = Math.floor(rand() * modes.length);
+  return {
+    operatingMode: modeIdx,
+    operatingModeStr: modes[modeIdx],
+    outletCoolantTempC: round(18 + rand() * 8, 1),
+    inletCoolantTempC: round(22 + rand() * 10, 1),
+    ambientTempC: round(20 + rand() * 15, 1),
+    inletCoolantPressure: round(1.5 + rand() * 1.5, 2),
+    outletCoolantPressure: round(1.2 + rand() * 1.2, 2),
+    compressorStatus: rand() > 0.3,
+    pumpStatus: rand() > 0.2,
+    fanRunStatus: rand() > 0.4,
+    electricHeaterStatus: rand() < 0.15,
+    compressorSpeed: Math.floor(rand() * 100),
+    pumpSpeed: Math.floor(40 + rand() * 60),
+  };
+}
+
+// --- HVCU State ---
+function generateHvcuState(seed: number): BessHvcuState {
+  const rand = seededRandom(seed + 8000);
+  const stateStrs = ["Standby", "Pre-charge", "Active", "Shutdown", "Fault"];
+  const bcuCount = 2 + Math.floor(rand() * 3);
+  const bcuStates = Array.from({ length: bcuCount }, (_, i) => {
+    const stateIdx = i === 0 ? 2 : Math.floor(rand() * stateStrs.length);
+    return {
+      id: i + 1,
+      controlState: stateIdx,
+      stateStr: stateStrs[stateIdx],
+    };
+  });
+  return {
+    bcuStates,
+    isolationControl: rand() > 0.3,
+  };
+}
+
+// --- Per-unit fault/chiller/hvcu maps ---
+const batteryFaultFlagMap = new Map<string, BatteryFaultFlag[]>();
+const chillerAlarmFlagMap = new Map<string, ChillerAlarmFlag[]>();
+const chillerStateMap = new Map<string, BessChillerState>();
+const hvcuStateMap = new Map<string, BessHvcuState>();
+
+unitSpecs.forEach((spec) => {
+  batteryFaultFlagMap.set(spec.id, generateBatteryFaultFlags(spec.seed));
+  chillerAlarmFlagMap.set(spec.id, generateChillerAlarmFlags(spec.seed));
+  chillerStateMap.set(spec.id, generateChillerState(spec.seed));
+  hvcuStateMap.set(spec.id, generateHvcuState(spec.seed));
+});
+
+export function getBatteryFaultFlagsForUnit(unitId: string): BatteryFaultFlag[] {
+  return batteryFaultFlagMap.get(unitId) ?? [];
+}
+
+export function getChillerAlarmFlagsForUnit(unitId: string): ChillerAlarmFlag[] {
+  return chillerAlarmFlagMap.get(unitId) ?? [];
+}
+
+export function getChillerStateForUnit(unitId: string): BessChillerState | undefined {
+  return chillerStateMap.get(unitId);
+}
+
+export function getHvcuStateForUnit(unitId: string): BessHvcuState | undefined {
+  return hvcuStateMap.get(unitId);
 }
 
 // --- Curve data generation ---

@@ -91,12 +91,55 @@ export interface BessUnit {
     tempAvg: number;
     tempMin: number;
     tempMax: number;
+    remainingEnergyKwh: number;
+    availableEnergyKwh: number;
+    dmccA: number; // max charge current limit
+    dmdcA: number; // max discharge current limit
+    contactorPositive: boolean;
+    contactorNegative: boolean;
+    isolationStatus: number; // kOhm
+    cellVoltageMaxMv: number;
+    cellVoltageMinMv: number;
+    avgCellVoltageMv: number;
+    cellVoltageMaxLoc: { bmuLoc: number; cellLoc: number };
+    cellVoltageMinLoc: { bmuLoc: number; cellLoc: number };
+    cellTempMaxC: number;
+    cellTempMinC: number;
+    cellTempMaxLoc: { bmuLoc: number; cellLoc: number };
+    cellTempMinLoc: { bmuLoc: number; cellLoc: number };
+    outVoltPosV: number;
+    outVoltNegV: number;
+    stateCode: number;
   };
   lifecycle: {
+    // Aging & Degradation
     cycleCount: number;
-    lifetimeThroughputMWh: number;
+    equivalentFullCycles: number;
+    designedCycleLife: number;
+    designedCalendarLifeYears: number;
+    averageDoD: number; // %
+    sohTrendMonthly: number[]; // last 12 months SoH readings
+
+    // Energy Throughput
+    lifetimeChargedMWh: number;
+    lifetimeDischargedMWh: number;
     dailyChargedKWh: number;
     dailyDischargedKWh: number;
+    roundTripEfficiency: number; // %
+    initialRoundTripEfficiency: number; // %
+
+    // Operational History
+    totalOperatingHours: number;
+    totalStandbyHours: number;
+    lastMaintenanceDate: string;
+    nextMaintenanceDue: string;
+    warrantyExpiryDate: string;
+    firmwareVersion: string;
+
+    // Thermal Stress
+    maxRecordedTemp: number; // °C
+    thermalExcursionCount: number;
+    avgOperatingTemp: number; // °C
   };
   connectedDevices: {
     inverter: string;
@@ -185,3 +228,55 @@ export type HierarchySortField =
   | "temperature";
 
 export type SortDirection = "asc" | "desc";
+
+// Battery Fault Flag types
+export type BatteryFaultCategory = "pack" | "cell" | "module" | "communication" | "board";
+
+export interface BatteryFaultFlag {
+  key: string;
+  label: string;
+  category: BatteryFaultCategory;
+  severity: "danger" | "warning";
+  active: boolean;
+}
+
+// Chiller / TMS types
+export type ChillerFaultCategory =
+  | "sensor"
+  | "power"
+  | "system"
+  | "pump"
+  | "pressure"
+  | "temperature"
+  | "communication"
+  | "compressor_vfd"
+  | "lock";
+
+export interface ChillerAlarmFlag {
+  key: string;
+  label: string;
+  category: ChillerFaultCategory;
+  active: boolean;
+}
+
+export interface BessChillerState {
+  operatingMode: number;
+  operatingModeStr: string;
+  outletCoolantTempC: number;
+  inletCoolantTempC: number;
+  ambientTempC: number;
+  inletCoolantPressure: number;
+  outletCoolantPressure: number;
+  compressorStatus: boolean;
+  pumpStatus: boolean;
+  fanRunStatus: boolean;
+  electricHeaterStatus: boolean;
+  compressorSpeed: number;
+  pumpSpeed: number;
+}
+
+// HVCU types
+export interface BessHvcuState {
+  bcuStates: Array<{ id: number; controlState: number; stateStr: string }>;
+  isolationControl: boolean;
+}

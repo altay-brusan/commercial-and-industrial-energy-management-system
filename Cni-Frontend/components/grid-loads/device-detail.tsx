@@ -179,6 +179,34 @@ export function DeviceDetail({ device, onBack, onAlarmOpen }: DeviceDetailProps)
             </>
           )}
 
+          {/* Transformer Lifecycle */}
+          {device.deviceType === "transformer" && device.tapChangerOperationCount !== null && (
+            <>
+              <SectionTitle title="Transformer Lifecycle" />
+              <MetricGrid>
+                <MetricItem label="Tap changer operations" value={device.tapChangerOperationCount} unit="" />
+                <MetricItem label="Insulation resistance" value={device.insulationResistance} unit="MOhm" />
+                <MetricItem label="Total load throughput" value={device.totalLoadMVAh} unit="MVAh" />
+              </MetricGrid>
+              <MetricGrid>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-muted-foreground">Oil condition</span>
+                  <Badge className={
+                    device.oilCondition === "good"
+                      ? "bg-energy-solar/15 text-energy-solar border-energy-solar/30"
+                      : device.oilCondition === "fair"
+                        ? "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30"
+                        : "bg-energy-grid/15 text-energy-grid border-energy-grid/30"
+                  }>
+                    {device.oilCondition ? device.oilCondition.charAt(0).toUpperCase() + device.oilCondition.slice(1) : "--"}
+                  </Badge>
+                </div>
+                <StringMetric label="Last oil test" value={device.oilTestDate} />
+                <StringMetric label="Designed life" value={device.designedLifeYears ? `${device.designedLifeYears} years` : null} />
+              </MetricGrid>
+            </>
+          )}
+
           {/* Breaker/Relay Data (conditional) */}
           {(device.deviceType === "circuit-breaker" || device.deviceType === "protection-relay" || device.deviceType === "switchgear") && (
             <>
@@ -187,6 +215,30 @@ export function DeviceDetail({ device, onBack, onAlarmOpen }: DeviceDetailProps)
                 <StringMetric label="Breaker position" value={device.breakerPosition ? device.breakerPosition.charAt(0).toUpperCase() + device.breakerPosition.slice(1) : null} />
                 <StringMetric label="Relay trip status" value={device.relayTripStatus !== null ? (device.relayTripStatus ? "Tripped" : "Normal") : null} />
                 <StringMetric label="Last trip time" value={device.lastTripTime ? format(device.lastTripTime, "dd/MMM/yyyy HH:mm") : null} />
+              </MetricGrid>
+            </>
+          )}
+
+          {/* Breaker Lifecycle */}
+          {device.deviceType === "circuit-breaker" && device.totalOperationCount !== null && (
+            <>
+              <SectionTitle title="Breaker Lifecycle" />
+              <MetricGrid>
+                <MetricItem label="Total operations" value={device.totalOperationCount} unit="" />
+                <MetricItem label="Fault trips" value={device.tripCount} unit="" />
+                <MetricItem label="Rated operations" value={device.ratedOperationCount} unit="" />
+              </MetricGrid>
+              <MetricGrid>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-muted-foreground">Operation life used</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      {device.ratedOperationCount ? ((device.totalOperationCount / device.ratedOperationCount) * 100).toFixed(1) : "--"}%
+                    </span>
+                    <Activity className="h-3.5 w-3.5 text-muted-foreground/50" />
+                  </div>
+                </div>
+                <StringMetric label="Designed life" value={device.designedLifeYears ? `${device.designedLifeYears} years` : null} />
               </MetricGrid>
             </>
           )}
@@ -202,6 +254,55 @@ export function DeviceDetail({ device, onBack, onAlarmOpen }: DeviceDetailProps)
               <MetricGrid>
                 <MetricItem label="Total imported" value={device.totalImported} unit="MWh" />
                 <MetricItem label="Total exported" value={device.totalExported} unit="MWh" />
+              </MetricGrid>
+            </>
+          )}
+
+          {/* Maintenance & Warranty (for transformer / circuit-breaker with lifecycle data) */}
+          {device.lastMaintenanceDate !== null && (
+            <>
+              <SectionTitle title="Maintenance & Warranty" />
+              <MetricGrid>
+                <StringMetric label="Last maintenance" value={device.lastMaintenanceDate} />
+                <StringMetric label="Next maintenance due" value={device.nextMaintenanceDue} />
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-muted-foreground">Warranty expiry</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium">{device.warrantyExpiryDate ?? "--"}</span>
+                    {device.warrantyExpiryDate && (() => {
+                      const parts = device.warrantyExpiryDate.split("/");
+                      const monthMap: Record<string, number> = {
+                        Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+                        Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+                      };
+                      const expDate = new Date(Number(parts[2]), monthMap[parts[1]], Number(parts[0]));
+                      const expired = Date.now() > expDate.getTime();
+                      return (
+                        <Badge className={expired ? "bg-energy-grid/15 text-energy-grid border-energy-grid/30" : "bg-energy-solar/15 text-energy-solar border-energy-solar/30"}>
+                          {expired ? "Expired" : "Active"}
+                        </Badge>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </MetricGrid>
+              <MetricGrid>
+                <StringMetric label="Designed life" value={device.designedLifeYears ? `${device.designedLifeYears} years` : null} />
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm text-muted-foreground">Asset age</span>
+                  <span className="text-sm font-medium">
+                    {(() => {
+                      const parts = device.commissioningDate.split("/");
+                      const monthMap: Record<string, number> = {
+                        Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+                        Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+                      };
+                      const commDate = new Date(Number(parts[2]), monthMap[parts[1]], Number(parts[0]));
+                      const years = ((Date.now() - commDate.getTime()) / (365.25 * 24 * 3600 * 1000)).toFixed(1);
+                      return `${years} years`;
+                    })()}
+                  </span>
+                </div>
               </MetricGrid>
             </>
           )}
