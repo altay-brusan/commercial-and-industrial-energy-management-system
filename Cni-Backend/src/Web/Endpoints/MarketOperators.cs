@@ -42,7 +42,7 @@ public class MarketOperators : EndpointGroupBase
     /// <summary>
     /// Creates a new Market Operator. Admin only.
     /// </summary>
-    public async Task<Created<int>> CreateMarketOperator(ISender sender, CreateMarketOperatorCommand command)
+    public async Task<Created<Guid>> CreateMarketOperator(ISender sender, CreateMarketOperatorCommand command)
     {
         var id = await sender.Send(command);
         return TypedResults.Created($"/{nameof(MarketOperators)}/{id}", id);
@@ -51,7 +51,7 @@ public class MarketOperators : EndpointGroupBase
     /// <summary>
     /// Updates an existing Market Operator. Admin only.
     /// </summary>
-    public async Task<Results<NoContent, BadRequest>> UpdateMarketOperator(ISender sender, int id, UpdateMarketOperatorCommand command)
+    public async Task<Results<NoContent, BadRequest>> UpdateMarketOperator(ISender sender, Guid id, UpdateMarketOperatorCommand command)
     {
         if (id != command.Id) return TypedResults.BadRequest();
         await sender.Send(command);
@@ -61,7 +61,7 @@ public class MarketOperators : EndpointGroupBase
     /// <summary>
     /// Deletes a Market Operator. Admin only.
     /// </summary>
-    public async Task<NoContent> DeleteMarketOperator(ISender sender, int id)
+    public async Task<NoContent> DeleteMarketOperator(ISender sender, Guid id)
     {
         await sender.Send(new DeleteMarketOperatorCommand(id));
         return TypedResults.NoContent();

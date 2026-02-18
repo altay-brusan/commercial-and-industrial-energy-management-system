@@ -12,7 +12,7 @@ public class UpdateFirmTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
         var command = new UpdateFirmCommand
         {
-            Id = 99999,
+            Id = Guid.NewGuid(),
             Name = "Demo Updated Firm",
             Country = "Netherlands",
             State = "Noord-Holland",

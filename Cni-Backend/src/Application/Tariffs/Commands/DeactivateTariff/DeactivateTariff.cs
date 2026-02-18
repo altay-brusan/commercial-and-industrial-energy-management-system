@@ -14,7 +14,7 @@ public record DeactivateTariffCommand : IRequest<bool>
     /// <summary>
     /// The ID of the tariff to deactivate.
     /// </summary>
-    public int Id { get; init; }
+    public Guid Id { get; init; }
 }
 
 public class DeactivateTariffCommandHandler : IRequestHandler<DeactivateTariffCommand, bool>

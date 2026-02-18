@@ -6,15 +6,15 @@ using Backend.Domain.Events;
 namespace Backend.Application.FirmMarketOperators.Commands.CreateFirmMarketOperator;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
-public record CreateFirmMarketOperatorCommand : IRequest<int>
+public record CreateFirmMarketOperatorCommand : IRequest<Guid>
 {
-    public int FirmId { get; set; }
-    public int MarketOperatorId { get; set; }
+    public Guid FirmId { get; set; }
+    public Guid MarketOperatorId { get; set; }
     public string AreaCode { get; set; } = string.Empty;
     public int SamplingPeriodMinutes { get; set; } = 60;
 }
 
-public class CreateFirmMarketOperatorCommandHandler : IRequestHandler<CreateFirmMarketOperatorCommand, int>
+public class CreateFirmMarketOperatorCommandHandler : IRequestHandler<CreateFirmMarketOperatorCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
@@ -23,7 +23,7 @@ public class CreateFirmMarketOperatorCommandHandler : IRequestHandler<CreateFirm
         _context = context;
     }
 
-    public async Task<int> Handle(CreateFirmMarketOperatorCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateFirmMarketOperatorCommand request, CancellationToken cancellationToken)
     {
         var entity = new FirmMarketOperator
         {

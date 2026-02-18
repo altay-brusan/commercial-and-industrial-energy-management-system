@@ -8,7 +8,7 @@ namespace Backend.Application.Graphs.Queries.GetInverterGraph;
 [RequirePermission(Backend.Domain.Constants.Permissions.MonitoringView)]
 public record GetInverterGraphQuery : IRequest<List<InverterGraphDto>>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 }

@@ -18,7 +18,7 @@ public record GetLiveDayAheadEnergyPricesQuery : IRequest<LiveDayAheadEnergyPric
     /// <summary>
     /// Firm ID to fetch prices for. Required.
     /// </summary>
-    public int FirmId { get; set; }
+    public Guid FirmId { get; set; }
 
     /// <summary>
     /// Start date (inclusive). If not specified, uses today or tomorrow based on MO publication rules.
@@ -260,7 +260,7 @@ public class GetLiveDayAheadEnergyPricesQueryHandler : IRequestHandler<GetLiveDa
     }
 
     private async Task<(decimal distributionFee, decimal transmissionFee, decimal taxRate, string currency, bool usingDefault)> GetTariffForCountryAsync(
-        int firmId,
+        Guid firmId,
         string? countryName,
         CancellationToken cancellationToken)
     {

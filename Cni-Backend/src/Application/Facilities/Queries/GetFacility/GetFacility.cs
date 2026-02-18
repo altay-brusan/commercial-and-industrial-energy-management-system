@@ -6,7 +6,7 @@ namespace Backend.Application.Facilities.Queries.GetFacility;
 [RequirePermission(Backend.Domain.Constants.Permissions.FacilityView)]
 public record GetFacilityQuery : IRequest<FacilityDto?>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 }
 
 public class GetFacilityQueryHandler : IRequestHandler<GetFacilityQuery, FacilityDto?>

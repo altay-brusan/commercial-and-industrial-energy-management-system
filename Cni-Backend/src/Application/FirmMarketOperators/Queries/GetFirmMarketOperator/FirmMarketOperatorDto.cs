@@ -4,9 +4,9 @@ namespace Backend.Application.FirmMarketOperators.Queries.GetFirmMarketOperator;
 
 public class FirmMarketOperatorDto
 {
-    public int Id { get; init; }
-    public int FirmId { get; set; }
-    public int MarketOperatorId { get; set; }
+    public Guid Id { get; init; }
+    public Guid FirmId { get; set; }
+    public Guid MarketOperatorId { get; set; }
     public string MarketOperatorName { get; set; } = string.Empty;
     public string MarketOperatorCode { get; set; } = string.Empty;
     public string AreaCode { get; set; } = string.Empty;

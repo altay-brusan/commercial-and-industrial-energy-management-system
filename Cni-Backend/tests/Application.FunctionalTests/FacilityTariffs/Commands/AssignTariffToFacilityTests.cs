@@ -24,7 +24,7 @@ public class AssignTariffToFacilityTests : BaseTestFixture
 
         var command = new AssignTariffToFacilityCommand
         {
-            FacilityId = 99999,
+            FacilityId = Guid.NewGuid(),
             TariffId = tariff.Id
         };
 
@@ -66,7 +66,7 @@ public class AssignTariffToFacilityTests : BaseTestFixture
         var command = new AssignTariffToFacilityCommand
         {
             FacilityId = facility.Id,
-            TariffId = 99999
+            TariffId = Guid.NewGuid()
         };
 
         await FluentActions.Invoking(() =>

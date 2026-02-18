@@ -13,7 +13,7 @@ public class GetDayAheadPricesTests : BaseTestFixture
 
         var query = new GetDayAheadPricesQuery
         {
-            FacilityId = 99999,
+            FacilityId = Guid.NewGuid(),
             StartDate = DateTimeOffset.UtcNow.Date
         };
 

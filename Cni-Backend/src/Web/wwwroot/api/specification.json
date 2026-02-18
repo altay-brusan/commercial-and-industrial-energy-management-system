@@ -352,8 +352,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -464,8 +464,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -490,8 +490,8 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -550,8 +550,8 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -682,8 +682,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -708,8 +708,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -746,8 +746,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -793,8 +793,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -884,8 +884,8 @@
             "name": "facilityId",
             "in": "query",
             "schema": {
-              "type": "integer",
-              "format": "int32",
+              "type": "string",
+              "format": "guid",
               "nullable": true
             },
             "x-position": 3
@@ -894,8 +894,8 @@
             "name": "tariffId",
             "in": "query",
             "schema": {
-              "type": "integer",
-              "format": "int32",
+              "type": "string",
+              "format": "guid",
               "nullable": true
             },
             "x-position": 4
@@ -951,8 +951,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -977,8 +977,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1015,8 +1015,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1039,8 +1039,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -1063,8 +1063,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1096,8 +1096,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1136,8 +1136,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1171,8 +1171,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1214,8 +1214,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1310,8 +1310,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -1336,8 +1336,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1371,8 +1371,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1395,8 +1395,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -1421,8 +1421,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -1431,8 +1431,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 2
           }
@@ -1474,8 +1474,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -1484,8 +1484,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 2
           }
@@ -1514,8 +1514,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1549,8 +1549,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1592,8 +1592,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1679,8 +1679,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -1705,8 +1705,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -1762,8 +1762,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -1819,8 +1819,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -1879,8 +1879,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -1939,8 +1939,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -1974,8 +1974,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2017,8 +2017,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2113,8 +2113,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -2206,8 +2206,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2241,8 +2241,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2284,8 +2284,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2371,8 +2371,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -2397,8 +2397,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -2529,8 +2529,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -2555,8 +2555,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2590,8 +2590,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2633,8 +2633,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2663,8 +2663,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2705,8 +2705,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2747,8 +2747,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           },
@@ -2786,8 +2786,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2821,8 +2821,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2864,8 +2864,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2951,8 +2951,8 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer",
-                  "format": "int32"
+                  "type": "string",
+                  "format": "guid"
                 }
               }
             }
@@ -3325,18 +3325,18 @@
         "additionalProperties": false,
         "properties": {
           "authenticatedTenantId": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "guid",
             "nullable": true
           },
           "selectedTenantId": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "guid",
             "nullable": true
           },
           "effectiveTenantId": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "guid",
             "nullable": true
           },
           "isSuperAdmin": {
@@ -3355,8 +3355,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -3466,16 +3466,16 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "facilityId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "deviceTypeId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -3530,12 +3530,12 @@
         "additionalProperties": false,
         "properties": {
           "facilityId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "deviceTypeId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -3560,8 +3560,8 @@
         "additionalProperties": false,
         "properties": {
           "facilityId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "facilityName": {
             "type": "string"
@@ -3570,8 +3570,8 @@
             "type": "string"
           },
           "marketOperatorId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "marketOperatorCode": {
             "type": "string"
@@ -3650,13 +3650,13 @@
             "nullable": true
           },
           "firmId": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "guid",
             "nullable": true
           },
           "marketOperatorId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "marketOperatorName": {
             "type": "string"
@@ -3821,8 +3821,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "countryName": {
             "type": "string"
@@ -3856,8 +3856,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "countryName": {
             "type": "string"
@@ -3935,12 +3935,12 @@
         "additionalProperties": false,
         "properties": {
           "newTariffId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "oldTariffId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "migratedFacilitiesCount": {
             "type": "integer",
@@ -3953,8 +3953,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "countryName": {
             "type": "string"
@@ -4015,19 +4015,19 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "facilityId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "facilityName": {
             "type": "string"
           },
           "tariffId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "tariffCountryName": {
             "type": "string"
@@ -4054,19 +4054,19 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "facilityId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "facilityName": {
             "type": "string"
           },
           "tariffId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "tariffCountryName": {
             "type": "string"
@@ -4138,12 +4138,12 @@
         "additionalProperties": false,
         "properties": {
           "facilityId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "tariffId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "contractNumber": {
             "type": "string",
@@ -4174,12 +4174,12 @@
         "additionalProperties": false,
         "properties": {
           "currentAssignmentId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "newTariffId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "contractNumber": {
             "type": "string",
@@ -4210,12 +4210,12 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "firmId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -4293,12 +4293,12 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "firmId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -4328,8 +4328,8 @@
         "additionalProperties": false,
         "properties": {
           "firmId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -4359,12 +4359,12 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "firmId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -4398,16 +4398,16 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "firmId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "marketOperatorId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "marketOperatorName": {
             "type": "string"
@@ -4432,12 +4432,12 @@
         "additionalProperties": false,
         "properties": {
           "firmId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "marketOperatorId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "areaCode": {
             "type": "string"
@@ -4453,12 +4453,12 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "marketOperatorId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "areaCode": {
             "type": "string"
@@ -4477,12 +4477,12 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "tenantId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string",
@@ -4577,12 +4577,12 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "tenantId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string",
@@ -4647,8 +4647,8 @@
         "additionalProperties": false,
         "properties": {
           "tenantId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string",
@@ -4713,8 +4713,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string",
@@ -4815,8 +4815,8 @@
             "format": "date-time"
           },
           "pcsId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "activePower": {
             "type": "number",
@@ -4870,8 +4870,8 @@
         "additionalProperties": false,
         "properties": {
           "facilityId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "time": {
             "type": "string",
@@ -4904,8 +4904,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -4973,8 +4973,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -5037,8 +5037,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -5094,8 +5094,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "key": {
             "type": "string"
@@ -5117,8 +5117,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -5178,8 +5178,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -5236,8 +5236,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -5405,8 +5405,8 @@
         "additionalProperties": false,
         "properties": {
           "deviceId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "deviceName": {
             "type": "string",
@@ -5860,8 +5860,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -5880,8 +5880,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -5919,8 +5919,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string"
@@ -5939,14 +5939,14 @@
         "additionalProperties": false,
         "properties": {
           "tenantRoleId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "permissionIds": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "guid"
             }
           }
         }
@@ -5956,8 +5956,8 @@
         "additionalProperties": false,
         "properties": {
           "tenantRoleId": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "userId": {
             "type": "string"
@@ -5969,8 +5969,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "identifier": {
             "type": "string",
@@ -6017,8 +6017,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "identifier": {
             "type": "string",
@@ -6049,8 +6049,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string",
@@ -6116,8 +6116,8 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "guid"
           },
           "name": {
             "type": "string",
@@ -6172,13 +6172,13 @@
         "additionalProperties": false,
         "properties": {
           "firmId": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "guid",
             "nullable": true
           },
           "facilityId": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "guid",
             "nullable": true
           }
         }
@@ -6319,8 +6319,8 @@
         "additionalProperties": false,
         "properties": {
           "firmId": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "guid",
             "nullable": true
           },
           "firmName": {
@@ -6328,8 +6328,8 @@
             "nullable": true
           },
           "facilityId": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "guid",
             "nullable": true
           },
           "facilityName": {

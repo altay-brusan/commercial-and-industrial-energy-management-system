@@ -55,15 +55,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .AddScoped<IMultiTenantService>(provider =>
                 {
                     var mock = new Mock<IMultiTenantService>();
-                    mock.Setup(s => s.GetAuthenticatedTenantId()).Returns((int?)null);
-                    mock.Setup(s => s.GetSelectedTenantId()).Returns((int?)null);
-                    mock.Setup(s => s.GetEffectiveTenantId()).Returns((int?)null);
+                    mock.Setup(s => s.GetAuthenticatedTenantId()).Returns((Guid?)null);
+                    mock.Setup(s => s.GetSelectedTenantId()).Returns((Guid?)null);
+                    mock.Setup(s => s.GetEffectiveTenantId()).Returns((Guid?)null);
                     mock.Setup(s => s.IsSuperAdmin()).Returns(true);
                     mock.Setup(s => s.IsTenantScoped()).Returns(false);
                     mock.Setup(s => s.IsImpersonating()).Returns(false);
                     // Return the requested tenant ID when creating entities (super admin can create for any tenant)
-                    mock.Setup(s => s.GetTenantIdForCreation(It.IsAny<int?>()))
-                        .Returns((int? requestedTenantId) => requestedTenantId ?? 1);
+                    mock.Setup(s => s.GetTenantIdForCreation(It.IsAny<Guid?>()))
+                        .Returns((Guid? requestedTenantId) => requestedTenantId ?? Guid.NewGuid());
                     return mock.Object;
                 });
 

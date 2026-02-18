@@ -33,44 +33,44 @@ public class TenantRoles : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<Ok<TenantRoleDto>> GetTenantRole(ISender sender, int id)
+    public async Task<Ok<TenantRoleDto>> GetTenantRole(ISender sender, Guid id)
     {
         var result = await sender.Send(new GetTenantRoleQuery(id));
         return TypedResults.Ok(result);
     }
 
-    public async Task<Created<int>> CreateTenantRole(ISender sender, CreateTenantRoleCommand command)
+    public async Task<Created<Guid>> CreateTenantRole(ISender sender, CreateTenantRoleCommand command)
     {
         var id = await sender.Send(command);
         return TypedResults.Created($"/{nameof(TenantRoles)}/{id}", id);
     }
 
-    public async Task<Results<NoContent, BadRequest>> UpdateTenantRole(ISender sender, int id, UpdateTenantRoleCommand command)
+    public async Task<Results<NoContent, BadRequest>> UpdateTenantRole(ISender sender, Guid id, UpdateTenantRoleCommand command)
     {
         if (id != command.Id) return TypedResults.BadRequest();
         await sender.Send(command);
         return TypedResults.NoContent();
     }
 
-    public async Task<NoContent> DeleteTenantRole(ISender sender, int id)
+    public async Task<NoContent> DeleteTenantRole(ISender sender, Guid id)
     {
         await sender.Send(new DeleteTenantRoleCommand(id));
         return TypedResults.NoContent();
     }
 
-    public async Task<NoContent> AssignPermissionsToRole(ISender sender, int id, AssignPermissionsToRoleCommand command)
+    public async Task<NoContent> AssignPermissionsToRole(ISender sender, Guid id, AssignPermissionsToRoleCommand command)
     {
         await sender.Send(command with { TenantRoleId = id });
         return TypedResults.NoContent();
     }
 
-    public async Task<NoContent> AssignRoleToUser(ISender sender, int id, AssignRoleToUserCommand command)
+    public async Task<NoContent> AssignRoleToUser(ISender sender, Guid id, AssignRoleToUserCommand command)
     {
         await sender.Send(command with { TenantRoleId = id });
         return TypedResults.NoContent();
     }
 
-    public async Task<NoContent> RemoveRoleFromUser(ISender sender, int id, string userId)
+    public async Task<NoContent> RemoveRoleFromUser(ISender sender, Guid id, string userId)
     {
         await sender.Send(new RemoveRoleFromUserCommand { TenantRoleId = id, UserId = userId });
         return TypedResults.NoContent();

@@ -6,7 +6,7 @@ using Backend.Domain.Events;
 namespace Backend.Application.Plans.Commands.CreatePlan;
 
 [Authorize(Roles = "Administrator")]
-public record CreatePlanCommand : IRequest<int>
+public record CreatePlanCommand : IRequest<Guid>
 {
     public string Name { get; set; } = string.Empty;
     public string Modules { get; set; } = string.Empty; // JSON veya CSV formatında tutulabilir
@@ -16,7 +16,7 @@ public record CreatePlanCommand : IRequest<int>
     public decimal Price { get; set; }
 }
 
-public class CreatePlanCommandHandler : IRequestHandler<CreatePlanCommand, int>
+public class CreatePlanCommandHandler : IRequestHandler<CreatePlanCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
     public CreatePlanCommandHandler(IApplicationDbContext context)
@@ -24,7 +24,7 @@ public class CreatePlanCommandHandler : IRequestHandler<CreatePlanCommand, int>
         _context = context;
     }
 
-    public async Task<int> Handle(CreatePlanCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreatePlanCommand request, CancellationToken cancellationToken)
     {
         var entity = new Plan
         {

@@ -71,7 +71,7 @@ public class EnergyPrices : EndpointGroupBase
     /// <param name="endDate">End date (inclusive). If null, only startDate's data is returned.</param>
     public async Task<Results<Ok<DayAheadEnergyPricesDto>, NotFound>> GetDayAheadPrices(
         ISender sender,
-        [FromQuery] int facilityId,
+        [FromQuery] Guid facilityId,
         [FromQuery] DateTimeOffset startDate,
         [FromQuery] DateTimeOffset? endDate = null)
     {
@@ -103,7 +103,7 @@ public class EnergyPrices : EndpointGroupBase
     /// <param name="endDate">End date (inclusive). If not specified, defaults to startDate + 1 day.</param>
     public async Task<Ok<LiveDayAheadEnergyPricesDto>> GetLiveDayAheadPrices(
         ISender sender,
-        [FromQuery] int firmId,
+        [FromQuery] Guid firmId,
         [FromQuery] DateTimeOffset? startDate = null,
         [FromQuery] DateTimeOffset? endDate = null)
     {
@@ -152,7 +152,7 @@ public class EnergyPrices : EndpointGroupBase
     /// </summary>
     /// <param name="sender">MediatR sender</param>
     /// <param name="id">Tariff ID</param>
-    public async Task<Results<Ok<TariffDto>, NotFound>> GetTariffById(ISender sender, int id)
+    public async Task<Results<Ok<TariffDto>, NotFound>> GetTariffById(ISender sender, Guid id)
     {
         var query = new GetTariffQuery { Id = id };
         var result = await sender.Send(query);
@@ -191,7 +191,7 @@ public class EnergyPrices : EndpointGroupBase
     /// <param name="sender">MediatR sender</param>
     /// <param name="command">Tariff creation data</param>
     /// <returns>The ID of the newly created tariff</returns>
-    public async Task<Created<int>> CreateTariff(ISender sender, CreateTariffCommand command)
+    public async Task<Created<Guid>> CreateTariff(ISender sender, CreateTariffCommand command)
     {
         var id = await sender.Send(command);
         return TypedResults.Created($"/api/EnergyPrices/Tariffs/{id}", id);
@@ -206,7 +206,7 @@ public class EnergyPrices : EndpointGroupBase
     /// <param name="id">The ID of the tariff to update (will be deactivated)</param>
     /// <param name="command">New tariff data</param>
     /// <returns>Result containing new tariff ID and migration count</returns>
-    public async Task<Ok<UpdateTariffResult>> UpdateTariff(ISender sender, int id, UpdateTariffCommand command)
+    public async Task<Ok<UpdateTariffResult>> UpdateTariff(ISender sender, Guid id, UpdateTariffCommand command)
     {
         // Ensure the ID in the route matches the command
         if (command.Id != id)
@@ -224,7 +224,7 @@ public class EnergyPrices : EndpointGroupBase
     /// </summary>
     /// <param name="sender">MediatR sender</param>
     /// <param name="id">The ID of the tariff to deactivate</param>
-    public async Task<Results<Ok, NotFound>> DeactivateTariff(ISender sender, int id)
+    public async Task<Results<Ok, NotFound>> DeactivateTariff(ISender sender, Guid id)
     {
         var command = new DeactivateTariffCommand { Id = id };
         await sender.Send(command);
@@ -248,8 +248,8 @@ public class EnergyPrices : EndpointGroupBase
         ISender sender,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] int? facilityId = null,
-        [FromQuery] int? tariffId = null,
+        [FromQuery] Guid? facilityId = null,
+        [FromQuery] Guid? tariffId = null,
         [FromQuery] bool? isActive = null)
     {
         var query = new GetFacilityTariffsQuery
@@ -269,7 +269,7 @@ public class EnergyPrices : EndpointGroupBase
     /// </summary>
     /// <param name="sender">MediatR sender</param>
     /// <param name="id">FacilityTariff ID</param>
-    public async Task<Results<Ok<FacilityTariffDto>, NotFound>> GetFacilityTariffById(ISender sender, int id)
+    public async Task<Results<Ok<FacilityTariffDto>, NotFound>> GetFacilityTariffById(ISender sender, Guid id)
     {
         var query = new GetFacilityTariffQuery { Id = id };
         var result = await sender.Send(query);
@@ -287,7 +287,7 @@ public class EnergyPrices : EndpointGroupBase
     /// </summary>
     /// <param name="sender">MediatR sender</param>
     /// <param name="facilityId">Facility ID</param>
-    public async Task<Results<Ok<FacilityTariffDto>, NotFound>> GetActiveTariffForFacility(ISender sender, int facilityId)
+    public async Task<Results<Ok<FacilityTariffDto>, NotFound>> GetActiveTariffForFacility(ISender sender, Guid facilityId)
     {
         var query = new GetActiveTariffForFacilityQuery { FacilityId = facilityId };
         var result = await sender.Send(query);
@@ -307,7 +307,7 @@ public class EnergyPrices : EndpointGroupBase
     /// <param name="sender">MediatR sender</param>
     /// <param name="command">Assignment data (FacilityId and TariffId)</param>
     /// <returns>The ID of the newly created assignment</returns>
-    public async Task<Created<int>> AssignTariffToFacility(ISender sender, AssignTariffToFacilityCommand command)
+    public async Task<Created<Guid>> AssignTariffToFacility(ISender sender, AssignTariffToFacilityCommand command)
     {
         var id = await sender.Send(command);
         return TypedResults.Created($"/api/EnergyPrices/FacilityTariffs/{id}", id);
@@ -322,7 +322,7 @@ public class EnergyPrices : EndpointGroupBase
     /// <param name="id">The ID of the current assignment to replace</param>
     /// <param name="command">Change data (NewTariffId)</param>
     /// <returns>The ID of the newly created assignment</returns>
-    public async Task<Ok<int>> ChangeFacilityTariff(ISender sender, int id, ChangeFacilityTariffCommand command)
+    public async Task<Ok<Guid>> ChangeFacilityTariff(ISender sender, Guid id, ChangeFacilityTariffCommand command)
     {
         // Ensure the ID in the route matches the command
         if (command.CurrentAssignmentId != id)
@@ -340,7 +340,7 @@ public class EnergyPrices : EndpointGroupBase
     /// </summary>
     /// <param name="sender">MediatR sender</param>
     /// <param name="id">The ID of the assignment to deactivate</param>
-    public async Task<Results<Ok, NotFound>> DeactivateFacilityTariff(ISender sender, int id)
+    public async Task<Results<Ok, NotFound>> DeactivateFacilityTariff(ISender sender, Guid id)
     {
         var command = new DeactivateFacilityTariffCommand { Id = id };
         await sender.Send(command);

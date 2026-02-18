@@ -11,12 +11,12 @@ public class FacilityTariff : BaseAuditableEntity
     /// <summary>
     /// The Facility this tariff is assigned to
     /// </summary>
-    public int FacilityId { get; set; }
+    public Guid FacilityId { get; set; }
 
     /// <summary>
     /// The Tariff assigned to the facility
     /// </summary>
-    public int TariffId { get; set; }
+    public Guid TariffId { get; set; }
 
     /// <summary>
     /// Whether this tariff assignment is currently active.

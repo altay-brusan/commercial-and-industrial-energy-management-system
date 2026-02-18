@@ -13,7 +13,7 @@ public class DeactivateFacilityTariffTests : BaseTestFixture
 
         var command = new DeactivateFacilityTariffCommand
         {
-            Id = 99999
+            Id = Guid.NewGuid()
         };
 
         await FluentActions.Invoking(() =>

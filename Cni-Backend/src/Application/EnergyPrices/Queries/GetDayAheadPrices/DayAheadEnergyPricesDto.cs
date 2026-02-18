@@ -5,10 +5,10 @@ namespace Backend.Application.EnergyPrices.Queries.GetDayAheadPrices;
 /// </summary>
 public class DayAheadEnergyPricesDto
 {
-    public int FacilityId { get; set; }
+    public Guid FacilityId { get; set; }
     public string FacilityName { get; set; } = string.Empty;
     public string Country { get; set; } = string.Empty;
-    public int MarketOperatorId { get; set; }
+    public Guid MarketOperatorId { get; set; }
     public string MarketOperatorCode { get; set; } = string.Empty;
     public DateTimeOffset StartDate { get; set; }
     public DateTimeOffset EndDate { get; set; }

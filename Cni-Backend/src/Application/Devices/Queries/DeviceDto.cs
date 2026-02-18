@@ -4,9 +4,9 @@ namespace Backend.Application.Devices.Queries;
 
 public class DeviceDto
 {
-    public int Id { get; init; }
-    public int FacilityId { get; set; }
-    public int DeviceTypeId { get; set; }
+    public Guid Id { get; init; }
+    public Guid FacilityId { get; set; }
+    public Guid DeviceTypeId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
     public string SerialNumber { get; set; } = string.Empty;

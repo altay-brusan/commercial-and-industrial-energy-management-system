@@ -5,7 +5,7 @@ public class DeactivateTariffCommandValidator : AbstractValidator<DeactivateTari
     public DeactivateTariffCommandValidator()
     {
         RuleFor(x => x.Id)
-            .GreaterThan(0)
-            .WithMessage("Tariff ID must be greater than 0.");
+            .NotEmpty()
+            .WithMessage("Tariff ID is required.");
     }
 }

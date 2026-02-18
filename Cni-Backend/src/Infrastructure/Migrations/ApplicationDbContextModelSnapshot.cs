@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Backend.Infrastructure.Data.Migrations
+namespace Backend.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -82,8 +82,8 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(70)
                         .HasColumnType("character varying(70)");
 
-                    b.Property<int?>("TenantId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -111,11 +111,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.DayAheadNetEnergyPriceHistory", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Country")
                         .IsRequired()
@@ -134,8 +132,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("MarketOperatorId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("MarketOperatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal>("NetPrice")
                         .HasPrecision(18, 6)
@@ -156,11 +154,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Device", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -168,11 +164,11 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("DeviceTypeId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("DeviceTypeId")
+                        .HasColumnType("uuid");
 
-                    b.Property<int>("FacilityId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -226,14 +222,14 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
-                    b.Property<int>("DeviceId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("DeviceLocalTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("FirmId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -254,9 +250,9 @@ namespace Backend.Infrastructure.Data.Migrations
                         .IsDescending(false, true)
                         .HasDatabaseName("IX_DeviceBessData_DeviceId_DeviceLocalTime");
 
-                    b.HasIndex("FirmId", "DeviceLocalTime")
+                    b.HasIndex("FacilityId", "DeviceLocalTime")
                         .IsDescending(false, true)
-                        .HasDatabaseName("IX_DeviceBessData_FirmId_DeviceLocalTime");
+                        .HasDatabaseName("IX_DeviceBessData_FacilityId_DeviceLocalTime");
 
                     b.ToTable("DeviceBessData", (string)null);
                 });
@@ -276,14 +272,14 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
-                    b.Property<int>("DeviceId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("DeviceLocalTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("FirmId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -304,9 +300,9 @@ namespace Backend.Infrastructure.Data.Migrations
                         .IsDescending(false, true)
                         .HasDatabaseName("IX_DevicePcsData_DeviceId_DeviceLocalTime");
 
-                    b.HasIndex("FirmId", "DeviceLocalTime")
+                    b.HasIndex("FacilityId", "DeviceLocalTime")
                         .IsDescending(false, true)
-                        .HasDatabaseName("IX_DevicePcsData_FirmId_DeviceLocalTime");
+                        .HasDatabaseName("IX_DevicePcsData_FacilityId_DeviceLocalTime");
 
                     b.ToTable("DevicePcsData", (string)null);
                 });
@@ -326,14 +322,14 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
-                    b.Property<int>("DeviceId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("DeviceLocalTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("FirmId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -354,9 +350,9 @@ namespace Backend.Infrastructure.Data.Migrations
                         .IsDescending(false, true)
                         .HasDatabaseName("IX_DeviceSmartMeterData_DeviceId_DeviceLocalTime");
 
-                    b.HasIndex("FirmId", "DeviceLocalTime")
+                    b.HasIndex("FacilityId", "DeviceLocalTime")
                         .IsDescending(false, true)
-                        .HasDatabaseName("IX_DeviceSmartMeterData_FirmId_DeviceLocalTime");
+                        .HasDatabaseName("IX_DeviceSmartMeterData_FacilityId_DeviceLocalTime");
 
                     b.ToTable("DeviceSmartMeterData", (string)null);
                 });
@@ -376,14 +372,14 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
-                    b.Property<int>("DeviceId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("DeviceLocalTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("FirmId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -404,20 +400,18 @@ namespace Backend.Infrastructure.Data.Migrations
                         .IsDescending(false, true)
                         .HasDatabaseName("IX_DeviceSolarData_DeviceId_DeviceLocalTime");
 
-                    b.HasIndex("FirmId", "DeviceLocalTime")
+                    b.HasIndex("FacilityId", "DeviceLocalTime")
                         .IsDescending(false, true)
-                        .HasDatabaseName("IX_DeviceSolarData_FirmId_DeviceLocalTime");
+                        .HasDatabaseName("IX_DeviceSolarData_FacilityId_DeviceLocalTime");
 
                     b.ToTable("DeviceSolarData", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceLink", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Configuration")
                         .IsRequired()
@@ -433,8 +427,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("FacilityId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -462,11 +456,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceType", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -495,11 +487,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Address")
                         .IsRequired()
@@ -518,8 +508,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<int>("EnergyUnit")
                         .HasColumnType("integer");
 
-                    b.Property<int>("FirmId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FirmId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -550,11 +540,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.FacilityTariff", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("ContractEndDate")
                         .HasColumnType("timestamp with time zone");
@@ -578,8 +566,8 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(5,4)")
                         .HasDefaultValue(0m);
 
-                    b.Property<int>("FacilityId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -596,8 +584,8 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<int>("TariffId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("TariffId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -611,11 +599,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Feature", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Category")
                         .HasMaxLength(100)
@@ -660,11 +646,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Firm", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Address")
                         .IsRequired()
@@ -739,8 +723,8 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -756,11 +740,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.FirmMarketOperator", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("AreaCode")
                         .IsRequired()
@@ -773,8 +755,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("FirmId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FirmId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -785,8 +767,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("MarketOperatorId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("MarketOperatorId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("SamplingPeriodMinutes")
                         .HasColumnType("integer");
@@ -803,11 +785,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.MarketOperator", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ApiKey")
                         .HasMaxLength(500)
@@ -861,11 +841,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -877,8 +855,8 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<int>("FeatureId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FeatureId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Key")
                         .IsRequired()
@@ -908,11 +886,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Plan", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("ApiAccess")
                         .HasColumnType("boolean");
@@ -955,11 +931,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.PlanFeature", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -967,8 +941,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("FeatureId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FeatureId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -976,8 +950,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("PlanId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -991,11 +965,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.RefreshToken", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -1042,11 +1014,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Tariff", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<string>("CountryName")
                         .IsRequired()
@@ -1102,11 +1072,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Tenant", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -1128,8 +1096,8 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<int?>("PlanId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("PlanId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -1140,11 +1108,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.TenantRole", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -1170,8 +1136,8 @@ namespace Backend.Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -1183,11 +1149,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.TenantRolePermission", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -1201,11 +1165,11 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("PermissionId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uuid");
 
-                    b.Property<int>("TenantRoleId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("TenantRoleId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -1219,11 +1183,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.UserFirmFacility", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -1231,11 +1193,11 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<int?>("FacilityId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("FacilityId")
+                        .HasColumnType("uuid");
 
-                    b.Property<int?>("FirmId")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("FirmId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -1243,8 +1205,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("UserId")
                         .HasColumnType("text");
@@ -1263,11 +1225,9 @@ namespace Backend.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.UserTenantRole", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -1281,8 +1241,8 @@ namespace Backend.Infrastructure.Data.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<int>("TenantRoleId")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("TenantRoleId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -1469,15 +1429,15 @@ namespace Backend.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend.Domain.Entities.Firm", "Firm")
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
                         .WithMany()
-                        .HasForeignKey("FirmId")
+                        .HasForeignKey("FacilityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Device");
 
-                    b.Navigation("Firm");
+                    b.Navigation("Facility");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceData.DevicePcsData", b =>
@@ -1488,15 +1448,15 @@ namespace Backend.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend.Domain.Entities.Firm", "Firm")
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
                         .WithMany()
-                        .HasForeignKey("FirmId")
+                        .HasForeignKey("FacilityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Device");
 
-                    b.Navigation("Firm");
+                    b.Navigation("Facility");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceData.DeviceSmartMeterData", b =>
@@ -1507,15 +1467,15 @@ namespace Backend.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend.Domain.Entities.Firm", "Firm")
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
                         .WithMany()
-                        .HasForeignKey("FirmId")
+                        .HasForeignKey("FacilityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Device");
 
-                    b.Navigation("Firm");
+                    b.Navigation("Facility");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceData.DeviceSolarData", b =>
@@ -1526,15 +1486,15 @@ namespace Backend.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend.Domain.Entities.Firm", "Firm")
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
                         .WithMany()
-                        .HasForeignKey("FirmId")
+                        .HasForeignKey("FacilityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Device");
 
-                    b.Navigation("Firm");
+                    b.Navigation("Facility");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceLink", b =>

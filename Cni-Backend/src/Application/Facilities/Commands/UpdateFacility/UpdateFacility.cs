@@ -8,8 +8,8 @@ namespace Backend.Application.Facilities.Commands.UpdateFacility;
 [RequirePermission(Backend.Domain.Constants.Permissions.FacilityEdit)]
 public record UpdateFacilityCommand : IRequest
 {
-    public int Id { get; set; }
-    public int FirmId { get; set; }
+    public Guid Id { get; set; }
+    public Guid FirmId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public int EnergyCapacity { get; set; }

@@ -5,7 +5,7 @@ public class AssignPermissionsToRoleCommandValidator : AbstractValidator<AssignP
     public AssignPermissionsToRoleCommandValidator()
     {
         RuleFor(v => v.TenantRoleId)
-            .GreaterThan(0);
+            .NotEmpty();
 
         RuleFor(v => v.PermissionIds)
             .NotNull();

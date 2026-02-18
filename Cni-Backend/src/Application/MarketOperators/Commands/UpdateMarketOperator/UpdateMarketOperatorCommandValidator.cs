@@ -11,7 +11,7 @@ public class UpdateMarketOperatorCommandValidator : AbstractValidator<UpdateMark
         _context = context;
 
         RuleFor(v => v.Id)
-            .GreaterThan(0);
+            .NotEmpty();
 
         RuleFor(v => v.Name)
             .NotEmpty()

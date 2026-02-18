@@ -8,7 +8,7 @@ namespace Backend.Application.Scada.Queries.GetScadaData;
 
 public record GetScadaQuery : IRequest<FacilityHubDto>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public DateTime Time { get; set; }
 }
 
@@ -41,24 +41,23 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
 
         foreach (var device in devices)
         {
-            switch (device.DeviceTypeId)
+            var deviceTypeName = device.DeviceType?.Name;
+            switch (deviceTypeName)
             {
-                case (int)DeviceTypeEnum.SolarPanel:
+                case "Solar":
                     await ProcessSolarDevice(device, facilityHub, cancellationToken, request.Time);
                     break;
-                case (int)DeviceTypeEnum.Bess:
+                case "Battery":
                     await ProcessBessDevice(device, facilityHub, cancellationToken, request.Time);
                     break;
-                case (int)DeviceTypeEnum.PCS:
+                case "PCS":
+                case "Inverter":
                     await ProcessPCSDevice(device, facilityHub, cancellationToken, request.Time);
                     break;
-                case (int)DeviceTypeEnum.SmartMeter:
+                case "Smart Meter":
                     await ProcessSmartMeterDevice(device, facilityHub, cancellationToken, request.Time);
                     break;
-                case (int)DeviceTypeEnum.FacilitySmartMeter:
-                    await ProcessFacilitySmartMeter(device, facilityHub, cancellationToken, request.Time);
-                    break;
-                case (int)DeviceTypeEnum.Generator:
+                case "Generator":
                     await ProcessGeneratorDevice(device, facilityHub, cancellationToken, request.Time);
                     break;
             }

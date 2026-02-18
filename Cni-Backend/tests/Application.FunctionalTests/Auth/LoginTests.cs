@@ -31,7 +31,7 @@ public class LoginTests : BaseTestFixture
         string email,
         string password = "TestPassword1!",
         string[]? roles = null,
-        int? tenantId = null)
+        Guid? tenantId = null)
     {
         await ExecuteWithServiceAsync<UserManager<ApplicationUser>>(async userManager =>
         {

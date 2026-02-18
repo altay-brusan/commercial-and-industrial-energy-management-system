@@ -6,7 +6,7 @@ namespace Backend.Application.FirmMarketOperators.Queries.GetFirmMarketOperator;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record GetFirmMarketOperatorQuery : IRequest<FirmMarketOperatorDto?>
 {
-    public int FirmId { get; set; }
+    public Guid FirmId { get; set; }
 }
 
 public class GetFirmMarketOperatorQueryHandler : IRequestHandler<GetFirmMarketOperatorQuery, FirmMarketOperatorDto?>
@@ -22,7 +22,7 @@ public class GetFirmMarketOperatorQueryHandler : IRequestHandler<GetFirmMarketOp
 
     public async Task<FirmMarketOperatorDto?> Handle(GetFirmMarketOperatorQuery request, CancellationToken cancellationToken)
     {
-        if (request.FirmId <= 0)
+        if (request.FirmId == Guid.Empty)
         {
             return null;
         }

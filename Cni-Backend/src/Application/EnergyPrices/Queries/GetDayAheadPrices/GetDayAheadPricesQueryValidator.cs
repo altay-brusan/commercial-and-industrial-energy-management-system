@@ -5,7 +5,7 @@ public class GetDayAheadPricesQueryValidator : AbstractValidator<GetDayAheadPric
     public GetDayAheadPricesQueryValidator()
     {
         RuleFor(v => v.FacilityId)
-            .GreaterThan(0)
+            .NotEmpty()
             .WithMessage("Facility ID is required.");
 
         RuleFor(v => v.StartDate)

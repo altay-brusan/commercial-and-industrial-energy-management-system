@@ -4,7 +4,7 @@ namespace Backend.Application.Tariffs;
 
 public class TariffDto
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string CountryName { get; set; } = string.Empty;
     public string? DistributorName { get; set; }
     public decimal DistributionFee { get; set; }
@@ -28,7 +28,7 @@ public class TariffDto
 
 public class TariffBriefDto
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string CountryName { get; set; } = string.Empty;
     public string? DistributorName { get; set; }
     public decimal DistributionFee { get; set; }

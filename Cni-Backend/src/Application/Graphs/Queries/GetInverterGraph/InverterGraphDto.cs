@@ -7,7 +7,7 @@
 public class InverterGraphDto
 {
     public DateTimeOffset Time { get; set; }
-    public int PcsId { get; set; }
+    public Guid PcsId { get; set; }
     public double? ActivePower { get; set; }
     public double? ReactivePower { get; set; }
     public double? PowerFactor { get; set; }

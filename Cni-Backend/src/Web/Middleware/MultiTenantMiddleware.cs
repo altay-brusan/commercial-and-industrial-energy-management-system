@@ -14,17 +14,17 @@ public class MultiTenantMiddleware() : IMiddleware
         {
             // 1. Extract authenticated tenant from JWT "tenant_id" claim
             var tenantIdString = context.User?.FindFirst("tenant_id")?.Value;
-            var parseTenantId = int.TryParse(tenantIdString, out int authenticatedTenantId);
-            var tenantId = parseTenantId ? authenticatedTenantId : (int?)null;
+            var parseTenantId = Guid.TryParse(tenantIdString, out Guid authenticatedTenantId);
+            var tenantId = parseTenantId ? authenticatedTenantId : (Guid?)null;
 
             // 2. Extract super admin status from "Administrator" role
             var isAdmin = context.User?.IsInRole("Administrator") ?? false;
 
             // 3. If admin, read X-Selected-Tenant-Id header for tenant impersonation
-            int? selectedTenantId = null;
+            Guid? selectedTenantId = null;
             if (isAdmin && context.Request.Headers.TryGetValue(SelectedTenantHeader, out var selectedTenantHeader))
             {
-                if (int.TryParse(selectedTenantHeader.ToString(), out int parsedSelectedTenant) && parsedSelectedTenant > 0)
+                if (Guid.TryParse(selectedTenantHeader.ToString(), out Guid parsedSelectedTenant) && parsedSelectedTenant != Guid.Empty)
                 {
                     selectedTenantId = parsedSelectedTenant;
                 }

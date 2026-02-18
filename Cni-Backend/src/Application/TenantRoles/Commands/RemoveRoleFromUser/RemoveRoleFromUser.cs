@@ -6,7 +6,7 @@ namespace Backend.Application.TenantRoles.Commands.RemoveRoleFromUser;
 [Authorize(Roles = "Administrator,TenantAdmin")]
 public record RemoveRoleFromUserCommand : IRequest
 {
-    public int TenantRoleId { get; init; }
+    public Guid TenantRoleId { get; init; }
     public string UserId { get; init; } = string.Empty;
 }
 

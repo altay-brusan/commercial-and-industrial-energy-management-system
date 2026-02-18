@@ -10,7 +10,7 @@ public class DayAheadNetEnergyPriceHistory : BaseAuditableEntity
     /// <summary>
     /// Reference to the Market Operator
     /// </summary>
-    public int MarketOperatorId { get; set; }
+    public Guid MarketOperatorId { get; set; }
 
     /// <summary>
     /// The country name for this price data (e.g., "Netherlands", "Turkey", "Germany")

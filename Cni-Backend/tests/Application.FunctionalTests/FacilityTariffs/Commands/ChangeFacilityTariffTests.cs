@@ -24,7 +24,7 @@ public class ChangeFacilityTariffTests : BaseTestFixture
 
         var command = new ChangeFacilityTariffCommand
         {
-            CurrentAssignmentId = 99999,
+            CurrentAssignmentId = Guid.NewGuid(),
             NewTariffId = tariff.Id
         };
 
@@ -85,7 +85,7 @@ public class ChangeFacilityTariffTests : BaseTestFixture
         var command = new ChangeFacilityTariffCommand
         {
             CurrentAssignmentId = facilityTariff.Id,
-            NewTariffId = 99999
+            NewTariffId = Guid.NewGuid()
         };
 
         await FluentActions.Invoking(() =>

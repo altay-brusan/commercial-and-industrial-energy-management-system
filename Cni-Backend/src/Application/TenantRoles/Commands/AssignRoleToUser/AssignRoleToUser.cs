@@ -7,7 +7,7 @@ namespace Backend.Application.TenantRoles.Commands.AssignRoleToUser;
 [Authorize(Roles = "Administrator,TenantAdmin")]
 public record AssignRoleToUserCommand : IRequest
 {
-    public int TenantRoleId { get; init; }
+    public Guid TenantRoleId { get; init; }
     public string UserId { get; init; } = string.Empty;
 }
 

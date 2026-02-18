@@ -20,8 +20,8 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
         builder.Property(e => e.DeviceId)
             .IsRequired();
 
-        // Denormalized FirmId for future partitioning
-        builder.Property(e => e.FirmId)
+        // Denormalized FacilityId for partitioning
+        builder.Property(e => e.FacilityId)
             .IsRequired();
 
         // Device local timestamp
@@ -45,10 +45,10 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
             .IsDescending(false, true)
             .HasDatabaseName($"IX_{typeof(T).Name}_DeviceId_DeviceLocalTime");
 
-        // Index for partitioning queries by FirmId
-        builder.HasIndex(e => new { e.FirmId, e.DeviceLocalTime })
+        // Index for partitioning queries by FacilityId
+        builder.HasIndex(e => new { e.FacilityId, e.DeviceLocalTime })
             .IsDescending(false, true)
-            .HasDatabaseName($"IX_{typeof(T).Name}_FirmId_DeviceLocalTime");
+            .HasDatabaseName($"IX_{typeof(T).Name}_FacilityId_DeviceLocalTime");
 
         // Foreign keys
         builder.HasOne(e => e.Device)
@@ -56,9 +56,9 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
             .HasForeignKey(e => e.DeviceId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(e => e.Firm)
+        builder.HasOne(e => e.Facility)
             .WithMany()
-            .HasForeignKey(e => e.FirmId)
+            .HasForeignKey(e => e.FacilityId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -8,10 +8,10 @@ namespace Backend.Application.Devices.Commands;
 
 [Authorize(Roles = "Administrator")]
 [RequirePermission(Backend.Domain.Constants.Permissions.DeviceCreate)]
-public record CreateDeviceCommand : IRequest<int>
+public record CreateDeviceCommand : IRequest<Guid>
 {
-    public int FacilityId { get; init; }
-    public int DeviceTypeId { get; init; }
+    public Guid FacilityId { get; init; }
+    public Guid DeviceTypeId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Model { get; init; } = string.Empty;
     public string SerialNumber { get; init; } = string.Empty;
@@ -19,7 +19,7 @@ public record CreateDeviceCommand : IRequest<int>
     public string Ports { get; init; } = "[]";
 }
 
-public class CreateDeviceCommandHandler : IRequestHandler<CreateDeviceCommand, int>
+public class CreateDeviceCommandHandler : IRequestHandler<CreateDeviceCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
@@ -28,7 +28,7 @@ public class CreateDeviceCommandHandler : IRequestHandler<CreateDeviceCommand, i
         _context = context;
     }
 
-    public async Task<int> Handle(CreateDeviceCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateDeviceCommand request, CancellationToken cancellationToken)
     {
         var entity = new Device
         {

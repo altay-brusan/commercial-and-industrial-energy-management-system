@@ -19,7 +19,7 @@ public class FacilityHubDto
 /// </summary>
 public abstract class DeviceDataDtoBase
 {
-    public int DeviceId { get; set; }
+    public Guid DeviceId { get; set; }
     public string? DeviceName { get; set; }
     public int? NodeId { get; set; } // Kept for backwards compatibility, always null
     public DateTimeOffset Timestamp { get; set; }

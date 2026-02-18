@@ -8,7 +8,7 @@ namespace Backend.Application.Graphs.Queries.GetSolarPowerProduction;
 [RequirePermission(Backend.Domain.Constants.Permissions.SolarView)]
 public record GetSolarPowerProductionQuery : IRequest<SolarGraphDto?>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 }

@@ -84,13 +84,13 @@ public class ApplicationDbContextInitializer
         // Without this, the Any() checks may return false even when records exist,
         // because the query filters require a tenant context that isn't set during startup.
 
-        int tenantId = 1;
-        int firmId = 1;
-        int facilitiyId = 1;
+        Guid tenantId = Guid.Empty;
+        Guid firmId = Guid.Empty;
+        Guid facilitiyId = Guid.Empty;
 
         // Create Tenant first (required for multi-tenancy)
         // Use IgnoreQueryFilters to check ALL tenants regardless of current tenant context
-        var existingTenant = await _context.Tenants.IgnoreQueryFilters().OrderBy(x => x.Id).FirstOrDefaultAsync();
+        var existingTenant = await _context.Tenants.IgnoreQueryFilters().OrderBy(x => x.Created).FirstOrDefaultAsync();
         if (existingTenant == null)
         {
             var tenant = new Tenant
@@ -112,7 +112,7 @@ public class ApplicationDbContextInitializer
 
         // Create Firm (required for Facility foreign key)
         // Use IgnoreQueryFilters to check ALL firms regardless of current tenant context
-        var existingFirm = await _context.Firms.IgnoreQueryFilters().OrderBy(x => x.Id).FirstOrDefaultAsync();
+        var existingFirm = await _context.Firms.IgnoreQueryFilters().OrderBy(x => x.Created).FirstOrDefaultAsync();
         if (existingFirm == null)
         {
             var firm = new Firm
@@ -146,7 +146,7 @@ public class ApplicationDbContextInitializer
 
         // Create Facility (required for Device foreign key)
         // Use IgnoreQueryFilters to check ALL facilities regardless of current tenant context
-        var existingFacility = await _context.Facilities.IgnoreQueryFilters().OrderBy(x => x.Id).FirstOrDefaultAsync();
+        var existingFacility = await _context.Facilities.IgnoreQueryFilters().OrderBy(x => x.Created).FirstOrDefaultAsync();
         if (existingFacility == null)
         {
             var facility = new Facility
@@ -388,12 +388,16 @@ public class ApplicationDbContextInitializer
             await _context.SaveChangesAsync();
         }
 
+        // Reload device types from DB to get their Guid IDs
+        var savedDeviceTypes = await _context.DeviceTypes.ToListAsync();
+        var dtLookup = savedDeviceTypes.ToDictionary(dt => dt.Name!, dt => dt.Id);
+
         var devices = new List<Device>
         {
             new Device
             {
                 FacilityId = facilitiyId,
-                DeviceTypeId = 4, // Battery
+                DeviceTypeId = dtLookup["Battery"],
                 Name = "BESS_001",
                 Model = "Tesla Megapack",
                 SerialNumber = "BESS-SN-001",
@@ -403,7 +407,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 FacilityId = facilitiyId,
-                DeviceTypeId = 1, // Solar
+                DeviceTypeId = dtLookup["Solar"],
                 Name = "PV_001",
                 Model = "SunPower Maxeon 6",
                 SerialNumber = "PV-SN-001",
@@ -413,7 +417,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 FacilityId = facilitiyId,
-                DeviceTypeId = 5, // Inverter
+                DeviceTypeId = dtLookup["Inverter"],
                 Name = "INVERTER_001",
                 Model = "SMA Sunny Tripower",
                 SerialNumber = "INV-SN-001",
@@ -423,7 +427,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 FacilityId = facilitiyId,
-                DeviceTypeId = 7, // Smart Meter
+                DeviceTypeId = dtLookup["Smart Meter"],
                 Name = "SM_001",
                 Model = "Schneider PM5560",
                 SerialNumber = "SM-SN-001",
@@ -433,7 +437,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 FacilityId = facilitiyId,
-                DeviceTypeId = 8, // Grid
+                DeviceTypeId = dtLookup["Grid"],
                 Name = "GRID_001",
                 Model = "Grid Connection",
                 SerialNumber = "GRID-SN-001",
@@ -442,7 +446,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 FacilityId = facilitiyId,
-                DeviceTypeId = 2, // Generator
+                DeviceTypeId = dtLookup["Generator"],
                 Name = "GEN_001",
                 Model = "Caterpillar C18",
                 SerialNumber = "GEN-SN-001",

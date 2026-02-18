@@ -15,13 +15,13 @@ public abstract class DeviceDataBase
     /// <summary>
     /// Reference to the device that generated this data
     /// </summary>
-    public int DeviceId { get; set; }
+    public Guid DeviceId { get; set; }
 
     /// <summary>
-    /// Denormalized FirmId for future partitioning
-    /// (Device → Facility → Firm)
+    /// Denormalized FacilityId for partitioning
+    /// (Device → Facility)
     /// </summary>
-    public int FirmId { get; set; }
+    public Guid FacilityId { get; set; }
 
     /// <summary>
     /// Timestamp from the device itself (device's local time)
@@ -41,5 +41,5 @@ public abstract class DeviceDataBase
 
     // Navigation
     public Device? Device { get; set; }
-    public Firm? Firm { get; set; }
+    public Facility? Facility { get; set; }
 }

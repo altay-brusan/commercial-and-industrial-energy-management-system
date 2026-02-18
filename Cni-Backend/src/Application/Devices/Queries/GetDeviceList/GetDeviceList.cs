@@ -37,20 +37,20 @@ public class GetDevicesWithPaginationQueryHandler : IRequestHandler<GetDevicesWi
     {
         var query = _context.Devices.AsQueryable();
 
-        List<int>? facilityIds = null;
-        List<int>? deviceTypes = null;
+        List<Guid>? facilityIds = null;
+        List<Guid>? deviceTypes = null;
 
         if (!string.IsNullOrEmpty(request.Facilities))
         {
-            facilityIds = request.Facilities.Split(',').Select(int.Parse).ToList();
+            facilityIds = request.Facilities.Split(',').Select(Guid.Parse).ToList();
         }
-        if (facilityIds is { Count: > 0 }) // Null degilse ve içinde eleman varsa filtre uygula
+        if (facilityIds is { Count: > 0 }) // Null degilse ve iï¿½inde eleman varsa filtre uygula
         {
             query = query.Where(x => facilityIds.Contains(x.FacilityId));
         }
         if (!string.IsNullOrEmpty(request.DeviceTypeList))
         {
-            deviceTypes = request.DeviceTypeList.Split(',').Select(int.Parse).ToList();
+            deviceTypes = request.DeviceTypeList.Split(',').Select(Guid.Parse).ToList();
         }
         if (deviceTypes is { Count: > 0 }) // Eger DeviceTypeList doluysa filtre uygula
         {

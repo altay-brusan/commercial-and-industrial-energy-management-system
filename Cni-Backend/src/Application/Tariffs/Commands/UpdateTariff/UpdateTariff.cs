@@ -16,7 +16,7 @@ public record UpdateTariffCommand : IRequest<UpdateTariffResult>
     /// <summary>
     /// The ID of the tariff to update (this tariff will be deactivated).
     /// </summary>
-    public int Id { get; init; }
+    public Guid Id { get; init; }
 
     public string CountryName { get; init; } = string.Empty;
     public string? DistributorName { get; init; }
@@ -34,12 +34,12 @@ public class UpdateTariffResult
     /// <summary>
     /// The ID of the newly created tariff version.
     /// </summary>
-    public int NewTariffId { get; set; }
+    public Guid NewTariffId { get; set; }
 
     /// <summary>
     /// The ID of the old (now deactivated) tariff.
     /// </summary>
-    public int OldTariffId { get; set; }
+    public Guid OldTariffId { get; set; }
 
     /// <summary>
     /// Number of facilities that were migrated to the new tariff.

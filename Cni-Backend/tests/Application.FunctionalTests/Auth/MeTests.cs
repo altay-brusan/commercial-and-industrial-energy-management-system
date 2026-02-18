@@ -32,7 +32,7 @@ public class MeTests : BaseTestFixture
         string? email = null,
         string password = "TestPassword1!",
         string[]? roles = null,
-        int? tenantId = null)
+        Guid? tenantId = null)
     {
         email ??= $"me-{Guid.NewGuid():N}@example.com";
 

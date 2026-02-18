@@ -4,7 +4,7 @@ namespace Backend.Domain.Entities;
 
 public class ApplicationUser : IdentityUser
 {
-    public int? TenantId { get; set; }
+    public Guid? TenantId { get; set; }
     public string? Name { get; set; }
     public string? Surname { get; set; }
     public string? Title { get; set; }

@@ -6,13 +6,13 @@ using Backend.Domain.Events;
 namespace Backend.Application.Tenants.Commands.CreateTenant;
 
 [Authorize(Roles = "Administrator")]
-public record CreateTenantCommand : IRequest<int>
+public record CreateTenantCommand : IRequest<Guid>
 {
     public string? Name { get; init; }
     public string? Identifier { get; init; }
 }
 
-public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, int>
+public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
@@ -21,7 +21,7 @@ public class CreateTenantCommandHandler : IRequestHandler<CreateTenantCommand, i
         _context = context;
     }
 
-    public async Task<int> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateTenantCommand request, CancellationToken cancellationToken)
     {
         var entity = new Tenant
         {

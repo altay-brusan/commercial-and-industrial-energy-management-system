@@ -7,7 +7,7 @@ namespace Backend.Application.Graphs.Queries.GetPowerGeneralGraph;
 [RequirePermission(Backend.Domain.Constants.Permissions.MonitoringView)]
 public record GetPowerGeneralGraphQuery : IRequest<List<PowerGeneralGraphDto>>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
 }

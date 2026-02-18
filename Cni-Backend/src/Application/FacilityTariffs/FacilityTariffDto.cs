@@ -4,10 +4,10 @@ namespace Backend.Application.FacilityTariffs;
 
 public class FacilityTariffDto
 {
-    public int Id { get; set; }
-    public int FacilityId { get; set; }
+    public Guid Id { get; set; }
+    public Guid FacilityId { get; set; }
     public string FacilityName { get; set; } = string.Empty;
-    public int TariffId { get; set; }
+    public Guid TariffId { get; set; }
     public string TariffCountryName { get; set; } = string.Empty;
     public string? TariffDistributorName { get; set; }
     public decimal DistributionFee { get; set; }
@@ -46,10 +46,10 @@ public class FacilityTariffDto
 
 public class FacilityTariffBriefDto
 {
-    public int Id { get; set; }
-    public int FacilityId { get; set; }
+    public Guid Id { get; set; }
+    public Guid FacilityId { get; set; }
     public string FacilityName { get; set; } = string.Empty;
-    public int TariffId { get; set; }
+    public Guid TariffId { get; set; }
     public string TariffCountryName { get; set; } = string.Empty;
     public string? TariffDistributorName { get; set; }
     public bool IsActive { get; set; }

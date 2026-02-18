@@ -14,7 +14,7 @@ public class GetLiveDayAheadEnergyPricesTests : BaseTestFixture
 
         var query = new GetLiveDayAheadEnergyPricesQuery
         {
-            FirmId = 99999
+            FirmId = Guid.NewGuid()
         };
 
         // Act
@@ -139,7 +139,7 @@ public class GetLiveDayAheadEnergyPricesTests : BaseTestFixture
 
         var query = new GetLiveDayAheadEnergyPricesQuery
         {
-            FirmId = 0 // Invalid
+            FirmId = Guid.Empty // Invalid
         };
 
         // Act & Assert
@@ -357,7 +357,7 @@ public class GetLiveDayAheadEnergyPricesTests : BaseTestFixture
 
         var query = new GetLiveDayAheadEnergyPricesQuery
         {
-            FirmId = 1,
+            FirmId = Guid.NewGuid(),
             StartDate = startDate,
             EndDate = endDate
         };

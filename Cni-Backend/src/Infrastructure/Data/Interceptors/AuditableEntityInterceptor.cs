@@ -75,7 +75,7 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
         }
     }
 
-    private void LogImpersonationAction(EntityEntry entry, string action, int? tenantId)
+    private void LogImpersonationAction(EntityEntry entry, string action, Guid? tenantId)
     {
         var entityType = entry.Entity.GetType().Name;
         var entityId = entry.Property("Id")?.CurrentValue;

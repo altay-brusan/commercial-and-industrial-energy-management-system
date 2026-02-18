@@ -4,7 +4,7 @@ using Backend.Application.Common.Security;
 namespace Backend.Application.TenantRoles.Commands.DeleteTenantRole;
 
 [Authorize(Roles = "Administrator,TenantAdmin")]
-public record DeleteTenantRoleCommand(int Id) : IRequest;
+public record DeleteTenantRoleCommand(Guid Id) : IRequest;
 
 public class DeleteTenantRoleCommandHandler : IRequestHandler<DeleteTenantRoleCommand>
 {

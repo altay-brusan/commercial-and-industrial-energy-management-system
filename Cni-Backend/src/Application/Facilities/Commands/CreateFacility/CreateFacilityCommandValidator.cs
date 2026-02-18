@@ -7,7 +7,7 @@ public class CreateFacilityCommandValidator : AbstractValidator<CreateFacilityCo
     public CreateFacilityCommandValidator()
     {
         RuleFor(v => v.FirmId)
-            .GreaterThan(0)
+            .NotEmpty()
             .WithMessage("FirmId is required.");
 
         RuleFor(v => v.Name)

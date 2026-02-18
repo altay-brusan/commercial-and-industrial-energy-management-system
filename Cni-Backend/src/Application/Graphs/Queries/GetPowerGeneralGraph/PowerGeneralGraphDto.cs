@@ -6,7 +6,7 @@
 /// </summary>
 public class PowerGeneralGraphDto
 {
-    public int FacilityId { get; set; }
+    public Guid FacilityId { get; set; }
     public DateTime Time { get; set; }
     public double? GeneratorPower { get; set; }
     public double? GridPower { get; set; }

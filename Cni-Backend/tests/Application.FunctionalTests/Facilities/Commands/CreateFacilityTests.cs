@@ -23,7 +23,7 @@ public class CreateFacilityTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
         var command = new CreateFacilityCommand
         {
-            FirmId = 0,
+            FirmId = Guid.Empty,
             Name = "Demo Solar Facility"
         };
 

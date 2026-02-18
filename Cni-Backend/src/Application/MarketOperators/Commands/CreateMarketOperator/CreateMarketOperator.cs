@@ -6,7 +6,7 @@ using Backend.Domain.Events;
 namespace Backend.Application.MarketOperators.Commands.CreateMarketOperator;
 
 [Authorize(Roles = "Administrator")]
-public record CreateMarketOperatorCommand : IRequest<int>
+public record CreateMarketOperatorCommand : IRequest<Guid>
 {
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
@@ -16,7 +16,7 @@ public record CreateMarketOperatorCommand : IRequest<int>
     public List<string> AreaCodes { get; set; } = new();
 }
 
-public class CreateMarketOperatorCommandHandler : IRequestHandler<CreateMarketOperatorCommand, int>
+public class CreateMarketOperatorCommandHandler : IRequestHandler<CreateMarketOperatorCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
@@ -25,7 +25,7 @@ public class CreateMarketOperatorCommandHandler : IRequestHandler<CreateMarketOp
         _context = context;
     }
 
-    public async Task<int> Handle(CreateMarketOperatorCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateMarketOperatorCommand request, CancellationToken cancellationToken)
     {
         var entity = new MarketOperator
         {

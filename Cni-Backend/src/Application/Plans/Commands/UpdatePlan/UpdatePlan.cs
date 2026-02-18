@@ -5,7 +5,7 @@ namespace Backend.Application.Plans.Commands.UpdatePlan;
 [Authorize(Roles = "Administrator")]
 public record UpdatePlanCommand : IRequest
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Modules { get; set; } = string.Empty; // JSON veya CSV formatında tutulabilir
     public bool ApiAccess { get; set; }

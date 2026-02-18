@@ -11,7 +11,7 @@ public class Facility : BaseAuditableEntity
     /// <summary>
     /// The Firm (Site/Factory) this facility belongs to
     /// </summary>
-    public int FirmId { get; set; }
+    public Guid FirmId { get; set; }
 
     /// <summary>
     /// Display name of the facility (e.g., "Solar Cluster A", "Battery Container 1")

@@ -2,7 +2,7 @@
 
 public class Firm : BaseAuditableEntity, IMultiTenantEntity
 {
-    public int TenantId { get; set; }
+    public Guid TenantId { get; set; }
     public string? Name { get; set; } 
     public string? LogoUrl { get; set; }
     public string? Type { get; set; } 

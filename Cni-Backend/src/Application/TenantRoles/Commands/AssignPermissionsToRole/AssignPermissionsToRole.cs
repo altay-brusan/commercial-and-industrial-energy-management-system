@@ -7,8 +7,8 @@ namespace Backend.Application.TenantRoles.Commands.AssignPermissionsToRole;
 [Authorize(Roles = "Administrator,TenantAdmin")]
 public record AssignPermissionsToRoleCommand : IRequest
 {
-    public int TenantRoleId { get; init; }
-    public List<int> PermissionIds { get; init; } = new();
+    public Guid TenantRoleId { get; init; }
+    public List<Guid> PermissionIds { get; init; } = new();
 }
 
 public class AssignPermissionsToRoleCommandHandler : IRequestHandler<AssignPermissionsToRoleCommand>

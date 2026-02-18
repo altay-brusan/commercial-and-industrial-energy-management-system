@@ -41,7 +41,7 @@ public class GetMarketOperatorTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
 
         // Act
-        var result = await Testing.SendAsync(new GetMarketOperatorQuery { Id = 99999 });
+        var result = await Testing.SendAsync(new GetMarketOperatorQuery { Id = Guid.NewGuid() });
 
         // Assert
         result.Should().BeNull();

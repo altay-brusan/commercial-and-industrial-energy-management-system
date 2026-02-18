@@ -4,7 +4,7 @@ namespace Backend.Domain.Entities;
 
 public class TenantRole : BaseAuditableEntity, IMultiTenantEntity
 {
-    public int TenantId { get; set; }
+    public Guid TenantId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;

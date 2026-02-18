@@ -5,7 +5,7 @@ using Backend.Domain.Events;
 namespace Backend.Application.FirmMarketOperators.Commands.DeleteFirmMarketOperator;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
-public record DeleteFirmMarketOperatorCommand(int Id) : IRequest;
+public record DeleteFirmMarketOperatorCommand(Guid Id) : IRequest;
 
 public class DeleteFirmMarketOperatorCommandHandler : IRequestHandler<DeleteFirmMarketOperatorCommand>
 {

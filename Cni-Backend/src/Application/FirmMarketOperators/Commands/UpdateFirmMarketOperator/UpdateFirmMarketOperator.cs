@@ -6,8 +6,8 @@ namespace Backend.Application.FirmMarketOperators.Commands.UpdateFirmMarketOpera
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record UpdateFirmMarketOperatorCommand : IRequest
 {
-    public int Id { get; set; }
-    public int MarketOperatorId { get; set; }
+    public Guid Id { get; set; }
+    public Guid MarketOperatorId { get; set; }
     public string AreaCode { get; set; } = string.Empty;
     public int SamplingPeriodMinutes { get; set; } = 60;
     public bool IsActive { get; set; } = true;

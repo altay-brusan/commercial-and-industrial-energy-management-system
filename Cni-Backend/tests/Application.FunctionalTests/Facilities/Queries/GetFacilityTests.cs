@@ -60,7 +60,7 @@ public class GetFacilityTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
 
         // Act
-        var result = await Testing.SendAsync(new GetFacilityQuery { Id = 99999 });
+        var result = await Testing.SendAsync(new GetFacilityQuery { Id = Guid.NewGuid() });
 
         // Assert
         result.Should().BeNull();
