@@ -30,6 +30,11 @@ public interface IApplicationDbContext
     DbSet<TenantRolePermission> TenantRolePermissions { get; }
     DbSet<UserTenantRole> UserTenantRoles { get; }
 
+    // Device models, alarms, connectivity
+    DbSet<DeviceModel> DeviceModels { get; }
+    DbSet<DeviceAlarm> DeviceAlarms { get; }
+    DbSet<FacilityConnectivity> FacilityConnectivities { get; }
+
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }
     DbSet<FirmMarketOperator> FirmMarketOperators { get; }

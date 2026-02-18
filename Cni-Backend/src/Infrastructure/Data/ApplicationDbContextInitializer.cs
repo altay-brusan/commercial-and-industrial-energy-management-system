@@ -47,7 +47,6 @@ public class ApplicationDbContextInitializer
     {
         try
         {
-            // Check if using SQLite (typically for tests) - use EnsureCreated instead of Migrate
             var isSqlite = _context.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) ?? false;
             if (isSqlite)
             {
