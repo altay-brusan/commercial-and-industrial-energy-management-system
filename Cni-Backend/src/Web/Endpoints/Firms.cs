@@ -33,14 +33,14 @@ public class Firms : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<Created<int>> CreateFirm(ISender sender, CreateFirmCommand command)
+    public async Task<Created<Guid>> CreateFirm(ISender sender, CreateFirmCommand command)
     {
         var id = await sender.Send(command);
 
         return TypedResults.Created($"/{nameof(Firms)}/{id}", id);
     }
 
-    public async Task<Results<NoContent, BadRequest>> UpdateFirm(ISender sender, int id, UpdateFirmCommand command)
+    public async Task<Results<NoContent, BadRequest>> UpdateFirm(ISender sender, Guid id, UpdateFirmCommand command)
     {
         if (id != command.Id) return TypedResults.BadRequest();
 
@@ -49,7 +49,7 @@ public class Firms : EndpointGroupBase
         return TypedResults.NoContent();
     }
 
-    public async Task<NoContent> DeleteFirm(ISender sender, int id)
+    public async Task<NoContent> DeleteFirm(ISender sender, Guid id)
     {
         await sender.Send(new DeleteFirmCommand(id));
 

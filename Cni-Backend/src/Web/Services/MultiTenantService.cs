@@ -4,18 +4,18 @@ namespace Backend.Web.Services;
 
 public class MultiTenantService : IMultiTenantService
 {
-    private int? _authenticatedTenantId;
-    private int? _selectedTenantId;
+    private Guid? _authenticatedTenantId;
+    private Guid? _selectedTenantId;
     private bool _isSuperAdmin;
 
     /// <inheritdoc />
-    public int? GetAuthenticatedTenantId() => _authenticatedTenantId;
+    public Guid? GetAuthenticatedTenantId() => _authenticatedTenantId;
 
     /// <inheritdoc />
-    public int? GetSelectedTenantId() => _isSuperAdmin ? _selectedTenantId : null;
+    public Guid? GetSelectedTenantId() => _isSuperAdmin ? _selectedTenantId : null;
 
     /// <inheritdoc />
-    public int? GetEffectiveTenantId()
+    public Guid? GetEffectiveTenantId()
     {
         if (_isSuperAdmin)
         {
@@ -47,13 +47,13 @@ public class MultiTenantService : IMultiTenantService
     public bool IsImpersonating() => _isSuperAdmin && _selectedTenantId.HasValue;
 
     /// <inheritdoc />
-    public void SetSelectedTenantId(int? tenantId)
+    public void SetSelectedTenantId(Guid? tenantId)
     {
         _selectedTenantId = tenantId;
     }
 
     /// <inheritdoc />
-    public void ValidateTenantAccess(int tenantId)
+    public void ValidateTenantAccess(Guid tenantId)
     {
         if (_isSuperAdmin)
         {
@@ -68,7 +68,7 @@ public class MultiTenantService : IMultiTenantService
     }
 
     /// <inheritdoc />
-    public int GetTenantIdForCreation(int? requestedTenantId = null)
+    public Guid GetTenantIdForCreation(Guid? requestedTenantId = null)
     {
         if (!_isSuperAdmin)
         {
@@ -88,7 +88,7 @@ public class MultiTenantService : IMultiTenantService
         }
 
         // 2. Requested tenant (from request body)
-        if (requestedTenantId.HasValue && requestedTenantId.Value > 0)
+        if (requestedTenantId.HasValue && requestedTenantId.Value != Guid.Empty)
         {
             return requestedTenantId.Value;
         }
@@ -102,7 +102,7 @@ public class MultiTenantService : IMultiTenantService
     /// Initializes the service with values from the middleware.
     /// Called by MultiTenantMiddleware after extracting values from the request.
     /// </summary>
-    public void Initialize(int? authenticatedTenantId, bool isSuperAdmin, int? selectedTenantId)
+    public void Initialize(Guid? authenticatedTenantId, bool isSuperAdmin, Guid? selectedTenantId)
     {
         _authenticatedTenantId = authenticatedTenantId;
         _isSuperAdmin = isSuperAdmin;
@@ -113,11 +113,11 @@ public class MultiTenantService : IMultiTenantService
 
     /// <inheritdoc />
     [Obsolete("Use GetEffectiveTenantId() for queries or GetAuthenticatedTenantId() for the user's home tenant")]
-    public int? GetCurrentTenantId() => GetEffectiveTenantId();
+    public Guid? GetCurrentTenantId() => GetEffectiveTenantId();
 
     /// <inheritdoc />
     [Obsolete("Use SetSelectedTenantId() instead")]
-    public int? SetCurrentTenantId(int? tenantId)
+    public Guid? SetCurrentTenantId(Guid? tenantId)
     {
         _authenticatedTenantId = tenantId;
         return _authenticatedTenantId;

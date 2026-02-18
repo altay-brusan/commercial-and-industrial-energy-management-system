@@ -16,7 +16,7 @@ public class Tenant : BaseAuditableEntity
     /// </summary>
     public string? Name { get; set; }
 
-    public int? PlanId { get; set; }
+    public Guid? PlanId { get; set; }
     public Plan? Plan { get; set; }
 
     // Navigation properties

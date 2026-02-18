@@ -7,7 +7,7 @@ public class GetLiveDayAheadEnergyPricesQueryValidator : AbstractValidator<GetLi
     public GetLiveDayAheadEnergyPricesQueryValidator()
     {
         RuleFor(v => v.FirmId)
-            .GreaterThan(0)
+            .NotEmpty()
             .WithMessage("FirmId is required.");
 
         RuleFor(v => v.EndDate)

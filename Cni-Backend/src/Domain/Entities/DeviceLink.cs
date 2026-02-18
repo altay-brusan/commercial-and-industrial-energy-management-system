@@ -9,7 +9,7 @@ public class DeviceLink : BaseAuditableEntity
     /// <summary>
     /// The Facility this link belongs to
     /// </summary>
-    public int FacilityId { get; set; }
+    public Guid FacilityId { get; set; }
 
     /// <summary>
     /// Unique identifier for the link within the facility (e.g., "AC_BUS_001", "DC_LINK_002")

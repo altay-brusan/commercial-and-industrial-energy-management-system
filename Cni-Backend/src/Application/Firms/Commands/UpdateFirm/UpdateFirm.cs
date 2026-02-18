@@ -6,7 +6,7 @@ namespace Backend.Application.Firms.Commands.UpdateFirm;
 [RequirePermission(Backend.Domain.Constants.Permissions.FirmEdit)]
 public record UpdateFirmCommand : IRequest
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string? Name { get; set; }
     public string? LogoUrl { get; set; }
     public string? Type { get; set; }

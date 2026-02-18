@@ -4,7 +4,7 @@ using Backend.Domain.Events;
 
 namespace Backend.Application.Plans.Commands.DeletePlan;
 [Authorize(Roles = "Administrator")]
-public record DeletePlanCommand(int Id) : IRequest;
+public record DeletePlanCommand(Guid Id) : IRequest;
 
 public class DeletePlanCommandHandler : IRequestHandler<DeletePlanCommand>
 {

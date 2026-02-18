@@ -18,12 +18,12 @@ public record GetFacilityTariffsQuery : IRequest<PaginatedList<FacilityTariffBri
     /// <summary>
     /// Filter by facility ID (optional).
     /// </summary>
-    public int? FacilityId { get; init; }
+    public Guid? FacilityId { get; init; }
 
     /// <summary>
     /// Filter by tariff ID (optional).
     /// </summary>
-    public int? TariffId { get; init; }
+    public Guid? TariffId { get; init; }
 
     /// <summary>
     /// Filter by active status. If null, returns all assignments.

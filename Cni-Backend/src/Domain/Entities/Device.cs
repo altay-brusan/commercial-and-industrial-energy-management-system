@@ -10,12 +10,12 @@ public class Device : BaseAuditableEntity
     /// <summary>
     /// The Facility this device belongs to
     /// </summary>
-    public int FacilityId { get; set; }
+    public Guid FacilityId { get; set; }
 
     /// <summary>
     /// The type of device (e.g., Inverter, Battery, Solar Panel)
     /// </summary>
-    public int DeviceTypeId { get; set; }
+    public Guid DeviceTypeId { get; set; }
 
     /// <summary>
     /// Display name of the device (e.g., "INVERTER_001", "BESS_002")

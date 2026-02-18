@@ -12,8 +12,8 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
         var command = new CreateFirmMarketOperatorCommand
         {
-            FirmId = 0,
-            MarketOperatorId = 1,
+            FirmId = Guid.Empty,
+            MarketOperatorId = Guid.NewGuid(),
             AreaCode = "10YNL----------L"
         };
 
@@ -27,8 +27,8 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
         var command = new CreateFirmMarketOperatorCommand
         {
-            FirmId = 1,
-            MarketOperatorId = 0,
+            FirmId = Guid.NewGuid(),
+            MarketOperatorId = Guid.Empty,
             AreaCode = "10YNL----------L"
         };
 
@@ -42,8 +42,8 @@ public class CreateFirmMarketOperatorTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
         var command = new CreateFirmMarketOperatorCommand
         {
-            FirmId = 1,
-            MarketOperatorId = 1,
+            FirmId = Guid.NewGuid(),
+            MarketOperatorId = Guid.NewGuid(),
             AreaCode = ""
         };
 

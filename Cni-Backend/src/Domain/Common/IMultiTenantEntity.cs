@@ -1,5 +1,5 @@
 ﻿namespace Backend.Domain.Common;
 public interface IMultiTenantEntity
 {
-    public int TenantId { get; set; }
+    public Guid TenantId { get; set; }
 }

@@ -4,8 +4,8 @@ public class LiveDayAheadEnergyPricesDto
 {
     public bool Success { get; set; }
     public string? ErrorMessage { get; set; }
-    public int? FirmId { get; set; }
-    public int MarketOperatorId { get; set; }
+    public Guid? FirmId { get; set; }
+    public Guid MarketOperatorId { get; set; }
     public string MarketOperatorName { get; set; } = string.Empty;
     public string MarketOperatorCode { get; set; } = string.Empty;
     public string AreaCode { get; set; } = string.Empty;

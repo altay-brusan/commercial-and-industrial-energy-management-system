@@ -28,13 +28,13 @@ public class GetFacilitiesWithPaginationQueryHandler : IRequestHandler<GetFacili
     {
         var query = _context.Facilities.AsQueryable();
 
-        List<int>? FirmIds = null;
+        List<Guid>? FirmIds = null;
 
         if (!string.IsNullOrEmpty(request.FirmIds))
         {
-            FirmIds = request.FirmIds.Split(',').Select(int.Parse).ToList();
+            FirmIds = request.FirmIds.Split(',').Select(Guid.Parse).ToList();
         }
-        if (FirmIds is { Count: > 0 }) // Null degilse ve içinde eleman varsa filtre uygula
+        if (FirmIds is { Count: > 0 }) // Null degilse ve iï¿½inde eleman varsa filtre uygula
         {
             query = query.Where(x => FirmIds.Contains(x.FirmId));
         }

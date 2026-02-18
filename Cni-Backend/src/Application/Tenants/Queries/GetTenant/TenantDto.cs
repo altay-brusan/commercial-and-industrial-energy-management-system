@@ -4,7 +4,7 @@ namespace Backend.Application.Tenants.Queries.GetTenant;
 
 public class TenantDto
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string? Identifier { get; set; }
     public string? Name { get; set; }
 

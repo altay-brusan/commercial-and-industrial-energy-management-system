@@ -4,7 +4,7 @@ using Backend.Application.Common.Security;
 namespace Backend.Application.TenantRoles.Queries.GetTenantRole;
 
 [Authorize(Roles = "Administrator,TenantAdmin")]
-public record GetTenantRoleQuery(int Id) : IRequest<TenantRoleDto>;
+public record GetTenantRoleQuery(Guid Id) : IRequest<TenantRoleDto>;
 
 public class GetTenantRoleQueryHandler : IRequestHandler<GetTenantRoleQuery, TenantRoleDto>
 {

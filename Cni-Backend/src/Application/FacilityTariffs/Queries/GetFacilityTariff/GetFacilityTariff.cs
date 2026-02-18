@@ -9,7 +9,7 @@ namespace Backend.Application.FacilityTariffs.Queries.GetFacilityTariff;
 [Authorize(Roles = "Administrator")]
 public record GetFacilityTariffQuery : IRequest<FacilityTariffDto?>
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
 }
 
 public class GetFacilityTariffQueryHandler : IRequestHandler<GetFacilityTariffQuery, FacilityTariffDto?>

@@ -6,7 +6,7 @@ namespace Backend.Application.MarketOperators.Queries.GetMarketOperator;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 public record GetMarketOperatorQuery : IRequest<MarketOperatorDto?>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 }
 
 public class GetMarketOperatorQueryHandler : IRequestHandler<GetMarketOperatorQuery, MarketOperatorDto?>

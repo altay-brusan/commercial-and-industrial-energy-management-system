@@ -6,9 +6,9 @@ using Backend.Domain.Events;
 namespace Backend.Application.Firms.Commands.CreateFirm;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.FirmCreate)]
-public record CreateFirmCommand : IRequest<int>
+public record CreateFirmCommand : IRequest<Guid>
 {
-    public int TenantId { get; set; }
+    public Guid TenantId { get; set; }
     public string? Name { get; set; }
     public string? LogoUrl { get; set; }
     public string? Type { get; set; }
@@ -25,7 +25,7 @@ public record CreateFirmCommand : IRequest<int>
     public string? TaxOffice { get; set; }
 }
 
-public class CreateFirmCommandHandler : IRequestHandler<CreateFirmCommand, int>
+public class CreateFirmCommandHandler : IRequestHandler<CreateFirmCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMultiTenantService _multiTenantService;
@@ -36,9 +36,9 @@ public class CreateFirmCommandHandler : IRequestHandler<CreateFirmCommand, int>
         _multiTenantService = multiTenantService;
     }
 
-    public async Task<int> Handle(CreateFirmCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateFirmCommand request, CancellationToken cancellationToken)
     {
-        var tenantId = _multiTenantService.GetTenantIdForCreation(request.TenantId > 0 ? request.TenantId : null);
+        var tenantId = _multiTenantService.GetTenantIdForCreation(request.TenantId != Guid.Empty ? request.TenantId : null);
 
         var entity = new Firm
         {

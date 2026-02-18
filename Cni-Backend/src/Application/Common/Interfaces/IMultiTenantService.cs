@@ -5,20 +5,20 @@ public interface IMultiTenantService
     /// <summary>
     /// Gets the tenant ID from the authenticated user's JWT claims.
     /// </summary>
-    int? GetAuthenticatedTenantId();
+    Guid? GetAuthenticatedTenantId();
 
     /// <summary>
     /// Gets the tenant ID selected by a super admin via the X-Selected-Tenant-Id header.
     /// Returns null if not a super admin or no tenant selected.
     /// </summary>
-    int? GetSelectedTenantId();
+    Guid? GetSelectedTenantId();
 
     /// <summary>
     /// Gets the effective tenant ID to use for queries.
     /// For super admins: returns selected tenant if set, otherwise null (shows all data).
     /// For regular users: returns authenticated tenant.
     /// </summary>
-    int? GetEffectiveTenantId();
+    Guid? GetEffectiveTenantId();
 
     /// <summary>
     /// Returns true if the current user is a super admin (Administrator role).
@@ -42,13 +42,13 @@ public interface IMultiTenantService
     /// Sets the selected tenant ID for admin tenant impersonation.
     /// Called by middleware when processing X-Selected-Tenant-Id header.
     /// </summary>
-    void SetSelectedTenantId(int? tenantId);
+    void SetSelectedTenantId(Guid? tenantId);
 
     /// <summary>
     /// Validates that the current user has access to the specified tenant.
     /// Throws UnauthorizedAccessException if access is denied.
     /// </summary>
-    void ValidateTenantAccess(int tenantId);
+    void ValidateTenantAccess(Guid tenantId);
 
     /// <summary>
     /// Gets the tenant ID to use when creating a new entity.
@@ -56,7 +56,7 @@ public interface IMultiTenantService
     /// For super admins: returns selected tenant (from header) or requestedTenantId if provided.
     /// Throws InvalidOperationException if admin hasn't selected a tenant and no requestedTenantId provided.
     /// </summary>
-    int GetTenantIdForCreation(int? requestedTenantId = null);
+    Guid GetTenantIdForCreation(Guid? requestedTenantId = null);
 
     #region Legacy Methods (Deprecated)
 
@@ -64,13 +64,13 @@ public interface IMultiTenantService
     /// Gets the current tenant ID. Use GetEffectiveTenantId() instead for new code.
     /// </summary>
     [Obsolete("Use GetEffectiveTenantId() for queries or GetAuthenticatedTenantId() for the user's home tenant")]
-    int? GetCurrentTenantId();
+    Guid? GetCurrentTenantId();
 
     /// <summary>
     /// Sets the current tenant ID. Use SetSelectedTenantId() instead.
     /// </summary>
     [Obsolete("Use SetSelectedTenantId() instead")]
-    int? SetCurrentTenantId(int? tenantId);
+    Guid? SetCurrentTenantId(Guid? tenantId);
 
     /// <summary>
     /// Sets the super admin flag. This is now handled automatically by middleware.

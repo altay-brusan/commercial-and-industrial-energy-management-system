@@ -106,7 +106,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 {
                     userFirmFacilities.Add(new UserFirmFacility
                     {
-                        TenantId = (int)tenantId,
+                        TenantId = tenantId.Value,
                         UserId = userId,
                         FirmId = userFirmFacility.FirmId,
                         FacilityId = userFirmFacility.FacilityId
@@ -482,7 +482,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
     {
         public required string Email { get; init; }
 
-        public int? TenantId { get; init; }
+        public Guid? TenantId { get; init; }
         public required string Name { get; set; }
         public required string Surname { get; set; }
         public string? Title { get; set; }
@@ -493,14 +493,14 @@ public static class IdentityApiEndpointRouteBuilderExtensions
     }
     public sealed class UserFirmFacilityRequest
     {
-        public int? FirmId { get; set; }
-        public int? FacilityId { get; set; }
+        public Guid? FirmId { get; set; }
+        public Guid? FacilityId { get; set; }
     }
-    
+
     public sealed class UserInfoDTO
     {
         public required string Email { get; init; }
-        public int? TenantId { get; init; }
+        public Guid? TenantId { get; init; }
         public string? Name { get; set; }
         public string? Surname { get; set; }
     }

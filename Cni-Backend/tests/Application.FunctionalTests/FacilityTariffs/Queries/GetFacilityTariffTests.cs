@@ -74,7 +74,7 @@ public class GetFacilityTariffTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
 
         // Act
-        var result = await Testing.SendAsync(new GetFacilityTariffQuery { Id = 99999 });
+        var result = await Testing.SendAsync(new GetFacilityTariffQuery { Id = Guid.NewGuid() });
 
         // Assert
         result.Should().BeNull();

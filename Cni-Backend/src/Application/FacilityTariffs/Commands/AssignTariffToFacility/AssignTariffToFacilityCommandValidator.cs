@@ -5,12 +5,12 @@ public class AssignTariffToFacilityCommandValidator : AbstractValidator<AssignTa
     public AssignTariffToFacilityCommandValidator()
     {
         RuleFor(x => x.FacilityId)
-            .GreaterThan(0)
-            .WithMessage("Facility ID must be greater than 0.");
+            .NotEmpty()
+            .WithMessage("Facility ID is required.");
 
         RuleFor(x => x.TariffId)
-            .GreaterThan(0)
-            .WithMessage("Tariff ID must be greater than 0.");
+            .NotEmpty()
+            .WithMessage("Tariff ID is required.");
 
         RuleFor(x => x.DiscountRate)
             .InclusiveBetween(0m, 1m)

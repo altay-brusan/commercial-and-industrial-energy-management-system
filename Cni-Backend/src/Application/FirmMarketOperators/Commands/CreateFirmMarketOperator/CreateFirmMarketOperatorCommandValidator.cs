@@ -11,10 +11,10 @@ public class CreateFirmMarketOperatorCommandValidator : AbstractValidator<Create
         _context = context;
 
         RuleFor(v => v.FirmId)
-            .GreaterThan(0);
+            .NotEmpty();
 
         RuleFor(v => v.MarketOperatorId)
-            .GreaterThan(0);
+            .NotEmpty();
 
         RuleFor(v => v.AreaCode)
             .NotEmpty()

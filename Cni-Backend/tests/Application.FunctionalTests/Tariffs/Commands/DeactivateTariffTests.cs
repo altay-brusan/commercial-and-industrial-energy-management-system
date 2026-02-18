@@ -12,7 +12,7 @@ public class DeactivateTariffTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
         var command = new DeactivateTariffCommand
         {
-            Id = 99999
+            Id = Guid.NewGuid()
         };
 
         await FluentActions.Invoking(() =>

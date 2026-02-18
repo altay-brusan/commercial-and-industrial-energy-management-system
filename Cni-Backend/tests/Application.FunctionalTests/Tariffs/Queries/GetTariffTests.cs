@@ -45,7 +45,7 @@ public class GetTariffTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
 
         // Act
-        var result = await Testing.SendAsync(new GetTariffQuery { Id = 99999 });
+        var result = await Testing.SendAsync(new GetTariffQuery { Id = Guid.NewGuid() });
 
         // Assert
         result.Should().BeNull();

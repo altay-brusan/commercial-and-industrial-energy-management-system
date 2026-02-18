@@ -12,7 +12,7 @@ public class UpdateTariffTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
         var command = new UpdateTariffCommand
         {
-            Id = 99999,
+            Id = Guid.NewGuid(),
             CountryName = "Netherlands",
             DistributionFee = 20m,
             TransmissionFee = 5m,

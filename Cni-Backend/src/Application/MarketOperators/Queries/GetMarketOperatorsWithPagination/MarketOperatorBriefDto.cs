@@ -4,7 +4,7 @@ namespace Backend.Application.MarketOperators.Queries.GetMarketOperatorsWithPagi
 
 public class MarketOperatorBriefDto
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public List<int> SupportedResolutions { get; set; } = new();

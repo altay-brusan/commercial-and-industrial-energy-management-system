@@ -14,7 +14,7 @@ public record GetDayAheadPricesQuery : IRequest<DayAheadEnergyPricesDto?>
     /// <summary>
     /// The facility to get prices for. The country is determined from the facility's firm configuration.
     /// </summary>
-    public int FacilityId { get; set; }
+    public Guid FacilityId { get; set; }
 
     /// <summary>
     /// Start date (inclusive). If EndDate is null, only this day's prices are returned.

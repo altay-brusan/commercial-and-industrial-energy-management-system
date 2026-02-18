@@ -14,7 +14,7 @@ public record DeactivateFacilityTariffCommand : IRequest<bool>
     /// <summary>
     /// The ID of the facility-tariff assignment to deactivate.
     /// </summary>
-    public int Id { get; init; }
+    public Guid Id { get; init; }
 }
 
 public class DeactivateFacilityTariffCommandHandler : IRequestHandler<DeactivateFacilityTariffCommand, bool>

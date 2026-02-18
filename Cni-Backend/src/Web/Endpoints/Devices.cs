@@ -31,7 +31,7 @@ public class Devices : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<Created<int>> CreateDevice(ISender sender, CreateDeviceCommand command)
+    public async Task<Created<Guid>> CreateDevice(ISender sender, CreateDeviceCommand command)
     {
         var id = await sender.Send(command);
 

@@ -10,7 +10,7 @@ namespace Backend.Application.Tariffs.Commands.CreateTariff;
 /// Only Administrators can create tariffs.
 /// </summary>
 [Authorize(Roles = "Administrator")]
-public record CreateTariffCommand : IRequest<int>
+public record CreateTariffCommand : IRequest<Guid>
 {
     public string CountryName { get; init; } = string.Empty;
     public string? DistributorName { get; init; }
@@ -20,7 +20,7 @@ public record CreateTariffCommand : IRequest<int>
     public string Currency { get; init; } = "EUR";
 }
 
-public class CreateTariffCommandHandler : IRequestHandler<CreateTariffCommand, int>
+public class CreateTariffCommandHandler : IRequestHandler<CreateTariffCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
@@ -29,7 +29,7 @@ public class CreateTariffCommandHandler : IRequestHandler<CreateTariffCommand, i
         _context = context;
     }
 
-    public async Task<int> Handle(CreateTariffCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateTariffCommand request, CancellationToken cancellationToken)
     {
         // Use a transaction to ensure atomicity
         await using var transaction = await _context.BeginTransactionAsync(cancellationToken);

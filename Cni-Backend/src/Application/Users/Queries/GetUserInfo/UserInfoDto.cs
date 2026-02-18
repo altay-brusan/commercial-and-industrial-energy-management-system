@@ -15,15 +15,15 @@ public sealed class UserInfoDto
 }
 public sealed class UserInfoTenantDto
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string? Name { get; set; }
     public List<UserInfoTenantDto>? Items { get; set; }
 }
 public sealed class UserFirmFacilityDto
 {
-    public int? FirmId { get; set; }
+    public Guid? FirmId { get; set; }
     public string? FirmName { get; set; }
-    public int? FacilityId { get; set; }
+    public Guid? FacilityId { get; set; }
     public string? FacilityName { get; set; }
     private class Mapping : Profile
     {

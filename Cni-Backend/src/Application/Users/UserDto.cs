@@ -6,7 +6,7 @@ public sealed class UserDto
 {
     public required string UserId { get; set; }
     public required string Email { get; init; }
-    public int? TenantId { get; set; }
+    public Guid? TenantId { get; set; }
     public string? Name { get; set; }
     public string? Surname { get; set; }
     public string? Title { get; set; }
@@ -16,7 +16,7 @@ public sealed class UserDto
 }
 public class UserFirmFacilityUserDto
 {
-    public int? FirmId { get; set; }
-    public int? FacilityId { get; set; }
+    public Guid? FirmId { get; set; }
+    public Guid? FacilityId { get; set; }
 
 }

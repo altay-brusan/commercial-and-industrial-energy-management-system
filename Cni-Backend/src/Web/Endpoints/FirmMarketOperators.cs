@@ -21,7 +21,7 @@ public class FirmMarketOperators : EndpointGroupBase
     /// <summary>
     /// Gets the Market Operator configuration for a firm.
     /// </summary>
-    public async Task<Ok<FirmMarketOperatorDto>> GetFirmMarketOperator(ISender sender, int firmId)
+    public async Task<Ok<FirmMarketOperatorDto>> GetFirmMarketOperator(ISender sender, Guid firmId)
     {
         var query = new GetFirmMarketOperatorQuery { FirmId = firmId };
         var result = await sender.Send(query);
@@ -31,7 +31,7 @@ public class FirmMarketOperators : EndpointGroupBase
     /// <summary>
     /// Assigns a Market Operator to a firm.
     /// </summary>
-    public async Task<Created<int>> CreateFirmMarketOperator(ISender sender, int firmId, CreateFirmMarketOperatorCommand command)
+    public async Task<Created<Guid>> CreateFirmMarketOperator(ISender sender, Guid firmId, CreateFirmMarketOperatorCommand command)
     {
         command.FirmId = firmId;
         var id = await sender.Send(command);
@@ -41,7 +41,7 @@ public class FirmMarketOperators : EndpointGroupBase
     /// <summary>
     /// Updates the Market Operator configuration for a firm.
     /// </summary>
-    public async Task<Results<NoContent, BadRequest>> UpdateFirmMarketOperator(ISender sender, int firmId, int id, UpdateFirmMarketOperatorCommand command)
+    public async Task<Results<NoContent, BadRequest>> UpdateFirmMarketOperator(ISender sender, Guid firmId, Guid id, UpdateFirmMarketOperatorCommand command)
     {
         if (id != command.Id) return TypedResults.BadRequest();
         await sender.Send(command);
@@ -51,7 +51,7 @@ public class FirmMarketOperators : EndpointGroupBase
     /// <summary>
     /// Removes the Market Operator assignment from a firm.
     /// </summary>
-    public async Task<NoContent> DeleteFirmMarketOperator(ISender sender, int firmId, int id)
+    public async Task<NoContent> DeleteFirmMarketOperator(ISender sender, Guid firmId, Guid id)
     {
         await sender.Send(new DeleteFirmMarketOperatorCommand(id));
         return TypedResults.NoContent();

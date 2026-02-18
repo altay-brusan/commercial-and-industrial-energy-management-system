@@ -10,10 +10,10 @@ namespace Backend.Application.FacilityTariffs.Commands.AssignTariffToFacility;
 /// Only Administrators can assign tariffs.
 /// </summary>
 [Authorize(Roles = "Administrator")]
-public record AssignTariffToFacilityCommand : IRequest<int>
+public record AssignTariffToFacilityCommand : IRequest<Guid>
 {
-    public int FacilityId { get; init; }
-    public int TariffId { get; init; }
+    public Guid FacilityId { get; init; }
+    public Guid TariffId { get; init; }
 
     // Optional contract details for special arrangements
     public string? ContractNumber { get; init; }
@@ -23,7 +23,7 @@ public record AssignTariffToFacilityCommand : IRequest<int>
     public string? Notes { get; init; }
 }
 
-public class AssignTariffToFacilityCommandHandler : IRequestHandler<AssignTariffToFacilityCommand, int>
+public class AssignTariffToFacilityCommandHandler : IRequestHandler<AssignTariffToFacilityCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
@@ -32,7 +32,7 @@ public class AssignTariffToFacilityCommandHandler : IRequestHandler<AssignTariff
         _context = context;
     }
 
-    public async Task<int> Handle(AssignTariffToFacilityCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(AssignTariffToFacilityCommand request, CancellationToken cancellationToken)
     {
         // Use a transaction to ensure atomicity
         await using var transaction = await _context.BeginTransactionAsync(cancellationToken);

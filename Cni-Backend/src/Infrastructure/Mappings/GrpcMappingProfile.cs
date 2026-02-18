@@ -27,41 +27,41 @@ public class GrpcMappingProfile : Profile
         CreateMap<BESSData, DeviceBessData>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.DeviceId, opt => opt.Ignore()) // Set by caller
-            .ForMember(dest => dest.FirmId, opt => opt.Ignore())   // Set by caller
+            .ForMember(dest => dest.FacilityId, opt => opt.Ignore())   // Set by caller
             .ForMember(dest => dest.DeviceLocalTime, opt => opt.MapFrom(_ => DateTimeOffset.UtcNow))
             .ForMember(dest => dest.Payload, opt => opt.MapFrom(src => SerializeBessData(src)))
             .ForMember(dest => dest.Device, opt => opt.Ignore())
-            .ForMember(dest => dest.Firm, opt => opt.Ignore());
+            .ForMember(dest => dest.Facility, opt => opt.Ignore());
 
         // PCS Mapping
         CreateMap<PCSData, DevicePcsData>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.DeviceId, opt => opt.Ignore())
-            .ForMember(dest => dest.FirmId, opt => opt.Ignore())
+            .ForMember(dest => dest.FacilityId, opt => opt.Ignore())
             .ForMember(dest => dest.DeviceLocalTime, opt => opt.MapFrom(_ => DateTimeOffset.UtcNow))
             .ForMember(dest => dest.Payload, opt => opt.MapFrom(src => SerializePcsData(src)))
             .ForMember(dest => dest.Device, opt => opt.Ignore())
-            .ForMember(dest => dest.Firm, opt => opt.Ignore());
+            .ForMember(dest => dest.Facility, opt => opt.Ignore());
 
         // SmartMeter Mapping
         CreateMap<SmartMeterData, DeviceSmartMeterData>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.DeviceId, opt => opt.Ignore())
-            .ForMember(dest => dest.FirmId, opt => opt.Ignore())
+            .ForMember(dest => dest.FacilityId, opt => opt.Ignore())
             .ForMember(dest => dest.DeviceLocalTime, opt => opt.MapFrom(_ => DateTimeOffset.UtcNow))
             .ForMember(dest => dest.Payload, opt => opt.MapFrom(src => SerializeSmartMeterData(src)))
             .ForMember(dest => dest.Device, opt => opt.Ignore())
-            .ForMember(dest => dest.Firm, opt => opt.Ignore());
+            .ForMember(dest => dest.Facility, opt => opt.Ignore());
 
         // Solar Mapping
         CreateMap<SolarData, DeviceSolarData>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.DeviceId, opt => opt.Ignore())
-            .ForMember(dest => dest.FirmId, opt => opt.Ignore())
+            .ForMember(dest => dest.FacilityId, opt => opt.Ignore())
             .ForMember(dest => dest.DeviceLocalTime, opt => opt.MapFrom(_ => DateTimeOffset.UtcNow))
             .ForMember(dest => dest.Payload, opt => opt.MapFrom(src => SerializeSolarData(src)))
             .ForMember(dest => dest.Device, opt => opt.Ignore())
-            .ForMember(dest => dest.Firm, opt => opt.Ignore());
+            .ForMember(dest => dest.Facility, opt => opt.Ignore());
     }
 
     private static string SerializeBessData(BESSData src)

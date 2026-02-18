@@ -11,17 +11,17 @@ namespace Backend.Application.FacilityTariffs.Commands.ChangeFacilityTariff;
 /// Only Administrators can change facility tariffs.
 /// </summary>
 [Authorize(Roles = "Administrator")]
-public record ChangeFacilityTariffCommand : IRequest<int>
+public record ChangeFacilityTariffCommand : IRequest<Guid>
 {
     /// <summary>
     /// The ID of the current facility-tariff assignment to deactivate.
     /// </summary>
-    public int CurrentAssignmentId { get; init; }
+    public Guid CurrentAssignmentId { get; init; }
 
     /// <summary>
     /// The ID of the new tariff to assign.
     /// </summary>
-    public int NewTariffId { get; init; }
+    public Guid NewTariffId { get; init; }
 
     // Optional contract details for special arrangements
     public string? ContractNumber { get; init; }
@@ -31,7 +31,7 @@ public record ChangeFacilityTariffCommand : IRequest<int>
     public string? Notes { get; init; }
 }
 
-public class ChangeFacilityTariffCommandHandler : IRequestHandler<ChangeFacilityTariffCommand, int>
+public class ChangeFacilityTariffCommandHandler : IRequestHandler<ChangeFacilityTariffCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
@@ -40,7 +40,7 @@ public class ChangeFacilityTariffCommandHandler : IRequestHandler<ChangeFacility
         _context = context;
     }
 
-    public async Task<int> Handle(ChangeFacilityTariffCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(ChangeFacilityTariffCommand request, CancellationToken cancellationToken)
     {
         // Use a transaction to ensure atomicity
         await using var transaction = await _context.BeginTransactionAsync(cancellationToken);

@@ -20,8 +20,8 @@ public record UpdateUserCommand : IRequest<Unit>  // Degisiklik: IRequest<Unit> 
 }
 public sealed class UpdateUserFirmFacilityDto
 {
-    public int? FirmId { get; set; }
-    public int? FacilityId { get; set; }
+    public Guid? FirmId { get; set; }
+    public Guid? FacilityId { get; set; }
 }
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>  // Degisiklik: IRequestHandler<UpdateUserCommand, Unit>
 {
@@ -42,7 +42,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
             var user = await _userManager.FindByIdAsync(request.UserId);
             Guard.Against.NotFound(request.UserId, user);
 
-            // Kullanici bilgilerini güncelle
+            // Kullanici bilgilerini gï¿½ncelle
             if (!string.IsNullOrEmpty(request.Email))
             {
                 user.Email = request.Email;
@@ -65,7 +65,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
                 throw new Exception(string.Join(", ", updateResult.Errors.Select(e => e.Description)));
             }
 
-            // Kullanicinin firma/tesis yetkilerini güncelle
+            // Kullanicinin firma/tesis yetkilerini gï¿½ncelle
             var existingUserFirmFacilities = await _unitOfWork.DbContext.UserFirmFacilities
                 .Where(uf => uf.UserId == user.Id)
                 .ToListAsync(cancellationToken);
@@ -76,7 +76,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
             var newUserFirmFacilities = request.UserFirmFacilities
                 .Select(f => new UserFirmFacility
                 {
-                    TenantId = user.TenantId ?? 0,
+                    TenantId = user.TenantId ?? Guid.Empty,
                     UserId = user.Id,
                     FirmId = f.FirmId,
                     FacilityId = f.FacilityId
@@ -88,7 +88,7 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Unit>
 
             // Eger her sey basariliysa, transaction commit edilir
             await transaction.CommitAsync(cancellationToken);
-            return Unit.Value;  // Burada Unit.Value döndürülüyor
+            return Unit.Value;  // Burada Unit.Value dï¿½ndï¿½rï¿½lï¿½yor
         }
         catch (Exception ex)
         {

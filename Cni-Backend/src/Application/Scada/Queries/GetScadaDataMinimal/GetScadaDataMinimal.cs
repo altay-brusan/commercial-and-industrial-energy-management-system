@@ -27,24 +27,45 @@ public class GetScadaDataMinimalQueryHandler : IRequestHandler<GetScadaDataMinim
     {
         var time = _virtualClockService.CurrentTime;
 
+        // Look up device IDs by DeviceType name
+        var solarDeviceIds = await _context.Devices
+            .Where(d => d.DeviceType!.Name == "Solar")
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
+        var bessDeviceIds = await _context.Devices
+            .Where(d => d.DeviceType!.Name == "Battery")
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
+        var pcsDeviceIds = await _context.Devices
+            .Where(d => d.DeviceType!.Name == "PCS" || d.DeviceType!.Name == "Inverter")
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
+        var smartMeterDeviceIds = await _context.Devices
+            .Where(d => d.DeviceType!.Name == "Smart Meter")
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
         // Get device data from new tables with JSON payloads
         var solarData = await _context.DeviceSolarData
-            .Where(f => f.DeviceId == 2)
+            .Where(f => solarDeviceIds.Contains(f.DeviceId))
             .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
             .FirstOrDefaultAsync(cancellationToken);
 
         var bessData = await _context.DeviceBessData
-            .Where(f => f.DeviceId == 1)
+            .Where(f => bessDeviceIds.Contains(f.DeviceId))
             .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
             .FirstOrDefaultAsync(cancellationToken);
 
         var pcsData = await _context.DevicePcsData
-            .Where(f => f.DeviceId == 3)
+            .Where(f => pcsDeviceIds.Contains(f.DeviceId))
             .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
             .FirstOrDefaultAsync(cancellationToken);
 
         var facilityData = await _context.DeviceSmartMeterData
-            .Where(f => f.DeviceId == 5)
+            .Where(f => smartMeterDeviceIds.Contains(f.DeviceId))
             .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
             .FirstOrDefaultAsync(cancellationToken);
 

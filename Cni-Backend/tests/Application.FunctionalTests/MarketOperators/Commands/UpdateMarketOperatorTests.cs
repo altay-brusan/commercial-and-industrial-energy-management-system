@@ -13,7 +13,7 @@ public class UpdateMarketOperatorTests : BaseTestFixture
         var uniqueCode = $"UPD_{Guid.NewGuid():N}";
         var command = new UpdateMarketOperatorCommand
         {
-            Id = 99999,
+            Id = Guid.NewGuid(),
             Name = "Updated Name",
             Code = uniqueCode,
             BaseUrl = "https://api.updated.com",

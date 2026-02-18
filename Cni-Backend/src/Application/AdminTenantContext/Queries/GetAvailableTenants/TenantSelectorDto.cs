@@ -5,7 +5,7 @@ public class TenantSelectorDto
     /// <summary>
     /// The tenant ID to use in X-Selected-Tenant-Id header.
     /// </summary>
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Display name for the tenant selector UI.

@@ -4,8 +4,8 @@ namespace Backend.Application.Firms.Queries.GetFirm;
 
 public class FirmDto
 {
-    public int Id { get; init; }
-    public int TenantId { get; set; }
+    public Guid Id { get; init; }
+    public Guid TenantId { get; set; }
     public string? Name { get; set; }
     public string? LogoUrl { get; set; }
     public string? Type { get; set; }

@@ -5,7 +5,7 @@ public class AssignRoleToUserCommandValidator : AbstractValidator<AssignRoleToUs
     public AssignRoleToUserCommandValidator()
     {
         RuleFor(v => v.TenantRoleId)
-            .GreaterThan(0);
+            .NotEmpty();
 
         RuleFor(v => v.UserId)
             .NotEmpty();

@@ -12,7 +12,7 @@ namespace Backend.Application.Devices.Queries.GetDevice;
 [RequirePermission(Backend.Domain.Constants.Permissions.DeviceView)]
 public record GetDeviceQuery : IRequest<DeviceDto?>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 }
 
 public class GetDeviceQueryHandler : IRequestHandler<GetDeviceQuery, DeviceDto?>

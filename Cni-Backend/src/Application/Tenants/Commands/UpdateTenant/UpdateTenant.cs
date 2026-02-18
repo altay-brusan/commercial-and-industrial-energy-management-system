@@ -6,7 +6,7 @@ namespace Backend.Application.Tenants.Commands.UpdateTenant;
 [Authorize(Roles = "Administrator")]
 public record UpdateTenantCommand : IRequest
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string? Name { get; init; }
     public string? Identifier { get; init; }
 }

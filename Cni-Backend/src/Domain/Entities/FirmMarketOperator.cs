@@ -9,12 +9,12 @@ public class FirmMarketOperator : BaseAuditableEntity
     /// <summary>
     /// The Firm this Market Operator configuration belongs to
     /// </summary>
-    public int FirmId { get; set; }
+    public Guid FirmId { get; set; }
 
     /// <summary>
     /// The Market Operator being configured
     /// </summary>
-    public int MarketOperatorId { get; set; }
+    public Guid MarketOperatorId { get; set; }
 
     /// <summary>
     /// The area/bidding zone code selected by this firm.

@@ -5,12 +5,12 @@ public class ChangeFacilityTariffCommandValidator : AbstractValidator<ChangeFaci
     public ChangeFacilityTariffCommandValidator()
     {
         RuleFor(x => x.CurrentAssignmentId)
-            .GreaterThan(0)
-            .WithMessage("Current assignment ID must be greater than 0.");
+            .NotEmpty()
+            .WithMessage("Current assignment ID is required.");
 
         RuleFor(x => x.NewTariffId)
-            .GreaterThan(0)
-            .WithMessage("New tariff ID must be greater than 0.");
+            .NotEmpty()
+            .WithMessage("New tariff ID is required.");
 
         RuleFor(x => x.DiscountRate)
             .InclusiveBetween(0m, 1m)

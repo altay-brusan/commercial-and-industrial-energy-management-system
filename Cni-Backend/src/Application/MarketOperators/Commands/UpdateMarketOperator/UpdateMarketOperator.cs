@@ -6,7 +6,7 @@ namespace Backend.Application.MarketOperators.Commands.UpdateMarketOperator;
 [Authorize(Roles = "Administrator")]
 public record UpdateMarketOperatorCommand : IRequest
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Code { get; set; } = string.Empty;
     public string BaseUrl { get; set; } = string.Empty;

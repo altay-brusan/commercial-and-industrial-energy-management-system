@@ -6,7 +6,7 @@ namespace Backend.Application.Firms.Queries.GetFirm;
 [RequirePermission(Backend.Domain.Constants.Permissions.FirmView)]
 public record GetFirmQuery : IRequest<FirmDto?>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 }
 
 public class GetFirmQueryHandler : IRequestHandler<GetFirmQuery, FirmDto?>

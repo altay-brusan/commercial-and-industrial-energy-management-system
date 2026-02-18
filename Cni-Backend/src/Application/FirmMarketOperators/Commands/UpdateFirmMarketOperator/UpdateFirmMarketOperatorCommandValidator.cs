@@ -11,10 +11,10 @@ public class UpdateFirmMarketOperatorCommandValidator : AbstractValidator<Update
         _context = context;
 
         RuleFor(v => v.Id)
-            .GreaterThan(0);
+            .NotEmpty();
 
         RuleFor(v => v.MarketOperatorId)
-            .GreaterThan(0);
+            .NotEmpty();
 
         RuleFor(v => v.AreaCode)
             .NotEmpty()

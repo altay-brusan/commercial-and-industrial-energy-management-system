@@ -14,7 +14,7 @@ public class PermissionService : IPermissionService
         _context = context;
     }
 
-    public async Task<bool> TenantHasFeatureAsync(int tenantId, string featureKey, CancellationToken ct = default)
+    public async Task<bool> TenantHasFeatureAsync(Guid tenantId, string featureKey, CancellationToken ct = default)
     {
         return await _context.Tenants
             .IgnoreQueryFilters()
@@ -23,7 +23,7 @@ public class PermissionService : IPermissionService
             .AnyAsync(pf => pf.Feature.Key == featureKey && pf.Feature.IsActive, ct);
     }
 
-    public async Task<bool> UserHasPermissionAsync(string userId, int tenantId, string permissionKey, CancellationToken ct = default)
+    public async Task<bool> UserHasPermissionAsync(string userId, Guid tenantId, string permissionKey, CancellationToken ct = default)
     {
         return await _context.Set<UserTenantRole>()
             .IgnoreQueryFilters()
@@ -34,7 +34,7 @@ public class PermissionService : IPermissionService
             .AnyAsync(trp => trp.Permission.Key == permissionKey, ct);
     }
 
-    public async Task<List<string>> GetUserPermissionsAsync(string userId, int tenantId, CancellationToken ct = default)
+    public async Task<List<string>> GetUserPermissionsAsync(string userId, Guid tenantId, CancellationToken ct = default)
     {
         return await _context.Set<UserTenantRole>()
             .IgnoreQueryFilters()
@@ -47,7 +47,7 @@ public class PermissionService : IPermissionService
             .ToListAsync(ct);
     }
 
-    public async Task<List<string>> GetTenantFeaturesAsync(int tenantId, CancellationToken ct = default)
+    public async Task<List<string>> GetTenantFeaturesAsync(Guid tenantId, CancellationToken ct = default)
     {
         return await _context.Tenants
             .IgnoreQueryFilters()

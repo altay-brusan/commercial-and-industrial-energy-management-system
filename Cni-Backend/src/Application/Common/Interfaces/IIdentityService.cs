@@ -12,7 +12,7 @@ public interface IIdentityService
 
     Task<bool> AuthorizeAsync(string userId, string policyName);
 
-    Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password, int tenantId);
+    Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password, Guid tenantId);
 
     Task<Result> DeleteUserAsync(string userId);
     Task<UserDto?> GetUserInfoAsync(CancellationToken cancellationToken);

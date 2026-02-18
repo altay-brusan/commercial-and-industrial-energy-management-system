@@ -5,7 +5,7 @@ using Backend.Domain.Events;
 namespace Backend.Application.Facilities.Commands.DeleteFacility;
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.FacilityDelete)]
-public record DeleteFacilityCommand(int Id) : IRequest;
+public record DeleteFacilityCommand(Guid Id) : IRequest;
 
 public class DeleteFacilityCommandHandler : IRequestHandler<DeleteFacilityCommand>
 {

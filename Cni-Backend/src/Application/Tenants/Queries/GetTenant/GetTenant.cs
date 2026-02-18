@@ -5,7 +5,7 @@ namespace Backend.Application.Tenants.Queries.GetTenant;
 [Authorize]
 public record GetTenantQuery : IRequest<TenantDto?>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 }
 
 public class GetTenantQueryHandler : IRequestHandler<GetTenantQuery, TenantDto?>

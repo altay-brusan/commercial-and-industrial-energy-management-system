@@ -5,17 +5,17 @@ public class TenantContextDto
     /// <summary>
     /// The tenant ID from the authenticated user's JWT claims.
     /// </summary>
-    public int? AuthenticatedTenantId { get; set; }
+    public Guid? AuthenticatedTenantId { get; set; }
 
     /// <summary>
     /// The tenant ID selected by the admin via X-Selected-Tenant-Id header.
     /// </summary>
-    public int? SelectedTenantId { get; set; }
+    public Guid? SelectedTenantId { get; set; }
 
     /// <summary>
     /// The effective tenant ID used for queries.
     /// </summary>
-    public int? EffectiveTenantId { get; set; }
+    public Guid? EffectiveTenantId { get; set; }
 
     /// <summary>
     /// Whether the current user is a super admin.

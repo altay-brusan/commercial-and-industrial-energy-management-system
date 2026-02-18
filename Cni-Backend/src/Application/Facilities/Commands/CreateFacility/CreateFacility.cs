@@ -8,9 +8,9 @@ namespace Backend.Application.Facilities.Commands.CreateFacility;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.FacilityCreate)]
-public record CreateFacilityCommand : IRequest<int>
+public record CreateFacilityCommand : IRequest<Guid>
 {
-    public int FirmId { get; set; }
+    public Guid FirmId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public int EnergyCapacity { get; set; }
@@ -19,7 +19,7 @@ public record CreateFacilityCommand : IRequest<int>
     public double Latitude { get; set; }
 }
 
-public class CreateFacilityCommandHandler : IRequestHandler<CreateFacilityCommand, int>
+public class CreateFacilityCommandHandler : IRequestHandler<CreateFacilityCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
 
@@ -28,7 +28,7 @@ public class CreateFacilityCommandHandler : IRequestHandler<CreateFacilityComman
         _context = context;
     }
 
-    public async Task<int> Handle(CreateFacilityCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateFacilityCommand request, CancellationToken cancellationToken)
     {
         var entity = new Facility
         {

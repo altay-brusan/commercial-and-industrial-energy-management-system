@@ -33,14 +33,14 @@ public class Plans : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public async Task<Created<int>> CreatePlan(ISender sender, CreatePlanCommand command)
+    public async Task<Created<Guid>> CreatePlan(ISender sender, CreatePlanCommand command)
     {
         var id = await sender.Send(command);
 
         return TypedResults.Created($"/{nameof(Plans)}/{id}", id);
     }
 
-    public async Task<Results<NoContent, BadRequest>> UpdatePlan(ISender sender, int id, UpdatePlanCommand command)
+    public async Task<Results<NoContent, BadRequest>> UpdatePlan(ISender sender, Guid id, UpdatePlanCommand command)
     {
         if (id != command.Id) return TypedResults.BadRequest();
 
@@ -49,7 +49,7 @@ public class Plans : EndpointGroupBase
         return TypedResults.NoContent();
     }
 
-    public async Task<NoContent> DeletePlan(ISender sender, int id)
+    public async Task<NoContent> DeletePlan(ISender sender, Guid id)
     {
         await sender.Send(new DeletePlanCommand(id));
 

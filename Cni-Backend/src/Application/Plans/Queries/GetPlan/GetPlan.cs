@@ -5,7 +5,7 @@ namespace Backend.Application.Plans.Queries.GetPlan;
 [Authorize(Roles = "Administrator")]
 public record GetPlanQuery : IRequest<PlanDto?>
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 }
 
 public class GetPlanQueryHandler : IRequestHandler<GetPlanQuery, PlanDto?>

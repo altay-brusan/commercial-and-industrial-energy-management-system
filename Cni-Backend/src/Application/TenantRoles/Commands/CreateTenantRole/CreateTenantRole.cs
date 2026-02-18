@@ -5,13 +5,13 @@ using Backend.Domain.Entities;
 namespace Backend.Application.TenantRoles.Commands.CreateTenantRole;
 
 [Authorize(Roles = "Administrator,TenantAdmin")]
-public record CreateTenantRoleCommand : IRequest<int>
+public record CreateTenantRoleCommand : IRequest<Guid>
 {
     public string Name { get; init; } = string.Empty;
     public string? Description { get; init; }
 }
 
-public class CreateTenantRoleCommandHandler : IRequestHandler<CreateTenantRoleCommand, int>
+public class CreateTenantRoleCommandHandler : IRequestHandler<CreateTenantRoleCommand, Guid>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMultiTenantService _multiTenantService;
@@ -22,7 +22,7 @@ public class CreateTenantRoleCommandHandler : IRequestHandler<CreateTenantRoleCo
         _multiTenantService = multiTenantService;
     }
 
-    public async Task<int> Handle(CreateTenantRoleCommand request, CancellationToken cancellationToken)
+    public async Task<Guid> Handle(CreateTenantRoleCommand request, CancellationToken cancellationToken)
     {
         var tenantId = _multiTenantService.GetTenantIdForCreation();
 

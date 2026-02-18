@@ -103,7 +103,7 @@ public class GetFirmMarketOperatorTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
 
         // Act
-        var result = await Testing.SendAsync(new GetFirmMarketOperatorQuery { FirmId = 99999 });
+        var result = await Testing.SendAsync(new GetFirmMarketOperatorQuery { FirmId = Guid.NewGuid() });
 
         // Assert
         result.Should().BeNull();
@@ -225,7 +225,7 @@ public class GetFirmMarketOperatorTests : BaseTestFixture
         await Testing.RunAsAdministratorAsync();
 
         // Act
-        var result = await Testing.SendAsync(new GetFirmMarketOperatorQuery { FirmId = 0 });
+        var result = await Testing.SendAsync(new GetFirmMarketOperatorQuery { FirmId = Guid.Empty });
 
         // Assert
         result.Should().BeNull();

@@ -5,8 +5,8 @@ namespace Backend.Application.Facilities.Queries.GetFacility;
 
 public class FacilityDto
 {
-    public int Id { get; init; }
-    public int FirmId { get; set; }
+    public Guid Id { get; init; }
+    public Guid FirmId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public int EnergyCapacity { get; set; }

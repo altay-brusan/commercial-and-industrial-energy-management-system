@@ -26,7 +26,7 @@ public class UpdateFirmMarketOperatorTests : BaseTestFixture
 
         var command = new UpdateFirmMarketOperatorCommand
         {
-            Id = 99999,
+            Id = Guid.NewGuid(),
             MarketOperatorId = marketOperator.Id,
             AreaCode = "10YNL----------L",
             SamplingPeriodMinutes = 60
