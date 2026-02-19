@@ -18,6 +18,16 @@ public class Device : BaseAuditableEntity
     public Guid DeviceTypeId { get; set; }
 
     /// <summary>
+    /// Optional reference to a specific device model/template (nullable for legacy devices)
+    /// </summary>
+    public Guid? DeviceModelId { get; set; }
+
+    /// <summary>
+    /// Self-reference for composite devices (e.g., cabinet → child subsystems)
+    /// </summary>
+    public Guid? ParentDeviceId { get; set; }
+
+    /// <summary>
     /// Display name of the device (e.g., "INVERTER_001", "BESS_002")
     /// </summary>
     public string Name { get; set; } = string.Empty;
@@ -44,7 +54,31 @@ public class Device : BaseAuditableEntity
     /// </summary>
     public string Ports { get; set; } = "[]";
 
+    /// <summary>
+    /// Original ID from topology JSON (for re-export/roundtrip)
+    /// </summary>
+    public string? TopologyId { get; set; }
+
+    /// <summary>
+    /// Instance-specific config as JSON (capacity, chemistry, commissioning date, etc.)
+    /// </summary>
+    public string? Metadata { get; set; }
+
+    /// <summary>
+    /// Current device status: online/offline/standby/fault/maintenance
+    /// </summary>
+    public string? Status { get; set; }
+
+    /// <summary>
+    /// Last telemetry timestamp from the device
+    /// </summary>
+    public DateTimeOffset? LastSeenUtc { get; set; }
+
     // Navigation properties
     public Facility? Facility { get; set; }
     public DeviceType? DeviceType { get; set; }
+    public DeviceModel? DeviceModel { get; set; }
+    public Device? ParentDevice { get; set; }
+    public ICollection<Device> ChildDevices { get; set; } = new List<Device>();
+    public ICollection<DeviceAlarm> Alarms { get; set; } = new List<DeviceAlarm>();
 }

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260218054756_InitialGuidSchema")]
-    partial class InitialGuidSchema
+    [Migration("20260218150536_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -167,6 +167,9 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("DeviceModelId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("DeviceTypeId")
                         .HasColumnType("uuid");
 
@@ -179,9 +182,15 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("LastSeenUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Manufacturer")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("Model")
                         .IsRequired()
@@ -193,21 +202,110 @@ namespace Backend.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid?>("ParentDeviceId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Ports")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("SerialNumber")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("TopologyId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("DeviceModelId");
 
                     b.HasIndex("DeviceTypeId");
 
-                    b.HasIndex("FacilityId");
+                    b.HasIndex("ParentDeviceId");
+
+                    b.HasIndex("FacilityId", "Status");
 
                     b.ToTable("Devices", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarm", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FaultKey")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("RecoveredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Severity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId", "IsActive");
+
+                    b.HasIndex("FacilityId", "OccurredAt")
+                        .IsDescending(false, true);
+
+                    b.ToTable("DeviceAlarms", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceData.DeviceBessData", b =>
@@ -234,6 +332,10 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<Guid>("FacilityId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Kind")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
@@ -256,6 +358,10 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("FacilityId", "DeviceLocalTime")
                         .IsDescending(false, true)
                         .HasDatabaseName("IX_DeviceBessData_FacilityId_DeviceLocalTime");
+
+                    b.HasIndex("DeviceId", "Kind", "DeviceLocalTime")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("IX_DeviceBessData_DeviceId_Kind_DeviceLocalTime");
 
                     b.ToTable("DeviceBessData", (string)null);
                 });
@@ -284,6 +390,10 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<Guid>("FacilityId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Kind")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
@@ -306,6 +416,10 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("FacilityId", "DeviceLocalTime")
                         .IsDescending(false, true)
                         .HasDatabaseName("IX_DevicePcsData_FacilityId_DeviceLocalTime");
+
+                    b.HasIndex("DeviceId", "Kind", "DeviceLocalTime")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("IX_DevicePcsData_DeviceId_Kind_DeviceLocalTime");
 
                     b.ToTable("DevicePcsData", (string)null);
                 });
@@ -334,6 +448,10 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<Guid>("FacilityId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Kind")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
@@ -356,6 +474,10 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("FacilityId", "DeviceLocalTime")
                         .IsDescending(false, true)
                         .HasDatabaseName("IX_DeviceSmartMeterData_FacilityId_DeviceLocalTime");
+
+                    b.HasIndex("DeviceId", "Kind", "DeviceLocalTime")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("IX_DeviceSmartMeterData_DeviceId_Kind_DeviceLocalTime");
 
                     b.ToTable("DeviceSmartMeterData", (string)null);
                 });
@@ -384,6 +506,10 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<Guid>("FacilityId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Kind")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
@@ -407,6 +533,10 @@ namespace Backend.Infrastructure.Migrations
                         .IsDescending(false, true)
                         .HasDatabaseName("IX_DeviceSolarData_FacilityId_DeviceLocalTime");
 
+                    b.HasIndex("DeviceId", "Kind", "DeviceLocalTime")
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("IX_DeviceSolarData_DeviceId_Kind_DeviceLocalTime");
+
                     b.ToTable("DeviceSolarData", (string)null);
                 });
 
@@ -418,11 +548,11 @@ namespace Backend.Infrastructure.Migrations
 
                     b.Property<string>("Configuration")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("ConnectedPorts")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -457,6 +587,50 @@ namespace Backend.Infrastructure.Migrations
                     b.ToTable("DeviceLinks", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("DeviceTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Manufacturer")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PortTemplate")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Specifications")
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceTypeId", "Name", "Manufacturer")
+                        .IsUnique();
+
+                    b.ToTable("DeviceModels", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.DeviceType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -468,6 +642,10 @@ namespace Backend.Infrastructure.Migrations
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -532,13 +710,78 @@ namespace Backend.Infrastructure.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("Topology")
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FirmId");
 
                     b.ToTable("Facilities", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.FacilityConnectivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Configuration")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastSeenUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("Port")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Protocol")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PublicIpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<string>("RtuModel")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RtuSerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("VpnIpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacilityId");
+
+                    b.HasIndex("RtuSerialNumber")
+                        .IsUnique();
+
+                    b.ToTable("FacilityConnectivities", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.FacilityTariff", b =>
@@ -1407,6 +1650,11 @@ namespace Backend.Infrastructure.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Device", b =>
                 {
+                    b.HasOne("Backend.Domain.Entities.DeviceModel", "DeviceModel")
+                        .WithMany("Devices")
+                        .HasForeignKey("DeviceModelId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Backend.Domain.Entities.DeviceType", "DeviceType")
                         .WithMany()
                         .HasForeignKey("DeviceTypeId")
@@ -1419,7 +1667,35 @@ namespace Backend.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Backend.Domain.Entities.Device", "ParentDevice")
+                        .WithMany("ChildDevices")
+                        .HasForeignKey("ParentDeviceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("DeviceModel");
+
                     b.Navigation("DeviceType");
+
+                    b.Navigation("Facility");
+
+                    b.Navigation("ParentDevice");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarm", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Device", "Device")
+                        .WithMany("Alarms")
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
+                        .WithMany()
+                        .HasForeignKey("FacilityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Device");
 
                     b.Navigation("Facility");
                 });
@@ -1511,6 +1787,17 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("Facility");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceModel", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.DeviceType", "DeviceType")
+                        .WithMany("DeviceModels")
+                        .HasForeignKey("DeviceTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DeviceType");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.Firm", "Firm")
@@ -1520,6 +1807,17 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Firm");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.FacilityConnectivity", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
+                        .WithMany("Connectivities")
+                        .HasForeignKey("FacilityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Facility");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.FacilityTariff", b =>
@@ -1751,8 +2049,27 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("UserTenantRoles");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Device", b =>
+                {
+                    b.Navigation("Alarms");
+
+                    b.Navigation("ChildDevices");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceModel", b =>
+                {
+                    b.Navigation("Devices");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceType", b =>
+                {
+                    b.Navigation("DeviceModels");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
                 {
+                    b.Navigation("Connectivities");
+
                     b.Navigation("DeviceLinks");
 
                     b.Navigation("Devices");

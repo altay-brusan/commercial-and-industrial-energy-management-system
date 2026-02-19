@@ -31,8 +31,17 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
             .HasMaxLength(200);
 
         builder.Property(d => d.Ports)
-            .HasColumnType("text")
+            .HasColumnType("jsonb")
             .IsRequired();
+
+        builder.Property(d => d.TopologyId)
+            .HasMaxLength(100);
+
+        builder.Property(d => d.Metadata)
+            .HasColumnType("jsonb");
+
+        builder.Property(d => d.Status)
+            .HasMaxLength(50);
 
         // Relationship to Facility
         builder.HasOne(d => d.Facility)
@@ -46,7 +55,19 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
             .HasForeignKey(d => d.DeviceTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Note: SerialNumber uniqueness not enforced at DB level due to existing duplicate data
-        // Add unique constraint later after data cleanup if needed
+        // Relationship to DeviceModel (nullable for legacy devices)
+        builder.HasOne(d => d.DeviceModel)
+            .WithMany(dm => dm.Devices)
+            .HasForeignKey(d => d.DeviceModelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Self-referencing relationship for composite devices
+        builder.HasOne(d => d.ParentDevice)
+            .WithMany(d => d.ChildDevices)
+            .HasForeignKey(d => d.ParentDeviceId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Index for unit listing with status filters
+        builder.HasIndex(d => new { d.FacilityId, d.Status });
     }
 }

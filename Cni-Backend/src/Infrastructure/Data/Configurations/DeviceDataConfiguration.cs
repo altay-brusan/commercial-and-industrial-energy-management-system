@@ -28,6 +28,10 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
         builder.Property(e => e.DeviceLocalTime)
             .IsRequired();
 
+        // Message type discriminator
+        builder.Property(e => e.Kind)
+            .HasMaxLength(100);
+
         // JSON payload - use PostgreSQL JSONB type for efficient querying
         builder.Property(e => e.Payload)
             .HasColumnType("jsonb")
@@ -49,6 +53,11 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
         builder.HasIndex(e => new { e.FacilityId, e.DeviceLocalTime })
             .IsDescending(false, true)
             .HasDatabaseName($"IX_{typeof(T).Name}_FacilityId_DeviceLocalTime");
+
+        // Index for kind-filtered queries
+        builder.HasIndex(e => new { e.DeviceId, e.Kind, e.DeviceLocalTime })
+            .IsDescending(false, false, true)
+            .HasDatabaseName($"IX_{typeof(T).Name}_DeviceId_Kind_DeviceLocalTime");
 
         // Foreign keys
         builder.HasOne(e => e.Device)

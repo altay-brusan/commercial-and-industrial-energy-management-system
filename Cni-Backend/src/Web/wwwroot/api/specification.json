@@ -340,6 +340,461 @@
         ]
       }
     },
+    "/api/v1/BatteryStorage/Units": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnits",
+        "parameters": [
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "SortDirection",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BessUnitsResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Units/{unitId}": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnits2",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BessUnitDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Units/{unitId}/Hierarchy": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsHierarchy",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HierarchyResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Units/{unitId}/HierarchyLevel": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsHierarchyLevel",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "parentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HierarchyLevelResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Units/{unitId}/Summary": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsSummary",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DynamicSectionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Units/{unitId}/Health": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsHealth",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DynamicSectionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Units/{unitId}/Curves": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsCurves",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Units/{unitId}/FaultFlags": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsFaultFlags",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaultFlagsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Units/{unitId}/Faults": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsFaults",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "x-position": 5
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaultsPaginatedResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/BatteryStorage/Schema": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageSchema",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/Devices/{id}": {
       "get": {
         "tags": [
@@ -2127,6 +2582,254 @@
         ]
       }
     },
+    "/api/v1/Pcs/Units": {
+      "get": {
+        "tags": [
+          "Pcs"
+        ],
+        "operationId": "GetApiV1PcsUnits",
+        "parameters": [
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          },
+          {
+            "name": "SortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "SortDirection",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PcsUnitsResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Pcs/Units/{unitId}": {
+      "get": {
+        "tags": [
+          "Pcs"
+        ],
+        "operationId": "GetApiV1PcsUnits2",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PcsUnitDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Pcs/Units/{unitId}/General": {
+      "get": {
+        "tags": [
+          "Pcs"
+        ],
+        "operationId": "GetApiV1PcsUnitsGeneral",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DynamicSectionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Pcs/Units/{unitId}/FaultFlags": {
+      "get": {
+        "tags": [
+          "Pcs"
+        ],
+        "operationId": "GetApiV1PcsUnitsFaultFlags",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaultFlagsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Pcs/Units/{unitId}/Curves": {
+      "get": {
+        "tags": [
+          "Pcs"
+        ],
+        "operationId": "GetApiV1PcsUnitsCurves",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChartResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Pcs/Schema": {
+      "get": {
+        "tags": [
+          "Pcs"
+        ],
+        "operationId": "GetApiV1PcsSchema",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchemaResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/Permissions": {
       "get": {
         "tags": [
@@ -3458,6 +4161,707 @@
         "properties": {
           "email": {
             "type": "string"
+          }
+        }
+      },
+      "BessUnitsResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BessUnitListItemDto"
+            }
+          },
+          "aggregates": {
+            "$ref": "#/components/schemas/BessAggregatesDto"
+          }
+        }
+      },
+      "BessUnitListItemDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "socPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "sohPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "powerKw": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "temperatureC": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "chargeStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastSeenUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "StatusBadgeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      },
+      "BessAggregatesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "onlineCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offlineCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "faultCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "avgSocPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "avgSohPercent": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalPowerKw": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalEnergyStoredKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "BessUnitDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "facilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TabInfoDto"
+            }
+          },
+          "lastSeenUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "TabInfoDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HierarchyResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "levels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HierarchyLevelDefinitionDto"
+            }
+          },
+          "rootItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HierarchyItemDto"
+            }
+          }
+        }
+      },
+      "HierarchyLevelDefinitionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "depth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasChildren": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HierarchyItemDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "status": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StatusBadgeDto"
+              }
+            ]
+          },
+          "data": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
+          },
+          "hasChildren": {
+            "type": "boolean"
+          },
+          "childCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HierarchyLevelResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "level": {
+            "type": "string"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "breadcrumb": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BreadcrumbDto"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HierarchyItemDto"
+            }
+          }
+        }
+      },
+      "BreadcrumbDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          }
+        }
+      },
+      "DynamicSectionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SectionFieldDto"
+            }
+          },
+          "subsections": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/SubsectionDto"
+            }
+          }
+        }
+      },
+      "SectionFieldDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "format": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SubsectionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SectionFieldDto"
+            }
+          }
+        }
+      },
+      "ChartResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "charts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartDefinitionDto"
+            }
+          },
+          "period": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          }
+        }
+      },
+      "ChartDefinitionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "chartType": {
+            "type": "string"
+          },
+          "xAxis": {
+            "$ref": "#/components/schemas/XAxisDto"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChartSeriesDto"
+            }
+          }
+        }
+      },
+      "XAxisDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ChartSeriesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "nullable": true
+            }
+          }
+        }
+      },
+      "FaultFlagsResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FaultFlagDto"
+            }
+          },
+          "sources": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/FaultSourceDto"
+            }
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FaultCategoryDto"
+            }
+          },
+          "summary": {
+            "$ref": "#/components/schemas/FaultFlagSummaryDto"
+          }
+        }
+      },
+      "FaultFlagDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "severity": {
+            "type": "string"
+          }
+        }
+      },
+      "FaultSourceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "activeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "FaultCategoryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "activeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "FaultFlagSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalFlags": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeFlags": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeBySource": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "activeByCategory": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "FaultsPaginatedResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FaultRecordDto"
+            }
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "FaultRecordDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recoveredAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "details": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SchemaResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "productTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductTypeSchemaDto"
+            }
+          }
+        }
+      },
+      "ProductTypeSchemaDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceModelId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "modelName": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "specifications": {
+            "nullable": true
           }
         }
       },
@@ -5068,6 +6472,209 @@
           },
           "isActive": {
             "type": "boolean"
+          }
+        }
+      },
+      "PcsUnitsResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PcsUnitListItemDto"
+            }
+          },
+          "aggregates": {
+            "$ref": "#/components/schemas/PcsAggregatesDto"
+          }
+        }
+      },
+      "PcsUnitListItemDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "gridMode": {
+            "type": "string",
+            "nullable": true
+          },
+          "activePowerKw": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "gridFreqHz": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "igbtTempC": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "efficiencyPct": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "powerFactor": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "linkedBessUnitId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "linkedBessUnitName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastSeenUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "PcsAggregatesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "onlineCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offlineCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "faultCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalActivePowerKw": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "avgEfficiencyPct": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "avgPowerFactor": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "PcsUnitDetailDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "facilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TabInfoDto"
+            }
+          },
+          "linkedBessUnit": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PcsLinkedBessDto"
+              }
+            ]
+          },
+          "lastSeenUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "PcsLinkedBessDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

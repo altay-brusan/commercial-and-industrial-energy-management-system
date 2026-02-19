@@ -30,7 +30,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     public DbSet<Device> Devices => Set<Device>();
     public DbSet<DeviceType> DeviceTypes => Set<DeviceType>();
+    public DbSet<DeviceModel> DeviceModels => Set<DeviceModel>();
     public DbSet<DeviceLink> DeviceLinks => Set<DeviceLink>();
+    public DbSet<FacilityConnectivity> FacilityConnectivities => Set<FacilityConnectivity>();
+    public DbSet<DeviceAlarm> DeviceAlarms => Set<DeviceAlarm>();
 
     // Device telemetry data (time-series with JSON payload)
     public DbSet<DeviceBessData> DeviceBessData => Set<DeviceBessData>();
@@ -70,6 +73,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         // Entities that access tenant through Facility → Firm need matching filters
         builder.Entity<Device>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<DeviceLink>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<FacilityConnectivity>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DeviceAlarm>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<FacilityTariff>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
         // Device telemetry data - filter by denormalized FacilityId → Firm → Tenant
         builder.Entity<DeviceBessData>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);

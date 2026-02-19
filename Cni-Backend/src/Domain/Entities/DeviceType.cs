@@ -11,4 +11,9 @@ public class DeviceType : BaseAuditableEntity
     /// Name of the device type (e.g., "Inverter", "Battery", "Solar")
     /// </summary>
     public required string Name { get; set; }
+
+    public string? Description { get; set; }
+
+    // Navigation
+    public ICollection<DeviceModel> DeviceModels { get; set; } = new List<DeviceModel>();
 }

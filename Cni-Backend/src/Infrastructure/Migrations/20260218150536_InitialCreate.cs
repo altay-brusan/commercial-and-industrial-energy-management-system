@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialGuidSchema : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -62,6 +62,7 @@ namespace Backend.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -291,6 +292,32 @@ namespace Backend.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DeviceModels",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    DeviceTypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Manufacturer = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    PortTemplate = table.Column<string>(type: "jsonb", nullable: true),
+                    Specifications = table.Column<string>(type: "jsonb", nullable: true),
+                    Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DeviceModels", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DeviceModels_DeviceTypes_DeviceTypeId",
+                        column: x => x.DeviceTypeId,
+                        principalTable: "DeviceTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Permissions",
                 columns: table => new
                 {
@@ -466,7 +493,7 @@ namespace Backend.Infrastructure.Migrations
                     EnergyUnit = table.Column<int>(type: "integer", nullable: false),
                     Longitude = table.Column<double>(type: "double precision", nullable: false),
                     Latitude = table.Column<double>(type: "double precision", nullable: false),
-                    Topology = table.Column<string>(type: "text", nullable: true),
+                    Topology = table.Column<string>(type: "jsonb", nullable: true),
                     Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -581,8 +608,8 @@ namespace Backend.Infrastructure.Migrations
                     FacilityId = table.Column<Guid>(type: "uuid", nullable: false),
                     LinkId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     LinkType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Configuration = table.Column<string>(type: "text", nullable: false),
-                    ConnectedPorts = table.Column<string>(type: "text", nullable: false),
+                    Configuration = table.Column<string>(type: "jsonb", nullable: false),
+                    ConnectedPorts = table.Column<string>(type: "jsonb", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -606,11 +633,17 @@ namespace Backend.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     FacilityId = table.Column<Guid>(type: "uuid", nullable: false),
                     DeviceTypeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DeviceModelId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ParentDeviceId = table.Column<Guid>(type: "uuid", nullable: true),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     Model = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     SerialNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Manufacturer = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Ports = table.Column<string>(type: "text", nullable: false),
+                    Ports = table.Column<string>(type: "jsonb", nullable: false),
+                    TopologyId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    Metadata = table.Column<string>(type: "jsonb", nullable: true),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    LastSeenUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     LastModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -620,13 +653,56 @@ namespace Backend.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_Devices", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Devices_DeviceModels_DeviceModelId",
+                        column: x => x.DeviceModelId,
+                        principalTable: "DeviceModels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_Devices_DeviceTypes_DeviceTypeId",
                         column: x => x.DeviceTypeId,
                         principalTable: "DeviceTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "FK_Devices_Devices_ParentDeviceId",
+                        column: x => x.ParentDeviceId,
+                        principalTable: "Devices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_Devices_Facilities_FacilityId",
+                        column: x => x.FacilityId,
+                        principalTable: "Facilities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FacilityConnectivities",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    FacilityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RtuSerialNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    RtuModel = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    VpnIpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    PublicIpAddress = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    Port = table.Column<int>(type: "integer", nullable: true),
+                    Protocol = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    LastSeenUtc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Configuration = table.Column<string>(type: "jsonb", nullable: true),
+                    Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FacilityConnectivities", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FacilityConnectivities_Facilities_FacilityId",
                         column: x => x.FacilityId,
                         principalTable: "Facilities",
                         principalColumn: "Id",
@@ -704,6 +780,45 @@ namespace Backend.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DeviceAlarms",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    DeviceId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FacilityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Severity = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Category = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Source = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    FaultKey = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    OccurredAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    RecoveredAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    Details = table.Column<string>(type: "jsonb", nullable: true),
+                    Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<string>(type: "text", nullable: true),
+                    LastModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastModifiedBy = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DeviceAlarms", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DeviceAlarms_Devices_DeviceId",
+                        column: x => x.DeviceId,
+                        principalTable: "Devices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DeviceAlarms_Facilities_FacilityId",
+                        column: x => x.FacilityId,
+                        principalTable: "Facilities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DeviceBessData",
                 columns: table => new
                 {
@@ -712,6 +827,7 @@ namespace Backend.Infrastructure.Migrations
                     DeviceId = table.Column<Guid>(type: "uuid", nullable: false),
                     FacilityId = table.Column<Guid>(type: "uuid", nullable: false),
                     DeviceLocalTime = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Kind = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Payload = table.Column<string>(type: "jsonb", nullable: false, defaultValue: "{}"),
                     Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
@@ -744,6 +860,7 @@ namespace Backend.Infrastructure.Migrations
                     DeviceId = table.Column<Guid>(type: "uuid", nullable: false),
                     FacilityId = table.Column<Guid>(type: "uuid", nullable: false),
                     DeviceLocalTime = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Kind = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Payload = table.Column<string>(type: "jsonb", nullable: false, defaultValue: "{}"),
                     Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
@@ -776,6 +893,7 @@ namespace Backend.Infrastructure.Migrations
                     DeviceId = table.Column<Guid>(type: "uuid", nullable: false),
                     FacilityId = table.Column<Guid>(type: "uuid", nullable: false),
                     DeviceLocalTime = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Kind = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Payload = table.Column<string>(type: "jsonb", nullable: false, defaultValue: "{}"),
                     Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
@@ -808,6 +926,7 @@ namespace Backend.Infrastructure.Migrations
                     DeviceId = table.Column<Guid>(type: "uuid", nullable: false),
                     FacilityId = table.Column<Guid>(type: "uuid", nullable: false),
                     DeviceLocalTime = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Kind = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Payload = table.Column<string>(type: "jsonb", nullable: false, defaultValue: "{}"),
                     Created = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
@@ -880,10 +999,27 @@ namespace Backend.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_DeviceAlarms_DeviceId_IsActive",
+                table: "DeviceAlarms",
+                columns: new[] { "DeviceId", "IsActive" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DeviceAlarms_FacilityId_OccurredAt",
+                table: "DeviceAlarms",
+                columns: new[] { "FacilityId", "OccurredAt" },
+                descending: new[] { false, true });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DeviceBessData_DeviceId_DeviceLocalTime",
                 table: "DeviceBessData",
                 columns: new[] { "DeviceId", "DeviceLocalTime" },
                 descending: new[] { false, true });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DeviceBessData_DeviceId_Kind_DeviceLocalTime",
+                table: "DeviceBessData",
+                columns: new[] { "DeviceId", "Kind", "DeviceLocalTime" },
+                descending: new[] { false, false, true });
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeviceBessData_FacilityId_DeviceLocalTime",
@@ -898,10 +1034,22 @@ namespace Backend.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_DeviceModels_DeviceTypeId_Name_Manufacturer",
+                table: "DeviceModels",
+                columns: new[] { "DeviceTypeId", "Name", "Manufacturer" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DevicePcsData_DeviceId_DeviceLocalTime",
                 table: "DevicePcsData",
                 columns: new[] { "DeviceId", "DeviceLocalTime" },
                 descending: new[] { false, true });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DevicePcsData_DeviceId_Kind_DeviceLocalTime",
+                table: "DevicePcsData",
+                columns: new[] { "DeviceId", "Kind", "DeviceLocalTime" },
+                descending: new[] { false, false, true });
 
             migrationBuilder.CreateIndex(
                 name: "IX_DevicePcsData_FacilityId_DeviceLocalTime",
@@ -910,20 +1058,36 @@ namespace Backend.Infrastructure.Migrations
                 descending: new[] { false, true });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Devices_DeviceModelId",
+                table: "Devices",
+                column: "DeviceModelId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Devices_DeviceTypeId",
                 table: "Devices",
                 column: "DeviceTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Devices_FacilityId",
+                name: "IX_Devices_FacilityId_Status",
                 table: "Devices",
-                column: "FacilityId");
+                columns: new[] { "FacilityId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Devices_ParentDeviceId",
+                table: "Devices",
+                column: "ParentDeviceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeviceSmartMeterData_DeviceId_DeviceLocalTime",
                 table: "DeviceSmartMeterData",
                 columns: new[] { "DeviceId", "DeviceLocalTime" },
                 descending: new[] { false, true });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DeviceSmartMeterData_DeviceId_Kind_DeviceLocalTime",
+                table: "DeviceSmartMeterData",
+                columns: new[] { "DeviceId", "Kind", "DeviceLocalTime" },
+                descending: new[] { false, false, true });
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeviceSmartMeterData_FacilityId_DeviceLocalTime",
@@ -936,6 +1100,12 @@ namespace Backend.Infrastructure.Migrations
                 table: "DeviceSolarData",
                 columns: new[] { "DeviceId", "DeviceLocalTime" },
                 descending: new[] { false, true });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DeviceSolarData_DeviceId_Kind_DeviceLocalTime",
+                table: "DeviceSolarData",
+                columns: new[] { "DeviceId", "Kind", "DeviceLocalTime" },
+                descending: new[] { false, false, true });
 
             migrationBuilder.CreateIndex(
                 name: "IX_DeviceSolarData_FacilityId_DeviceLocalTime",
@@ -953,6 +1123,17 @@ namespace Backend.Infrastructure.Migrations
                 name: "IX_Facilities_FirmId",
                 table: "Facilities",
                 column: "FirmId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FacilityConnectivities_FacilityId",
+                table: "FacilityConnectivities",
+                column: "FacilityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FacilityConnectivities_RtuSerialNumber",
+                table: "FacilityConnectivities",
+                column: "RtuSerialNumber",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_FacilityTariffs_FacilityId_IsActive",
@@ -1108,6 +1289,9 @@ namespace Backend.Infrastructure.Migrations
                 name: "DayAheadNetEnergyPriceHistories");
 
             migrationBuilder.DropTable(
+                name: "DeviceAlarms");
+
+            migrationBuilder.DropTable(
                 name: "DeviceBessData");
 
             migrationBuilder.DropTable(
@@ -1121,6 +1305,9 @@ namespace Backend.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "DeviceSolarData");
+
+            migrationBuilder.DropTable(
+                name: "FacilityConnectivities");
 
             migrationBuilder.DropTable(
                 name: "FacilityTariffs");
@@ -1165,13 +1352,16 @@ namespace Backend.Infrastructure.Migrations
                 name: "TenantRoles");
 
             migrationBuilder.DropTable(
-                name: "DeviceTypes");
+                name: "DeviceModels");
 
             migrationBuilder.DropTable(
                 name: "Facilities");
 
             migrationBuilder.DropTable(
                 name: "Features");
+
+            migrationBuilder.DropTable(
+                name: "DeviceTypes");
 
             migrationBuilder.DropTable(
                 name: "Firms");

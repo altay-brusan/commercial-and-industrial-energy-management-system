@@ -28,7 +28,7 @@ public class FacilityConfiguration : IEntityTypeConfiguration<Facility>
             .IsRequired();
 
         builder.Property(p => p.Topology)
-            .HasColumnType("text");
+            .HasColumnType("jsonb");
 
         // Relationship to Firm (Tenant access is through Firm)
         builder.HasOne(f => f.Firm)

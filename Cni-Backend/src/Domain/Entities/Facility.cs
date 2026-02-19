@@ -55,4 +55,5 @@ public class Facility : BaseAuditableEntity
     public ICollection<DeviceLink> DeviceLinks { get; set; } = new List<DeviceLink>();
     public ICollection<FacilityTariff> FacilityTariffs { get; set; } = new List<FacilityTariff>();
     public ICollection<UserFirmFacility> UserCompanyFacilities { get; set; } = new List<UserFirmFacility>();
+    public ICollection<FacilityConnectivity> Connectivities { get; set; } = new List<FacilityConnectivity>();
 }
