@@ -252,6 +252,46 @@ public class ApplicationDbContextInitializer
             }
         }
 
+        // Create Oklidis Admin user (for testing)
+        var oklidisAdmin = new ApplicationUser
+        {
+            UserName = "admin@oklidis.com.tr",
+            Email = "admin@oklidis.com.tr",
+            EmailConfirmed = true,
+            TenantId = tenantId,
+            Name = "Oklidis",
+            Surname = "Admin",
+            Title = "System Administrator",
+            Description = "Oklidis test administrator account"
+        };
+
+        if (_userManager.Users.All(u => u.UserName != oklidisAdmin.UserName))
+        {
+            var result = await _userManager.CreateAsync(oklidisAdmin, "Admin@123");
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRolesAsync(oklidisAdmin, new[] { Roles.Administrator });
+
+                var userFirmFacility = new UserFirmFacility
+                {
+                    TenantId = tenantId,
+                    UserId = oklidisAdmin.Id,
+                    FirmId = firmId,
+                    FacilityId = facilitiyId,
+                    Created = DateTime.UtcNow
+                };
+                _context.UserFirmFacilities.Add(userFirmFacility);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Oklidis admin user created successfully (admin@oklidis.com.tr)");
+            }
+            else
+            {
+                _logger.LogWarning("Failed to create Oklidis admin user: {Errors}",
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+        }
+
         #endregion
 
         #region FeaturesAndPermissions
