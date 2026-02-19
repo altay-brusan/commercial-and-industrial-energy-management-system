@@ -1,0 +1,144 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    jenkins: agent
+spec:
+  serviceAccountName: jenkins-agent
+  containers:
+  - name: node
+    image: node:20-alpine
+    command: ['cat']
+    tty: true
+  - name: docker
+    image: docker:27.0-cli
+    command: ['cat']
+    tty: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run/docker.sock
+  - name: kubectl
+    image: alpine/k8s:1.28.3
+    command: ['cat']
+    tty: true
+  volumes:
+  - name: docker-sock
+    hostPath:
+      path: /var/run/docker.sock
+            """
+        }
+    }
+
+    environment {
+        DOCKER_REGISTRY = 'REDACTED_HOST:30500'
+        DOCKER_IMAGE_NAME = 'cni-frontend'
+        GIT_COMMIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+        ENV_NAME = "${env.BRANCH_NAME == 'stg' ? 'stg' : 'dev'}"
+        K8S_NAMESPACE = "cni-${ENV_NAME}"
+        BUILD_TAG = "${ENV_NAME}-${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
+        IMAGE_LATEST = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${ENV_NAME}-latest"
+        DEPLOY_URL = "${ENV_NAME == 'stg' ? 'cni-app-stg.oklidis.com.tr' : 'cni-app-dev.oklidis.com.tr'}"
+        API_URL = "${ENV_NAME == 'stg' ? 'https://cni-api-stg.oklidis.com.tr/api' : 'https://cni-api-dev.oklidis.com.tr/api'}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build & Lint') {
+            steps {
+                container('node') {
+                    sh """
+                        npm ci
+                        npm run lint || true
+                        npm run build
+                    """
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                container('node') {
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                            sh """
+                                npm install -g sonarqube-scanner
+                                sonar-scanner \
+                                    -Dsonar.projectKey=cni-frontend \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.host.url=http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+                                    -Dsonar.token=\${SONAR_TOKEN} \
+                                    -Dsonar.branch.name=${ENV_NAME} \
+                                    -Dsonar.exclusions=node_modules/**,.next/**,public/**
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                container('docker') {
+                    sh """
+                        docker build \
+                            --build-arg NEXT_PUBLIC_API_URL=${API_URL} \
+                            -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG} \
+                            -f ./Dockerfile .
+                        docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG} \
+                            ${IMAGE_LATEST}
+                    """
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                container('docker') {
+                    sh """
+                        docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG}
+                        docker push ${IMAGE_LATEST}
+                    """
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                container('kubectl') {
+                    sh """
+                        kubectl set image deployment/cni-frontend \
+                            frontend=${IMAGE_LATEST} \
+                            -n ${K8S_NAMESPACE}
+                        kubectl rollout restart deployment/cni-frontend -n ${K8S_NAMESPACE}
+                        kubectl rollout status deployment/cni-frontend \
+                            -n ${K8S_NAMESPACE} --timeout=5m
+                    """
+                }
+            }
+            post {
+                success {
+                    echo "Deployed to ${ENV_NAME.toUpperCase()}: https://${DEPLOY_URL}"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                deleteDir()
+            }
+        }
+        success { echo "Pipeline completed: ${BUILD_TAG}" }
+        failure { echo "Pipeline failed!" }
+    }
+}
