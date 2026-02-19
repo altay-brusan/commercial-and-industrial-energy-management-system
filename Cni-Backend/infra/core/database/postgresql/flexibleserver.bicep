@@ -111,6 +111,9 @@ apk add postgresql-client
 cat << EOF > create_user.sql
 CREATE ROLE "$APPUSERLOGIN" WITH LOGIN PASSWORD '$APPUSERPASSWORD';
 GRANT ALL PRIVILEGES ON DATABASE $DBNAME TO "$APPUSERLOGIN";
+CREATE SCHEMA IF NOT EXISTS public;
+GRANT ALL ON SCHEMA public TO "$APPUSERLOGIN";
+GRANT ALL ON SCHEMA public TO PUBLIC;
 EOF
 
 psql "host=$DBSERVER.postgres.database.azure.com user=$ADMINLOGIN dbname=$DBNAME port=5432 password=$ADMINLOGINPASSWORD sslmode=require" < create_user.sql
