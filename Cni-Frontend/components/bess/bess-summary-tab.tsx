@@ -46,14 +46,14 @@ function SectionTitle({ title }: { title: string }) {
 }
 
 function getSOCColor(soc: number): string {
-  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-energy-solar";
-  if (soc >= 30) return "[&>[data-slot=progress-indicator]]:bg-energy-consumption";
-  return "[&>[data-slot=progress-indicator]]:bg-energy-grid";
+  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-status-operational";
+  if (soc >= 30) return "[&>[data-slot=progress-indicator]]:bg-severity-high";
+  return "[&>[data-slot=progress-indicator]]:bg-severity-critical";
 }
 
 function StatusBadge({ active, onLabel, offLabel }: { active: boolean; onLabel?: string; offLabel?: string }) {
   return active ? (
-    <Badge className="bg-energy-solar/15 text-energy-solar border-energy-solar/30 text-xs">{onLabel ?? "On"}</Badge>
+    <Badge className="bg-status-operational/15 text-status-operational border-status-operational/30 text-xs">{onLabel ?? "On"}</Badge>
   ) : (
     <Badge variant="outline" className="text-muted-foreground text-xs">{offLabel ?? "Off"}</Badge>
   );
@@ -245,9 +245,9 @@ export function BessSummaryTab({ unit }: BessSummaryTabProps) {
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{live.isolationStatus} kΩ</span>
             {live.isolationStatus < 500 ? (
-              <Badge className="bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30 text-xs">Low</Badge>
+              <Badge className="bg-severity-high/15 text-severity-high border-severity-high/30 text-xs">Low</Badge>
             ) : (
-              <Badge className="bg-energy-solar/15 text-energy-solar border-energy-solar/30 text-xs">Normal</Badge>
+              <Badge className="bg-status-operational/15 text-status-operational border-status-operational/30 text-xs">Normal</Badge>
             )}
           </div>
         </div>
@@ -319,9 +319,9 @@ export function BessSummaryTab({ unit }: BessSummaryTabProps) {
                         variant="outline"
                         className={
                           bcu.stateStr === "Active"
-                            ? "bg-energy-solar/15 text-energy-solar border-energy-solar/30 text-xs"
+                            ? "bg-status-operational/15 text-status-operational border-status-operational/30 text-xs"
                             : bcu.stateStr === "Fault"
-                              ? "bg-energy-grid/15 text-energy-grid border-energy-grid/30 text-xs"
+                              ? "bg-severity-critical/15 text-severity-critical border-severity-critical/30 text-xs"
                               : "text-xs"
                         }
                       >

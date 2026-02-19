@@ -15,19 +15,19 @@ export function FinancialKPIStrip({ currency, onCurrencyToggle }: FinancialKPISt
       label: "Total Revenue",
       value: formatCurrency(financialKPI.totalRevenue, currency),
       unit: "/mo",
-      color: "text-energy-solar",
+      color: "text-status-operational",
     },
     {
       label: "Total Cost",
       value: formatCurrency(financialKPI.totalCost, currency),
       unit: "/mo",
-      color: "text-energy-grid",
+      color: "text-severity-critical",
     },
     {
       label: "Net Income",
       value: formatCurrency(financialKPI.netIncome, currency),
       unit: "/mo",
-      color: financialKPI.netIncome >= 0 ? "text-energy-solar" : "text-energy-grid",
+      color: financialKPI.netIncome >= 0 ? "text-status-operational" : "text-severity-critical",
     },
     {
       label: "Gross Margin",
@@ -47,7 +47,7 @@ export function FinancialKPIStrip({ currency, onCurrencyToggle }: FinancialKPISt
       label: "ROI",
       value: `${financialKPI.roi.toFixed(1)}%`,
       unit: "",
-      color: "text-energy-solar",
+      color: "text-status-operational",
     },
   ];
 

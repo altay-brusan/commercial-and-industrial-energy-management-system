@@ -29,11 +29,11 @@ function getSeverityIcon(severity: AlarmSeverity) {
 function getSeverityColor(severity: AlarmSeverity) {
   switch (severity) {
     case "critical":
-      return "bg-energy-grid/15 text-energy-grid border-energy-grid/30";
+      return "bg-severity-critical/15 text-severity-critical border-severity-critical/30";
     case "high":
-      return "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30";
+      return "bg-severity-high/15 text-severity-high border-severity-high/30";
     case "medium":
-      return "bg-energy-battery/15 text-energy-battery border-energy-battery/30";
+      return "bg-severity-medium/15 text-severity-medium border-severity-medium/30";
     case "low":
       return "bg-muted text-muted-foreground border-border";
   }
@@ -42,11 +42,11 @@ function getSeverityColor(severity: AlarmSeverity) {
 function getSeverityIconColor(severity: AlarmSeverity) {
   switch (severity) {
     case "critical":
-      return "text-energy-grid";
+      return "text-severity-critical";
     case "high":
-      return "text-energy-consumption";
+      return "text-severity-high";
     case "medium":
-      return "text-energy-battery";
+      return "text-severity-medium";
     case "low":
       return "text-muted-foreground";
   }

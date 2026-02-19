@@ -67,15 +67,15 @@ function DRStatusBadge({ status }: { status: DRStatus }) {
   switch (status) {
     case "enrolled":
       return (
-        <Badge className="bg-energy-solar/15 text-energy-solar border-energy-solar/30 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-solar" />
+        <Badge className="bg-status-operational/15 text-status-operational border-status-operational/30 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-operational" />
           Enrolled
         </Badge>
       );
     case "active":
       return (
-        <Badge className="bg-energy-battery/15 text-energy-battery border-energy-battery/30 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-battery animate-pulse" />
+        <Badge className="bg-severity-medium/15 text-severity-medium border-severity-medium/30 gap-1">
+          <span className="h-2 w-2 rounded-full bg-severity-medium animate-pulse" />
           Active
         </Badge>
       );
@@ -260,9 +260,9 @@ export function DemandResponseView() {
                           <div
                             className={cn(
                               "inline-flex items-center justify-center w-8 h-6 rounded text-[9px] font-mono",
-                              isHigh && "bg-energy-grid/20 text-energy-grid",
-                              isMedium && "bg-energy-consumption/20 text-energy-consumption",
-                              !isHigh && !isMedium && "bg-energy-solar/20 text-energy-solar"
+                              isHigh && "bg-severity-critical/20 text-severity-critical",
+                              isMedium && "bg-severity-high/20 text-severity-high",
+                              !isHigh && !isMedium && "bg-status-operational/20 text-status-operational"
                             )}
                           >
                             {val}

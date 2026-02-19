@@ -10,11 +10,11 @@ interface AlarmStatusBadgeProps {
 export function getAlarmStatusColor(status: AlarmStatus): string {
   switch (status) {
     case "active":
-      return "border-energy-grid text-energy-grid bg-energy-grid/10";
+      return "border-severity-critical text-severity-critical bg-severity-critical/10";
     case "acknowledged":
-      return "border-energy-consumption text-energy-consumption bg-energy-consumption/10";
+      return "border-severity-high text-severity-high bg-severity-high/10";
     case "resolved":
-      return "border-energy-solar text-energy-solar bg-energy-solar/10";
+      return "border-status-operational text-status-operational bg-status-operational/10";
   }
 }
 

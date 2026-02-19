@@ -41,11 +41,11 @@ const systemData: SystemHealthData = {
 function getStatusColor(status: SystemStatus): string {
   switch (status) {
     case "operational":
-      return "bg-energy-solar";
+      return "bg-status-operational";
     case "warning":
-      return "bg-energy-consumption";
+      return "bg-severity-high";
     case "critical":
-      return "bg-energy-grid";
+      return "bg-severity-critical";
     case "offline":
       return "bg-muted-foreground";
   }
@@ -54,11 +54,11 @@ function getStatusColor(status: SystemStatus): string {
 function getStatusTextColor(status: SystemStatus): string {
   switch (status) {
     case "operational":
-      return "text-energy-solar";
+      return "text-status-operational";
     case "warning":
-      return "text-energy-consumption";
+      return "text-severity-high";
     case "critical":
-      return "text-energy-grid";
+      return "text-severity-critical";
     case "offline":
       return "text-muted-foreground";
   }
@@ -105,10 +105,10 @@ export function SystemHealth() {
             value={systemData.healthScore}
             className={`h-2 ${
               systemData.healthScore >= 90
-                ? "[&>[data-slot=progress-indicator]]:bg-energy-solar"
+                ? "[&>[data-slot=progress-indicator]]:bg-status-operational"
                 : systemData.healthScore >= 70
-                ? "[&>[data-slot=progress-indicator]]:bg-energy-consumption"
-                : "[&>[data-slot=progress-indicator]]:bg-energy-grid"
+                ? "[&>[data-slot=progress-indicator]]:bg-severity-high"
+                : "[&>[data-slot=progress-indicator]]:bg-severity-critical"
             }`}
           />
         </div>
@@ -149,7 +149,7 @@ export function SystemHealth() {
         </div>
 
         {hasIssues && (
-          <div className="text-xs text-energy-consumption bg-energy-consumption/10 rounded-md p-2">
+          <div className="text-xs text-severity-high bg-severity-high/10 rounded-md p-2">
             1 subsystem requires attention
           </div>
         )}

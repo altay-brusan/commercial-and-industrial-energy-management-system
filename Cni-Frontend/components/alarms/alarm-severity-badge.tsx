@@ -10,11 +10,11 @@ interface AlarmSeverityBadgeProps {
 export function getSeverityColor(severity: AlarmSeverity): string {
   switch (severity) {
     case "critical":
-      return "bg-energy-grid text-white hover:bg-energy-grid/90";
+      return "bg-severity-critical text-white hover:bg-severity-critical/90";
     case "high":
-      return "bg-energy-consumption text-white hover:bg-energy-consumption/90";
+      return "bg-severity-high text-white hover:bg-severity-high/90";
     case "medium":
-      return "bg-energy-battery text-white hover:bg-energy-battery/90";
+      return "bg-severity-medium text-white hover:bg-severity-medium/90";
     case "low":
       return "bg-muted text-muted-foreground hover:bg-muted/90";
   }

@@ -61,7 +61,7 @@ export function PerformanceView() {
   const heatmapData = useMemo(() => getStringCurrentHeatmap(), []);
 
   const totalInverters = solarInverters.length;
-  const onlineInverters = statusSummary.normal + statusSummary.warning;
+  const onlineInverters = statusSummary.online + statusSummary.warning;
 
   const plantSpecificYield = +(yieldToday / capacity).toFixed(2);
   const plantPr = 85.2;
@@ -182,9 +182,9 @@ export function PerformanceView() {
                           <div
                             className={cn(
                               "inline-flex items-center justify-center w-9 h-7 rounded text-[10px] font-mono",
-                              isLow && "bg-energy-grid/20 text-energy-grid",
-                              !isLow && isNormal && "bg-energy-solar/20 text-energy-solar",
-                              !isLow && !isNormal && "bg-energy-consumption/20 text-energy-consumption"
+                              isLow && "bg-severity-critical/20 text-severity-critical",
+                              !isLow && isNormal && "bg-status-operational/20 text-status-operational",
+                              !isLow && !isNormal && "bg-severity-high/20 text-severity-high"
                             )}
                           >
                             {val !== null ? val.toFixed(1) : "—"}

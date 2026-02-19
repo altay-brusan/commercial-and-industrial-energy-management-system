@@ -190,9 +190,9 @@ export function PerformanceView() {
                           <div
                             className={cn(
                               "inline-flex items-center justify-center w-8 h-6 rounded text-[9px] font-mono",
-                              isHigh && "bg-energy-grid/20 text-energy-grid",
-                              isMedium && "bg-energy-consumption/20 text-energy-consumption",
-                              !isHigh && !isMedium && "bg-energy-solar/20 text-energy-solar"
+                              isHigh && "bg-severity-critical/20 text-severity-critical",
+                              isMedium && "bg-severity-high/20 text-severity-high",
+                              !isHigh && !isMedium && "bg-status-operational/20 text-status-operational"
                             )}
                           >
                             {val}

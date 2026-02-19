@@ -20,7 +20,7 @@ export function getInstalledCapacity(): number {
 }
 
 export function getDeviceStatusSummary(): Record<InverterStatus, number> {
-  const summary: Record<InverterStatus, number> = { normal: 0, offline: 0, warning: 0, fault: 0 };
+  const summary: Record<InverterStatus, number> = { online: 0, offline: 0, warning: 0, fault: 0 };
   for (const inv of solarInverters) {
     summary[inv.status]++;
   }
