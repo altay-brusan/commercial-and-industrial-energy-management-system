@@ -73,22 +73,22 @@ function ComponentStatusBadge({ status }: { status: BessComponentStatus }) {
   switch (status) {
     case "normal":
       return (
-        <Badge className="bg-energy-solar/15 text-energy-solar border-energy-solar/30 hover:bg-energy-solar/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-solar" />
+        <Badge className="bg-status-operational/15 text-status-operational border-status-operational/30 hover:bg-status-operational/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-operational" />
           Normal
         </Badge>
       );
     case "warning":
       return (
-        <Badge className="bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30 hover:bg-energy-consumption/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-consumption" />
+        <Badge className="bg-status-warning/15 text-status-warning border-status-warning/30 hover:bg-status-warning/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-warning" />
           Warning
         </Badge>
       );
     case "fault":
       return (
-        <Badge className="bg-energy-grid/15 text-energy-grid border-energy-grid/30 hover:bg-energy-grid/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-grid" />
+        <Badge className="bg-status-critical/15 text-status-critical border-status-critical/30 hover:bg-status-critical/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-critical" />
           Fault
         </Badge>
       );
@@ -103,9 +103,9 @@ function ComponentStatusBadge({ status }: { status: BessComponentStatus }) {
 }
 
 function getSOCColor(soc: number): string {
-  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-energy-solar";
-  if (soc >= 30) return "[&>[data-slot=progress-indicator]]:bg-energy-consumption";
-  return "[&>[data-slot=progress-indicator]]:bg-energy-grid";
+  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-status-operational";
+  if (soc >= 30) return "[&>[data-slot=progress-indicator]]:bg-severity-high";
+  return "[&>[data-slot=progress-indicator]]:bg-severity-critical";
 }
 
 function getLabel(item: HierarchyItem): string {

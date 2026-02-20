@@ -172,9 +172,9 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
               <DropdownMenuSeparator />
               {recentAlarms.map((alarm) => {
                 const severityConfig = {
-                  critical: { bg: "bg-energy-grid/10", color: "text-energy-grid" },
-                  high: { bg: "bg-energy-consumption/10", color: "text-energy-consumption" },
-                  medium: { bg: "bg-energy-battery/10", color: "text-energy-battery" },
+                  critical: { bg: "bg-severity-critical/10", color: "text-severity-critical" },
+                  high: { bg: "bg-severity-high/10", color: "text-severity-high" },
+                  medium: { bg: "bg-severity-medium/10", color: "text-severity-medium" },
                   low: { bg: "bg-muted", color: "text-muted-foreground" },
                 }[alarm.severity];
 
@@ -223,11 +223,11 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
               <DropdownMenuSeparator />
               {recentNotifications.map((notif) => {
                 const iconConfig: Record<NotificationType, { icon: React.ElementType; bg: string; color: string }> = {
-                  maintenance_completed: { icon: Wrench, bg: "bg-energy-solar/10", color: "text-energy-solar" },
-                  system_update: { icon: RefreshCw, bg: "bg-energy-battery/10", color: "text-energy-battery" },
-                  alarm_resolved: { icon: CheckCircle2, bg: "bg-energy-solar/10", color: "text-energy-solar" },
-                  schedule_reminder: { icon: CalendarClock, bg: "bg-energy-battery/10", color: "text-energy-battery" },
-                  system_alert: { icon: AlertTriangle, bg: "bg-energy-grid/10", color: "text-energy-grid" },
+                  maintenance_completed: { icon: Wrench, bg: "bg-status-operational/10", color: "text-status-operational" },
+                  system_update: { icon: RefreshCw, bg: "bg-severity-medium/10", color: "text-severity-medium" },
+                  alarm_resolved: { icon: CheckCircle2, bg: "bg-status-operational/10", color: "text-status-operational" },
+                  schedule_reminder: { icon: CalendarClock, bg: "bg-severity-medium/10", color: "text-severity-medium" },
+                  system_alert: { icon: AlertTriangle, bg: "bg-severity-critical/10", color: "text-severity-critical" },
                 };
                 const config = iconConfig[notif.type];
                 const NotifIcon = config.icon;

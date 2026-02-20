@@ -62,8 +62,8 @@ function UnitStatusBadge({ status }: { status: BessUnit["status"] }) {
   switch (status) {
     case "online":
       return (
-        <Badge className="bg-sky-500/15 text-sky-600 border-sky-500/30 hover:bg-sky-500/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-sky-500" />
+        <Badge className="bg-status-operational/15 text-status-operational border-status-operational/30 hover:bg-status-operational/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-operational" />
           Online
         </Badge>
       );
@@ -76,15 +76,15 @@ function UnitStatusBadge({ status }: { status: BessUnit["status"] }) {
       );
     case "fault":
       return (
-        <Badge className="bg-energy-grid/15 text-energy-grid border-energy-grid/30 hover:bg-energy-grid/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-grid" />
+        <Badge className="bg-status-critical/15 text-status-critical border-status-critical/30 hover:bg-status-critical/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-critical" />
           Fault
         </Badge>
       );
     case "standby":
       return (
-        <Badge className="bg-yellow-500/15 text-yellow-600 border-yellow-500/30 hover:bg-yellow-500/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-yellow-500" />
+        <Badge className="bg-status-standby/15 text-status-standby border-status-standby/30 hover:bg-status-standby/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-standby" />
           Standby
         </Badge>
       );
@@ -114,9 +114,9 @@ function ModeBadge({ mode }: { mode: BessUnit["operatingMode"] }) {
 }
 
 function getSOCColor(soc: number): string {
-  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-energy-solar";
-  if (soc >= 30) return "[&>[data-slot=progress-indicator]]:bg-energy-consumption";
-  return "[&>[data-slot=progress-indicator]]:bg-energy-grid";
+  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-status-operational";
+  if (soc >= 30) return "[&>[data-slot=progress-indicator]]:bg-severity-high";
+  return "[&>[data-slot=progress-indicator]]:bg-severity-critical";
 }
 
 function PowerCell({ power, mode }: { power: number; mode: BessUnit["operatingMode"] }) {
@@ -269,7 +269,7 @@ export function BessOverviewTable({ units, onUnitSelect }: BessOverviewTableProp
                 </TableCell>
                 <TableCell className="py-3.5 pr-6">
                   {unit.activeAlarmCount > 0 ? (
-                    <Badge className="bg-energy-grid/15 text-energy-grid border-energy-grid/30">
+                    <Badge className="bg-severity-critical/15 text-severity-critical border-severity-critical/30">
                       {unit.activeAlarmCount}
                     </Badge>
                   ) : (

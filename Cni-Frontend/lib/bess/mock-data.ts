@@ -13,6 +13,13 @@ import type {
   ChillerFaultCategory,
   BessChillerState,
   BessHvcuState,
+  BessEsc,
+  BessHvac,
+  BessDeviceTreeNode,
+  BessUnitSettings,
+  BessRackSettings,
+  BessEscSettings,
+  BessHvacSettings,
 } from "./types";
 
 // --- Seeded random for deterministic data ---
@@ -796,4 +803,317 @@ unitSpecs.forEach((spec) => {
 
 export function getCurveDataForUnit(unitId: string): BessCurveData {
   return curveDataMap.get(unitId) ?? { power: [], voltage: [], temperature: [] };
+}
+
+// --- ESC (DC-DC Controller) generation ---
+
+function generateEsc(unitId: string, seed: number): BessEsc {
+  const rand = seededRandom(seed + 9000);
+  const escId = `${unitId}-ESC-1`;
+  const operatingStates = ["Running", "Standby", "Pre-charge", "Shutdown"];
+  const stateIdx = Math.floor(rand() * operatingStates.length);
+  const hasAlarm = rand() < 0.15;
+
+  return {
+    id: escId,
+    unitId,
+    deviceInfo: {
+      model: "ESC-3000D",
+      serialNumber: `SN-ESC-${unitId.toUpperCase()}-${seed}`,
+      firmware: "v2.4.1",
+      protocol: "Modbus TCP",
+      modbusAddress: 10 + Math.floor(rand() * 5),
+    },
+    live: {
+      dcVoltageIn: round(750 + rand() * 100, 1),
+      dcVoltageOut: round(700 + rand() * 80, 1),
+      dcCurrent: round(50 + rand() * 150, 1),
+      power: round(40 + rand() * 60, 1),
+      efficiency: round(95 + rand() * 4, 1),
+      temperature: round(30 + rand() * 20, 1),
+      isolationResistance: round(400 + rand() * 400, 0),
+      operatingState: operatingStates[stateIdx],
+    },
+    status: hasAlarm ? "warning" : stateIdx === 3 ? "offline" : "normal",
+    activeAlarmCount: hasAlarm ? 1 : 0,
+  };
+}
+
+// --- HVAC (Thermal Management) generation ---
+
+function generateHvacs(unitId: string, seed: number, count: number): BessHvac[] {
+  const hvacs: BessHvac[] = [];
+  for (let i = 0; i < count; i++) {
+    const hvacSeed = seed + 10000 + i * 100;
+    const rand = seededRandom(hvacSeed);
+    const hvacId = `${unitId}-HVAC-${i + 1}`;
+    const modes = ["Cooling", "Heating", "Standby", "Auto"];
+    const modeIdx = Math.floor(rand() * modes.length);
+    const hasAlarm = rand() < 0.1;
+
+    hvacs.push({
+      id: hvacId,
+      unitId,
+      deviceInfo: {
+        model: i === 0 ? "TMS-5000A" : "TMS-5000B",
+        serialNumber: `SN-HVAC-${unitId.toUpperCase()}-${hvacSeed}`,
+        firmware: "v1.8.3",
+        protocol: "Modbus RTU",
+        modbusAddress: 20 + i,
+      },
+      chillerState: {
+        operatingMode: modeIdx,
+        operatingModeStr: modes[modeIdx],
+        outletCoolantTempC: round(18 + rand() * 8, 1),
+        inletCoolantTempC: round(22 + rand() * 10, 1),
+        ambientTempC: round(20 + rand() * 15, 1),
+        inletCoolantPressure: round(1.5 + rand() * 1.5, 2),
+        outletCoolantPressure: round(1.2 + rand() * 1.2, 2),
+        compressorStatus: rand() > 0.3,
+        pumpStatus: rand() > 0.2,
+        fanRunStatus: rand() > 0.4,
+        electricHeaterStatus: rand() < 0.15,
+        compressorSpeed: Math.floor(rand() * 100),
+        pumpSpeed: Math.floor(40 + rand() * 60),
+      },
+      setpoints: {
+        coolantTempSetpoint: 22,
+        highAlarm: 35,
+        lowAlarm: 5,
+        operatingMode: modes[modeIdx],
+      },
+      status: hasAlarm ? "warning" : "normal",
+      activeAlarmCount: hasAlarm ? 1 : 0,
+    });
+  }
+  return hvacs;
+}
+
+// --- Per-unit ESC/HVAC maps ---
+
+const escMap = new Map<string, BessEsc>();
+const hvacMap = new Map<string, BessHvac[]>();
+
+unitSpecs.forEach((spec) => {
+  escMap.set(spec.id, generateEsc(spec.id, spec.seed));
+  const hvacCount = spec.rackCount >= 4 ? 2 : 1;
+  hvacMap.set(spec.id, generateHvacs(spec.id, spec.seed, hvacCount));
+});
+
+export function getEscForUnit(unitId: string): BessEsc | undefined {
+  return escMap.get(unitId);
+}
+
+export function getHvacsForUnit(unitId: string): BessHvac[] {
+  return hvacMap.get(unitId) ?? [];
+}
+
+export function getEscById(escId: string): BessEsc | undefined {
+  for (const esc of escMap.values()) {
+    if (esc.id === escId) return esc;
+  }
+  return undefined;
+}
+
+export function getHvacById(hvacId: string): BessHvac | undefined {
+  for (const hvacs of hvacMap.values()) {
+    const found = hvacs.find((h) => h.id === hvacId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+// --- ESC/HVAC faults (appended to bessFaults) ---
+
+const escHvacFaults: Omit<BessFault, "id">[] = [
+  {
+    unitId: "bess-01",
+    code: "ESC-0101",
+    name: "DC Bus Over Voltage",
+    severity: "major",
+    status: "recovered",
+    source: "ESC-1",
+    occurredAt: new Date("2025-02-07T10:22:00"),
+    recoveredAt: new Date("2025-02-07T10:35:00"),
+    relatedAlarmId: "alarm-013",
+  },
+  {
+    unitId: "bess-02",
+    code: "HVAC-0201",
+    name: "Compressor Over Temperature",
+    severity: "warning",
+    status: "active",
+    source: "HVAC-1",
+    occurredAt: new Date("2025-02-09T07:45:00"),
+    recoveredAt: null,
+    relatedAlarmId: "alarm-014",
+  },
+  {
+    unitId: "bess-01",
+    code: "HVAC-0301",
+    name: "Coolant Flow Low",
+    severity: "minor",
+    status: "recovered",
+    source: "HVAC-2",
+    occurredAt: new Date("2025-02-06T14:10:00"),
+    recoveredAt: new Date("2025-02-06T14:25:00"),
+    relatedAlarmId: "alarm-015",
+  },
+  {
+    unitId: "bess-03",
+    code: "ESC-0201",
+    name: "Isolation Resistance Low",
+    severity: "warning",
+    status: "active",
+    source: "ESC-1",
+    occurredAt: new Date("2025-02-09T01:30:00"),
+    recoveredAt: null,
+    relatedAlarmId: "alarm-016",
+  },
+];
+
+// Append ESC/HVAC faults to main fault list
+escHvacFaults.forEach((f, i) => {
+  bessFaults.push({
+    ...f,
+    id: `bess-fault-${String(baseFaults.length + i + 1).padStart(3, "0")}`,
+  });
+});
+
+// --- Device Tree builder ---
+
+export function buildDeviceTree(): BessDeviceTreeNode[] {
+  return bessUnits.map((unit) => {
+    const children: BessDeviceTreeNode[] = [];
+
+    // Racks
+    unit.racks.forEach((rack) => {
+      const rackAlarms = rack.packs.reduce(
+        (sum, p) =>
+          sum +
+          p.modules.reduce(
+            (ms, m) => ms + m.cells.filter((c) => c.status === "fault" || c.status === "warning").length,
+            0
+          ),
+        0
+      );
+      children.push({
+        id: rack.id,
+        name: `Rack ${rack.rackNumber}`,
+        type: "rack",
+        status: rack.status,
+        parentUnitId: unit.id,
+        alarmCount: rackAlarms,
+      });
+    });
+
+    // ESC
+    const esc = escMap.get(unit.id);
+    if (esc) {
+      children.push({
+        id: esc.id,
+        name: "ESC-1",
+        type: "esc",
+        status: esc.status,
+        parentUnitId: unit.id,
+        alarmCount: esc.activeAlarmCount,
+      });
+    }
+
+    // HVACs
+    const hvacs = hvacMap.get(unit.id) ?? [];
+    hvacs.forEach((hvac, i) => {
+      children.push({
+        id: hvac.id,
+        name: `HVAC-${i + 1}`,
+        type: "hvac",
+        status: hvac.status,
+        parentUnitId: unit.id,
+        alarmCount: hvac.activeAlarmCount,
+      });
+    });
+
+    const unitStatus: BessComponentStatus =
+      unit.status === "online" ? "normal" :
+      unit.status === "fault" ? "fault" :
+      unit.status === "standby" ? "normal" :
+      "offline";
+
+    return {
+      id: unit.id,
+      name: unit.name,
+      type: "unit" as const,
+      status: unitStatus,
+      parentUnitId: unit.id,
+      children,
+      alarmCount: unit.activeAlarmCount,
+    };
+  });
+}
+
+// --- Settings defaults ---
+
+export function getDefaultUnitSettings(unitId: string): BessUnitSettings {
+  const unit = getBessUnitById(unitId);
+  return {
+    deviceName: unit?.name ?? "Unknown",
+    protocol: "Modbus TCP",
+    firmwareVersion: unit?.lifecycle.firmwareVersion ?? "v0.0.0",
+    serialNumber: unit?.nameplate.serialNumber ?? "",
+    modbusAddress: 1,
+    maintenanceIntervalDays: 90,
+    tempAlarmThreshold: 45,
+    socLowAlarm: 10,
+    socHighAlarm: 95,
+  };
+}
+
+export function getDefaultRackSettings(): BessRackSettings {
+  return {
+    socCalibrationIntervalHours: 168,
+    chargeStopSoc: 95,
+    dischargeStopSoc: 10,
+    operatingMode: "auto",
+    insulationResistanceThreshold: 500,
+    balancingEnabled: true,
+    balancingThresholdMv: 30,
+  };
+}
+
+export function getDefaultEscSettings(escId: string): BessEscSettings {
+  const esc = getEscById(escId);
+  return {
+    deviceName: "ESC-1",
+    model: esc?.deviceInfo.model ?? "ESC-3000D",
+    serialNumber: esc?.deviceInfo.serialNumber ?? "",
+    firmware: esc?.deviceInfo.firmware ?? "",
+    protocol: esc?.deviceInfo.protocol ?? "Modbus TCP",
+    modbusAddress: esc?.deviceInfo.modbusAddress ?? 10,
+    isolationResistanceThreshold: 500,
+    maxPowerLimit: 100,
+    autoRestart: true,
+  };
+}
+
+export function getDefaultHvacSettings(hvacId: string): BessHvacSettings {
+  const hvac = getHvacById(hvacId);
+  return {
+    operatingMode: hvac?.setpoints.operatingMode ?? "Auto",
+    coolantTempSetpoint: hvac?.setpoints.coolantTempSetpoint ?? 22,
+    highTempAlarm: hvac?.setpoints.highAlarm ?? 35,
+    lowTempAlarm: hvac?.setpoints.lowAlarm ?? 5,
+    compressorMaxSpeed: 100,
+    pumpMaxSpeed: 100,
+    autoDefrost: true,
+  };
+}
+
+// --- Helper: get rack by ID ---
+
+export function getRackById(rackId: string): { rack: BessRack; unit: BessUnit } | undefined {
+  for (const unit of bessUnits) {
+    const rack = unit.racks.find((r) => r.id === rackId);
+    if (rack) return { rack, unit };
+  }
+  return undefined;
 }

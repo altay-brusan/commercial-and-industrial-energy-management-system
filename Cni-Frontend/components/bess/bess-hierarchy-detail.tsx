@@ -15,18 +15,18 @@ interface BessHierarchyDetailProps {
 
 function ComponentStatusBadge({ status }: { status: BessComponentStatus }) {
   const styles: Record<BessComponentStatus, string> = {
-    normal: "bg-energy-solar/15 text-energy-solar border-energy-solar/30",
-    warning: "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30",
-    fault: "bg-energy-grid/15 text-energy-grid border-energy-grid/30",
+    normal: "bg-status-operational/15 text-status-operational border-status-operational/30",
+    warning: "bg-status-warning/15 text-status-warning border-status-warning/30",
+    fault: "bg-status-critical/15 text-status-critical border-status-critical/30",
     offline: "bg-muted text-muted-foreground",
   };
   return <Badge className={styles[status]}>{status}</Badge>;
 }
 
 function getSOCColor(soc: number): string {
-  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-energy-solar";
-  if (soc >= 30) return "[&>[data-slot=progress-indicator]]:bg-energy-consumption";
-  return "[&>[data-slot=progress-indicator]]:bg-energy-grid";
+  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-status-operational";
+  if (soc >= 30) return "[&>[data-slot=progress-indicator]]:bg-severity-high";
+  return "[&>[data-slot=progress-indicator]]:bg-severity-critical";
 }
 
 function Metric({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {

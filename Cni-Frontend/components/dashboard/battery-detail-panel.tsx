@@ -37,9 +37,9 @@ function InfoSection({ title, items }: { title: string; items: InfoItem[] }) {
 function getModeColor(mode: string) {
   switch (mode) {
     case "charging":
-      return "bg-energy-solar/15 text-energy-solar border-energy-solar/30";
+      return "bg-status-operational/15 text-status-operational border-status-operational/30";
     case "discharging":
-      return "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30";
+      return "bg-severity-high/15 text-severity-high border-severity-high/30";
     case "idle":
     case "standby":
       return "bg-muted text-muted-foreground border-border";

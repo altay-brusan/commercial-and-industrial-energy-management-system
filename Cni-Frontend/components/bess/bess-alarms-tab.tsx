@@ -20,6 +20,7 @@ import type { FaultSeverity, FaultStatus } from "@/lib/bess/types";
 interface BessAlarmsTabProps {
   unitId: string;
   onAlarmOpen: (alarmId: string) => void;
+  sourceFilter?: string;
 }
 
 type FaultSortField = "code" | "name" | "severity" | "source" | "occurredAt" | "recoveredAt" | "status";
@@ -34,10 +35,10 @@ const severityOrder: Record<FaultSeverity, number> = {
 
 function FaultSeverityBadge({ severity }: { severity: FaultSeverity }) {
   const styles: Record<FaultSeverity, string> = {
-    critical: "bg-energy-grid/15 text-energy-grid border-energy-grid/30",
-    major: "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30",
-    minor: "bg-energy-battery/15 text-energy-battery border-energy-battery/30",
-    warning: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30",
+    critical: "bg-severity-critical/15 text-severity-critical border-severity-critical/30",
+    major: "bg-severity-high/15 text-severity-high border-severity-high/30",
+    minor: "bg-severity-minor/15 text-severity-minor border-severity-minor/30",
+    warning: "bg-status-standby/15 text-status-standby border-status-standby/30",
   };
   return (
     <Badge className={cn("capitalize", styles[severity])}>
@@ -49,8 +50,8 @@ function FaultSeverityBadge({ severity }: { severity: FaultSeverity }) {
 function FaultStatusBadge({ status }: { status: FaultStatus }) {
   if (status === "active") {
     return (
-      <Badge className="bg-energy-grid/15 text-energy-grid border-energy-grid/30 gap-1">
-        <span className="h-1.5 w-1.5 rounded-full bg-energy-grid animate-pulse" />
+      <Badge className="bg-severity-critical/15 text-severity-critical border-severity-critical/30 gap-1">
+        <span className="h-1.5 w-1.5 rounded-full bg-severity-critical animate-pulse" />
         Active
       </Badge>
     );
@@ -99,8 +100,12 @@ function SortableHeader({ label, field, currentField, direction, onSort, classNa
   );
 }
 
-export function BessAlarmsTab({ unitId, onAlarmOpen }: BessAlarmsTabProps) {
-  const faults = useMemo(() => getFaultsForUnit(unitId), [unitId]);
+export function BessAlarmsTab({ unitId, onAlarmOpen, sourceFilter }: BessAlarmsTabProps) {
+  const faults = useMemo(() => {
+    const all = getFaultsForUnit(unitId);
+    if (!sourceFilter) return all;
+    return all.filter((f) => f.source.includes(sourceFilter));
+  }, [unitId, sourceFilter]);
   const [sortField, setSortField] = useState<FaultSortField | null>("occurredAt");
   const [sortDirection, setSortDirection] = useState<SortDir>("desc");
 

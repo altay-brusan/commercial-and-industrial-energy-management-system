@@ -107,19 +107,19 @@ export function EnergyAnalyticsView() {
             </div>
             <div className="flex items-center gap-5 text-sm">
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-energy-solar" />
-                <span className="text-muted-foreground">{statusSummary.normal} Normal</span>
+                <span className="h-2 w-2 rounded-full bg-status-operational" />
+                <span className="text-muted-foreground">{statusSummary.online} Online</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-muted-foreground" />
                 <span className="text-muted-foreground">{statusSummary.offline} Offline</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-energy-consumption" />
+                <span className="h-2 w-2 rounded-full bg-status-warning" />
                 <span className="text-muted-foreground">{statusSummary.warning} Warning</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-energy-grid" />
+                <span className="h-2 w-2 rounded-full bg-status-critical" />
                 <span className="text-muted-foreground">{statusSummary.fault} Fault</span>
               </div>
               <span className="text-xs text-muted-foreground">{solarInverters.length} inverters</span>

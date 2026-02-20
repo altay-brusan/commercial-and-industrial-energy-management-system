@@ -280,3 +280,155 @@ export interface BessHvcuState {
   bcuStates: Array<{ id: number; controlState: number; stateStr: string }>;
   isolationControl: boolean;
 }
+
+// --- Device Tree types ---
+
+export type BessDeviceType = "unit" | "rack" | "esc" | "hvac";
+
+export interface BessSelectedDevice {
+  id: string;
+  type: BessDeviceType;
+  unitId: string;
+}
+
+export interface BessDeviceTreeNode {
+  id: string;
+  name: string;
+  type: BessDeviceType;
+  status: BessUnitStatus | BessComponentStatus;
+  parentUnitId: string;
+  children?: BessDeviceTreeNode[];
+  alarmCount: number;
+}
+
+// --- ESC (DC-DC Controller) ---
+
+export interface BessEsc {
+  id: string;
+  unitId: string;
+  deviceInfo: {
+    model: string;
+    serialNumber: string;
+    firmware: string;
+    protocol: string;
+    modbusAddress: number;
+  };
+  live: {
+    dcVoltageIn: number;
+    dcVoltageOut: number;
+    dcCurrent: number;
+    power: number;
+    efficiency: number;
+    temperature: number;
+    isolationResistance: number;
+    operatingState: string;
+  };
+  status: BessComponentStatus;
+  activeAlarmCount: number;
+}
+
+// --- HVAC (Thermal Management) ---
+
+export interface BessHvac {
+  id: string;
+  unitId: string;
+  deviceInfo: {
+    model: string;
+    serialNumber: string;
+    firmware: string;
+    protocol: string;
+    modbusAddress: number;
+  };
+  chillerState: BessChillerState;
+  setpoints: {
+    coolantTempSetpoint: number;
+    highAlarm: number;
+    lowAlarm: number;
+    operatingMode: string;
+  };
+  status: BessComponentStatus;
+  activeAlarmCount: number;
+}
+
+// --- Settings types ---
+
+export interface BessUnitSettings {
+  deviceName: string;
+  protocol: string;
+  firmwareVersion: string;
+  serialNumber: string;
+  modbusAddress: number;
+  maintenanceIntervalDays: number;
+  tempAlarmThreshold: number;
+  socLowAlarm: number;
+  socHighAlarm: number;
+}
+
+export interface BessRackSettings {
+  socCalibrationIntervalHours: number;
+  chargeStopSoc: number;
+  dischargeStopSoc: number;
+  operatingMode: string;
+  insulationResistanceThreshold: number;
+  balancingEnabled: boolean;
+  balancingThresholdMv: number;
+}
+
+export interface BessEscSettings {
+  deviceName: string;
+  model: string;
+  serialNumber: string;
+  firmware: string;
+  protocol: string;
+  modbusAddress: number;
+  isolationResistanceThreshold: number;
+  maxPowerLimit: number;
+  autoRestart: boolean;
+}
+
+export interface BessHvacSettings {
+  operatingMode: string;
+  coolantTempSetpoint: number;
+  highTempAlarm: number;
+  lowTempAlarm: number;
+  compressorMaxSpeed: number;
+  pumpMaxSpeed: number;
+  autoDefrost: boolean;
+}
+
+// --- Tab configurations ---
+
+export interface TabConfig {
+  id: string;
+  label: string;
+  disabled?: boolean;
+}
+
+export const UNIT_TABS: TabConfig[] = [
+  { id: "summary", label: "Summary" },
+  { id: "hierarchy", label: "Hierarchy" },
+  { id: "monitoring", label: "Monitoring" },
+  { id: "health", label: "Health" },
+  { id: "fault", label: "Fault" },
+  { id: "alarms", label: "Alarms" },
+  { id: "settings", label: "Settings" },
+];
+
+export const RACK_TABS: TabConfig[] = [
+  { id: "summary", label: "Summary" },
+  { id: "hierarchy", label: "Hierarchy" },
+  { id: "alarms", label: "Alarms" },
+  { id: "settings", label: "Settings" },
+];
+
+export const ESC_TABS: TabConfig[] = [
+  { id: "details", label: "Details" },
+  { id: "alarms", label: "Alarms" },
+  { id: "settings", label: "Settings" },
+];
+
+export const HVAC_TABS: TabConfig[] = [
+  { id: "monitoring", label: "Monitoring" },
+  { id: "alarms", label: "Alarms" },
+  { id: "settings", label: "Settings" },
+];

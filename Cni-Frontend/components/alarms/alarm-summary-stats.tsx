@@ -22,19 +22,19 @@ export function AlarmSummaryStats({ alarms }: AlarmSummaryStatsProps) {
       label: "Critical",
       shortLabel: "Critical",
       value: critical,
-      badge: { value: "urgent", color: "text-energy-grid" },
+      badge: { value: "urgent", color: "text-severity-critical" },
     },
     {
       label: "High",
       shortLabel: "High",
       value: high,
-      badge: { value: "warning", color: "text-energy-consumption" },
+      badge: { value: "warning", color: "text-severity-high" },
     },
     {
       label: "Acknowledged",
       shortLabel: "Ack'd",
       value: acknowledged,
-      badge: { value: "in review", color: "text-energy-battery" },
+      badge: { value: "in review", color: "text-severity-medium" },
     },
   ];
 

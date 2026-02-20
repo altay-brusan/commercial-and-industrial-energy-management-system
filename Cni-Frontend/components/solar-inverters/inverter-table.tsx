@@ -59,11 +59,11 @@ function SortableHeader({ label, field, currentField, direction, onSort, classNa
 
 function InverterStatusBadge({ status }: { status: SolarInverter["status"] }) {
   switch (status) {
-    case "normal":
+    case "online":
       return (
-        <Badge className="bg-energy-solar/15 text-energy-solar border-energy-solar/30 hover:bg-energy-solar/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-solar" />
-          Normal
+        <Badge className="bg-status-operational/15 text-status-operational border-status-operational/30 hover:bg-status-operational/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-operational" />
+          Online
         </Badge>
       );
     case "offline":
@@ -75,15 +75,15 @@ function InverterStatusBadge({ status }: { status: SolarInverter["status"] }) {
       );
     case "warning":
       return (
-        <Badge className="bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30 hover:bg-energy-consumption/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-consumption" />
+        <Badge className="bg-status-warning/15 text-status-warning border-status-warning/30 hover:bg-status-warning/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-warning" />
           Warning
         </Badge>
       );
     case "fault":
       return (
-        <Badge className="bg-energy-grid/15 text-energy-grid border-energy-grid/30 hover:bg-energy-grid/20 gap-1">
-          <span className="h-2 w-2 rounded-full bg-energy-grid" />
+        <Badge className="bg-status-critical/15 text-status-critical border-status-critical/30 hover:bg-status-critical/20 gap-1">
+          <span className="h-2 w-2 rounded-full bg-status-critical" />
           Fault
         </Badge>
       );
@@ -133,7 +133,7 @@ export function InverterTable({ inverters, onInverterSelect }: InverterTableProp
           comparison = a.serialNumber.localeCompare(b.serialNumber);
           break;
         case "status": {
-          const statusOrder = { normal: 0, warning: 1, fault: 2, offline: 3 };
+          const statusOrder = { online: 0, warning: 1, fault: 2, offline: 3 };
           comparison = statusOrder[a.status] - statusOrder[b.status];
           break;
         }

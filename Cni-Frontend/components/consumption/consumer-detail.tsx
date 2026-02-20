@@ -182,13 +182,13 @@ export function ConsumerDetail({ consumer, onBack, onAlarmOpen }: ConsumerDetail
                 <Badge
                   className={
                     consumer.status === "normal"
-                      ? "bg-energy-solar/15 text-energy-solar border-energy-solar/30"
+                      ? "bg-status-operational/15 text-status-operational border-status-operational/30"
                       : consumer.status === "warning"
-                        ? "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30"
+                        ? "bg-status-warning/15 text-status-warning border-status-warning/30"
                         : consumer.status === "fault"
-                          ? "bg-energy-grid/15 text-energy-grid border-energy-grid/30"
+                          ? "bg-severity-critical/15 text-severity-critical border-severity-critical/30"
                           : consumer.status === "curtailed"
-                            ? "bg-energy-battery/15 text-energy-battery border-energy-battery/30"
+                            ? "bg-severity-medium/15 text-severity-medium border-severity-medium/30"
                             : "bg-muted text-muted-foreground"
                   }
                 >

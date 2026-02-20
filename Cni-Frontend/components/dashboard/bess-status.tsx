@@ -58,10 +58,10 @@ function getModeColor(mode: BESSMode): string {
 }
 
 function getSOCColor(soc: number): string {
-  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-energy-solar";
+  if (soc >= 60) return "[&>[data-slot=progress-indicator]]:bg-status-operational";
   if (soc >= 30)
-    return "[&>[data-slot=progress-indicator]]:bg-energy-consumption";
-  return "[&>[data-slot=progress-indicator]]:bg-energy-grid";
+    return "[&>[data-slot=progress-indicator]]:bg-severity-high";
+  return "[&>[data-slot=progress-indicator]]:bg-severity-critical";
 }
 
 export function BESSStatus() {
