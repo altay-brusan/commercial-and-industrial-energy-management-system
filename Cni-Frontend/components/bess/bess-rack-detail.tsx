@@ -5,9 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BessRackSummaryTab } from "./bess-rack-summary-tab";
-import { BessRackHierarchyTab } from "./bess-rack-hierarchy-tab";
 import { BessAlarmsTab } from "./bess-alarms-tab";
-import { BessRackSettingsTab } from "./settings/bess-rack-settings-tab";
 import { RACK_TABS } from "@/lib/bess/types";
 import type { BessRack, BessUnit, BessComponentStatus } from "@/lib/bess/types";
 
@@ -67,7 +65,6 @@ export function BessRackDetail({ rack, unit, onBack, onAlarmOpen }: BessRackDeta
 
       {/* Tab content */}
       {activeTab === "summary" && <BessRackSummaryTab rack={rack} />}
-      {activeTab === "hierarchy" && <BessRackHierarchyTab rack={rack} />}
       {activeTab === "alarms" && (
         <BessAlarmsTab
           unitId={unit.id}
@@ -75,7 +72,6 @@ export function BessRackDetail({ rack, unit, onBack, onAlarmOpen }: BessRackDeta
           sourceFilter={`Rack ${rack.rackNumber}`}
         />
       )}
-      {activeTab === "settings" && <BessRackSettingsTab rackId={rack.id} />}
     </div>
   );
 }

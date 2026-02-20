@@ -5,7 +5,10 @@ import {
   ChevronRight,
   ChevronDown,
   Battery,
+  BatteryCharging,
   Server,
+  Package,
+  CircuitBoard,
   Cpu,
   Thermometer,
 } from "lucide-react";
@@ -25,14 +28,20 @@ interface BessDeviceTreeProps {
 
 const deviceIcon: Record<BessDeviceType, React.ElementType> = {
   unit: Battery,
+  battery: BatteryCharging,
   rack: Server,
+  pack: Package,
+  module: CircuitBoard,
   esc: Cpu,
   hvac: Thermometer,
 };
 
 const typeLabel: Record<BessDeviceType, string> = {
   unit: "Unit",
+  battery: "Bat",
   rack: "Rack",
+  pack: "Pack",
+  module: "Mod",
   esc: "Ctrl",
   hvac: "TMS",
 };
@@ -78,6 +87,8 @@ function TreeNode({
       id: node.id,
       type: node.type,
       unitId: node.parentUnitId,
+      rackId: node.parentRackId,
+      packId: node.parentPackId,
     });
   };
 
@@ -90,7 +101,7 @@ function TreeNode({
             ? "bg-primary/10 text-primary font-medium"
             : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
         )}
-        style={{ paddingLeft: `${8 + depth * 16}px` }}
+        style={{ paddingLeft: `${8 + depth * 12}px` }}
         onClick={handleSelect}
       >
         {/* Expand/collapse chevron */}
@@ -124,7 +135,7 @@ function TreeNode({
         <span className="truncate flex-1 text-xs">{node.name}</span>
 
         {/* Type badge for non-unit types */}
-        {node.type !== "unit" && node.type !== "rack" && (
+        {node.type !== "unit" && node.type !== "battery" && node.type !== "rack" && node.type !== "pack" && node.type !== "module" && (
           <span className="text-[10px] text-muted-foreground/70 shrink-0">
             {typeLabel[node.type]}
           </span>

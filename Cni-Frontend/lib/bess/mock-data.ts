@@ -17,7 +17,6 @@ import type {
   BessHvac,
   BessDeviceTreeNode,
   BessUnitSettings,
-  BessRackSettings,
   BessEscSettings,
   BessHvacSettings,
 } from "./types";
@@ -986,7 +985,10 @@ export function buildDeviceTree(): BessDeviceTreeNode[] {
   return bessUnits.map((unit) => {
     const children: BessDeviceTreeNode[] = [];
 
-    // Racks
+    // Battery node wrapping all Racks → Packs → Modules
+    const rackNodes: BessDeviceTreeNode[] = [];
+    let totalBatteryAlarms = 0;
+
     unit.racks.forEach((rack) => {
       const rackAlarms = rack.packs.reduce(
         (sum, p) =>
@@ -997,14 +999,63 @@ export function buildDeviceTree(): BessDeviceTreeNode[] {
           ),
         0
       );
-      children.push({
+      totalBatteryAlarms += rackAlarms;
+
+      const packChildren: BessDeviceTreeNode[] = rack.packs.map((pack) => {
+        const packAlarms = pack.modules.reduce(
+          (ms, m) => ms + m.cells.filter((c) => c.status === "fault" || c.status === "warning").length,
+          0
+        );
+
+        const moduleChildren: BessDeviceTreeNode[] = pack.modules.map((mod) => {
+          const modAlarms = mod.cells.filter((c) => c.status === "fault" || c.status === "warning").length;
+          return {
+            id: mod.id,
+            name: `Module ${mod.moduleNumber}`,
+            type: "module" as const,
+            status: mod.status,
+            parentUnitId: unit.id,
+            parentRackId: rack.id,
+            parentPackId: pack.id,
+            alarmCount: modAlarms,
+          };
+        });
+
+        return {
+          id: pack.id,
+          name: `Pack ${pack.packNumber}`,
+          type: "pack" as const,
+          status: pack.status,
+          parentUnitId: unit.id,
+          parentRackId: rack.id,
+          children: moduleChildren,
+          alarmCount: packAlarms,
+        };
+      });
+
+      rackNodes.push({
         id: rack.id,
         name: `Rack ${rack.rackNumber}`,
         type: "rack",
         status: rack.status,
         parentUnitId: unit.id,
+        children: packChildren,
         alarmCount: rackAlarms,
       });
+    });
+
+    const batteryStatus: BessComponentStatus = rollupStatus(
+      unit.racks.map((r) => r.status)
+    );
+
+    children.push({
+      id: `${unit.id}-battery`,
+      name: "Battery",
+      type: "battery",
+      status: batteryStatus,
+      parentUnitId: unit.id,
+      children: rackNodes,
+      alarmCount: totalBatteryAlarms,
     });
 
     // ESC
@@ -1065,11 +1116,7 @@ export function getDefaultUnitSettings(unitId: string): BessUnitSettings {
     tempAlarmThreshold: 45,
     socLowAlarm: 10,
     socHighAlarm: 95,
-  };
-}
-
-export function getDefaultRackSettings(): BessRackSettings {
-  return {
+    // Rack configuration
     socCalibrationIntervalHours: 168,
     chargeStopSoc: 95,
     dischargeStopSoc: 10,
@@ -1114,6 +1161,32 @@ export function getRackById(rackId: string): { rack: BessRack; unit: BessUnit } 
   for (const unit of bessUnits) {
     const rack = unit.racks.find((r) => r.id === rackId);
     if (rack) return { rack, unit };
+  }
+  return undefined;
+}
+
+// --- Helper: get pack by ID ---
+
+export function getPackById(packId: string): { pack: BessPack; rack: BessRack; unit: BessUnit } | undefined {
+  for (const unit of bessUnits) {
+    for (const rack of unit.racks) {
+      const pack = rack.packs.find((p) => p.id === packId);
+      if (pack) return { pack, rack, unit };
+    }
+  }
+  return undefined;
+}
+
+// --- Helper: get module by ID ---
+
+export function getModuleById(moduleId: string): { module: BessModule; pack: BessPack; rack: BessRack; unit: BessUnit } | undefined {
+  for (const unit of bessUnits) {
+    for (const rack of unit.racks) {
+      for (const pack of rack.packs) {
+        const mod = pack.modules.find((m) => m.id === moduleId);
+        if (mod) return { module: mod, pack, rack, unit };
+      }
+    }
   }
   return undefined;
 }

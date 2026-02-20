@@ -4,6 +4,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getDefaultUnitSettings } from "@/lib/bess/mock-data";
 import type { BessUnitSettings } from "@/lib/bess/types";
 
@@ -38,7 +46,7 @@ export function BessUnitSettingsTab({ unitId }: BessUnitSettingsTabProps) {
   const defaults = getDefaultUnitSettings(unitId);
   const [settings, setSettings] = useState<BessUnitSettings>(defaults);
 
-  const update = (field: keyof BessUnitSettings, value: string | number) => {
+  const update = (field: keyof BessUnitSettings, value: string | number | boolean) => {
     setSettings((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -108,6 +116,80 @@ export function BessUnitSettingsTab({ unitId }: BessUnitSettingsTabProps) {
               type="number"
               value={settings.socHighAlarm}
               onChange={(e) => update("socHighAlarm", Number(e.target.value))}
+            />
+          </FormField>
+        </div>
+
+        <SectionTitle title="Rack Configuration — SoC Management" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="SoC Calibration Interval (hours)">
+            <Input
+              type="number"
+              value={settings.socCalibrationIntervalHours}
+              onChange={(e) => update("socCalibrationIntervalHours", Number(e.target.value))}
+            />
+          </FormField>
+          <FormField label="Charge Stop SoC (%)">
+            <Input
+              type="number"
+              value={settings.chargeStopSoc}
+              onChange={(e) => update("chargeStopSoc", Number(e.target.value))}
+            />
+          </FormField>
+          <FormField label="Discharge Stop SoC (%)">
+            <Input
+              type="number"
+              value={settings.dischargeStopSoc}
+              onChange={(e) => update("dischargeStopSoc", Number(e.target.value))}
+            />
+          </FormField>
+        </div>
+
+        <SectionTitle title="Rack Configuration — Operating Mode" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="Operating Mode">
+            <Select
+              value={settings.operatingMode}
+              onValueChange={(v) => update("operatingMode", v)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto</SelectItem>
+                <SelectItem value="charge">Charge Only</SelectItem>
+                <SelectItem value="discharge">Discharge Only</SelectItem>
+                <SelectItem value="standby">Standby</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+        </div>
+
+        <SectionTitle title="Rack Configuration — Safety" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="Insulation Resistance Threshold (k&Omega;)">
+            <Input
+              type="number"
+              value={settings.insulationResistanceThreshold}
+              onChange={(e) => update("insulationResistanceThreshold", Number(e.target.value))}
+            />
+          </FormField>
+        </div>
+
+        <SectionTitle title="Rack Configuration — Cell Balancing" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between py-2">
+            <Label className="text-sm">Balancing Enabled</Label>
+            <Switch
+              checked={settings.balancingEnabled}
+              onCheckedChange={(v) => update("balancingEnabled", v)}
+            />
+          </div>
+          <FormField label="Balancing Threshold (mV)">
+            <Input
+              type="number"
+              value={settings.balancingThresholdMv}
+              onChange={(e) => update("balancingThresholdMv", Number(e.target.value))}
             />
           </FormField>
         </div>

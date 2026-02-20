@@ -283,12 +283,14 @@ export interface BessHvcuState {
 
 // --- Device Tree types ---
 
-export type BessDeviceType = "unit" | "rack" | "esc" | "hvac";
+export type BessDeviceType = "unit" | "battery" | "rack" | "pack" | "module" | "esc" | "hvac";
 
 export interface BessSelectedDevice {
   id: string;
   type: BessDeviceType;
   unitId: string;
+  rackId?: string;
+  packId?: string;
 }
 
 export interface BessDeviceTreeNode {
@@ -297,6 +299,8 @@ export interface BessDeviceTreeNode {
   type: BessDeviceType;
   status: BessUnitStatus | BessComponentStatus;
   parentUnitId: string;
+  parentRackId?: string;
+  parentPackId?: string;
   children?: BessDeviceTreeNode[];
   alarmCount: number;
 }
@@ -362,9 +366,7 @@ export interface BessUnitSettings {
   tempAlarmThreshold: number;
   socLowAlarm: number;
   socHighAlarm: number;
-}
-
-export interface BessRackSettings {
+  // Rack configuration (merged from rack-level settings)
   socCalibrationIntervalHours: number;
   chargeStopSoc: number;
   dischargeStopSoc: number;
@@ -416,9 +418,18 @@ export const UNIT_TABS: TabConfig[] = [
 
 export const RACK_TABS: TabConfig[] = [
   { id: "summary", label: "Summary" },
-  { id: "hierarchy", label: "Hierarchy" },
   { id: "alarms", label: "Alarms" },
-  { id: "settings", label: "Settings" },
+];
+
+export const PACK_TABS: TabConfig[] = [
+  { id: "summary", label: "Summary" },
+  { id: "alarms", label: "Alarms" },
+];
+
+export const MODULE_TABS: TabConfig[] = [
+  { id: "summary", label: "Summary" },
+  { id: "cells", label: "Cells" },
+  { id: "alarms", label: "Alarms" },
 ];
 
 export const ESC_TABS: TabConfig[] = [

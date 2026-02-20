@@ -2,11 +2,15 @@
 
 import { BessUnitDetail } from "./bess-unit-detail";
 import { BessRackDetail } from "./bess-rack-detail";
+import { BessPackDetail } from "./bess-pack-detail";
+import { BessModuleDetail } from "./bess-module-detail";
 import { BessEscDetail } from "./bess-esc-detail";
 import { BessHvacDetail } from "./bess-hvac-detail";
 import {
   getBessUnitById,
   getRackById,
+  getPackById,
+  getModuleById,
   getEscById,
   getHvacById,
 } from "@/lib/bess/mock-data";
@@ -31,11 +35,45 @@ export function BessDeviceDetail({
         <BessUnitDetail unit={unit} onBack={onBack} onAlarmOpen={onAlarmOpen} />
       );
     }
+    case "battery": {
+      const unit = getBessUnitById(selectedDevice.unitId);
+      if (!unit) return <EmptyState />;
+      return (
+        <BessUnitDetail unit={unit} onBack={onBack} onAlarmOpen={onAlarmOpen} />
+      );
+    }
     case "rack": {
       const result = getRackById(selectedDevice.id);
       if (!result) return <EmptyState />;
       return (
         <BessRackDetail
+          rack={result.rack}
+          unit={result.unit}
+          onBack={onBack}
+          onAlarmOpen={onAlarmOpen}
+        />
+      );
+    }
+    case "pack": {
+      const result = getPackById(selectedDevice.id);
+      if (!result) return <EmptyState />;
+      return (
+        <BessPackDetail
+          pack={result.pack}
+          rack={result.rack}
+          unit={result.unit}
+          onBack={onBack}
+          onAlarmOpen={onAlarmOpen}
+        />
+      );
+    }
+    case "module": {
+      const result = getModuleById(selectedDevice.id);
+      if (!result) return <EmptyState />;
+      return (
+        <BessModuleDetail
+          module={result.module}
+          pack={result.pack}
           rack={result.rack}
           unit={result.unit}
           onBack={onBack}
