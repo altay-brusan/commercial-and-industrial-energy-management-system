@@ -3,7 +3,6 @@ namespace Backend.Domain.Entities.DeviceData;
 /// <summary>
 /// Base class for all device telemetry data.
 /// Uses BIGINT Id for high-volume time-series data.
-/// FirmId is denormalized for future table partitioning.
 /// </summary>
 public abstract class DeviceDataBase
 {
@@ -16,12 +15,6 @@ public abstract class DeviceDataBase
     /// Reference to the device that generated this data
     /// </summary>
     public Guid DeviceId { get; set; }
-
-    /// <summary>
-    /// Denormalized FacilityId for partitioning
-    /// (Device → Facility)
-    /// </summary>
-    public Guid FacilityId { get; set; }
 
     /// <summary>
     /// Timestamp from the device itself (device's local time)
@@ -46,5 +39,4 @@ public abstract class DeviceDataBase
 
     // Navigation
     public Device? Device { get; set; }
-    public Facility? Facility { get; set; }
 }

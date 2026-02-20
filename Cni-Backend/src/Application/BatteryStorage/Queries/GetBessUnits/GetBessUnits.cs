@@ -26,14 +26,13 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
     {
         var batteryDevices = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
-            .Include(d => d.Facility)
+            .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .Where(d => d.DeviceType != null && d.DeviceType.Name == "Battery")
             .ToListAsync(cancellationToken);
 
         var deviceIds = batteryDevices.Select(d => d.Id).ToList();
 
-        var latestData = await _context.DeviceBessData
+        var latestData = await _context.DeviceBatteryData
             .Where(dd => deviceIds.Contains(dd.DeviceId))
             .GroupBy(dd => dd.DeviceId)
             .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
@@ -53,10 +52,10 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
                 Id = device.Id,
                 Name = device.Name,
                 SerialNumber = device.SerialNumber,
-                ModelName = device.DeviceModel?.Name,
-                Manufacturer = device.DeviceModel?.Manufacturer ?? device.Manufacturer,
-                FacilityName = device.Facility?.Name,
-                FacilityId = device.FacilityId,
+                ModelName = device.Model,
+                Manufacturer = device.Manufacturer,
+                FacilityName = device.Rtu?.Facility?.Name,
+                FacilityId = device.Rtu!.FacilityId,
                 Status = StatusBadgeDto.FromStatus(device.Status),
                 SocPercent = ExtractDouble(payload, "stateOfCharge"),
                 SohPercent = ExtractDouble(payload, "stateOfHealth"),

@@ -40,7 +40,6 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "Battery")
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -49,13 +48,13 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         var (start, end) = GetPeriodRange(request.Period);
         var intervalMinutes = GetIntervalMinutes(request.Interval);
 
-        var rawData = await _context.DeviceBessData
+        var rawData = await _context.DeviceBatteryData
             .Where(dd => dd.DeviceId == request.UnitId && dd.DeviceLocalTime >= start && dd.DeviceLocalTime <= end)
             .OrderBy(dd => dd.DeviceLocalTime)
             .ToListAsync(cancellationToken);
 
         var sampled = SampleData(rawData, intervalMinutes);
-        var specs = PayloadDeserializer.GetElement(device.DeviceModel?.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.Specifications);
         var charts = BuildCharts(specs, sampled);
 
         return new ChartResponseDto
@@ -89,7 +88,7 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     };
 
     private static List<(DateTimeOffset Time, JsonElement? Payload)> SampleData(
-        List<Domain.Entities.DeviceData.DeviceBessData> rawData, int intervalMinutes)
+        List<Domain.Entities.DeviceData.DeviceBatteryData> rawData, int intervalMinutes)
     {
         if (rawData.Count == 0) return new();
 

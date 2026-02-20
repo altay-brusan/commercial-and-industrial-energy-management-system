@@ -17,7 +17,7 @@ public interface IApplicationDbContext
     DbSet<UserFirmFacility> UserFirmFacilities { get; }
 
     // Device telemetry data (time-series with JSON payload)
-    DbSet<DeviceBessData> DeviceBessData { get; }
+    DbSet<DeviceBatteryData> DeviceBatteryData { get; }
     DbSet<DeviceSolarData> DeviceSolarData { get; }
     DbSet<DevicePcsData> DevicePcsData { get; }
     DbSet<DeviceSmartMeterData> DeviceSmartMeterData { get; }
@@ -30,10 +30,9 @@ public interface IApplicationDbContext
     DbSet<TenantRolePermission> TenantRolePermissions { get; }
     DbSet<UserTenantRole> UserTenantRoles { get; }
 
-    // Device models, alarms, connectivity
-    DbSet<DeviceModel> DeviceModels { get; }
+    // Device alarms, connectivity
     DbSet<DeviceAlarm> DeviceAlarms { get; }
-    DbSet<FacilityConnectivity> FacilityConnectivities { get; }
+    DbSet<Rtu> Rtus { get; }
 
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }

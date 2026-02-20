@@ -20,25 +20,25 @@ public class GetPcsSchemaQueryHandler : IRequestHandler<GetPcsSchemaQuery, Schem
 
     public async Task<SchemaResponseDto> Handle(GetPcsSchemaQuery request, CancellationToken cancellationToken)
     {
-        var pcsModels = await _context.DeviceModels
-            .Include(dm => dm.DeviceType)
-            .Where(dm => dm.DeviceType != null && dm.DeviceType.Name == "PCS")
+        var pcsDevices = await _context.Devices
+            .Include(d => d.DeviceType)
+            .Where(d => d.DeviceType != null && d.DeviceType.Name == "PCS" && d.Specifications != null)
             .ToListAsync(cancellationToken);
 
-        var productTypes = pcsModels.Select(dm =>
+        var productTypes = pcsDevices.Select(d =>
         {
             object? specs = null;
-            if (!string.IsNullOrWhiteSpace(dm.Specifications))
+            if (!string.IsNullOrWhiteSpace(d.Specifications))
             {
-                try { specs = JsonSerializer.Deserialize<object>(dm.Specifications); }
+                try { specs = JsonSerializer.Deserialize<object>(d.Specifications); }
                 catch { /* ignore invalid JSON */ }
             }
 
             return new ProductTypeSchemaDto
             {
-                DeviceModelId = dm.Id,
-                ModelName = dm.Name,
-                Manufacturer = dm.Manufacturer,
+                DeviceId = d.Id,
+                ModelName = d.Model,
+                Manufacturer = d.Manufacturer,
                 Specifications = specs
             };
         }).ToList();

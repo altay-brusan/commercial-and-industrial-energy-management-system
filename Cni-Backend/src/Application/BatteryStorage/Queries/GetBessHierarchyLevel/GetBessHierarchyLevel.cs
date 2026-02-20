@@ -35,7 +35,7 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
 
         Guard.Against.NotFound(request.UnitId, device);
 
-        var latestData = await _context.DeviceBessData
+        var latestData = await _context.DeviceBatteryData
             .Where(dd => dd.DeviceId == request.UnitId)
             .OrderByDescending(dd => dd.DeviceLocalTime)
             .FirstOrDefaultAsync(cancellationToken);

@@ -1,6 +1,6 @@
 namespace Backend.Domain.Entities;
 
-public class FacilityConnectivity : BaseAuditableEntity
+public class Rtu : BaseAuditableEntity
 {
     public Guid FacilityId { get; set; }
     public string RtuSerialNumber { get; set; } = string.Empty;
@@ -15,4 +15,5 @@ public class FacilityConnectivity : BaseAuditableEntity
 
     // Navigation
     public Facility? Facility { get; set; }
+    public ICollection<Device> Devices { get; set; } = new List<Device>();
 }

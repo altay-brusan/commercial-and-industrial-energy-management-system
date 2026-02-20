@@ -27,14 +27,14 @@ public class GetPowerGeneralGraphQueryHandler : IRequestHandler<GetPowerGeneralG
 
         // Get facility devices to aggregate power data
         var devices = await _context.Devices
-            .Where(d => d.FacilityId == request.Id)
+            .Where(d => d.Rtu!.FacilityId == request.Id)
             .ToListAsync(cancellationToken);
 
         // For now, return empty list - this needs proper implementation
         // to aggregate power data from multiple device types' JSON payloads
         var result = new List<PowerGeneralGraphDto>();
 
-        // TODO: Implement aggregation from DeviceSolarData, DeviceBessData, DevicePcsData, etc.
+        // TODO: Implement aggregation from DeviceSolarData, DeviceBatteryData, DevicePcsData, etc.
         // This requires querying each device data table and extracting power values from JSON payloads
 
         return result;

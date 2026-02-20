@@ -20,10 +20,6 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
         builder.Property(e => e.DeviceId)
             .IsRequired();
 
-        // Denormalized FacilityId for partitioning
-        builder.Property(e => e.FacilityId)
-            .IsRequired();
-
         // Device local timestamp
         builder.Property(e => e.DeviceLocalTime)
             .IsRequired();
@@ -49,11 +45,6 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
             .IsDescending(false, true)
             .HasDatabaseName($"IX_{typeof(T).Name}_DeviceId_DeviceLocalTime");
 
-        // Index for partitioning queries by FacilityId
-        builder.HasIndex(e => new { e.FacilityId, e.DeviceLocalTime })
-            .IsDescending(false, true)
-            .HasDatabaseName($"IX_{typeof(T).Name}_FacilityId_DeviceLocalTime");
-
         // Index for kind-filtered queries
         builder.HasIndex(e => new { e.DeviceId, e.Kind, e.DeviceLocalTime })
             .IsDescending(false, false, true)
@@ -64,19 +55,14 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
             .WithMany()
             .HasForeignKey(e => e.DeviceId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(e => e.Facility)
-            .WithMany()
-            .HasForeignKey(e => e.FacilityId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
-public class DeviceBessDataConfiguration : DeviceDataBaseConfiguration<DeviceBessData>
+public class DeviceBatteryDataConfiguration : DeviceDataBaseConfiguration<DeviceBatteryData>
 {
-    public override void Configure(EntityTypeBuilder<DeviceBessData> builder)
+    public override void Configure(EntityTypeBuilder<DeviceBatteryData> builder)
     {
-        builder.ToTable("DeviceBessData");
+        builder.ToTable("DeviceBatteryData");
         base.Configure(builder);
     }
 }

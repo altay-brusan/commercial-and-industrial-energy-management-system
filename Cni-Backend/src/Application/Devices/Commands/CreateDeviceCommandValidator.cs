@@ -4,9 +4,9 @@ public class CreateDeviceCommandValidator : AbstractValidator<CreateDeviceComman
 {
     public CreateDeviceCommandValidator()
     {
-        RuleFor(x => x.FacilityId)
+        RuleFor(x => x.RtuId)
             .NotEmpty()
-            .WithMessage("FacilityId is required.");
+            .WithMessage("RtuId is required.");
         RuleFor(x => x.DeviceTypeId)
             .NotEmpty()
             .WithMessage("DeviceTypeId is required.");

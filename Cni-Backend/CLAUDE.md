@@ -76,7 +76,7 @@ BaseEntity (Id: Guid, DomainEvents)
         └── All business entities
 
 DeviceDataBase (Id: long — separate hierarchy for time-series telemetry)
-  └── DeviceBessData, DeviceSolarData, DevicePcsData, DeviceSmartMeterData
+  └── DeviceBatteryData, DeviceSolarData, DevicePcsData, DeviceSmartMeterData
 ```
 
 Device telemetry entities use `long Id` (not Guid) for high-volume time-series data. They store a `Kind` discriminator string and a `Payload` JSON blob (PostgreSQL JSONB) rather than typed columns. Don't use `FindAsync<T>(Guid)` patterns with these.
@@ -114,7 +114,7 @@ Both are enforced by `AuthorizationBehaviour` in the MediatR pipeline. Administr
 - Admins can impersonate tenants via `X-Selected-Tenant-Id` request header
 - `MultiTenantService` resolves effective tenant: regular users are always scoped; admins without the header see all data
 - **EF Core global query filters** in `ApplicationDbContext` auto-scope data by tenant (set at DbContext construction time). You never need to manually filter by tenant. **Warning:** calling `IgnoreQueryFilters()` bypasses tenant isolation.
-- Tenant scoping chains through navigation properties (e.g., Device → Facility → Firm → TenantId)
+- Tenant scoping chains through navigation properties (e.g., Device → Rtu → Facility → Firm → TenantId)
 - Global entities (no tenant filter): `Tariff`, `MarketOperator`, `DayAheadNetEnergyPriceHistory`, `Plan`
 - For mutations, `GetTenantIdForCreation(requestedTenantId?)` resolves: regular user → own tenant; admin → header > request body > error
 
@@ -148,9 +148,9 @@ There is no direct MQTT client. EMQX broker is configured with webhook rules tha
 
 **Ingest flow** (`IngestDeviceDataHandler`):
 1. `DeviceDataCategorizer.Categorize(kind)` maps the `Kind` string prefix to a `DeviceDataCategory` enum (`ContainerBattery*`/`Chiller*`/`HVCU*` → Bess, `Pcs*` → Pcs, `Solar*`/`Pv*`/`Irradiance*` → Solar, `Meter*`/`Grid*`/`SmartMeter*` → SmartMeter)
-2. Looks up `FacilityConnectivity` by `RtuSerialNumber` and `Device` by `SerialNumber` (both 5-min memory cached)
-3. Creates the typed entity (`DeviceBessData`/`DevicePcsData`/`DeviceSolarData`/`DeviceSmartMeterData`)
-4. Updates `LastSeenUtc` on both `FacilityConnectivity` and `Device` as side effects
+2. Looks up `Rtu` by `RtuSerialNumber` and `Device` by `SerialNumber` (both 5-min memory cached)
+3. Creates the typed entity (`DeviceBatteryData`/`DevicePcsData`/`DeviceSolarData`/`DeviceSmartMeterData`)
+4. Updates `LastSeenUtc` on both `Rtu` and `Device` as side effects
 
 ## Background Jobs
 
@@ -205,11 +205,11 @@ Hangfire with PostgreSQL storage (own `hangfire` schema). Dashboard at `/hangfir
 ## Key Domain Entities
 
 - **Tenant/Firm/Facility** — Multi-tenant organizational hierarchy
-- **Device/DeviceType/DeviceModel** — IoT devices at facilities, with self-referential parent/child and JSON `Ports`/`Metadata`
+- **Device/DeviceType** — IoT devices under RTUs, with self-referential parent/child, JSON `Ports`/`Metadata`/`Specifications`
+- **Rtu** — Remote Terminal Units per facility (table: `FacilityRemoteTerminalUnits`). Devices belong to RTUs, not directly to facilities.
 - **DeviceLink** — Port-to-port connections between devices within a facility
-- **FacilityConnectivity** — RTU (Remote Terminal Unit) associations per facility
 - **DeviceAlarm** — Device fault/warning tracking with severity and recovery
-- **DeviceDataBase** subclasses (Solar, BESS, PCS, SmartMeter) — Time-series telemetry with JSON payloads
+- **DeviceDataBase** subclasses (Battery, Solar, PCS, SmartMeter) — Time-series telemetry with JSON payloads
 - **MarketOperator/FirmMarketOperator/DayAheadNetEnergyPriceHistory** — Energy market price integration
 - **Tariff/FacilityTariff** — Energy tariff assignment to facilities
 - **TenantRole/TenantRolePermission/Feature/Permission/Plan** — RBAC and subscription management

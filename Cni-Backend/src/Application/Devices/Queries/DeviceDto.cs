@@ -5,7 +5,7 @@ namespace Backend.Application.Devices.Queries;
 public class DeviceDto
 {
     public Guid Id { get; init; }
-    public Guid FacilityId { get; set; }
+    public Guid RtuId { get; set; }
     public Guid DeviceTypeId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;

@@ -10,7 +10,7 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
     {
         builder.ToTable("Devices");
 
-        builder.Property(d => d.FacilityId)
+        builder.Property(d => d.RtuId)
             .IsRequired();
 
         builder.Property(d => d.DeviceTypeId)
@@ -40,25 +40,22 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
         builder.Property(d => d.Metadata)
             .HasColumnType("jsonb");
 
+        builder.Property(d => d.Specifications)
+            .HasColumnType("jsonb");
+
         builder.Property(d => d.Status)
             .HasMaxLength(50);
 
-        // Relationship to Facility
-        builder.HasOne(d => d.Facility)
-            .WithMany(f => f.Devices)
-            .HasForeignKey(d => d.FacilityId)
+        // Relationship to RTU
+        builder.HasOne(d => d.Rtu)
+            .WithMany(r => r.Devices)
+            .HasForeignKey(d => d.RtuId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Relationship to DeviceType
         builder.HasOne(d => d.DeviceType)
             .WithMany()
             .HasForeignKey(d => d.DeviceTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Relationship to DeviceModel (nullable for legacy devices)
-        builder.HasOne(d => d.DeviceModel)
-            .WithMany(dm => dm.Devices)
-            .HasForeignKey(d => d.DeviceModelId)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Self-referencing relationship for composite devices
@@ -68,6 +65,6 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Index for unit listing with status filters
-        builder.HasIndex(d => new { d.FacilityId, d.Status });
+        builder.HasIndex(d => new { d.RtuId, d.Status });
     }
 }

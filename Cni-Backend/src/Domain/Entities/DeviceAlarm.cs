@@ -3,7 +3,6 @@ namespace Backend.Domain.Entities;
 public class DeviceAlarm : BaseAuditableEntity
 {
     public Guid DeviceId { get; set; }
-    public Guid FacilityId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Severity { get; set; } = string.Empty;
@@ -17,5 +16,4 @@ public class DeviceAlarm : BaseAuditableEntity
 
     // Navigation
     public Device? Device { get; set; }
-    public Facility? Facility { get; set; }
 }

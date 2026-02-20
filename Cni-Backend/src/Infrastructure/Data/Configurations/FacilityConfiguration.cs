@@ -36,12 +36,6 @@ public class FacilityConfiguration : IEntityTypeConfiguration<Facility>
             .HasForeignKey(f => f.FirmId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Navigation to Devices
-        builder.HasMany(f => f.Devices)
-            .WithOne(d => d.Facility)
-            .HasForeignKey(d => d.FacilityId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         // Navigation to DeviceLinks
         builder.HasMany(f => f.DeviceLinks)
             .WithOne(dl => dl.Facility)

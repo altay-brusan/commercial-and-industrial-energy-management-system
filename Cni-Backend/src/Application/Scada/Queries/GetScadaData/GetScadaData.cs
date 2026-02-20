@@ -36,7 +36,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
         var devices = await _context.Devices
             .Include(d => d.DeviceType)
             .IgnoreQueryFilters()
-            .Where(d => d.FacilityId == request.Id)
+            .Where(d => d.Rtu!.FacilityId == request.Id)
             .ToListAsync(cancellationToken);
 
         foreach (var device in devices)
@@ -150,7 +150,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
 
     private async Task ProcessBessDevice(Device device, FacilityHubDto hub, CancellationToken ct, DateTime time)
     {
-        var latestData = await _context.DeviceBessData
+        var latestData = await _context.DeviceBatteryData
             .Where(x => x.DeviceId == device.Id)
             .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
             .FirstOrDefaultAsync(ct);

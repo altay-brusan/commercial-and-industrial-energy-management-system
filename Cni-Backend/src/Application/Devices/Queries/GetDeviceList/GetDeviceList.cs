@@ -44,9 +44,9 @@ public class GetDevicesWithPaginationQueryHandler : IRequestHandler<GetDevicesWi
         {
             facilityIds = request.Facilities.Split(',').Select(Guid.Parse).ToList();
         }
-        if (facilityIds is { Count: > 0 }) // Null degilse ve i�inde eleman varsa filtre uygula
+        if (facilityIds is { Count: > 0 })
         {
-            query = query.Where(x => facilityIds.Contains(x.FacilityId));
+            query = query.Where(x => facilityIds.Contains(x.Rtu!.FacilityId));
         }
         if (!string.IsNullOrEmpty(request.DeviceTypeList))
         {

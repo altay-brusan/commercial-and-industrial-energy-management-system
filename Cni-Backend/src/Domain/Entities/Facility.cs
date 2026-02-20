@@ -51,9 +51,8 @@ public class Facility : BaseAuditableEntity
 
     // Navigation properties
     public Firm? Firm { get; set; }
-    public ICollection<Device> Devices { get; set; } = new List<Device>();
     public ICollection<DeviceLink> DeviceLinks { get; set; } = new List<DeviceLink>();
     public ICollection<FacilityTariff> FacilityTariffs { get; set; } = new List<FacilityTariff>();
     public ICollection<UserFirmFacility> UserCompanyFacilities { get; set; } = new List<UserFirmFacility>();
-    public ICollection<FacilityConnectivity> Connectivities { get; set; } = new List<FacilityConnectivity>();
+    public ICollection<Rtu> Rtus { get; set; } = new List<Rtu>();
 }

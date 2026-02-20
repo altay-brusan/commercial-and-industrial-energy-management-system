@@ -1,26 +1,21 @@
 namespace Backend.Domain.Entities;
 
 /// <summary>
-/// Represents a physical device instance within a Facility.
+/// Represents a physical device instance connected to an RTU.
 /// Contains port configurations for connections and links to other devices.
-/// Tenant relationship is through Facility → Firm → Tenant.
+/// Tenant relationship is through Rtu → Facility → Firm → Tenant.
 /// </summary>
 public class Device : BaseAuditableEntity
 {
     /// <summary>
-    /// The Facility this device belongs to
+    /// The RTU (Remote Terminal Unit) this device is connected to
     /// </summary>
-    public Guid FacilityId { get; set; }
+    public Guid RtuId { get; set; }
 
     /// <summary>
     /// The type of device (e.g., Inverter, Battery, Solar Panel)
     /// </summary>
     public Guid DeviceTypeId { get; set; }
-
-    /// <summary>
-    /// Optional reference to a specific device model/template (nullable for legacy devices)
-    /// </summary>
-    public Guid? DeviceModelId { get; set; }
 
     /// <summary>
     /// Self-reference for composite devices (e.g., cabinet → child subsystems)
@@ -65,6 +60,11 @@ public class Device : BaseAuditableEntity
     public string? Metadata { get; set; }
 
     /// <summary>
+    /// Device specifications as JSON (tabs, curves, fault flags, hierarchy definitions, etc.)
+    /// </summary>
+    public string? Specifications { get; set; }
+
+    /// <summary>
     /// Current device status: online/offline/standby/fault/maintenance
     /// </summary>
     public string? Status { get; set; }
@@ -75,9 +75,8 @@ public class Device : BaseAuditableEntity
     public DateTimeOffset? LastSeenUtc { get; set; }
 
     // Navigation properties
-    public Facility? Facility { get; set; }
+    public Rtu? Rtu { get; set; }
     public DeviceType? DeviceType { get; set; }
-    public DeviceModel? DeviceModel { get; set; }
     public Device? ParentDevice { get; set; }
     public ICollection<Device> ChildDevices { get; set; } = new List<Device>();
     public ICollection<DeviceAlarm> Alarms { get; set; } = new List<DeviceAlarm>();

@@ -40,7 +40,6 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "PCS")
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -55,7 +54,7 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
             .ToListAsync(cancellationToken);
 
         var sampled = SampleData(rawData, intervalMinutes);
-        var specs = PayloadDeserializer.GetElement(device.DeviceModel?.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.Specifications);
         var charts = BuildCharts(specs, sampled);
 
         return new ChartResponseDto

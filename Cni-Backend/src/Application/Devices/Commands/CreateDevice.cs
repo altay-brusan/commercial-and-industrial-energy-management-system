@@ -10,7 +10,7 @@ namespace Backend.Application.Devices.Commands;
 [RequirePermission(Backend.Domain.Constants.Permissions.DeviceCreate)]
 public record CreateDeviceCommand : IRequest<Guid>
 {
-    public Guid FacilityId { get; init; }
+    public Guid RtuId { get; init; }
     public Guid DeviceTypeId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Model { get; init; } = string.Empty;
@@ -32,7 +32,7 @@ public class CreateDeviceCommandHandler : IRequestHandler<CreateDeviceCommand, G
     {
         var entity = new Device
         {
-            FacilityId = request.FacilityId,
+            RtuId = request.RtuId,
             DeviceTypeId = request.DeviceTypeId,
             Name = request.Name,
             Model = request.Model,

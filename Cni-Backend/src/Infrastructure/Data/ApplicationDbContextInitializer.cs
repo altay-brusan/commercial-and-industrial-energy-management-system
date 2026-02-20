@@ -433,11 +433,35 @@ public class ApplicationDbContextInitializer
         var savedDeviceTypes = await _context.DeviceTypes.ToListAsync();
         var dtLookup = savedDeviceTypes.ToDictionary(dt => dt.Name!, dt => dt.Id);
 
+        // Seed RTU (Remote Terminal Unit) for the facility
+        Guid rtuId;
+        var existingRtu = await _context.Rtus.IgnoreQueryFilters().OrderBy(x => x.Created).FirstOrDefaultAsync();
+        if (existingRtu == null)
+        {
+            var rtu = new Rtu
+            {
+                FacilityId = facilitiyId,
+                RtuSerialNumber = "RTU-DEMO-001",
+                RtuModel = "Siemens SICAM A8000",
+                Protocol = "Modbus TCP",
+                Status = "online",
+                Created = DateTime.UtcNow
+            };
+            _context.Rtus.Add(rtu);
+            await _context.SaveChangesAsync();
+            rtuId = rtu.Id;
+            _logger.LogInformation("Demo RTU created with ID {RtuId}", rtuId);
+        }
+        else
+        {
+            rtuId = existingRtu.Id;
+        }
+
         var devices = new List<Device>
         {
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Battery"],
                 Name = "BESS_001",
                 Model = "Tesla Megapack",
@@ -447,7 +471,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Solar"],
                 Name = "PV_001",
                 Model = "SunPower Maxeon 6",
@@ -457,7 +481,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Inverter"],
                 Name = "INVERTER_001",
                 Model = "SMA Sunny Tripower",
@@ -467,7 +491,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Smart Meter"],
                 Name = "SM_001",
                 Model = "Schneider PM5560",
@@ -477,7 +501,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Grid"],
                 Name = "GRID_001",
                 Model = "Grid Connection",
@@ -486,7 +510,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Generator"],
                 Name = "GEN_001",
                 Model = "Caterpillar C18",

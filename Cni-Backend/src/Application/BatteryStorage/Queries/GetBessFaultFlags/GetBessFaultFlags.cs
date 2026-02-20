@@ -26,19 +26,18 @@ public class GetBessFaultFlagsQueryHandler : IRequestHandler<GetBessFaultFlagsQu
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "Battery")
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
-        var latestData = await _context.DeviceBessData
+        var latestData = await _context.DeviceBatteryData
             .Where(dd => dd.DeviceId == request.UnitId)
             .OrderByDescending(dd => dd.DeviceLocalTime)
             .FirstOrDefaultAsync(cancellationToken);
 
         var payload = PayloadDeserializer.GetElement(latestData?.Payload);
-        var specs = PayloadDeserializer.GetElement(device.DeviceModel?.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.Specifications);
 
         return BuildFaultFlags(specs, payload);
     }

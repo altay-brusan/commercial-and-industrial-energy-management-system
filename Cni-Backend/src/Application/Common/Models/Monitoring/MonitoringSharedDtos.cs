@@ -15,7 +15,7 @@ public record SchemaResponseDto
 
 public record ProductTypeSchemaDto
 {
-    public Guid DeviceModelId { get; init; }
+    public Guid DeviceId { get; init; }
     public string ModelName { get; init; } = string.Empty;
     public string? Manufacturer { get; init; }
     public object? Specifications { get; init; }

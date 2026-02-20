@@ -1,10 +1,10 @@
 namespace Backend.Domain.Entities.DeviceData;
 
 /// <summary>
-/// Battery Energy Storage System (BESS) telemetry data.
+/// Battery Energy Storage System telemetry data.
 /// Payload JSON typically contains: StateOfCharge, StateOfHealth, DcPower,
 /// BatteryTemperature, ChargeStatus, etc.
 /// </summary>
-public class DeviceBessData : DeviceDataBase
+public class DeviceBatteryData : DeviceDataBase
 {
 }

@@ -4849,7 +4849,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "deviceModelId": {
+          "deviceId": {
             "type": "string",
             "format": "guid"
           },
@@ -4873,7 +4873,7 @@
             "type": "string",
             "format": "guid"
           },
-          "facilityId": {
+          "rtuId": {
             "type": "string",
             "format": "guid"
           },
@@ -4933,7 +4933,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "facilityId": {
+          "rtuId": {
             "type": "string",
             "format": "guid"
           },

@@ -20,25 +20,25 @@ public class GetBessSchemaQueryHandler : IRequestHandler<GetBessSchemaQuery, Sch
 
     public async Task<SchemaResponseDto> Handle(GetBessSchemaQuery request, CancellationToken cancellationToken)
     {
-        var batteryModels = await _context.DeviceModels
-            .Include(dm => dm.DeviceType)
-            .Where(dm => dm.DeviceType != null && dm.DeviceType.Name == "Battery")
+        var batteryDevices = await _context.Devices
+            .Include(d => d.DeviceType)
+            .Where(d => d.DeviceType != null && d.DeviceType.Name == "Battery" && d.Specifications != null)
             .ToListAsync(cancellationToken);
 
-        var productTypes = batteryModels.Select(dm =>
+        var productTypes = batteryDevices.Select(d =>
         {
             object? specs = null;
-            if (!string.IsNullOrWhiteSpace(dm.Specifications))
+            if (!string.IsNullOrWhiteSpace(d.Specifications))
             {
-                try { specs = JsonSerializer.Deserialize<object>(dm.Specifications); }
+                try { specs = JsonSerializer.Deserialize<object>(d.Specifications); }
                 catch { /* ignore invalid JSON */ }
             }
 
             return new ProductTypeSchemaDto
             {
-                DeviceModelId = dm.Id,
-                ModelName = dm.Name,
-                Manufacturer = dm.Manufacturer,
+                DeviceId = d.Id,
+                ModelName = d.Model,
+                Manufacturer = d.Manufacturer,
                 Specifications = specs
             };
         }).ToList();
