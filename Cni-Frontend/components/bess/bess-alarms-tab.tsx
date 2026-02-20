@@ -20,6 +20,7 @@ import type { FaultSeverity, FaultStatus } from "@/lib/bess/types";
 interface BessAlarmsTabProps {
   unitId: string;
   onAlarmOpen: (alarmId: string) => void;
+  sourceFilter?: string;
 }
 
 type FaultSortField = "code" | "name" | "severity" | "source" | "occurredAt" | "recoveredAt" | "status";
@@ -99,8 +100,12 @@ function SortableHeader({ label, field, currentField, direction, onSort, classNa
   );
 }
 
-export function BessAlarmsTab({ unitId, onAlarmOpen }: BessAlarmsTabProps) {
-  const faults = useMemo(() => getFaultsForUnit(unitId), [unitId]);
+export function BessAlarmsTab({ unitId, onAlarmOpen, sourceFilter }: BessAlarmsTabProps) {
+  const faults = useMemo(() => {
+    const all = getFaultsForUnit(unitId);
+    if (!sourceFilter) return all;
+    return all.filter((f) => f.source.includes(sourceFilter));
+  }, [unitId, sourceFilter]);
   const [sortField, setSortField] = useState<FaultSortField | null>("occurredAt");
   const [sortDirection, setSortDirection] = useState<SortDir>("desc");
 

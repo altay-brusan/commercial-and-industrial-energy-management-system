@@ -10,6 +10,8 @@ import { BessHierarchyTab } from "./bess-hierarchy-tab";
 import { BessMonitoringTab } from "./bess-monitoring-tab";
 import { BessFaultTab } from "./bess-fault-tab";
 import { BessAlarmsTab } from "./bess-alarms-tab";
+import { BessUnitSettingsTab } from "./settings/bess-unit-settings-tab";
+import { UNIT_TABS } from "@/lib/bess/types";
 import type { BessUnit } from "@/lib/bess/types";
 
 interface BessUnitDetailProps {
@@ -36,15 +38,7 @@ function UnitStatusBadge({ status }: { status: BessUnit["status"] }) {
   return <Badge className={styles[status]}>{labels[status]}</Badge>;
 }
 
-const tabs: { id: DetailTab; label: string; disabled?: boolean }[] = [
-  { id: "summary", label: "Summary" },
-  { id: "hierarchy", label: "Hierarchy" },
-  { id: "monitoring", label: "Monitoring" },
-  { id: "health", label: "Health" },
-  { id: "fault", label: "Fault" },
-  { id: "alarms", label: "Alarms" },
-  { id: "settings", label: "Settings", disabled: true },
-];
+const tabs = UNIT_TABS;
 
 export function BessUnitDetail({ unit, onBack, onAlarmOpen }: BessUnitDetailProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>("summary");
@@ -69,7 +63,7 @@ export function BessUnitDetail({ unit, onBack, onAlarmOpen }: BessUnitDetailProp
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => !tab.disabled && setActiveTab(tab.id)}
+              onClick={() => !tab.disabled && setActiveTab(tab.id as DetailTab)}
               disabled={tab.disabled}
               className={`px-4 pb-2 text-sm transition-colors border-b-2 ${
                 activeTab === tab.id
@@ -92,6 +86,7 @@ export function BessUnitDetail({ unit, onBack, onAlarmOpen }: BessUnitDetailProp
       {activeTab === "monitoring" && <BessMonitoringTab unitId={unit.id} />}
       {activeTab === "fault" && <BessFaultTab unitId={unit.id} />}
       {activeTab === "alarms" && <BessAlarmsTab unitId={unit.id} onAlarmOpen={onAlarmOpen} />}
+      {activeTab === "settings" && <BessUnitSettingsTab unitId={unit.id} />}
     </div>
   );
 }
