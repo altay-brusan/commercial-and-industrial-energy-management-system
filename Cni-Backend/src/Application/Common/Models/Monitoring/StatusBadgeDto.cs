@@ -18,4 +18,17 @@ public record StatusBadgeDto
         "idle" => new StatusBadgeDto { Value = "idle", Label = "Idle", Color = "gray" },
         _ => new StatusBadgeDto { Value = status ?? "unknown", Label = status ?? "Unknown", Color = "gray" }
     };
+
+    /// <summary>
+    /// Derives operating mode badge from BMS state string (e.g., "Discharge", "Charge", "Idle").
+    /// </summary>
+    public static StatusBadgeDto FromOperatingMode(string? state) => state?.ToLowerInvariant() switch
+    {
+        "discharge" or "discharging" => new StatusBadgeDto { Value = "discharging", Label = "Discharging", Color = "purple" },
+        "charge" or "charging" => new StatusBadgeDto { Value = "charging", Label = "Charging", Color = "green" },
+        "idle" => new StatusBadgeDto { Value = "idle", Label = "Idle", Color = "gray" },
+        "standby" => new StatusBadgeDto { Value = "standby", Label = "Standby", Color = "yellow" },
+        "fault" or "error" => new StatusBadgeDto { Value = "fault", Label = "Fault", Color = "red" },
+        _ => new StatusBadgeDto { Value = state?.ToLowerInvariant() ?? "unknown", Label = state ?? "Unknown", Color = "gray" }
+    };
 }

@@ -4595,15 +4595,45 @@
           "name": {
             "type": "string"
           },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "operatingMode": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "soc": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "soh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "power": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "capacityKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "activeAlarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
           "serialNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "modelName": {
-            "type": "string",
-            "nullable": true
-          },
-          "manufacturer": {
             "type": "string",
             "nullable": true
           },
@@ -4615,31 +4645,9 @@
             "type": "string",
             "format": "guid"
           },
-          "status": {
-            "$ref": "#/components/schemas/StatusBadgeDto"
-          },
-          "socPercent": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "sohPercent": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "powerKw": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
           "temperatureC": {
             "type": "number",
             "format": "double",
-            "nullable": true
-          },
-          "chargeStatus": {
-            "type": "string",
             "nullable": true
           },
           "lastSeenUtc": {
@@ -4672,6 +4680,20 @@
             "type": "integer",
             "format": "int32"
           },
+          "totalCapacityKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "averageSoc": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalActiveAlarms": {
+            "type": "integer",
+            "format": "int32"
+          },
           "onlineCount": {
             "type": "integer",
             "format": "int32"
@@ -4684,25 +4706,9 @@
             "type": "integer",
             "format": "int32"
           },
-          "avgSocPercent": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "avgSohPercent": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "totalPowerKw": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "totalEnergyStoredKwh": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
+          "standbyCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
