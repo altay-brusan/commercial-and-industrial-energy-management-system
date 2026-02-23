@@ -826,6 +826,43 @@
         ]
       }
     },
+    "/api/v1/BatteryStorage/Units/{unitId}/Settings": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsSettings",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/BatteryStorage/Schema": {
       "get": {
         "tags": [
@@ -4979,6 +5016,17 @@
           "status": {
             "type": "string",
             "nullable": true
+          },
+          "editable": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
           },
           "meta": {
             "type": "object",

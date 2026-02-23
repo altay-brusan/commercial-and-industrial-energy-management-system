@@ -50,6 +50,8 @@ public record SectionFieldDto
     public string? Unit { get; init; }
     public string? Format { get; init; }
     public string? Status { get; init; }
+    public bool? Editable { get; init; }
+    public List<string>? Options { get; init; }
     public Dictionary<string, object?>? Meta { get; init; }
 
     /// <summary>

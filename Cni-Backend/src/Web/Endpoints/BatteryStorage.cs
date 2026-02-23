@@ -6,6 +6,7 @@ using Backend.Application.BatteryStorage.Queries.GetBessHealth;
 using Backend.Application.BatteryStorage.Queries.GetBessHierarchy;
 using Backend.Application.BatteryStorage.Queries.GetBessHierarchyLevel;
 using Backend.Application.BatteryStorage.Queries.GetBessSchema;
+using Backend.Application.BatteryStorage.Queries.GetBessSettings;
 using Backend.Application.BatteryStorage.Queries.GetBessSummary;
 using Backend.Application.BatteryStorage.Queries.GetBessUnitDetail;
 using Backend.Application.BatteryStorage.Queries.GetBessUnits;
@@ -35,6 +36,7 @@ public class BatteryStorage : EndpointGroupBase
         group.MapGet("/Units/{unitId}/Curves", GetCurves);
         group.MapGet("/Units/{unitId}/FaultFlags", GetFaultFlags);
         group.MapGet("/Units/{unitId}/Notifications", GetNotifications);
+        group.MapGet("/Units/{unitId}/Settings", GetSettings);
         group.MapGet("/Schema", GetSchema);
     }
 
@@ -115,6 +117,13 @@ public class BatteryStorage : EndpointGroupBase
             Severity = severity,
             IsActive = isActive
         });
+        return TypedResults.Ok(result);
+    }
+
+    public static async Task<Ok<SummaryResponseDto>> GetSettings(
+        ISender sender, Guid unitId)
+    {
+        var result = await sender.Send(new GetBessSettingsQuery { UnitId = unitId });
         return TypedResults.Ok(result);
     }
 
