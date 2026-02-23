@@ -26,8 +26,7 @@ public class GetPcsUnitDetailQueryHandler : IRequestHandler<GetPcsUnitDetailQuer
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
-            .Include(d => d.Facility)
+            .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "PCS")
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -36,20 +35,20 @@ public class GetPcsUnitDetailQueryHandler : IRequestHandler<GetPcsUnitDetailQuer
         // Find linked BESS unit (Battery device in same facility or via ParentDeviceId)
         var linkedBess = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.FacilityId == device.FacilityId && d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => d.Rtu!.FacilityId == device.Rtu!.FacilityId && d.DeviceType != null && d.DeviceType.Name == "Battery")
             .FirstOrDefaultAsync(cancellationToken);
 
-        var tabs = GetAvailableTabs(device.DeviceModel?.Specifications);
+        var tabs = GetAvailableTabs(device.Specifications);
 
         return new PcsUnitDetailDto
         {
             Id = device.Id,
             Name = device.Name,
             SerialNumber = device.SerialNumber,
-            ModelName = device.DeviceModel?.Name,
-            Manufacturer = device.DeviceModel?.Manufacturer ?? device.Manufacturer,
-            FacilityId = device.FacilityId,
-            FacilityName = device.Facility?.Name,
+            ModelName = device.Model,
+            Manufacturer = device.Manufacturer,
+            FacilityId = device.Rtu!.FacilityId,
+            FacilityName = device.Rtu?.Facility?.Name,
             Status = StatusBadgeDto.FromStatus(device.Status),
             AvailableTabs = tabs,
             LinkedBessUnit = linkedBess != null ? new PcsLinkedBessDto

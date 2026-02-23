@@ -41,17 +41,11 @@ public class DeviceAlarmConfiguration : IEntityTypeConfiguration<DeviceAlarm>
             .HasForeignKey(da => da.DeviceId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship to Facility (denormalized)
-        builder.HasOne(da => da.Facility)
-            .WithMany()
-            .HasForeignKey(da => da.FacilityId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         // Index for active alarm queries per device
         builder.HasIndex(da => new { da.DeviceId, da.IsActive });
 
-        // Index for paginated fault history by facility
-        builder.HasIndex(da => new { da.FacilityId, da.OccurredAt })
+        // Index for paginated fault history by device
+        builder.HasIndex(da => new { da.DeviceId, da.OccurredAt })
             .IsDescending(false, true);
     }
 }

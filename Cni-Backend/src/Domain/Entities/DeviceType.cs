@@ -13,7 +13,4 @@ public class DeviceType : BaseAuditableEntity
     public required string Name { get; set; }
 
     public string? Description { get; set; }
-
-    // Navigation
-    public ICollection<DeviceModel> DeviceModels { get; set; } = new List<DeviceModel>();
 }

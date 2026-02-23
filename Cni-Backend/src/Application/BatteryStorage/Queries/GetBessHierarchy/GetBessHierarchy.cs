@@ -26,16 +26,85 @@ public class GetBessHierarchyQueryHandler : IRequestHandler<GetBessHierarchyQuer
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "Battery")
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
-        var levels = GetHierarchyLevels(device.DeviceModel?.Specifications);
+        // Check if this device has child Device entities (real hierarchy)
+        var hasChildDevices = await _context.Devices
+            .AnyAsync(d => d.ParentDeviceId == request.UnitId, cancellationToken);
 
-        var latestData = await _context.DeviceBessData
-            .Where(dd => dd.DeviceId == request.UnitId)
+        if (hasChildDevices)
+        {
+            return await BuildFromDeviceEntities(request.UnitId, device.Specifications, cancellationToken);
+        }
+
+        // Fallback: extract from payload JSON (legacy behavior)
+        return await BuildFromPayload(request.UnitId, device.Specifications, cancellationToken);
+    }
+
+    private async Task<HierarchyResponseDto> BuildFromDeviceEntities(
+        Guid unitId, string? specifications, CancellationToken cancellationToken)
+    {
+        // Load direct children of the root device
+        var children = await _context.Devices
+            .Include(d => d.DeviceType)
+            .Where(d => d.ParentDeviceId == unitId)
+            .OrderBy(d => d.Name)
+            .ToListAsync(cancellationToken);
+
+        // Get alarm counts for children
+        var childIds = children.Select(d => d.Id).ToList();
+        var alarmCounts = await _context.DeviceAlarms
+            .Where(a => childIds.Contains(a.DeviceId) && a.IsActive)
+            .GroupBy(a => a.DeviceId)
+            .Select(g => new { DeviceId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.DeviceId, x => x.Count, cancellationToken);
+
+        // Check which children have their own children
+        var hasGrandchildren = await _context.Devices
+            .Where(d => d.ParentDeviceId.HasValue && childIds.Contains(d.ParentDeviceId.Value))
+            .Select(d => d.ParentDeviceId!.Value)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var grandchildSet = new HashSet<Guid>(hasGrandchildren);
+
+        // Count children per parent
+        var childCounts = await _context.Devices
+            .Where(d => d.ParentDeviceId.HasValue && childIds.Contains(d.ParentDeviceId.Value))
+            .GroupBy(d => d.ParentDeviceId!.Value)
+            .Select(g => new { ParentId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ParentId, x => x.Count, cancellationToken);
+
+        var levels = GetHierarchyLevels(specifications);
+
+        var rootItems = children.Select(child => new HierarchyItemDto
+        {
+            Id = child.Id.ToString(),
+            Name = child.Name,
+            Level = child.DeviceType?.Name?.Replace("Battery.", "").ToLowerInvariant() ?? "unknown",
+            Status = StatusBadgeDto.FromStatus(child.Status),
+            Data = null,
+            HasChildren = grandchildSet.Contains(child.Id),
+            ChildCount = childCounts.GetValueOrDefault(child.Id, 0)
+        }).ToList();
+
+        return new HierarchyResponseDto
+        {
+            Levels = levels,
+            RootItems = rootItems
+        };
+    }
+
+    private async Task<HierarchyResponseDto> BuildFromPayload(
+        Guid unitId, string? specifications, CancellationToken cancellationToken)
+    {
+        var levels = GetHierarchyLevels(specifications);
+
+        var latestData = await _context.DeviceBatteryData
+            .Where(dd => dd.DeviceId == unitId)
             .OrderByDescending(dd => dd.DeviceLocalTime)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -95,7 +164,7 @@ public class GetBessHierarchyQueryHandler : IRequestHandler<GetBessHierarchyQuer
             return items;
 
         var rootLevel = levels[0];
-        var pluralKey = rootLevel.Key + "s"; // rack -> racks
+        var pluralKey = rootLevel.Key + "s";
 
         if (PayloadDeserializer.GetNestedElement(element.Value, pluralKey) is { } arrayElement &&
             arrayElement.ValueKind == JsonValueKind.Array)

@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Backend.Infrastructure.Data.Configurations;
 
-public class FacilityConnectivityConfiguration : IEntityTypeConfiguration<FacilityConnectivity>
+public class RtuConfiguration : IEntityTypeConfiguration<Rtu>
 {
-    public void Configure(EntityTypeBuilder<FacilityConnectivity> builder)
+    public void Configure(EntityTypeBuilder<Rtu> builder)
     {
-        builder.ToTable("FacilityConnectivities");
+        builder.ToTable("FacilityRemoteTerminalUnits");
 
         builder.Property(fc => fc.RtuSerialNumber)
             .HasMaxLength(100)
@@ -34,7 +34,7 @@ public class FacilityConnectivityConfiguration : IEntityTypeConfiguration<Facili
 
         // Relationship to Facility
         builder.HasOne(fc => fc.Facility)
-            .WithMany(f => f.Connectivities)
+            .WithMany(f => f.Rtus)
             .HasForeignKey(fc => fc.FacilityId)
             .OnDelete(DeleteBehavior.Cascade);
 

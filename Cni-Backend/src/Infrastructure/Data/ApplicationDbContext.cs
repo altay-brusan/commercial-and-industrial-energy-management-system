@@ -30,13 +30,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     public DbSet<Device> Devices => Set<Device>();
     public DbSet<DeviceType> DeviceTypes => Set<DeviceType>();
-    public DbSet<DeviceModel> DeviceModels => Set<DeviceModel>();
     public DbSet<DeviceLink> DeviceLinks => Set<DeviceLink>();
-    public DbSet<FacilityConnectivity> FacilityConnectivities => Set<FacilityConnectivity>();
+    public DbSet<Rtu> Rtus => Set<Rtu>();
     public DbSet<DeviceAlarm> DeviceAlarms => Set<DeviceAlarm>();
+    public DbSet<DeviceSpecificationTemplate> DeviceSpecificationTemplates => Set<DeviceSpecificationTemplate>();
 
     // Device telemetry data (time-series with JSON payload)
-    public DbSet<DeviceBessData> DeviceBessData => Set<DeviceBessData>();
+    public DbSet<DeviceBatteryData> DeviceBatteryData => Set<DeviceBatteryData>();
     public DbSet<DeviceSolarData> DeviceSolarData => Set<DeviceSolarData>();
     public DbSet<DevicePcsData> DevicePcsData => Set<DevicePcsData>();
     public DbSet<DeviceSmartMeterData> DeviceSmartMeterData => Set<DeviceSmartMeterData>();
@@ -71,16 +71,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<Facility>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<FirmMarketOperator>().HasQueryFilter(x => !_isTenantScoped || x.Firm!.TenantId == _effectiveTenantId);
         // Entities that access tenant through Facility → Firm need matching filters
-        builder.Entity<Device>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<Device>().HasQueryFilter(x => !_isTenantScoped || x.Rtu!.Facility!.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<DeviceLink>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
-        builder.Entity<FacilityConnectivity>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
-        builder.Entity<DeviceAlarm>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<Rtu>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DeviceAlarm>().HasQueryFilter(x => !_isTenantScoped || x.Device!.Rtu!.Facility!.Firm!.TenantId == _effectiveTenantId);
         builder.Entity<FacilityTariff>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
-        // Device telemetry data - filter by denormalized FacilityId → Firm → Tenant
-        builder.Entity<DeviceBessData>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
-        builder.Entity<DeviceSolarData>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
-        builder.Entity<DevicePcsData>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
-        builder.Entity<DeviceSmartMeterData>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        // Device telemetry data - filter through Device → Rtu → Facility → Firm → Tenant
+        builder.Entity<DeviceBatteryData>().HasQueryFilter(x => !_isTenantScoped || x.Device!.Rtu!.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DeviceSolarData>().HasQueryFilter(x => !_isTenantScoped || x.Device!.Rtu!.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DevicePcsData>().HasQueryFilter(x => !_isTenantScoped || x.Device!.Rtu!.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<DeviceSmartMeterData>().HasQueryFilter(x => !_isTenantScoped || x.Device!.Rtu!.Facility!.Firm!.TenantId == _effectiveTenantId);
         // Authorization entities with tenant scoping
         builder.Entity<TenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
         builder.Entity<TenantRolePermission>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);

@@ -340,6 +340,31 @@
         ]
       }
     },
+    "/api/v1/BatteryStorage/DeviceTree": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageDeviceTree",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BessDeviceTreeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/BatteryStorage/Units": {
       "get": {
         "tags": [
@@ -523,6 +548,43 @@
         ]
       }
     },
+    "/api/v1/BatteryStorage/Units/{unitId}/Tree": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsTree",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceTreeNodeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/BatteryStorage/Units/{unitId}/Summary": {
       "get": {
         "tags": [
@@ -547,10 +609,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DynamicSectionDto"
-                  }
+                  "$ref": "#/components/schemas/SummaryResponseDto"
                 }
               }
             }
@@ -587,10 +646,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DynamicSectionDto"
-                  }
+                  "$ref": "#/components/schemas/SummaryResponseDto"
                 }
               }
             }
@@ -695,12 +751,12 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Units/{unitId}/Faults": {
+    "/api/v1/BatteryStorage/Units/{unitId}/Notifications": {
       "get": {
         "tags": [
           "BatteryStorage"
         ],
-        "operationId": "GetApiV1BatteryStorageUnitsFaults",
+        "operationId": "GetApiV1BatteryStorageUnitsNotifications",
         "parameters": [
           {
             "name": "unitId",
@@ -713,7 +769,7 @@
             "x-position": 1
           },
           {
-            "name": "pageNumber",
+            "name": "page",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -770,6 +826,43 @@
         ]
       }
     },
+    "/api/v1/BatteryStorage/Units/{unitId}/Settings": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsSettings",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/BatteryStorage/Schema": {
       "get": {
         "tags": [
@@ -793,6 +886,70 @@
             "JWT": []
           }
         ]
+      }
+    },
+    "/api/v1/DeviceData/Ingest": {
+      "post": {
+        "tags": [
+          "DeviceData"
+        ],
+        "operationId": "PostApiV1DeviceDataIngest",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestDeviceDataCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/DeviceData/Ingest/Batch": {
+      "post": {
+        "tags": [
+          "DeviceData"
+        ],
+        "operationId": "PostApiV1DeviceDataIngestBatch",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestDeviceDataBatchCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestBatchResultDto"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/Devices/{id}": {
@@ -924,6 +1081,234 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/Devices/{id}/Tree": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "GetDeviceTree",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceTreeNodeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/Devices/RegisterComposite": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "RegisterComposite",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceCompositeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/DeviceSpecificationTemplates": {
+      "get": {
+        "tags": [
+          "DeviceSpecificationTemplates"
+        ],
+        "operationId": "GetApiV1DeviceSpecificationTemplatesAll",
+        "parameters": [
+          {
+            "name": "deviceTypeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceSpecificationTemplateDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "DeviceSpecificationTemplates"
+        ],
+        "operationId": "PostApiV1DeviceSpecificationTemplates",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeviceSpecificationTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/DeviceSpecificationTemplates/{id}": {
+      "get": {
+        "tags": [
+          "DeviceSpecificationTemplates"
+        ],
+        "operationId": "GetApiV1DeviceSpecificationTemplates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceSpecificationTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "DeviceSpecificationTemplates"
+        ],
+        "operationId": "PutApiV1DeviceSpecificationTemplates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeviceSpecificationTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
           }
         },
         "security": [
@@ -4164,6 +4549,57 @@
           }
         }
       },
+      "BessDeviceTreeResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "tree": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceTreeNodeDto"
+            }
+          }
+        }
+      },
+      "DeviceTreeNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "deviceTypeName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "alarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceTreeNodeDto"
+            }
+          }
+        }
+      },
       "BessUnitsResultDto": {
         "type": "object",
         "additionalProperties": false,
@@ -4190,15 +4626,45 @@
           "name": {
             "type": "string"
           },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "operatingMode": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "soc": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "soh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "power": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "capacityKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "activeAlarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
           "serialNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "modelName": {
-            "type": "string",
-            "nullable": true
-          },
-          "manufacturer": {
             "type": "string",
             "nullable": true
           },
@@ -4210,31 +4676,9 @@
             "type": "string",
             "format": "guid"
           },
-          "status": {
-            "$ref": "#/components/schemas/StatusBadgeDto"
-          },
-          "socPercent": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "sohPercent": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "powerKw": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
           "temperatureC": {
             "type": "number",
             "format": "double",
-            "nullable": true
-          },
-          "chargeStatus": {
-            "type": "string",
             "nullable": true
           },
           "lastSeenUtc": {
@@ -4267,6 +4711,20 @@
             "type": "integer",
             "format": "int32"
           },
+          "totalCapacityKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "averageSoc": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalActiveAlarms": {
+            "type": "integer",
+            "format": "int32"
+          },
           "onlineCount": {
             "type": "integer",
             "format": "int32"
@@ -4279,25 +4737,9 @@
             "type": "integer",
             "format": "int32"
           },
-          "avgSocPercent": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "avgSohPercent": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "totalPowerKw": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "totalEnergyStoredKwh": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
+          "standbyCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -4479,6 +4921,18 @@
           }
         }
       },
+      "SummaryResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DynamicSectionDto"
+            }
+          }
+        }
+      },
       "DynamicSectionDto": {
         "type": "object",
         "additionalProperties": false,
@@ -4489,9 +4943,19 @@
           "title": {
             "type": "string"
           },
-          "order": {
+          "icon": {
+            "type": "string",
+            "nullable": true
+          },
+          "variant": {
+            "type": "string"
+          },
+          "columns": {
             "type": "integer",
             "format": "int32"
+          },
+          "optional": {
+            "type": "boolean"
           },
           "fields": {
             "type": "array",
@@ -4499,11 +4963,28 @@
               "$ref": "#/components/schemas/SectionFieldDto"
             }
           },
-          "subsections": {
+          "tableData": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TableDataDto"
+              }
+            ]
+          },
+          "chartConfig": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartConfigDto"
+              }
+            ]
+          },
+          "chartData": {
             "type": "array",
             "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/SubsectionDto"
+              "type": "object",
+              "additionalProperties": {}
             }
           }
         }
@@ -4521,6 +5002,9 @@
           "value": {
             "nullable": true
           },
+          "type": {
+            "type": "string"
+          },
           "unit": {
             "type": "string",
             "nullable": true
@@ -4529,31 +5013,140 @@
             "type": "string",
             "nullable": true
           },
-          "sourcePath": {
+          "status": {
             "type": "string",
             "nullable": true
           },
-          "order": {
-            "type": "integer",
-            "format": "int32"
+          "editable": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
           }
         }
       },
-      "SubsectionDto": {
+      "TableDataDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableColumnDto"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        }
+      },
+      "TableColumnDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "key": {
             "type": "string"
           },
-          "title": {
+          "label": {
             "type": "string"
           },
-          "fields": {
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "ChartConfigDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "xAxis": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartAxisDto"
+              }
+            ]
+          },
+          "yAxis": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartAxisDto"
+              }
+            ]
+          },
+          "referenceLines": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/SectionFieldDto"
+              "$ref": "#/components/schemas/ChartReferenceLineDto"
             }
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ChartAxisDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "domain": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
+      "ChartReferenceLineDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "y": {
+            "type": "number",
+            "format": "double"
+          },
+          "label": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "strokeDasharray": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -4566,12 +5159,6 @@
             "items": {
               "$ref": "#/components/schemas/ChartDefinitionDto"
             }
-          },
-          "period": {
-            "type": "string"
-          },
-          "interval": {
-            "type": "string"
           }
         }
       },
@@ -4585,36 +5172,44 @@
           "title": {
             "type": "string"
           },
-          "chartType": {
+          "type": {
             "type": "string"
           },
           "xAxis": {
-            "$ref": "#/components/schemas/XAxisDto"
+            "$ref": "#/components/schemas/CurveXAxisDto"
           },
           "series": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ChartSeriesDto"
+              "$ref": "#/components/schemas/CurveSeriesDto"
+            }
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
             }
           }
         }
       },
-      "XAxisDto": {
+      "CurveXAxisDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "type": {
+          "key": {
             "type": "string"
           },
-          "labels": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "label": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
-      "ChartSeriesDto": {
+      "CurveSeriesDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -4632,15 +5227,13 @@
             "type": "string",
             "nullable": true
           },
-          "sourcePath": {
+          "yAxis": {
             "type": "string",
             "nullable": true
           },
-          "data": {
-            "type": "array",
-            "items": {
-              "nullable": true
-            }
+          "type": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -4771,23 +5364,14 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "items": {
+          "faults": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FaultRecordDto"
             }
           },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
           }
         }
       },
@@ -4806,10 +5390,10 @@
             "type": "string"
           },
           "severity": {
-            "type": "string"
+            "$ref": "#/components/schemas/StatusBadgeDto"
           },
-          "category": {
-            "type": "string"
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
           },
           "source": {
             "type": "string",
@@ -4824,12 +5408,32 @@
             "format": "date-time",
             "nullable": true
           },
-          "isActive": {
-            "type": "boolean"
-          },
-          "details": {
+          "relatedAlarmId": {
             "type": "string",
+            "format": "guid",
             "nullable": true
+          }
+        }
+      },
+      "PaginationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -4849,19 +5453,117 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "deviceModelId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "modelName": {
+          "key": {
             "type": "string"
           },
-          "manufacturer": {
-            "type": "string",
-            "nullable": true
+          "label": {
+            "type": "string"
           },
-          "specifications": {
+          "hierarchy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportedTabs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summarySections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "healthSections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "faultSources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "curveCharts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "connectedDevices": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "IngestResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IngestDeviceDataCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rtuSn": {
+            "type": "string"
+          },
+          "deviceSn": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "string"
+          },
+          "deviceLocalTime": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
+          }
+        }
+      },
+      "IngestBatchResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "succeeded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "IngestDeviceDataBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IngestDeviceDataCommand"
+            }
           }
         }
       },
@@ -4873,7 +5575,7 @@
             "type": "string",
             "format": "guid"
           },
-          "facilityId": {
+          "rtuId": {
             "type": "string",
             "format": "guid"
           },
@@ -4933,13 +5635,18 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "facilityId": {
+          "rtuId": {
             "type": "string",
             "format": "guid"
           },
           "deviceTypeId": {
             "type": "string",
             "format": "guid"
+          },
+          "parentDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           },
           "name": {
             "type": "string"
@@ -4956,6 +5663,136 @@
           },
           "ports": {
             "type": "string"
+          },
+          "metadata": {
+            "type": "string",
+            "nullable": true
+          },
+          "specifications": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RegisterDeviceCompositeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rtuId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "parentDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "DeviceSpecificationTemplateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceTypeName": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "specificationsTemplate": {
+            "type": "string"
+          },
+          "metadataTemplate": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateDeviceSpecificationTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "model": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "specificationsTemplate": {
+            "type": "string"
+          },
+          "metadataTemplate": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateDeviceSpecificationTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "model": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "specificationsTemplate": {
+            "type": "string"
+          },
+          "metadataTemplate": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
           }
         }
       },

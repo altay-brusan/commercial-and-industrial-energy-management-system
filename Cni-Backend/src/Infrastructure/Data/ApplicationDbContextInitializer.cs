@@ -421,23 +421,64 @@ public class ApplicationDbContextInitializer
             new DeviceType { Name = "Transformer", Created = DateTime.UtcNow },
             new DeviceType { Name = "Load", Created = DateTime.UtcNow },
             new DeviceType { Name = "EV Charger", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Heat Pump", Created = DateTime.UtcNow }
+            new DeviceType { Name = "Heat Pump", Created = DateTime.UtcNow },
+            // Battery hierarchy sub-types
+            new DeviceType { Name = "Battery.Rack", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Battery.Pack", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Battery.Module", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Battery.Controller", Created = DateTime.UtcNow },
+            new DeviceType { Name = "Battery.TMS", Created = DateTime.UtcNow }
         };
         if (!_context.DeviceTypes.Any())
         {
             _context.DeviceTypes.AddRange(deviceTypes);
             await _context.SaveChangesAsync();
         }
+        else
+        {
+            // Seed new battery hierarchy sub-types if they don't exist yet
+            var existingNames = await _context.DeviceTypes.Select(dt => dt.Name).ToListAsync();
+            var newTypes = deviceTypes.Where(dt => !existingNames.Contains(dt.Name)).ToList();
+            if (newTypes.Count != 0)
+            {
+                _context.DeviceTypes.AddRange(newTypes);
+                await _context.SaveChangesAsync();
+            }
+        }
 
         // Reload device types from DB to get their Guid IDs
         var savedDeviceTypes = await _context.DeviceTypes.ToListAsync();
         var dtLookup = savedDeviceTypes.ToDictionary(dt => dt.Name!, dt => dt.Id);
 
+        // Seed RTU (Remote Terminal Unit) for the facility
+        Guid rtuId;
+        var existingRtu = await _context.Rtus.IgnoreQueryFilters().OrderBy(x => x.Created).FirstOrDefaultAsync();
+        if (existingRtu == null)
+        {
+            var rtu = new Rtu
+            {
+                FacilityId = facilitiyId,
+                RtuSerialNumber = "RTU-DEMO-001",
+                RtuModel = "Siemens SICAM A8000",
+                Protocol = "Modbus TCP",
+                Status = "online",
+                Created = DateTime.UtcNow
+            };
+            _context.Rtus.Add(rtu);
+            await _context.SaveChangesAsync();
+            rtuId = rtu.Id;
+            _logger.LogInformation("Demo RTU created with ID {RtuId}", rtuId);
+        }
+        else
+        {
+            rtuId = existingRtu.Id;
+        }
+
         var devices = new List<Device>
         {
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Battery"],
                 Name = "BESS_001",
                 Model = "Tesla Megapack",
@@ -447,7 +488,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Solar"],
                 Name = "PV_001",
                 Model = "SunPower Maxeon 6",
@@ -457,7 +498,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Inverter"],
                 Name = "INVERTER_001",
                 Model = "SMA Sunny Tripower",
@@ -467,7 +508,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Smart Meter"],
                 Name = "SM_001",
                 Model = "Schneider PM5560",
@@ -477,7 +518,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Grid"],
                 Name = "GRID_001",
                 Model = "Grid Connection",
@@ -486,7 +527,7 @@ public class ApplicationDbContextInitializer
             },
             new Device
             {
-                FacilityId = facilitiyId,
+                RtuId = rtuId,
                 DeviceTypeId = dtLookup["Generator"],
                 Name = "GEN_001",
                 Model = "Caterpillar C18",
@@ -500,6 +541,136 @@ public class ApplicationDbContextInitializer
         {
             _context.Devices.AddRange(devices);
             await _context.SaveChangesAsync();
+        }
+
+        // Seed DeviceSpecificationTemplate for Tesla Megapack
+        if (!_context.DeviceSpecificationTemplates.Any())
+        {
+            var batteryTypeId = dtLookup.GetValueOrDefault("Battery");
+            if (batteryTypeId != Guid.Empty)
+            {
+                var teslaMegapackTemplate = new DeviceSpecificationTemplate
+                {
+                    DeviceTypeId = batteryTypeId,
+                    Model = "Megapack 2XL",
+                    Manufacturer = "Tesla",
+                    IsDefault = true,
+                    SpecificationsTemplate = """
+                    {
+                      "supportedTabs": [
+                        { "key": "summary", "label": "Summary", "isEnabled": true, "order": 0 },
+                        { "key": "health", "label": "Health", "isEnabled": true, "order": 1 },
+                        { "key": "hierarchy", "label": "Hierarchy", "isEnabled": true, "order": 2 },
+                        { "key": "curves", "label": "Curves", "isEnabled": true, "order": 3 },
+                        { "key": "faults", "label": "Faults", "isEnabled": true, "order": 4 }
+                      ],
+                      "tabs": {
+                        "summary": {
+                          "sections": [
+                            {
+                              "key": "liveStatus",
+                              "title": "Live Status",
+                              "order": 0,
+                              "fields": [
+                                { "key": "soc", "label": "State of Charge", "sourcePath": "stateOfCharge", "unit": "%", "order": 0 },
+                                { "key": "soh", "label": "State of Health", "sourcePath": "stateOfHealth", "unit": "%", "order": 1 },
+                                { "key": "chargeStatus", "label": "Charge Status", "sourcePath": "chargeStatus", "order": 2 }
+                              ]
+                            },
+                            {
+                              "key": "dcPower",
+                              "title": "DC Power",
+                              "order": 1,
+                              "fields": [
+                                { "key": "voltage", "label": "Voltage", "sourcePath": "dcPower.voltage", "unit": "V", "order": 0 },
+                                { "key": "current", "label": "Current", "sourcePath": "dcPower.current", "unit": "A", "order": 1 },
+                                { "key": "power", "label": "Power", "sourcePath": "dcPower.power", "unit": "kW", "order": 2 }
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "hierarchy": [
+                        { "key": "rack", "label": "Rack", "hasChildren": true },
+                        { "key": "pack", "label": "Pack", "hasChildren": true },
+                        { "key": "module", "label": "Module", "hasChildren": true },
+                        { "key": "cell", "label": "Cell", "hasChildren": false }
+                      ],
+                      "curveCharts": [
+                        {
+                          "key": "power",
+                          "title": "Power",
+                          "chartType": "line",
+                          "series": [
+                            { "key": "dcPower", "label": "DC Power", "sourcePath": "dcPower.power", "unit": "kW", "color": "#4CAF50" }
+                          ]
+                        },
+                        {
+                          "key": "soc",
+                          "title": "State of Charge",
+                          "chartType": "area",
+                          "series": [
+                            { "key": "soc", "label": "SOC", "sourcePath": "stateOfCharge", "unit": "%", "color": "#2196F3" }
+                          ]
+                        }
+                      ]
+                    }
+                    """,
+                    MetadataTemplate = """
+                    {
+                      "ratedCapacityKwh": 3916,
+                      "ratedPowerKw": 1550,
+                      "nominalVoltage": 1500,
+                      "cellChemistry": "LFP"
+                    }
+                    """,
+                    HierarchyTemplate = """
+                    {
+                      "children": [
+                        {
+                          "key": "rack",
+                          "deviceTypeName": "Battery.Rack",
+                          "count": 4,
+                          "namePattern": "Rack {index}",
+                          "children": [
+                            {
+                              "key": "pack",
+                              "deviceTypeName": "Battery.Pack",
+                              "count": 4,
+                              "namePattern": "Pack {index}",
+                              "children": [
+                                {
+                                  "key": "module",
+                                  "deviceTypeName": "Battery.Module",
+                                  "count": 8,
+                                  "namePattern": "Module {index}"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "key": "esc",
+                          "deviceTypeName": "Battery.Controller",
+                          "count": 1,
+                          "namePattern": "ESC-{index}"
+                        },
+                        {
+                          "key": "hvac",
+                          "deviceTypeName": "Battery.TMS",
+                          "count": 2,
+                          "namePattern": "HVAC-{index}"
+                        }
+                      ]
+                    }
+                    """,
+                    Created = DateTime.UtcNow
+                };
+
+                _context.DeviceSpecificationTemplates.Add(teslaMegapackTemplate);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Seeded Tesla Megapack 2XL device specification template");
+            }
         }
         #endregion
 

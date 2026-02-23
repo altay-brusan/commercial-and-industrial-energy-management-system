@@ -10,13 +10,16 @@ namespace Backend.Application.Devices.Commands;
 [RequirePermission(Backend.Domain.Constants.Permissions.DeviceCreate)]
 public record CreateDeviceCommand : IRequest<Guid>
 {
-    public Guid FacilityId { get; init; }
+    public Guid RtuId { get; init; }
     public Guid DeviceTypeId { get; init; }
+    public Guid? ParentDeviceId { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Model { get; init; } = string.Empty;
     public string SerialNumber { get; init; } = string.Empty;
     public string? Manufacturer { get; init; }
     public string Ports { get; init; } = "[]";
+    public string? Metadata { get; init; }
+    public string? Specifications { get; init; }
 }
 
 public class CreateDeviceCommandHandler : IRequestHandler<CreateDeviceCommand, Guid>
@@ -32,13 +35,16 @@ public class CreateDeviceCommandHandler : IRequestHandler<CreateDeviceCommand, G
     {
         var entity = new Device
         {
-            FacilityId = request.FacilityId,
+            RtuId = request.RtuId,
             DeviceTypeId = request.DeviceTypeId,
+            ParentDeviceId = request.ParentDeviceId,
             Name = request.Name,
             Model = request.Model,
             SerialNumber = request.SerialNumber,
             Manufacturer = request.Manufacturer,
-            Ports = request.Ports
+            Ports = request.Ports,
+            Metadata = request.Metadata,
+            Specifications = request.Specifications
         };
 
         entity.AddDomainEvent(new DeviceCreatedEvent(entity));

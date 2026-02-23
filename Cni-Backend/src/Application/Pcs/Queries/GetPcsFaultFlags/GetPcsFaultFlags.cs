@@ -26,7 +26,6 @@ public class GetPcsFaultFlagsQueryHandler : IRequestHandler<GetPcsFaultFlagsQuer
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "PCS")
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -38,7 +37,7 @@ public class GetPcsFaultFlagsQueryHandler : IRequestHandler<GetPcsFaultFlagsQuer
             .FirstOrDefaultAsync(cancellationToken);
 
         var payload = PayloadDeserializer.GetElement(latestData?.Payload);
-        var specs = PayloadDeserializer.GetElement(device.DeviceModel?.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.Specifications);
 
         return BuildFaultFlags(specs, payload);
     }

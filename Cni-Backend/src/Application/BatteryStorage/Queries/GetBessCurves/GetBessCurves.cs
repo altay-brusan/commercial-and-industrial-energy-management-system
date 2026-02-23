@@ -40,30 +40,24 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "Battery")
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
         var (start, end) = GetPeriodRange(request.Period);
         var intervalMinutes = GetIntervalMinutes(request.Interval);
+        var timeFormat = GetTimeFormat(request.Period);
 
-        var rawData = await _context.DeviceBessData
+        var rawData = await _context.DeviceBatteryData
             .Where(dd => dd.DeviceId == request.UnitId && dd.DeviceLocalTime >= start && dd.DeviceLocalTime <= end)
             .OrderBy(dd => dd.DeviceLocalTime)
             .ToListAsync(cancellationToken);
 
         var sampled = SampleData(rawData, intervalMinutes);
-        var specs = PayloadDeserializer.GetElement(device.DeviceModel?.Specifications);
-        var charts = BuildCharts(specs, sampled);
+        var specs = PayloadDeserializer.GetElement(device.Specifications);
+        var charts = BuildCharts(specs, sampled, timeFormat);
 
-        return new ChartResponseDto
-        {
-            Charts = charts,
-            Period = request.Period,
-            Interval = request.Interval
-        };
+        return new ChartResponseDto { Charts = charts };
     }
 
     private static (DateTimeOffset start, DateTimeOffset end) GetPeriodRange(string period)
@@ -88,8 +82,17 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         _ => 15
     };
 
+    private static string GetTimeFormat(string period) => period switch
+    {
+        MonitoringPeriods.Day => "HH:mm",
+        MonitoringPeriods.Week => "ddd HH:mm",
+        MonitoringPeriods.Month => "dd MMM",
+        MonitoringPeriods.Year => "MMM yy",
+        _ => "HH:mm"
+    };
+
     private static List<(DateTimeOffset Time, JsonElement? Payload)> SampleData(
-        List<Domain.Entities.DeviceData.DeviceBessData> rawData, int intervalMinutes)
+        List<Domain.Entities.DeviceData.DeviceBatteryData> rawData, int intervalMinutes)
     {
         if (rawData.Count == 0) return new();
 
@@ -109,30 +112,33 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     }
 
     private static List<ChartDefinitionDto> BuildCharts(
-        JsonElement? specs, List<(DateTimeOffset Time, JsonElement? Payload)> data)
+        JsonElement? specs, List<(DateTimeOffset Time, JsonElement? Payload)> data, string timeFormat)
     {
         if (specs.HasValue && specs.Value.TryGetProperty("curveCharts", out var chartsElement) &&
             chartsElement.ValueKind == JsonValueKind.Array)
         {
-            return BuildFromSchema(chartsElement, data);
+            return BuildFromSchema(chartsElement, data, timeFormat);
         }
 
-        return BuildDefaultCharts(data);
+        return BuildDefaultCharts(data, timeFormat);
     }
 
     private static List<ChartDefinitionDto> BuildFromSchema(
-        JsonElement chartsElement, List<(DateTimeOffset Time, JsonElement? Payload)> data)
+        JsonElement chartsElement, List<(DateTimeOffset Time, JsonElement? Payload)> data, string timeFormat)
     {
         var charts = new List<ChartDefinitionDto>();
-        var labels = data.Select(d => d.Time.ToString("yyyy-MM-ddTHH:mm:ssZ")).ToList();
 
         foreach (var chart in chartsElement.EnumerateArray())
         {
             var key = chart.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
             var title = chart.TryGetProperty("title", out var t) ? t.GetString() ?? key : key;
-            var chartType = chart.TryGetProperty("chartType", out var ct) ? ct.GetString() ?? "line" : "line";
+            var chartType = chart.TryGetProperty("type", out var ct) ? ct.GetString() ?? "line" : "line";
+            var xFormat = chart.TryGetProperty("xAxis", out var xa) && xa.TryGetProperty("format", out var xf)
+                ? xf.GetString() ?? timeFormat : timeFormat;
 
-            var series = new List<ChartSeriesDto>();
+            var seriesDefs = new List<CurveSeriesDto>();
+            var sourcePaths = new List<(string Key, string SourcePath)>();
+
             if (chart.TryGetProperty("series", out var seriesElement) && seriesElement.ValueKind == JsonValueKind.Array)
             {
                 foreach (var s in seriesElement.EnumerateArray())
@@ -141,26 +147,29 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
                     var sLabel = s.TryGetProperty("label", out var sl) ? sl.GetString() ?? sKey : sKey;
                     var sUnit = s.TryGetProperty("unit", out var su) ? su.GetString() : null;
                     var sColor = s.TryGetProperty("color", out var sc) ? sc.GetString() : null;
+                    var sYAxis = s.TryGetProperty("yAxis", out var sy) ? sy.GetString() : null;
+                    var sType = s.TryGetProperty("type", out var st) ? st.GetString() : null;
                     var sourcePath = s.TryGetProperty("sourcePath", out var sp) ? sp.GetString() : null;
 
-                    var values = data.Select(d =>
-                        d.Payload.HasValue && sourcePath != null
-                            ? PayloadDeserializer.ExtractValue(d.Payload.Value, sourcePath)
-                            : null).ToList();
-
-                    series.Add(new ChartSeriesDto
+                    seriesDefs.Add(new CurveSeriesDto
                     {
                         Key = sKey, Label = sLabel, Unit = sUnit, Color = sColor,
-                        SourcePath = sourcePath, Data = values
+                        YAxis = sYAxis, Type = sType, SourcePath = sourcePath
                     });
+
+                    if (sourcePath != null)
+                        sourcePaths.Add((sKey, sourcePath));
                 }
             }
 
+            var chartData = BuildUnifiedData(data, sourcePaths, xFormat);
+
             charts.Add(new ChartDefinitionDto
             {
-                Key = key, Title = title, ChartType = chartType,
-                XAxis = new XAxisDto { Type = "time", Labels = labels },
-                Series = series
+                Key = key, Title = title, Type = chartType,
+                XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = xFormat },
+                Series = seriesDefs,
+                Data = chartData
             });
         }
 
@@ -168,62 +177,76 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     }
 
     private static List<ChartDefinitionDto> BuildDefaultCharts(
-        List<(DateTimeOffset Time, JsonElement? Payload)> data)
+        List<(DateTimeOffset Time, JsonElement? Payload)> data, string timeFormat)
     {
-        var labels = data.Select(d => d.Time.ToString("yyyy-MM-ddTHH:mm:ssZ")).ToList();
-
         return new List<ChartDefinitionDto>
         {
-            new()
-            {
-                Key = "power", Title = "DC Power", ChartType = "line",
-                XAxis = new XAxisDto { Type = "time", Labels = labels },
-                Series = new List<ChartSeriesDto>
-                {
-                    ExtractSeries("dcPower", "DC Power", "kW", "#3b82f6", "dcPower.power", data),
-                }
-            },
-            new()
-            {
-                Key = "soc", Title = "State of Charge", ChartType = "line",
-                XAxis = new XAxisDto { Type = "time", Labels = labels },
-                Series = new List<ChartSeriesDto>
-                {
-                    ExtractSeries("soc", "SoC", "%", "#10b981", "stateOfCharge", data),
-                }
-            },
-            new()
-            {
-                Key = "temperature", Title = "Temperature", ChartType = "line",
-                XAxis = new XAxisDto { Type = "time", Labels = labels },
-                Series = new List<ChartSeriesDto>
-                {
-                    ExtractSeries("batteryTemp", "Battery Temp", "°C", "#f59e0b", "batteryTemperature", data),
-                }
-            },
-            new()
-            {
-                Key = "voltage", Title = "DC Voltage", ChartType = "line",
-                XAxis = new XAxisDto { Type = "time", Labels = labels },
-                Series = new List<ChartSeriesDto>
-                {
-                    ExtractSeries("dcVoltage", "DC Voltage", "V", "#8b5cf6", "dcPower.voltage", data),
-                }
-            }
+            BuildChart("powerSoc", "Power & State of Charge", "area", timeFormat, data,
+                new CurveSeriesDto { Key = "power", Label = "Power", Unit = "kW", Color = "#8b5cf6", YAxis = "left", Type = "area", SourcePath = "dcPower.power" },
+                new CurveSeriesDto { Key = "soc", Label = "SoC", Unit = "%", Color = "#22c55e", YAxis = "right", Type = "line", SourcePath = "socPercent" }),
+
+            BuildChart("voltageCurrent", "Voltage & Current", "line", timeFormat, data,
+                new CurveSeriesDto { Key = "voltage", Label = "Voltage", Unit = "V", Color = "#3b82f6", YAxis = "left", Type = "line", SourcePath = "totalVoltageV" },
+                new CurveSeriesDto { Key = "current", Label = "Current", Unit = "A", Color = "#f59e0b", YAxis = "right", Type = "line", SourcePath = "instantCurrentA" }),
+
+            BuildChart("temperature", "Temperature", "area", timeFormat, data,
+                new CurveSeriesDto { Key = "tempMax", Label = "T.Max", Unit = "\u00b0C", Color = "#ef4444", Type = "area", SourcePath = "maxCellTempC" },
+                new CurveSeriesDto { Key = "tempAvg", Label = "T.Avg", Unit = "\u00b0C", Color = "#f59e0b", Type = "area", SourcePath = "ambientTempC" },
+                new CurveSeriesDto { Key = "tempMin", Label = "T.Min", Unit = "\u00b0C", Color = "#3b82f6", Type = "area", SourcePath = "minCellTempC" }),
         };
     }
 
-    private static ChartSeriesDto ExtractSeries(
-        string key, string label, string unit, string color, string sourcePath,
-        List<(DateTimeOffset Time, JsonElement? Payload)> data)
+    private static ChartDefinitionDto BuildChart(
+        string key, string title, string type, string timeFormat,
+        List<(DateTimeOffset Time, JsonElement? Payload)> data,
+        params CurveSeriesDto[] seriesDefs)
     {
-        var values = data.Select(d =>
-            d.Payload.HasValue ? PayloadDeserializer.ExtractValue(d.Payload.Value, sourcePath) : null).ToList();
+        var sourcePaths = seriesDefs
+            .Where(s => s.SourcePath != null)
+            .Select(s => (s.Key, s.SourcePath!))
+            .ToList();
 
-        return new ChartSeriesDto
+        return new ChartDefinitionDto
         {
-            Key = key, Label = label, Unit = unit, Color = color,
-            SourcePath = sourcePath, Data = values
+            Key = key, Title = title, Type = type,
+            XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = timeFormat },
+            Series = seriesDefs.ToList(),
+            Data = BuildUnifiedData(data, sourcePaths, timeFormat)
+        };
+    }
+
+    private static List<Dictionary<string, object?>> BuildUnifiedData(
+        List<(DateTimeOffset Time, JsonElement? Payload)> data,
+        List<(string Key, string SourcePath)> sourcePaths,
+        string timeFormat)
+    {
+        return data.Select(d =>
+        {
+            var row = new Dictionary<string, object?>
+            {
+                ["time"] = d.Time.ToString(timeFormat)
+            };
+
+            foreach (var (seriesKey, sourcePath) in sourcePaths)
+            {
+                row[seriesKey] = d.Payload.HasValue
+                    ? ExtractNumber(d.Payload.Value, sourcePath)
+                    : null;
+            }
+
+            return row;
+        }).ToList();
+    }
+
+    private static object? ExtractNumber(JsonElement payload, string path)
+    {
+        var value = PayloadDeserializer.ExtractValue(payload, path);
+        return value switch
+        {
+            double d => Math.Round(d, 1),
+            int i => i,
+            long l => l,
+            _ => null
         };
     }
 }

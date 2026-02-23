@@ -15,10 +15,16 @@ public record SchemaResponseDto
 
 public record ProductTypeSchemaDto
 {
-    public Guid DeviceModelId { get; init; }
-    public string ModelName { get; init; } = string.Empty;
-    public string? Manufacturer { get; init; }
-    public object? Specifications { get; init; }
+    public string Key { get; init; } = string.Empty;
+    public string Label { get; init; } = string.Empty;
+    public List<string> Hierarchy { get; init; } = new();
+    public List<string> SupportedTabs { get; init; } = new();
+    public List<string> SummarySections { get; init; } = new();
+    public List<string> HealthSections { get; init; } = new();
+    public List<string> FaultSources { get; init; } = new();
+    public List<string> CurveCharts { get; init; } = new();
+    public Dictionary<string, object?> Features { get; init; } = new();
+    public Dictionary<string, object?> ConnectedDevices { get; init; } = new();
 }
 
 public static class MonitoringPeriods

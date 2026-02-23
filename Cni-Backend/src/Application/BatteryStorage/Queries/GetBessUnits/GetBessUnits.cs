@@ -1,6 +1,7 @@
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
+using Backend.Application.Common.Services;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessUnits;
 
@@ -26,14 +27,14 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
     {
         var batteryDevices = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
-            .Include(d => d.Facility)
+            .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .Where(d => d.DeviceType != null && d.DeviceType.Name == "Battery")
             .ToListAsync(cancellationToken);
 
         var deviceIds = batteryDevices.Select(d => d.Id).ToList();
 
-        var latestData = await _context.DeviceBessData
+        // Load latest telemetry per device
+        var latestData = await _context.DeviceBatteryData
             .Where(dd => deviceIds.Contains(dd.DeviceId))
             .GroupBy(dd => dd.DeviceId)
             .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
@@ -41,30 +42,68 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
 
         var dataByDevice = latestData.ToDictionary(d => d.DeviceId);
 
+        // Load active alarm counts per device (includes descendant devices)
+        var allDescendantIds = await _context.Devices
+            .Where(d => d.ParentDeviceId.HasValue && deviceIds.Contains(d.ParentDeviceId.Value))
+            .Select(d => new { d.Id, d.ParentDeviceId })
+            .ToListAsync(cancellationToken);
+
+        // Build a map of root device → all descendant IDs (walk the tree)
+        var allDevicesInRtus = await _context.Devices
+            .Where(d => deviceIds.Contains(d.Id) || d.ParentDeviceId.HasValue)
+            .Select(d => new { d.Id, d.ParentDeviceId, d.RtuId })
+            .ToListAsync(cancellationToken);
+
+        // Group all devices by RTU, then map root → descendants
+        var rootRtuMap = batteryDevices.ToDictionary(d => d.Id, d => d.RtuId);
+        var devicesByRtu = allDevicesInRtus.GroupBy(d => d.RtuId).ToDictionary(g => g.Key, g => g.Select(d => d.Id).ToList());
+
+        var alarmDeviceIds = devicesByRtu.Values.SelectMany(ids => ids).Distinct().ToList();
+        var alarmCounts = await _context.DeviceAlarms
+            .Where(a => alarmDeviceIds.Contains(a.DeviceId) && a.IsActive)
+            .GroupBy(a => a.DeviceId)
+            .Select(g => new { DeviceId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.DeviceId, x => x.Count, cancellationToken);
+
+        // Calculate alarm count per root device (sum across all devices in same RTU)
+        var rootAlarmCounts = new Dictionary<Guid, int>();
+        foreach (var device in batteryDevices)
+        {
+            var rtuDeviceIds = devicesByRtu.GetValueOrDefault(device.RtuId, new List<Guid>());
+            rootAlarmCounts[device.Id] = rtuDeviceIds.Sum(id => alarmCounts.GetValueOrDefault(id, 0));
+        }
+
         var units = batteryDevices.Select(device =>
         {
             dataByDevice.TryGetValue(device.Id, out var data);
             var payload = data != null
-                ? Common.Services.PayloadDeserializer.GetElement(data.Payload)
+                ? PayloadDeserializer.GetElement(data.Payload)
+                : null;
+
+            var stateStr = payload.HasValue
+                ? PayloadDeserializer.ExtractValue(payload.Value, "state") as string
                 : null;
 
             return new BessUnitListItemDto
             {
                 Id = device.Id,
                 Name = device.Name,
-                SerialNumber = device.SerialNumber,
-                ModelName = device.DeviceModel?.Name,
-                Manufacturer = device.DeviceModel?.Manufacturer ?? device.Manufacturer,
-                FacilityName = device.Facility?.Name,
-                FacilityId = device.FacilityId,
                 Status = StatusBadgeDto.FromStatus(device.Status),
-                SocPercent = ExtractDouble(payload, "stateOfCharge"),
-                SohPercent = ExtractDouble(payload, "stateOfHealth"),
-                PowerKw = ExtractDouble(payload, "dcPower.power"),
-                TemperatureC = ExtractDouble(payload, "batteryTemperature"),
-                ChargeStatus = payload.HasValue
-                    ? Common.Services.PayloadDeserializer.ExtractValue(payload.Value, "chargeStatus") as string
-                    : null,
+                OperatingMode = StatusBadgeDto.FromOperatingMode(stateStr),
+                Soc = ExtractDouble(payload, "socPercent", "stateOfCharge", "soc"),
+                Soh = ExtractDouble(payload, "sohPercent", "stateOfHealth", "soh"),
+                Power = ExtractDouble(payload, "instantCurrentA") is double current
+                        && ExtractDouble(payload, "totalVoltageV") is double voltage
+                    ? Math.Round(voltage * current / 1000.0, 1)
+                    : ExtractDouble(payload, "dcPower.power", "power"),
+                CapacityKwh = ExtractDouble(payload, "availableEnergyKwh", "capacityKwh", "ratedEnergyKwh"),
+                ActiveAlarmCount = rootAlarmCounts.GetValueOrDefault(device.Id, 0),
+                Brand = device.Manufacturer,
+                Model = device.Model,
+                SerialNumber = device.SerialNumber,
+                FacilityName = device.Rtu?.Facility?.Name,
+                FacilityId = device.Rtu!.FacilityId,
+                TemperatureC = ExtractDouble(payload, "ambientTempC", "batteryTemperature"),
                 LastSeenUtc = device.LastSeenUtc
             };
         }).ToList();
@@ -83,18 +122,17 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
         units = (request.SortBy?.ToLowerInvariant(), request.SortDirection?.ToLowerInvariant()) switch
         {
             ("name", "desc") => units.OrderByDescending(u => u.Name).ToList(),
-            ("soc", "asc") => units.OrderBy(u => u.SocPercent).ToList(),
-            ("soc", "desc") => units.OrderByDescending(u => u.SocPercent).ToList(),
-            ("power", "asc") => units.OrderBy(u => u.PowerKw).ToList(),
-            ("power", "desc") => units.OrderByDescending(u => u.PowerKw).ToList(),
+            ("soc", "asc") => units.OrderBy(u => u.Soc).ToList(),
+            ("soc", "desc") => units.OrderByDescending(u => u.Soc).ToList(),
+            ("power", "asc") => units.OrderBy(u => u.Power).ToList(),
+            ("power", "desc") => units.OrderByDescending(u => u.Power).ToList(),
             ("status", "asc") => units.OrderBy(u => u.Status.Value).ToList(),
             ("status", "desc") => units.OrderByDescending(u => u.Status.Value).ToList(),
             _ => units.OrderBy(u => u.Name).ToList()
         };
 
-        var socValues = units.Where(u => u.SocPercent.HasValue).Select(u => u.SocPercent!.Value).ToList();
-        var sohValues = units.Where(u => u.SohPercent.HasValue).Select(u => u.SohPercent!.Value).ToList();
-        var powerValues = units.Where(u => u.PowerKw.HasValue).Select(u => u.PowerKw!.Value).ToList();
+        var socValues = units.Where(u => u.Soc.HasValue).Select(u => u.Soc!.Value).ToList();
+        var capacityValues = units.Where(u => u.CapacityKwh.HasValue).Select(u => u.CapacityKwh!.Value).ToList();
 
         return new BessUnitsResultDto
         {
@@ -102,26 +140,32 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
             Aggregates = new BessAggregatesDto
             {
                 TotalUnits = units.Count,
+                TotalCapacityKwh = capacityValues.Count > 0 ? Math.Round(capacityValues.Sum(), 2) : null,
+                AverageSoc = socValues.Count > 0 ? Math.Round(socValues.Average(), 1) : null,
+                TotalActiveAlarms = units.Sum(u => u.ActiveAlarmCount),
                 OnlineCount = units.Count(u => u.Status.Value == "online"),
                 OfflineCount = units.Count(u => u.Status.Value == "offline"),
                 FaultCount = units.Count(u => u.Status.Value == "fault"),
-                AvgSocPercent = socValues.Count > 0 ? Math.Round(socValues.Average(), 1) : null,
-                AvgSohPercent = sohValues.Count > 0 ? Math.Round(sohValues.Average(), 1) : null,
-                TotalPowerKw = powerValues.Count > 0 ? Math.Round(powerValues.Sum(), 2) : null
+                StandbyCount = units.Count(u => u.Status.Value == "standby")
             }
         };
     }
 
-    private static double? ExtractDouble(System.Text.Json.JsonElement? element, string path)
+    private static double? ExtractDouble(System.Text.Json.JsonElement? element, params string[] paths)
     {
         if (!element.HasValue) return null;
-        var value = Common.Services.PayloadDeserializer.ExtractValue(element.Value, path);
-        return value switch
+        foreach (var path in paths)
         {
-            double d => d,
-            int i => i,
-            long l => l,
-            _ => null
-        };
+            var value = PayloadDeserializer.ExtractValue(element.Value, path);
+            var result = value switch
+            {
+                double d => d,
+                int i => i,
+                long l => l,
+                _ => (double?)null
+            };
+            if (result.HasValue) return result;
+        }
+        return null;
     }
 }

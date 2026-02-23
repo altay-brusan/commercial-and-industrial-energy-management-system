@@ -54,7 +54,7 @@ public class GetScadaDataMinimalQueryHandler : IRequestHandler<GetScadaDataMinim
             .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
             .FirstOrDefaultAsync(cancellationToken);
 
-        var bessData = await _context.DeviceBessData
+        var bessData = await _context.DeviceBatteryData
             .Where(f => bessDeviceIds.Contains(f.DeviceId))
             .OrderBy(x => Math.Abs((x.Created - time).TotalSeconds))
             .FirstOrDefaultAsync(cancellationToken);

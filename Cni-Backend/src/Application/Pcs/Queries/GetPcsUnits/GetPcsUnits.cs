@@ -26,13 +26,12 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
     {
         var pcsDevices = await _context.Devices
             .Include(d => d.DeviceType)
-            .Include(d => d.DeviceModel)
-            .Include(d => d.Facility)
+            .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .Where(d => d.DeviceType != null && d.DeviceType.Name == "PCS")
             .ToListAsync(cancellationToken);
 
         var deviceIds = pcsDevices.Select(d => d.Id).ToList();
-        var facilityIds = pcsDevices.Select(d => d.FacilityId).Distinct().ToList();
+        var facilityIds = pcsDevices.Select(d => d.Rtu!.FacilityId).Distinct().ToList();
 
         var latestData = await _context.DevicePcsData
             .Where(dd => deviceIds.Contains(dd.DeviceId))
@@ -45,11 +44,11 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
         // Find linked BESS units (Battery devices in same facility)
         var batteryDevices = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => facilityIds.Contains(d.FacilityId) && d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => facilityIds.Contains(d.Rtu!.FacilityId) && d.DeviceType != null && d.DeviceType.Name == "Battery")
             .ToListAsync(cancellationToken);
 
         var batteryByFacility = batteryDevices
-            .GroupBy(d => d.FacilityId)
+            .GroupBy(d => d.Rtu!.FacilityId)
             .ToDictionary(g => g.Key, g => g.First());
 
         var units = pcsDevices.Select(device =>
@@ -59,17 +58,17 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
                 ? Common.Services.PayloadDeserializer.GetElement(data.Payload)
                 : null;
 
-            batteryByFacility.TryGetValue(device.FacilityId, out var linkedBess);
+            batteryByFacility.TryGetValue(device.Rtu!.FacilityId, out var linkedBess);
 
             return new PcsUnitListItemDto
             {
                 Id = device.Id,
                 Name = device.Name,
                 SerialNumber = device.SerialNumber,
-                ModelName = device.DeviceModel?.Name,
-                Manufacturer = device.DeviceModel?.Manufacturer ?? device.Manufacturer,
-                FacilityName = device.Facility?.Name,
-                FacilityId = device.FacilityId,
+                ModelName = device.Model,
+                Manufacturer = device.Manufacturer,
+                FacilityName = device.Rtu?.Facility?.Name,
+                FacilityId = device.Rtu!.FacilityId,
                 Status = StatusBadgeDto.FromStatus(device.Status),
                 GridMode = ExtractString(payload, "status.operatingMode"),
                 ActivePowerKw = ExtractDouble(payload, "acPower.totalActivePower"),
