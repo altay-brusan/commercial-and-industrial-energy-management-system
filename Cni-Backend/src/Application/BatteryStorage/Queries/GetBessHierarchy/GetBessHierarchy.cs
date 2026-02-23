@@ -145,7 +145,15 @@ public class GetBessHierarchyQueryHandler : IRequestHandler<GetBessHierarchyQuer
                 var key = level.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
                 var label = level.TryGetProperty("label", out var l) ? l.GetString() ?? key : key;
                 var hasChildren = level.TryGetProperty("hasChildren", out var hc) && hc.GetBoolean();
-                parsed.Add(new HierarchyLevelDefinitionDto { Key = key, Label = label, Depth = depth, HasChildren = hasChildren });
+                var isDataLevel = !level.TryGetProperty("dataLevel", out var dl) || dl.GetBoolean();
+                var isVirtual = level.TryGetProperty("virtual", out var vr) && vr.GetBoolean();
+                var inheritsFrom = level.TryGetProperty("inheritsFrom", out var inf) ? inf.GetString() : null;
+
+                parsed.Add(new HierarchyLevelDefinitionDto
+                {
+                    Key = key, Label = label, Depth = depth, HasChildren = hasChildren,
+                    IsDataLevel = isDataLevel, IsVirtual = isVirtual, InheritsFrom = inheritsFrom
+                });
                 depth++;
             }
             return parsed.Count > 0 ? parsed : defaultLevels;

@@ -144,6 +144,61 @@ public class ContainerTelemetryLoader
         return new ContainerTelemetryContext(allDevices, entries);
     }
 
+    /// <summary>
+    /// Walk up the parent chain until finding a device with telemetry data.
+    /// Returns the device ID and its payload if found.
+    /// </summary>
+    public async Task<(Guid DeviceId, JsonElement? Payload)?> ResolveInheritedData(
+        Guid deviceId, CancellationToken ct)
+    {
+        var current = await _context.Devices
+            .Include(d => d.DeviceType)
+            .FirstOrDefaultAsync(d => d.Id == deviceId, ct);
+
+        while (current?.ParentDeviceId.HasValue == true)
+        {
+            var parentId = current.ParentDeviceId.Value;
+            var category = CategorizeByDeviceType(current.DeviceType?.Name);
+
+            // Check if parent has telemetry data
+            var hasData = category switch
+            {
+                DeviceDataCategory.Pcs => await _context.DevicePcsData.AnyAsync(dd => dd.DeviceId == parentId, ct),
+                DeviceDataCategory.Solar => await _context.DeviceSolarData.AnyAsync(dd => dd.DeviceId == parentId, ct),
+                DeviceDataCategory.SmartMeter => await _context.DeviceSmartMeterData.AnyAsync(dd => dd.DeviceId == parentId, ct),
+                _ => await _context.DeviceBatteryData.AnyAsync(dd => dd.DeviceId == parentId, ct),
+            };
+
+            if (hasData)
+            {
+                // Load the latest payload from the parent
+                var payload = category switch
+                {
+                    DeviceDataCategory.Pcs => PayloadDeserializer.GetElement(
+                        (await _context.DevicePcsData.Where(dd => dd.DeviceId == parentId)
+                            .OrderByDescending(dd => dd.DeviceLocalTime).FirstOrDefaultAsync(ct))?.Payload),
+                    DeviceDataCategory.Solar => PayloadDeserializer.GetElement(
+                        (await _context.DeviceSolarData.Where(dd => dd.DeviceId == parentId)
+                            .OrderByDescending(dd => dd.DeviceLocalTime).FirstOrDefaultAsync(ct))?.Payload),
+                    DeviceDataCategory.SmartMeter => PayloadDeserializer.GetElement(
+                        (await _context.DeviceSmartMeterData.Where(dd => dd.DeviceId == parentId)
+                            .OrderByDescending(dd => dd.DeviceLocalTime).FirstOrDefaultAsync(ct))?.Payload),
+                    _ => PayloadDeserializer.GetElement(
+                        (await _context.DeviceBatteryData.Where(dd => dd.DeviceId == parentId)
+                            .OrderByDescending(dd => dd.DeviceLocalTime).FirstOrDefaultAsync(ct))?.Payload),
+                };
+
+                return (parentId, payload);
+            }
+
+            current = await _context.Devices
+                .Include(d => d.DeviceType)
+                .FirstOrDefaultAsync(d => d.Id == parentId, ct);
+        }
+
+        return null;
+    }
+
     private async Task<List<ContainerDevice>> LoadDescendants(Guid rootId, CancellationToken ct)
     {
         // Load all descendants in a single query using recursive CTE pattern

@@ -463,6 +463,19 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
             .FirstOrDefaultAsync(ct);
 
         var payload = PayloadDeserializer.GetElement(latestData?.Payload);
+        bool isInherited = false;
+
+        // If no own data, try to inherit from nearest ancestor
+        if (!payload.HasValue)
+        {
+            var inherited = await _telemetryLoader.ResolveInheritedData(device.Id, ct);
+            if (inherited.HasValue)
+            {
+                payload = inherited.Value.Payload;
+                isInherited = true;
+            }
+        }
+
         var sections = new List<DynamicSectionDto>
         {
             BuildNameplateSection(device, PayloadDeserializer.GetElement(device.Metadata)),
@@ -470,15 +483,16 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 
         if (payload.HasValue)
         {
-            sections.Add(new DynamicSectionDto
+            var statusSection = new DynamicSectionDto
             {
                 Key = "liveStatus",
-                Title = "Live Status",
+                Title = isInherited ? "Live Status (Inherited)" : "Live Status",
                 Icon = "activity",
                 Variant = "card",
                 Columns = 3,
                 Fields = BuildFieldsFromPayload(payload.Value)
-            });
+            };
+            sections.Add(statusSection);
         }
 
         return sections;

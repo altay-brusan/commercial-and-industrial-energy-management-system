@@ -36,10 +36,14 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
 
         Guard.Against.NotFound(request.UnitId, device);
 
+        // Parse hierarchy level definitions to check for virtual levels
+        var levels = GetHierarchyLevels(device.Specifications);
+        var levelDef = levels.FirstOrDefault(l => l.Key == request.Level.ToLowerInvariant());
+
         // Check if parentId is a valid GUID (indicates entity-based hierarchy)
         if (Guid.TryParse(request.ParentId, out var parentDeviceId))
         {
-            return await BuildFromDeviceEntities(parentDeviceId, request.Level, cancellationToken);
+            return await BuildFromDeviceEntities(parentDeviceId, request.Level, levelDef?.IsVirtual ?? false, cancellationToken);
         }
 
         // Fallback: extract from payload JSON (legacy behavior)
@@ -47,7 +51,7 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
     }
 
     private async Task<HierarchyLevelResponseDto> BuildFromDeviceEntities(
-        Guid parentDeviceId, string level, CancellationToken cancellationToken)
+        Guid parentDeviceId, string level, bool isVirtualLevel, CancellationToken cancellationToken)
     {
         // Build breadcrumb by walking up the parent chain
         var breadcrumb = new List<BreadcrumbDto>();
@@ -108,7 +112,8 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
             Status = StatusBadgeDto.FromStatus(child.Status),
             Data = null,
             HasChildren = grandchildSet.Contains(child.Id),
-            ChildCount = childCounts.GetValueOrDefault(child.Id, 0)
+            ChildCount = childCounts.GetValueOrDefault(child.Id, 0),
+            IsVirtual = isVirtualLevel
         }).ToList();
 
         return new HierarchyLevelResponseDto
@@ -254,6 +259,50 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
 
             index++;
         }
+    }
+
+    private static List<HierarchyLevelDefinitionDto> GetHierarchyLevels(string? specifications)
+    {
+        var defaultLevels = new List<HierarchyLevelDefinitionDto>
+        {
+            new() { Key = "rack", Label = "Rack", Depth = 0, HasChildren = true },
+            new() { Key = "pack", Label = "Pack", Depth = 1, HasChildren = true },
+            new() { Key = "module", Label = "Module", Depth = 2, HasChildren = true },
+            new() { Key = "cell", Label = "Cell", Depth = 3, HasChildren = false }
+        };
+
+        if (string.IsNullOrWhiteSpace(specifications))
+            return defaultLevels;
+
+        var element = PayloadDeserializer.GetElement(specifications);
+        if (!element.HasValue)
+            return defaultLevels;
+
+        if (element.Value.TryGetProperty("hierarchy", out var hierarchyElement) &&
+            hierarchyElement.ValueKind == JsonValueKind.Array)
+        {
+            var depth = 0;
+            var parsed = new List<HierarchyLevelDefinitionDto>();
+            foreach (var level in hierarchyElement.EnumerateArray())
+            {
+                var key = level.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
+                var label = level.TryGetProperty("label", out var l) ? l.GetString() ?? key : key;
+                var hasChildren = level.TryGetProperty("hasChildren", out var hc) && hc.GetBoolean();
+                var isDataLevel = !level.TryGetProperty("dataLevel", out var dl) || dl.GetBoolean();
+                var isVirtual = level.TryGetProperty("virtual", out var vr) && vr.GetBoolean();
+                var inheritsFrom = level.TryGetProperty("inheritsFrom", out var inf) ? inf.GetString() : null;
+
+                parsed.Add(new HierarchyLevelDefinitionDto
+                {
+                    Key = key, Label = label, Depth = depth, HasChildren = hasChildren,
+                    IsDataLevel = isDataLevel, IsVirtual = isVirtual, InheritsFrom = inheritsFrom
+                });
+                depth++;
+            }
+            return parsed.Count > 0 ? parsed : defaultLevels;
+        }
+
+        return defaultLevels;
     }
 
     private static bool ContainsId(JsonElement array, string? targetId, string[] levels, int currentDepth, int targetDepth)
