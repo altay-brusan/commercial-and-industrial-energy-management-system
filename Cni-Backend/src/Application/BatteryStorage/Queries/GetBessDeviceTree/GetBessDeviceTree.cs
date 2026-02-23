@@ -7,7 +7,10 @@ namespace Backend.Application.BatteryStorage.Queries.GetBessDeviceTree;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.BessView)]
-public record GetBessDeviceTreeQuery : IRequest<BessDeviceTreeResponseDto>;
+public record GetBessDeviceTreeQuery : IRequest<BessDeviceTreeResponseDto>
+{
+    public Guid? FacilityId { get; init; }
+}
 
 public class GetBessDeviceTreeQueryHandler : IRequestHandler<GetBessDeviceTreeQuery, BessDeviceTreeResponseDto>
 {
@@ -20,10 +23,15 @@ public class GetBessDeviceTreeQueryHandler : IRequestHandler<GetBessDeviceTreeQu
 
     public async Task<BessDeviceTreeResponseDto> Handle(GetBessDeviceTreeQuery request, CancellationToken cancellationToken)
     {
-        // Find all root Battery devices
-        var rootDevices = await _context.Devices
+        // Find all root EnergyStorage devices
+        var rootQuery = _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
+            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage);
+
+        if (request.FacilityId.HasValue)
+            rootQuery = rootQuery.Where(d => d.Rtu!.FacilityId == request.FacilityId.Value);
+
+        var rootDevices = await rootQuery
             .OrderBy(d => d.Name)
             .ToListAsync(cancellationToken);
 

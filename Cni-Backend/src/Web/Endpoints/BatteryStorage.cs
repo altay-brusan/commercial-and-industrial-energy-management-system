@@ -141,9 +141,9 @@ public class BatteryStorage : EndpointGroupBase
     }
 
     public static async Task<Ok<BessDeviceTreeResponseDto>> GetDeviceTree(
-        ISender sender)
+        ISender sender, Guid? facilityId)
     {
-        var result = await sender.Send(new GetBessDeviceTreeQuery());
+        var result = await sender.Send(new GetBessDeviceTreeQuery { FacilityId = facilityId });
         return TypedResults.Ok(result);
     }
 }

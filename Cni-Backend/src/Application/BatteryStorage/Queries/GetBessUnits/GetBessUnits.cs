@@ -10,6 +10,7 @@ namespace Backend.Application.BatteryStorage.Queries.GetBessUnits;
 [RequirePermission(Backend.Domain.Constants.Permissions.BessView)]
 public record GetBessUnitsQuery : IRequest<BessUnitsResultDto>
 {
+    public Guid? FacilityId { get; init; }
     public string? Search { get; init; }
     public string? SortBy { get; init; }
     public string? SortDirection { get; init; }
@@ -26,11 +27,15 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
 
     public async Task<BessUnitsResultDto> Handle(GetBessUnitsQuery request, CancellationToken cancellationToken)
     {
-        var batteryDevices = await _context.Devices
+        var query = _context.Devices
             .Include(d => d.DeviceType)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
-            .ToListAsync(cancellationToken);
+            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage);
+
+        if (request.FacilityId.HasValue)
+            query = query.Where(d => d.Rtu!.FacilityId == request.FacilityId.Value);
+
+        var batteryDevices = await query.ToListAsync(cancellationToken);
 
         var deviceIds = batteryDevices.Select(d => d.Id).ToList();
 
