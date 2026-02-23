@@ -20,8 +20,8 @@ namespace Backend.Infrastructure.Migrations
             migrationBuilder.Sql("""UPDATE "DeviceTypes" SET "Name" = 'EnergyStorage.Controller' WHERE "Name" = 'Battery.Controller'""");
             migrationBuilder.Sql("""UPDATE "DeviceTypes" SET "Name" = 'EnergyStorage.TMS' WHERE "Name" = 'Battery.TMS'""");
 
-            // Update HierarchyTemplate JSON in specification templates
-            migrationBuilder.Sql("""UPDATE "DeviceSpecificationTemplates" SET "HierarchyTemplate" = REPLACE("HierarchyTemplate", 'Battery.', 'EnergyStorage.') WHERE "HierarchyTemplate" LIKE '%Battery.%'""");
+            // Update HierarchyTemplate JSON in specification templates (cast jsonb→text for LIKE/REPLACE, then back)
+            migrationBuilder.Sql("""UPDATE "DeviceSpecificationTemplates" SET "HierarchyTemplate" = REPLACE("HierarchyTemplate"::text, 'Battery.', 'EnergyStorage.')::jsonb WHERE "HierarchyTemplate"::text LIKE '%Battery.%'""");
         }
 
         /// <inheritdoc />
@@ -37,8 +37,8 @@ namespace Backend.Infrastructure.Migrations
             migrationBuilder.Sql("""UPDATE "DeviceTypes" SET "Name" = 'Battery.Controller' WHERE "Name" = 'EnergyStorage.Controller'""");
             migrationBuilder.Sql("""UPDATE "DeviceTypes" SET "Name" = 'Battery.TMS' WHERE "Name" = 'EnergyStorage.TMS'""");
 
-            // Revert HierarchyTemplate JSON in specification templates
-            migrationBuilder.Sql("""UPDATE "DeviceSpecificationTemplates" SET "HierarchyTemplate" = REPLACE("HierarchyTemplate", 'EnergyStorage.', 'Battery.') WHERE "HierarchyTemplate" LIKE '%EnergyStorage.%'""");
+            // Revert HierarchyTemplate JSON in specification templates (cast jsonb→text for LIKE/REPLACE, then back)
+            migrationBuilder.Sql("""UPDATE "DeviceSpecificationTemplates" SET "HierarchyTemplate" = REPLACE("HierarchyTemplate"::text, 'EnergyStorage.', 'Battery.')::jsonb WHERE "HierarchyTemplate"::text LIKE '%EnergyStorage.%'""");
         }
     }
 }

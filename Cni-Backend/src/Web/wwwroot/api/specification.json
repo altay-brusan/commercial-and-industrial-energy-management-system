@@ -346,6 +346,18 @@
           "BatteryStorage"
         ],
         "operationId": "GetApiV1BatteryStorageDeviceTree",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -373,16 +385,17 @@
         "operationId": "GetApiV1BatteryStorageUnits",
         "parameters": [
           {
-            "name": "Search",
+            "name": "FacilityId",
             "in": "query",
             "schema": {
               "type": "string",
+              "format": "guid",
               "nullable": true
             },
             "x-position": 1
           },
           {
-            "name": "SortBy",
+            "name": "Search",
             "in": "query",
             "schema": {
               "type": "string",
@@ -391,13 +404,22 @@
             "x-position": 2
           },
           {
-            "name": "SortDirection",
+            "name": "SortBy",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
             "x-position": 3
+          },
+          {
+            "name": "SortDirection",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
           }
         ],
         "responses": {
@@ -2975,16 +2997,17 @@
         "operationId": "GetApiV1PcsUnits",
         "parameters": [
           {
-            "name": "Search",
+            "name": "FacilityId",
             "in": "query",
             "schema": {
               "type": "string",
+              "format": "guid",
               "nullable": true
             },
             "x-position": 1
           },
           {
-            "name": "SortBy",
+            "name": "Search",
             "in": "query",
             "schema": {
               "type": "string",
@@ -2993,13 +3016,22 @@
             "x-position": 2
           },
           {
-            "name": "SortDirection",
+            "name": "SortBy",
             "in": "query",
             "schema": {
               "type": "string",
               "nullable": true
             },
             "x-position": 3
+          },
+          {
+            "name": "SortDirection",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
           }
         ],
         "responses": {
@@ -4843,6 +4875,16 @@
           },
           "hasChildren": {
             "type": "boolean"
+          },
+          "isDataLevel": {
+            "type": "boolean"
+          },
+          "isVirtual": {
+            "type": "boolean"
+          },
+          "inheritsFrom": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -4878,6 +4920,9 @@
           "childCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "isVirtual": {
+            "type": "boolean"
           }
         }
       },
