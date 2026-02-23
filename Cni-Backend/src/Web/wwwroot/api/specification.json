@@ -5111,12 +5111,6 @@
             "items": {
               "$ref": "#/components/schemas/ChartDefinitionDto"
             }
-          },
-          "period": {
-            "type": "string"
-          },
-          "interval": {
-            "type": "string"
           }
         }
       },
@@ -5130,36 +5124,44 @@
           "title": {
             "type": "string"
           },
-          "chartType": {
+          "type": {
             "type": "string"
           },
           "xAxis": {
-            "$ref": "#/components/schemas/XAxisDto"
+            "$ref": "#/components/schemas/CurveXAxisDto"
           },
           "series": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ChartSeriesDto"
+              "$ref": "#/components/schemas/CurveSeriesDto"
+            }
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
             }
           }
         }
       },
-      "XAxisDto": {
+      "CurveXAxisDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "type": {
+          "key": {
             "type": "string"
           },
-          "labels": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "label": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
-      "ChartSeriesDto": {
+      "CurveSeriesDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -5177,15 +5179,13 @@
             "type": "string",
             "nullable": true
           },
-          "sourcePath": {
+          "yAxis": {
             "type": "string",
             "nullable": true
           },
-          "data": {
-            "type": "array",
-            "items": {
-              "nullable": true
-            }
+          "type": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
