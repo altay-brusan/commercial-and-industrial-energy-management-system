@@ -42,8 +42,8 @@ namespace Backend.Infrastructure.Migrations
             migrationBuilder.DropTable(
                 name: "DeviceModels");
 
-            migrationBuilder.DropTable(
-                name: "FacilityConnectivities");
+            // Use CASCADE because dependent objects (views, rules, etc.) may reference this table
+            migrationBuilder.Sql(@"DROP TABLE IF EXISTS ""FacilityConnectivities"" CASCADE;");
 
             migrationBuilder.DropIndex(
                 name: "IX_DeviceSolarData_FacilityId_DeviceLocalTime",

@@ -33,6 +33,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<DeviceLink> DeviceLinks => Set<DeviceLink>();
     public DbSet<Rtu> Rtus => Set<Rtu>();
     public DbSet<DeviceAlarm> DeviceAlarms => Set<DeviceAlarm>();
+    public DbSet<DeviceSpecificationTemplate> DeviceSpecificationTemplates => Set<DeviceSpecificationTemplate>();
 
     // Device telemetry data (time-series with JSON payload)
     public DbSet<DeviceBatteryData> DeviceBatteryData => Set<DeviceBatteryData>();

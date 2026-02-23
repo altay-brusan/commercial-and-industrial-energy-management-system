@@ -523,6 +523,43 @@
         ]
       }
     },
+    "/api/v1/BatteryStorage/Units/{unitId}/Tree": {
+      "get": {
+        "tags": [
+          "BatteryStorage"
+        ],
+        "operationId": "GetApiV1BatteryStorageUnitsTree",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceTreeNodeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/BatteryStorage/Units/{unitId}/Summary": {
       "get": {
         "tags": [
@@ -795,6 +832,70 @@
         ]
       }
     },
+    "/api/v1/DeviceData/Ingest": {
+      "post": {
+        "tags": [
+          "DeviceData"
+        ],
+        "operationId": "PostApiV1DeviceDataIngest",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestDeviceDataCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/DeviceData/Ingest/Batch": {
+      "post": {
+        "tags": [
+          "DeviceData"
+        ],
+        "operationId": "PostApiV1DeviceDataIngestBatch",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestDeviceDataBatchCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestBatchResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Devices/{id}": {
       "get": {
         "tags": [
@@ -924,6 +1025,234 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/Devices/{id}/Tree": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "GetDeviceTree",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceTreeNodeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/Devices/RegisterComposite": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "RegisterComposite",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceCompositeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/DeviceSpecificationTemplates": {
+      "get": {
+        "tags": [
+          "DeviceSpecificationTemplates"
+        ],
+        "operationId": "GetApiV1DeviceSpecificationTemplatesAll",
+        "parameters": [
+          {
+            "name": "deviceTypeId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceSpecificationTemplateDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "DeviceSpecificationTemplates"
+        ],
+        "operationId": "PostApiV1DeviceSpecificationTemplates",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeviceSpecificationTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/DeviceSpecificationTemplates/{id}": {
+      "get": {
+        "tags": [
+          "DeviceSpecificationTemplates"
+        ],
+        "operationId": "GetApiV1DeviceSpecificationTemplates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceSpecificationTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "DeviceSpecificationTemplates"
+        ],
+        "operationId": "PutApiV1DeviceSpecificationTemplates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeviceSpecificationTemplateCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
           }
         },
         "security": [
@@ -4479,6 +4808,42 @@
           }
         }
       },
+      "DeviceTreeNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "deviceTypeName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "activeAlarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceTreeNodeDto"
+            }
+          }
+        }
+      },
       "DynamicSectionDto": {
         "type": "object",
         "additionalProperties": false,
@@ -4865,6 +5230,68 @@
           }
         }
       },
+      "IngestResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IngestDeviceDataCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rtuSn": {
+            "type": "string"
+          },
+          "deviceSn": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "string"
+          },
+          "deviceLocalTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "IngestBatchResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "succeeded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "IngestDeviceDataBatchCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IngestDeviceDataCommand"
+            }
+          }
+        }
+      },
       "DeviceDto": {
         "type": "object",
         "additionalProperties": false,
@@ -4941,6 +5368,11 @@
             "type": "string",
             "format": "guid"
           },
+          "parentDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
           "name": {
             "type": "string"
           },
@@ -4956,6 +5388,136 @@
           },
           "ports": {
             "type": "string"
+          },
+          "metadata": {
+            "type": "string",
+            "nullable": true
+          },
+          "specifications": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "RegisterDeviceCompositeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rtuId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "parentDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "DeviceSpecificationTemplateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceTypeName": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "specificationsTemplate": {
+            "type": "string"
+          },
+          "metadataTemplate": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateDeviceSpecificationTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "model": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "specificationsTemplate": {
+            "type": "string"
+          },
+          "metadataTemplate": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateDeviceSpecificationTemplateCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "model": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "specificationsTemplate": {
+            "type": "string"
+          },
+          "metadataTemplate": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean"
           }
         }
       },

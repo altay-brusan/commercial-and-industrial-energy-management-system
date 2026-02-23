@@ -35,8 +35,95 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
 
         Guard.Against.NotFound(request.UnitId, device);
 
+        // Check if parentId is a valid GUID (indicates entity-based hierarchy)
+        if (Guid.TryParse(request.ParentId, out var parentDeviceId))
+        {
+            return await BuildFromDeviceEntities(parentDeviceId, request.Level, cancellationToken);
+        }
+
+        // Fallback: extract from payload JSON (legacy behavior)
+        return await BuildFromPayload(request.UnitId, request.Level, request.ParentId, cancellationToken);
+    }
+
+    private async Task<HierarchyLevelResponseDto> BuildFromDeviceEntities(
+        Guid parentDeviceId, string level, CancellationToken cancellationToken)
+    {
+        // Build breadcrumb by walking up the parent chain
+        var breadcrumb = new List<BreadcrumbDto>();
+        var current = await _context.Devices
+            .Include(d => d.DeviceType)
+            .FirstOrDefaultAsync(d => d.Id == parentDeviceId, cancellationToken);
+
+        if (current != null)
+        {
+            var ancestors = new List<BreadcrumbDto>();
+            var walker = current;
+            while (walker != null && walker.ParentDeviceId.HasValue)
+            {
+                ancestors.Add(new BreadcrumbDto
+                {
+                    Id = walker.Id.ToString(),
+                    Name = walker.Name,
+                    Level = walker.DeviceType?.Name?.Replace("Battery.", "").ToLowerInvariant() ?? "unknown"
+                });
+
+                walker = await _context.Devices
+                    .Include(d => d.DeviceType)
+                    .FirstOrDefaultAsync(d => d.Id == walker.ParentDeviceId, cancellationToken);
+            }
+            ancestors.Reverse();
+            breadcrumb = ancestors;
+        }
+
+        // Load children of the parent
+        var children = await _context.Devices
+            .Include(d => d.DeviceType)
+            .Where(d => d.ParentDeviceId == parentDeviceId)
+            .OrderBy(d => d.Name)
+            .ToListAsync(cancellationToken);
+
+        var childIds = children.Select(d => d.Id).ToList();
+
+        // Check which children have their own children
+        var hasGrandchildren = await _context.Devices
+            .Where(d => d.ParentDeviceId.HasValue && childIds.Contains(d.ParentDeviceId.Value))
+            .Select(d => d.ParentDeviceId!.Value)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var grandchildSet = new HashSet<Guid>(hasGrandchildren);
+
+        var childCounts = await _context.Devices
+            .Where(d => d.ParentDeviceId.HasValue && childIds.Contains(d.ParentDeviceId.Value))
+            .GroupBy(d => d.ParentDeviceId!.Value)
+            .Select(g => new { ParentId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.ParentId, x => x.Count, cancellationToken);
+
+        var items = children.Select(child => new HierarchyItemDto
+        {
+            Id = child.Id.ToString(),
+            Name = child.Name,
+            Level = child.DeviceType?.Name?.Replace("Battery.", "").ToLowerInvariant() ?? level,
+            Status = StatusBadgeDto.FromStatus(child.Status),
+            Data = null,
+            HasChildren = grandchildSet.Contains(child.Id),
+            ChildCount = childCounts.GetValueOrDefault(child.Id, 0)
+        }).ToList();
+
+        return new HierarchyLevelResponseDto
+        {
+            Level = level,
+            ParentId = parentDeviceId.ToString(),
+            Breadcrumb = breadcrumb,
+            Items = items
+        };
+    }
+
+    private async Task<HierarchyLevelResponseDto> BuildFromPayload(
+        Guid unitId, string level, string? parentId, CancellationToken cancellationToken)
+    {
         var latestData = await _context.DeviceBatteryData
-            .Where(dd => dd.DeviceId == request.UnitId)
+            .Where(dd => dd.DeviceId == unitId)
             .OrderByDescending(dd => dd.DeviceLocalTime)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -46,13 +133,13 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
 
         if (payload.HasValue)
         {
-            NavigateAndExtract(payload.Value, request.Level, request.ParentId, items, breadcrumb);
+            NavigateAndExtract(payload.Value, level, parentId, items, breadcrumb);
         }
 
         return new HierarchyLevelResponseDto
         {
-            Level = request.Level,
-            ParentId = request.ParentId,
+            Level = level,
+            ParentId = parentId,
             Breadcrumb = breadcrumb,
             Items = items
         };
@@ -71,17 +158,14 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
         var hasChildren = levelIndex < HierarchyLevels.Length - 1;
         var nextLevelKey = hasChildren ? HierarchyLevels[levelIndex + 1] + "s" : null;
 
-        // Navigate to the parent container in the payload tree
         JsonElement? container = root;
 
-        // Walk up from the root level to reach the target parent
         for (int i = 0; i < levelIndex; i++)
         {
             var currentLevelPluralKey = HierarchyLevels[i] + "s";
             container = PayloadDeserializer.GetNestedElement(container.Value, currentLevelPluralKey);
             if (!container.HasValue || container.Value.ValueKind != JsonValueKind.Array) return;
 
-            // Find the right parent in this level
             JsonElement? found = null;
             foreach (var item in container.Value.EnumerateArray())
             {
@@ -100,7 +184,6 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
                 }
                 else if (i < levelIndex - 1)
                 {
-                    // Check if this branch contains our parentId deeper
                     var childPluralKey = HierarchyLevels[i + 1] + "s";
                     if (item.TryGetProperty(childPluralKey, out var children) &&
                         children.ValueKind == JsonValueKind.Array &&
@@ -120,7 +203,6 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
             container = found;
         }
 
-        // Now extract children at target level from the parent container
         var targetPluralKey = HierarchyLevels[levelIndex] + "s";
         var targetArray = PayloadDeserializer.GetNestedElement(container.Value, targetPluralKey);
         if (!targetArray.HasValue || targetArray.Value.ValueKind != JsonValueKind.Array) return;
@@ -152,10 +234,10 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
             }
 
             var childCount = 0;
-            if (nextLevelKey != null && item.TryGetProperty(nextLevelKey, out var children) &&
-                children.ValueKind == JsonValueKind.Array)
+            if (nextLevelKey != null && item.TryGetProperty(nextLevelKey, out var childrenArr) &&
+                childrenArr.ValueKind == JsonValueKind.Array)
             {
-                childCount = children.GetArrayLength();
+                childCount = childrenArr.GetArrayLength();
             }
 
             items.Add(new HierarchyItemDto

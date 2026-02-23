@@ -34,6 +34,9 @@ public interface IApplicationDbContext
     DbSet<DeviceAlarm> DeviceAlarms { get; }
     DbSet<Rtu> Rtus { get; }
 
+    // Device specification templates
+    DbSet<DeviceSpecificationTemplate> DeviceSpecificationTemplates { get; }
+
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }
     DbSet<FirmMarketOperator> FirmMarketOperators { get; }

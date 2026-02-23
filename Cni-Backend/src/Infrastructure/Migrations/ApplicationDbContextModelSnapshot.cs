@@ -551,6 +551,62 @@ namespace Backend.Infrastructure.Migrations
                     b.ToTable("DeviceLinks", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceSpecificationTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("DeviceTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("HierarchyTemplate")
+                        .HasColumnType("jsonb");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Manufacturer")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("MetadataTemplate")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SpecificationsTemplate")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceTypeId", "Model", "Manufacturer")
+                        .IsUnique();
+
+                    b.ToTable("DeviceSpecificationTemplates", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.DeviceType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1658,6 +1714,17 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Facility");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceSpecificationTemplate", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.DeviceType", "DeviceType")
+                        .WithMany()
+                        .HasForeignKey("DeviceTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DeviceType");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>
