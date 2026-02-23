@@ -646,10 +646,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DynamicSectionDto"
-                  }
+                  "$ref": "#/components/schemas/SummaryResponseDto"
                 }
               }
             }
@@ -4936,6 +4933,22 @@
                 "$ref": "#/components/schemas/TableDataDto"
               }
             ]
+          },
+          "chartConfig": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartConfigDto"
+              }
+            ]
+          },
+          "chartData": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
           }
         }
       },
@@ -5005,6 +5018,87 @@
           },
           "type": {
             "type": "string"
+          }
+        }
+      },
+      "ChartConfigDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "xAxis": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartAxisDto"
+              }
+            ]
+          },
+          "yAxis": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartAxisDto"
+              }
+            ]
+          },
+          "referenceLines": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ChartReferenceLineDto"
+            }
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ChartAxisDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "domain": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
+      "ChartReferenceLineDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "y": {
+            "type": "number",
+            "format": "double"
+          },
+          "label": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "strokeDasharray": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

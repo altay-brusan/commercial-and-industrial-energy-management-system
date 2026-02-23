@@ -12,6 +12,33 @@ public record DynamicSectionDto
     public bool Optional { get; init; }
     public List<SectionFieldDto> Fields { get; init; } = new();
     public TableDataDto? TableData { get; init; }
+    public ChartConfigDto? ChartConfig { get; init; }
+    public List<Dictionary<string, object?>>? ChartData { get; init; }
+}
+
+public record ChartConfigDto
+{
+    public string Type { get; init; } = "line";
+    public ChartAxisDto? XAxis { get; init; }
+    public ChartAxisDto? YAxis { get; init; }
+    public List<ChartReferenceLineDto>? ReferenceLines { get; init; }
+    public string? Color { get; init; }
+}
+
+public record ChartAxisDto
+{
+    public string Key { get; init; } = string.Empty;
+    public string Label { get; init; } = string.Empty;
+    public string? Unit { get; init; }
+    public List<double>? Domain { get; init; }
+}
+
+public record ChartReferenceLineDto
+{
+    public double Y { get; init; }
+    public string Label { get; init; } = string.Empty;
+    public string? Color { get; init; }
+    public string? StrokeDasharray { get; init; }
 }
 
 public record SectionFieldDto

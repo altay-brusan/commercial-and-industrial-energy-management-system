@@ -78,7 +78,7 @@ public class BatteryStorage : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<List<DynamicSectionDto>>> GetHealth(
+    public static async Task<Ok<SummaryResponseDto>> GetHealth(
         ISender sender, Guid unitId)
     {
         var result = await sender.Send(new GetBessHealthQuery { UnitId = unitId });
