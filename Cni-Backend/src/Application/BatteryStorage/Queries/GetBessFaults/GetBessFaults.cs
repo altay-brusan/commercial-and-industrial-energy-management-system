@@ -9,7 +9,7 @@ namespace Backend.Application.BatteryStorage.Queries.GetBessFaults;
 public record GetBessFaultsQuery : IRequest<FaultsPaginatedResponseDto>
 {
     public Guid UnitId { get; init; }
-    public int PageNumber { get; init; } = 1;
+    public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 20;
     public string? Severity { get; init; }
     public bool? IsActive { get; init; }
@@ -26,12 +26,24 @@ public class GetBessFaultsQueryHandler : IRequestHandler<GetBessFaultsQuery, Fau
 
     public async Task<FaultsPaginatedResponseDto> Handle(GetBessFaultsQuery request, CancellationToken cancellationToken)
     {
+        // Get the root device and all descendant devices in the same RTU
+        var device = await _context.Devices
+            .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
+
+        Guard.Against.NotFound(request.UnitId, device);
+
+        var rtuDeviceIds = await _context.Devices
+            .Where(d => d.RtuId == device.RtuId)
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
         var query = _context.DeviceAlarms
-            .Where(a => a.DeviceId == request.UnitId);
+            .Where(a => rtuDeviceIds.Contains(a.DeviceId));
 
         if (!string.IsNullOrWhiteSpace(request.Severity))
         {
-            query = query.Where(a => a.Severity == request.Severity);
+            var sev = request.Severity.ToLowerInvariant();
+            query = query.Where(a => a.Severity.ToLower() == sev);
         }
 
         if (request.IsActive.HasValue)
@@ -43,29 +55,32 @@ public class GetBessFaultsQueryHandler : IRequestHandler<GetBessFaultsQuery, Fau
 
         var items = await query
             .OrderByDescending(a => a.OccurredAt)
-            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(a => new FaultRecordDto
             {
                 Id = a.Id,
                 Code = a.Code,
                 Name = a.Name,
-                Severity = a.Severity,
-                Category = a.Category,
+                Severity = FaultRecordDto.SeverityBadge(a.Severity),
+                Status = FaultRecordDto.FaultStatusBadge(a.IsActive),
                 Source = a.Source,
                 OccurredAt = a.OccurredAt,
                 RecoveredAt = a.RecoveredAt,
-                IsActive = a.IsActive,
-                Details = a.Details
+                RelatedAlarmId = a.Id
             })
             .ToListAsync(cancellationToken);
 
         return new FaultsPaginatedResponseDto
         {
-            Items = items,
-            PageNumber = request.PageNumber,
-            TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize),
-            TotalCount = totalCount
+            Faults = items,
+            Pagination = new PaginationDto
+            {
+                Page = request.Page,
+                PageSize = request.PageSize,
+                TotalItems = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            }
         };
     }
 }

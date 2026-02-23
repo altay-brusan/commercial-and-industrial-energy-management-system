@@ -34,7 +34,7 @@ public class BatteryStorage : EndpointGroupBase
         group.MapGet("/Units/{unitId}/Health", GetHealth);
         group.MapGet("/Units/{unitId}/Curves", GetCurves);
         group.MapGet("/Units/{unitId}/FaultFlags", GetFaultFlags);
-        group.MapGet("/Units/{unitId}/Faults", GetFaults);
+        group.MapGet("/Units/{unitId}/Notifications", GetNotifications);
         group.MapGet("/Schema", GetSchema);
     }
 
@@ -104,13 +104,13 @@ public class BatteryStorage : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<FaultsPaginatedResponseDto>> GetFaults(
-        ISender sender, Guid unitId, int? pageNumber, int? pageSize, string? severity, bool? isActive)
+    public static async Task<Ok<FaultsPaginatedResponseDto>> GetNotifications(
+        ISender sender, Guid unitId, int? page, int? pageSize, string? severity, bool? isActive)
     {
         var result = await sender.Send(new GetBessFaultsQuery
         {
             UnitId = unitId,
-            PageNumber = pageNumber ?? 1,
+            Page = page ?? 1,
             PageSize = pageSize ?? 20,
             Severity = severity,
             IsActive = isActive

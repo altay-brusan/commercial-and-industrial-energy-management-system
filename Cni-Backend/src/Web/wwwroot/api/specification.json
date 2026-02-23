@@ -751,12 +751,12 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Units/{unitId}/Faults": {
+    "/api/v1/BatteryStorage/Units/{unitId}/Notifications": {
       "get": {
         "tags": [
           "BatteryStorage"
         ],
-        "operationId": "GetApiV1BatteryStorageUnitsFaults",
+        "operationId": "GetApiV1BatteryStorageUnitsNotifications",
         "parameters": [
           {
             "name": "unitId",
@@ -769,7 +769,7 @@
             "x-position": 1
           },
           {
-            "name": "pageNumber",
+            "name": "page",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -5316,23 +5316,14 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "items": {
+          "faults": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FaultRecordDto"
             }
           },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationDto"
           }
         }
       },
@@ -5351,10 +5342,10 @@
             "type": "string"
           },
           "severity": {
-            "type": "string"
+            "$ref": "#/components/schemas/StatusBadgeDto"
           },
-          "category": {
-            "type": "string"
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
           },
           "source": {
             "type": "string",
@@ -5369,12 +5360,32 @@
             "format": "date-time",
             "nullable": true
           },
-          "isActive": {
-            "type": "boolean"
-          },
-          "details": {
+          "relatedAlarmId": {
             "type": "string",
+            "format": "guid",
             "nullable": true
+          }
+        }
+      },
+      "PaginationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
