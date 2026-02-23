@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessCurves;
 
@@ -48,14 +49,34 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         var intervalMinutes = GetIntervalMinutes(request.Interval);
         var timeFormat = GetTimeFormat(request.Period);
 
+        // Load Battery table time-series for root device
         var rawData = await _context.DeviceBatteryData
             .Where(dd => dd.DeviceId == request.UnitId && dd.DeviceLocalTime >= start && dd.DeviceLocalTime <= end)
             .OrderBy(dd => dd.DeviceLocalTime)
             .ToListAsync(cancellationToken);
 
         var sampled = SampleData(rawData, intervalMinutes);
+
+        // Also load PCS data from child PCS devices
+        var pcsChildIds = await _context.Devices
+            .Include(d => d.DeviceType)
+            .Where(d => d.ParentDeviceId == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs)
+            .Select(d => d.Id)
+            .ToListAsync(cancellationToken);
+
+        List<(DateTimeOffset Time, JsonElement? Payload)> pcsSampled = new();
+        if (pcsChildIds.Count > 0)
+        {
+            var pcsRawData = await _context.DevicePcsData
+                .Where(dd => pcsChildIds.Contains(dd.DeviceId) && dd.DeviceLocalTime >= start && dd.DeviceLocalTime <= end)
+                .OrderBy(dd => dd.DeviceLocalTime)
+                .ToListAsync(cancellationToken);
+
+            pcsSampled = SamplePcsData(pcsRawData, intervalMinutes);
+        }
+
         var specs = PayloadDeserializer.GetElement(device.Specifications);
-        var charts = BuildCharts(specs, sampled, timeFormat);
+        var charts = BuildCharts(specs, sampled, timeFormat, pcsSampled);
 
         return new ChartResponseDto { Charts = charts };
     }
@@ -111,8 +132,31 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         return result;
     }
 
+    private static List<(DateTimeOffset Time, JsonElement? Payload)> SamplePcsData(
+        List<Domain.Entities.DeviceData.DevicePcsData> rawData, int intervalMinutes)
+    {
+        if (rawData.Count == 0) return new();
+
+        var result = new List<(DateTimeOffset, JsonElement?)>();
+        var lastTimestamp = DateTimeOffset.MinValue;
+
+        foreach (var row in rawData)
+        {
+            if ((row.DeviceLocalTime - lastTimestamp).TotalMinutes >= intervalMinutes)
+            {
+                result.Add((row.DeviceLocalTime, PayloadDeserializer.GetElement(row.Payload)));
+                lastTimestamp = row.DeviceLocalTime;
+            }
+        }
+
+        return result;
+    }
+
     private static List<ChartDefinitionDto> BuildCharts(
-        JsonElement? specs, List<(DateTimeOffset Time, JsonElement? Payload)> data, string timeFormat)
+        JsonElement? specs,
+        List<(DateTimeOffset Time, JsonElement? Payload)> data,
+        string timeFormat,
+        List<(DateTimeOffset Time, JsonElement? Payload)>? pcsData = null)
     {
         if (specs.HasValue && specs.Value.TryGetProperty("curveCharts", out var chartsElement) &&
             chartsElement.ValueKind == JsonValueKind.Array)
@@ -120,7 +164,7 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
             return BuildFromSchema(chartsElement, data, timeFormat);
         }
 
-        return BuildDefaultCharts(data, timeFormat);
+        return BuildDefaultCharts(data, timeFormat, pcsData);
     }
 
     private static List<ChartDefinitionDto> BuildFromSchema(
@@ -177,9 +221,11 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     }
 
     private static List<ChartDefinitionDto> BuildDefaultCharts(
-        List<(DateTimeOffset Time, JsonElement? Payload)> data, string timeFormat)
+        List<(DateTimeOffset Time, JsonElement? Payload)> data,
+        string timeFormat,
+        List<(DateTimeOffset Time, JsonElement? Payload)>? pcsData = null)
     {
-        return new List<ChartDefinitionDto>
+        var charts = new List<ChartDefinitionDto>
         {
             BuildChart("powerSoc", "Power & State of Charge", "area", timeFormat, data,
                 new CurveSeriesDto { Key = "power", Label = "Power", Unit = "kW", Color = "#8b5cf6", YAxis = "left", Type = "area", SourcePath = "dcPower.power" },
@@ -194,6 +240,16 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
                 new CurveSeriesDto { Key = "tempAvg", Label = "T.Avg", Unit = "\u00b0C", Color = "#f59e0b", Type = "area", SourcePath = "ambientTempC" },
                 new CurveSeriesDto { Key = "tempMin", Label = "T.Min", Unit = "\u00b0C", Color = "#3b82f6", Type = "area", SourcePath = "minCellTempC" }),
         };
+
+        // Add PCS chart if child PCS data is available
+        if (pcsData is { Count: > 0 })
+        {
+            charts.Add(BuildChart("pcsAcPower", "PCS AC Power", "line", timeFormat, pcsData,
+                new CurveSeriesDto { Key = "acActivePower", Label = "Active Power", Unit = "kW", Color = "#06b6d4", YAxis = "left", Type = "line", SourcePath = "acPower.totalActivePower" },
+                new CurveSeriesDto { Key = "efficiency", Label = "Efficiency", Unit = "%", Color = "#a855f7", YAxis = "right", Type = "line", SourcePath = "efficiency" }));
+        }
+
+        return charts;
     }
 
     private static ChartDefinitionDto BuildChart(

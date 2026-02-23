@@ -17,10 +17,12 @@ public record GetBessFaultFlagsQuery : IRequest<FaultFlagsResponseDto>
 public class GetBessFaultFlagsQueryHandler : IRequestHandler<GetBessFaultFlagsQuery, FaultFlagsResponseDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ContainerTelemetryLoader _telemetryLoader;
 
     public GetBessFaultFlagsQueryHandler(IApplicationDbContext context)
     {
         _context = context;
+        _telemetryLoader = new ContainerTelemetryLoader(context);
     }
 
     public async Task<FaultFlagsResponseDto> Handle(GetBessFaultFlagsQuery request, CancellationToken cancellationToken)
@@ -32,12 +34,10 @@ public class GetBessFaultFlagsQueryHandler : IRequestHandler<GetBessFaultFlagsQu
 
         Guard.Against.NotFound(request.UnitId, device);
 
-        var latestData = await _context.DeviceBatteryData
-            .Where(dd => dd.DeviceId == request.UnitId)
-            .OrderByDescending(dd => dd.DeviceLocalTime)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var payload = PayloadDeserializer.GetElement(latestData?.Payload);
+        // Load multi-table telemetry for the container and all child devices
+        var telemetry = await _telemetryLoader.LoadLatest(request.UnitId, cancellationToken);
+        var mergedPayloads = telemetry.GetPayloadsByKind();
+        var payload = mergedPayloads.Values.FirstOrDefault(p => p.HasValue);
         var specs = PayloadDeserializer.GetElement(device.Specifications);
 
         return BuildFaultFlags(specs, payload);

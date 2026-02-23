@@ -17,10 +17,12 @@ public record GetBessSummaryQuery : IRequest<SummaryResponseDto>
 public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, SummaryResponseDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ContainerTelemetryLoader _telemetryLoader;
 
     public GetBessSummaryQueryHandler(IApplicationDbContext context)
     {
         _context = context;
+        _telemetryLoader = new ContainerTelemetryLoader(context);
     }
 
     public async Task<SummaryResponseDto> Handle(GetBessSummaryQuery request, CancellationToken cancellationToken)
@@ -38,13 +40,12 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
             summaryTab.TryGetProperty("sections", out var sectionsElement) &&
             sectionsElement.ValueKind == JsonValueKind.Array)
         {
-            // Specs-driven: load latest payload and build from schema
-            var latestData = await _context.DeviceBatteryData
-                .Where(dd => dd.DeviceId == request.UnitId)
-                .OrderByDescending(dd => dd.DeviceLocalTime)
-                .FirstOrDefaultAsync(cancellationToken);
+            // Specs-driven: load multi-table telemetry and merge payloads
+            var telemetry = await _telemetryLoader.LoadLatest(request.UnitId, cancellationToken);
+            var mergedPayloads = telemetry.GetPayloadsByKind();
 
-            var payload = PayloadDeserializer.GetElement(latestData?.Payload);
+            // Build a merged payload element from all Kinds for schema extraction
+            var payload = mergedPayloads.Values.FirstOrDefault(p => p.HasValue);
             return new SummaryResponseDto { Sections = BuildFromSchema(sectionsElement, payload) };
         }
 
@@ -67,19 +68,9 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
     private async Task<List<DynamicSectionDto>> BuildBatteryContainerSummary(
         Domain.Entities.Device device, CancellationToken ct)
     {
-        // Load latest payload per Kind in a single query
-        var latestByKind = await _context.DeviceBatteryData
-            .Where(dd => dd.DeviceId == device.Id)
-            .GroupBy(dd => dd.Kind)
-            .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
-            .ToListAsync(ct);
-
-        var payloads = new Dictionary<string, JsonElement?>();
-        foreach (var d in latestByKind)
-        {
-            if (d.Kind is not null)
-                payloads[d.Kind] = PayloadDeserializer.GetElement(d.Payload);
-        }
+        // Load multi-table telemetry for the container and all child devices
+        var telemetry = await _telemetryLoader.LoadLatest(device.Id, ct);
+        var payloads = telemetry.GetPayloadsByKind();
 
         var batt = payloads.GetValueOrDefault("ContainerBatteryState");
         var chiller = payloads.GetValueOrDefault("ChillerState");
