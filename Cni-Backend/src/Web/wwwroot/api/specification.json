@@ -5453,19 +5453,55 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "deviceId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "modelName": {
+          "key": {
             "type": "string"
           },
-          "manufacturer": {
-            "type": "string",
-            "nullable": true
+          "label": {
+            "type": "string"
           },
-          "specifications": {
-            "nullable": true
+          "hierarchy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportedTabs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summarySections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "healthSections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "faultSources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "curveCharts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "connectedDevices": {
+            "type": "object",
+            "additionalProperties": {}
           }
         }
       },
