@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessSchema;
 
@@ -24,7 +25,7 @@ public class GetBessSchemaQueryHandler : IRequestHandler<GetBessSchemaQuery, Sch
         // Load all Battery-type specification templates
         var templates = await _context.DeviceSpecificationTemplates
             .Include(t => t.DeviceType)
-            .Where(t => t.DeviceType != null && t.DeviceType.Name == "Battery")
+            .Where(t => t.DeviceType != null && t.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .ToListAsync(cancellationToken);
 
         var productTypes = templates.Select(t =>

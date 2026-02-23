@@ -1,5 +1,6 @@
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.Devices.Queries.GetDeviceTree;
 
@@ -105,14 +106,14 @@ public static class DeviceTreeBuilder
 
     public static string MapDeviceType(string? deviceTypeName) => deviceTypeName switch
     {
-        "Battery" => "unit",
-        "Battery.Rack" => "rack",
-        "Battery.Pack" => "pack",
-        "Battery.Module" => "module",
-        "Battery.Controller" => "esc",
-        "Battery.TMS" => "hvac",
-        "PCS" => "pcs",
-        "Solar" => "solar",
+        DeviceTypeNames.EnergyStorage => "unit",
+        DeviceTypeNames.EnergyStorageRack => "rack",
+        DeviceTypeNames.EnergyStoragePack => "pack",
+        DeviceTypeNames.EnergyStorageModule => "module",
+        DeviceTypeNames.EnergyStorageController => "esc",
+        DeviceTypeNames.EnergyStorageTMS => "hvac",
+        DeviceTypeNames.Pcs => "pcs",
+        DeviceTypeNames.Solar => "solar",
         "SmartMeter" => "meter",
         _ => deviceTypeName?.Split('.').Last().ToLowerInvariant() ?? "unknown"
     };

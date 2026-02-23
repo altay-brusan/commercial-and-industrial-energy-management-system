@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessHierarchy;
 
@@ -26,7 +27,7 @@ public class GetBessHierarchyQueryHandler : IRequestHandler<GetBessHierarchyQuer
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
@@ -84,7 +85,7 @@ public class GetBessHierarchyQueryHandler : IRequestHandler<GetBessHierarchyQuer
         {
             Id = child.Id.ToString(),
             Name = child.Name,
-            Level = child.DeviceType?.Name?.Replace("Battery.", "").ToLowerInvariant() ?? "unknown",
+            Level = child.DeviceType?.Name?.Replace(DeviceTypeNames.EnergyStoragePrefix, "").ToLowerInvariant() ?? "unknown",
             Status = StatusBadgeDto.FromStatus(child.Status),
             Data = null,
             HasChildren = grandchildSet.Contains(child.Id),

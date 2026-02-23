@@ -409,25 +409,25 @@ public class ApplicationDbContextInitializer
 
         var deviceTypes = new List<DeviceType>
         {
-            new DeviceType { Name = "Solar", Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.Solar, Created = DateTime.UtcNow },
             new DeviceType { Name = "Generator", Created = DateTime.UtcNow },
             new DeviceType { Name = "Wind Turbine", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Inverter", Created = DateTime.UtcNow },
-            new DeviceType { Name = "PCS", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Smart Meter", Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorage, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.Inverter, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.Pcs, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.SmartMeter, Created = DateTime.UtcNow },
             new DeviceType { Name = "Grid", Created = DateTime.UtcNow },
             new DeviceType { Name = "DC Bus", Created = DateTime.UtcNow },
             new DeviceType { Name = "Transformer", Created = DateTime.UtcNow },
             new DeviceType { Name = "Load", Created = DateTime.UtcNow },
             new DeviceType { Name = "EV Charger", Created = DateTime.UtcNow },
             new DeviceType { Name = "Heat Pump", Created = DateTime.UtcNow },
-            // Battery hierarchy sub-types
-            new DeviceType { Name = "Battery.Rack", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery.Pack", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery.Module", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery.Controller", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery.TMS", Created = DateTime.UtcNow }
+            // EnergyStorage hierarchy sub-types
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageRack, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStoragePack, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageModule, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageController, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageTMS, Created = DateTime.UtcNow }
         };
         if (!_context.DeviceTypes.Any())
         {
@@ -479,7 +479,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 RtuId = rtuId,
-                DeviceTypeId = dtLookup["Battery"],
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
                 Name = "BESS_001",
                 Model = "Tesla Megapack",
                 SerialNumber = "BESS-SN-001",
@@ -489,7 +489,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 RtuId = rtuId,
-                DeviceTypeId = dtLookup["Solar"],
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
                 Name = "PV_001",
                 Model = "SunPower Maxeon 6",
                 SerialNumber = "PV-SN-001",
@@ -499,7 +499,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 RtuId = rtuId,
-                DeviceTypeId = dtLookup["Inverter"],
+                DeviceTypeId = dtLookup[DeviceTypeNames.Inverter],
                 Name = "INVERTER_001",
                 Model = "SMA Sunny Tripower",
                 SerialNumber = "INV-SN-001",
@@ -509,7 +509,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 RtuId = rtuId,
-                DeviceTypeId = dtLookup["Smart Meter"],
+                DeviceTypeId = dtLookup[DeviceTypeNames.SmartMeter],
                 Name = "SM_001",
                 Model = "Schneider PM5560",
                 SerialNumber = "SM-SN-001",
@@ -546,7 +546,7 @@ public class ApplicationDbContextInitializer
         // Seed DeviceSpecificationTemplate for Tesla Megapack
         if (!_context.DeviceSpecificationTemplates.Any())
         {
-            var batteryTypeId = dtLookup.GetValueOrDefault("Battery");
+            var batteryTypeId = dtLookup.GetValueOrDefault(DeviceTypeNames.EnergyStorage);
             if (batteryTypeId != Guid.Empty)
             {
                 var teslaMegapackTemplate = new DeviceSpecificationTemplate
@@ -629,19 +629,19 @@ public class ApplicationDbContextInitializer
                       "children": [
                         {
                           "key": "rack",
-                          "deviceTypeName": "Battery.Rack",
+                          "deviceTypeName": "EnergyStorage.Rack",
                           "count": 4,
                           "namePattern": "Rack {index}",
                           "children": [
                             {
                               "key": "pack",
-                              "deviceTypeName": "Battery.Pack",
+                              "deviceTypeName": "EnergyStorage.Pack",
                               "count": 4,
                               "namePattern": "Pack {index}",
                               "children": [
                                 {
                                   "key": "module",
-                                  "deviceTypeName": "Battery.Module",
+                                  "deviceTypeName": "EnergyStorage.Module",
                                   "count": 8,
                                   "namePattern": "Module {index}"
                                 }
@@ -651,13 +651,13 @@ public class ApplicationDbContextInitializer
                         },
                         {
                           "key": "esc",
-                          "deviceTypeName": "Battery.Controller",
+                          "deviceTypeName": "EnergyStorage.Controller",
                           "count": 1,
                           "namePattern": "ESC-{index}"
                         },
                         {
                           "key": "hvac",
-                          "deviceTypeName": "Battery.TMS",
+                          "deviceTypeName": "EnergyStorage.TMS",
                           "count": 2,
                           "namePattern": "HVAC-{index}"
                         }

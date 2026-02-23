@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessHierarchyLevel;
 
@@ -30,7 +31,7 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
@@ -64,7 +65,7 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
                 {
                     Id = walker.Id.ToString(),
                     Name = walker.Name,
-                    Level = walker.DeviceType?.Name?.Replace("Battery.", "").ToLowerInvariant() ?? "unknown"
+                    Level = walker.DeviceType?.Name?.Replace(DeviceTypeNames.EnergyStoragePrefix, "").ToLowerInvariant() ?? "unknown"
                 });
 
                 walker = await _context.Devices
@@ -103,7 +104,7 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
         {
             Id = child.Id.ToString(),
             Name = child.Name,
-            Level = child.DeviceType?.Name?.Replace("Battery.", "").ToLowerInvariant() ?? level,
+            Level = child.DeviceType?.Name?.Replace(DeviceTypeNames.EnergyStoragePrefix, "").ToLowerInvariant() ?? level,
             Status = StatusBadgeDto.FromStatus(child.Status),
             Data = null,
             HasChildren = grandchildSet.Contains(child.Id),

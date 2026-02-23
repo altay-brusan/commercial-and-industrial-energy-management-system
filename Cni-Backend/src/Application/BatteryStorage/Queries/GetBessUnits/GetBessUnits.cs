@@ -2,6 +2,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessUnits;
 
@@ -28,7 +29,7 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
         var batteryDevices = await _context.Devices
             .Include(d => d.DeviceType)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .ToListAsync(cancellationToken);
 
         var deviceIds = batteryDevices.Select(d => d.Id).ToList();

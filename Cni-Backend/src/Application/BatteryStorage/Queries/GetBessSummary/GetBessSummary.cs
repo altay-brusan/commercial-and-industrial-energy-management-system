@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessSummary;
 
@@ -50,11 +51,11 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         // Default: build based on device type
         var sections = device.DeviceType?.Name switch
         {
-            "Battery" => await BuildBatteryContainerSummary(device, cancellationToken),
-            "Battery.Rack" or "Battery.Pack" or "Battery.Module" =>
+            DeviceTypeNames.EnergyStorage => await BuildBatteryContainerSummary(device, cancellationToken),
+            DeviceTypeNames.EnergyStorageRack or DeviceTypeNames.EnergyStoragePack or DeviceTypeNames.EnergyStorageModule =>
                 await BuildSubDeviceSummary(device, cancellationToken),
-            "Battery.Controller" => await BuildSubDeviceSummary(device, cancellationToken),
-            "Battery.TMS" => await BuildTmsSummary(device, cancellationToken),
+            DeviceTypeNames.EnergyStorageController => await BuildSubDeviceSummary(device, cancellationToken),
+            DeviceTypeNames.EnergyStorageTMS => await BuildTmsSummary(device, cancellationToken),
             _ => await BuildGenericSummary(device, cancellationToken)
         };
 

@@ -1,6 +1,7 @@
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Backend.Application.Devices.Queries.GetDeviceTree;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessDeviceTree;
 
@@ -22,7 +23,7 @@ public class GetBessDeviceTreeQueryHandler : IRequestHandler<GetBessDeviceTreeQu
         // Find all root Battery devices
         var rootDevices = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .OrderBy(d => d.Name)
             .ToListAsync(cancellationToken);
 

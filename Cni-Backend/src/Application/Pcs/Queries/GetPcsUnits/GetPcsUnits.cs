@@ -1,6 +1,7 @@
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.Pcs.Queries.GetPcsUnits;
 
@@ -44,7 +45,7 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
         // Find linked BESS units (Battery devices in same facility)
         var batteryDevices = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => facilityIds.Contains(d.Rtu!.FacilityId) && d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => facilityIds.Contains(d.Rtu!.FacilityId) && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .ToListAsync(cancellationToken);
 
         var batteryByFacility = batteryDevices

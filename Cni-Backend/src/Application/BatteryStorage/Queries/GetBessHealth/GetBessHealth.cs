@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessHealth;
 
@@ -49,7 +50,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
         // Default: build based on device type
         var sections = device.DeviceType?.Name switch
         {
-            "Battery" => await BuildBatteryHealthSections(device, cancellationToken),
+            DeviceTypeNames.EnergyStorage => await BuildBatteryHealthSections(device, cancellationToken),
             _ => await BuildGenericHealthSections(device, cancellationToken)
         };
 

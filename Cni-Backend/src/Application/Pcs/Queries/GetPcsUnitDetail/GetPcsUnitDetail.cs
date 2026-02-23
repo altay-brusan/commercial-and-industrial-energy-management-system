@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.Pcs.Queries.GetPcsUnitDetail;
 
@@ -35,7 +36,7 @@ public class GetPcsUnitDetailQueryHandler : IRequestHandler<GetPcsUnitDetailQuer
         // Find linked BESS unit (Battery device in same facility or via ParentDeviceId)
         var linkedBess = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.Rtu!.FacilityId == device.Rtu!.FacilityId && d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => d.Rtu!.FacilityId == device.Rtu!.FacilityId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
         var tabs = GetAvailableTabs(device.Specifications);
