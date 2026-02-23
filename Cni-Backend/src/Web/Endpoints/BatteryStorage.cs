@@ -71,7 +71,7 @@ public class BatteryStorage : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<List<DynamicSectionDto>>> GetSummary(
+    public static async Task<Ok<SummaryResponseDto>> GetSummary(
         ISender sender, Guid unitId)
     {
         var result = await sender.Send(new GetBessSummaryQuery { UnitId = unitId });

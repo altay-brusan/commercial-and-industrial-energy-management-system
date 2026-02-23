@@ -609,10 +609,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DynamicSectionDto"
-                  }
+                  "$ref": "#/components/schemas/SummaryResponseDto"
                 }
               }
             }
@@ -4890,6 +4887,18 @@
           }
         }
       },
+      "SummaryResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DynamicSectionDto"
+            }
+          }
+        }
+      },
       "DynamicSectionDto": {
         "type": "object",
         "additionalProperties": false,
@@ -4900,9 +4909,19 @@
           "title": {
             "type": "string"
           },
-          "order": {
+          "icon": {
+            "type": "string",
+            "nullable": true
+          },
+          "variant": {
+            "type": "string"
+          },
+          "columns": {
             "type": "integer",
             "format": "int32"
+          },
+          "optional": {
+            "type": "boolean"
           },
           "fields": {
             "type": "array",
@@ -4910,12 +4929,13 @@
               "$ref": "#/components/schemas/SectionFieldDto"
             }
           },
-          "subsections": {
-            "type": "array",
+          "tableData": {
             "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/SubsectionDto"
-            }
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TableDataDto"
+              }
+            ]
           }
         }
       },
@@ -4932,6 +4952,9 @@
           "value": {
             "nullable": true
           },
+          "type": {
+            "type": "string"
+          },
           "unit": {
             "type": "string",
             "nullable": true
@@ -4940,31 +4963,48 @@
             "type": "string",
             "nullable": true
           },
-          "sourcePath": {
+          "status": {
             "type": "string",
             "nullable": true
           },
-          "order": {
-            "type": "integer",
-            "format": "int32"
+          "meta": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
           }
         }
       },
-      "SubsectionDto": {
+      "TableDataDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableColumnDto"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        }
+      },
+      "TableColumnDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
           "key": {
             "type": "string"
           },
-          "title": {
+          "label": {
             "type": "string"
           },
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SectionFieldDto"
-            }
+          "type": {
+            "type": "string"
           }
         }
       },

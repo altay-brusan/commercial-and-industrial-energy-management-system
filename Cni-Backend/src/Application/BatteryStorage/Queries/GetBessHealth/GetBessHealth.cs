@@ -58,22 +58,21 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Lis
     private static List<DynamicSectionDto> BuildFromSchema(JsonElement sectionsElement, JsonElement? payload)
     {
         var sections = new List<DynamicSectionDto>();
-        var order = 0;
 
         foreach (var section in sectionsElement.EnumerateArray())
         {
-            order++;
             var key = section.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
             var title = section.TryGetProperty("title", out var t) ? t.GetString() ?? key : key;
+            var icon = section.TryGetProperty("icon", out var ic) ? ic.GetString() : null;
+            var variant = section.TryGetProperty("variant", out var v) ? v.GetString() ?? "card" : "card";
+            var columns = section.TryGetProperty("columns", out var c) && c.TryGetInt32(out var cols) ? cols : 3;
 
             var fields = new List<SectionFieldDto>();
             if (section.TryGetProperty("fields", out var fieldsElement) &&
                 fieldsElement.ValueKind == JsonValueKind.Array)
             {
-                var fieldOrder = 0;
                 foreach (var field in fieldsElement.EnumerateArray())
                 {
-                    fieldOrder++;
                     var fKey = field.TryGetProperty("key", out var fk) ? fk.GetString() ?? "" : "";
                     var fLabel = field.TryGetProperty("label", out var fl) ? fl.GetString() ?? fKey : fKey;
                     var fUnit = field.TryGetProperty("unit", out var fu) ? fu.GetString() : null;
@@ -91,8 +90,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Lis
                         Value = value,
                         Unit = fUnit,
                         Format = fFormat,
-                        SourcePath = sourcePath,
-                        Order = fieldOrder
+                        SourcePath = sourcePath
                     });
                 }
             }
@@ -101,7 +99,9 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Lis
             {
                 Key = key,
                 Title = title,
-                Order = order,
+                Icon = icon,
+                Variant = variant,
+                Columns = columns,
                 Fields = fields
             });
         }
@@ -117,41 +117,41 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Lis
             {
                 Key = "sohOverview",
                 Title = "State of Health Overview",
-                Order = 1,
+                Icon = "heart-pulse",
                 Fields = new List<SectionFieldDto>
                 {
-                    Field("soh", "State of Health", payload, "stateOfHealth", "%", 1),
-                    Field("cycleCount", "Cycle Count", payload, "health.cycleCount", null, 2),
-                    Field("designCapacity", "Design Capacity", payload, "health.designCapacity", "kWh", 3),
-                    Field("currentCapacity", "Current Capacity", payload, "health.currentCapacity", "kWh", 4),
+                    Field("soh", "State of Health", payload, "stateOfHealth", "%"),
+                    Field("cycleCount", "Cycle Count", payload, "health.cycleCount", null),
+                    Field("designCapacity", "Design Capacity", payload, "health.designCapacity", "kWh"),
+                    Field("currentCapacity", "Current Capacity", payload, "health.currentCapacity", "kWh"),
                 }
             },
             new()
             {
                 Key = "degradation",
                 Title = "Degradation",
-                Order = 2,
+                Icon = "trending-down",
                 Fields = new List<SectionFieldDto>
                 {
-                    Field("capacityFade", "Capacity Fade", payload, "health.capacityFade", "%", 1),
-                    Field("resistanceIncrease", "Resistance Increase", payload, "health.resistanceIncrease", "%", 2),
+                    Field("capacityFade", "Capacity Fade", payload, "health.capacityFade", "%"),
+                    Field("resistanceIncrease", "Resistance Increase", payload, "health.resistanceIncrease", "%"),
                 }
             },
             new()
             {
                 Key = "throughput",
                 Title = "Energy Throughput",
-                Order = 3,
+                Icon = "zap",
                 Fields = new List<SectionFieldDto>
                 {
-                    Field("totalCharged", "Total Energy Charged", payload, "health.totalCharged", "kWh", 1),
-                    Field("totalDischarged", "Total Energy Discharged", payload, "health.totalDischarged", "kWh", 2),
+                    Field("totalCharged", "Total Energy Charged", payload, "health.totalCharged", "kWh"),
+                    Field("totalDischarged", "Total Energy Discharged", payload, "health.totalDischarged", "kWh"),
                 }
             }
         };
     }
 
-    private static SectionFieldDto Field(string key, string label, JsonElement? payload, string sourcePath, string? unit, int order)
+    private static SectionFieldDto Field(string key, string label, JsonElement? payload, string sourcePath, string? unit)
     {
         object? value = null;
         if (payload.HasValue)
@@ -163,8 +163,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Lis
             Label = label,
             Value = value,
             Unit = unit,
-            SourcePath = sourcePath,
-            Order = order
+            SourcePath = sourcePath
         };
     }
 }
