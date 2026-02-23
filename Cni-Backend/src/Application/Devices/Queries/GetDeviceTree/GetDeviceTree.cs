@@ -21,20 +21,17 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
 
     public async Task<DeviceTreeNodeDto> Handle(GetDeviceTreeQuery request, CancellationToken cancellationToken)
     {
-        // Load the root device
         var rootDevice = await _context.Devices
             .Include(d => d.DeviceType)
             .FirstOrDefaultAsync(d => d.Id == request.DeviceId, cancellationToken);
 
         Guard.Against.NotFound(request.DeviceId, rootDevice);
 
-        // Load all descendants in a single query (devices that share the same RTU)
         var allDevices = await _context.Devices
             .Include(d => d.DeviceType)
             .Where(d => d.RtuId == rootDevice.RtuId)
             .ToListAsync(cancellationToken);
 
-        // Load alarm counts for all device IDs
         var deviceIds = allDevices.Select(d => d.Id).ToList();
         var alarmCounts = await _context.DeviceAlarms
             .Where(a => deviceIds.Contains(a.DeviceId) && a.IsActive)
@@ -42,17 +39,18 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
             .Select(g => new { DeviceId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.DeviceId, x => x.Count, cancellationToken);
 
-        // Build tree from flat list
-        var deviceMap = allDevices.ToDictionary(d => d.Id);
         var childrenMap = allDevices
             .Where(d => d.ParentDeviceId.HasValue)
             .GroupBy(d => d.ParentDeviceId!.Value)
             .ToDictionary(g => g.Key, g => g.OrderBy(d => d.Name).ToList());
 
-        return BuildTreeNode(rootDevice, childrenMap, alarmCounts);
+        return DeviceTreeBuilder.BuildTreeNode(rootDevice, childrenMap, alarmCounts);
     }
+}
 
-    private static DeviceTreeNodeDto BuildTreeNode(
+public static class DeviceTreeBuilder
+{
+    public static DeviceTreeNodeDto BuildTreeNode(
         Domain.Entities.Device device,
         Dictionary<Guid, List<Domain.Entities.Device>> childrenMap,
         Dictionary<Guid, int> alarmCounts)
@@ -66,11 +64,9 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
             }
         }
 
-        // Calculate active alarm count including descendants
         var directAlarms = alarmCounts.GetValueOrDefault(device.Id, 0);
-        var descendantAlarms = children.Sum(c => c.ActiveAlarmCount);
+        var descendantAlarms = children.Sum(c => c.AlarmCount);
 
-        // Parse supported tabs from Specifications
         var availableTabs = new List<string>();
         if (!string.IsNullOrWhiteSpace(device.Specifications))
         {
@@ -98,22 +94,38 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
         {
             Id = device.Id,
             Name = device.Name,
+            Type = MapDeviceType(device.DeviceType?.Name),
             DeviceTypeName = device.DeviceType?.Name ?? string.Empty,
             Status = device.Status,
-            ActiveAlarmCount = directAlarms + descendantAlarms,
+            AlarmCount = directAlarms + descendantAlarms,
             AvailableTabs = availableTabs,
             Children = children
         };
     }
+
+    public static string MapDeviceType(string? deviceTypeName) => deviceTypeName switch
+    {
+        "Battery" => "unit",
+        "Battery.Rack" => "rack",
+        "Battery.Pack" => "pack",
+        "Battery.Module" => "module",
+        "Battery.Controller" => "esc",
+        "Battery.TMS" => "hvac",
+        "PCS" => "pcs",
+        "Solar" => "solar",
+        "SmartMeter" => "meter",
+        _ => deviceTypeName?.Split('.').Last().ToLowerInvariant() ?? "unknown"
+    };
 }
 
 public record DeviceTreeNodeDto
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
+    public string Type { get; init; } = string.Empty;
     public string DeviceTypeName { get; init; } = string.Empty;
     public string? Status { get; init; }
-    public int ActiveAlarmCount { get; init; }
+    public int AlarmCount { get; init; }
     public List<string> AvailableTabs { get; init; } = new();
     public List<DeviceTreeNodeDto> Children { get; init; } = new();
 }

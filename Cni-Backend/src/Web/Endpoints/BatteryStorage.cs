@@ -1,4 +1,5 @@
 using Backend.Application.BatteryStorage.Queries.GetBessCurves;
+using Backend.Application.BatteryStorage.Queries.GetBessDeviceTree;
 using Backend.Application.BatteryStorage.Queries.GetBessFaultFlags;
 using Backend.Application.BatteryStorage.Queries.GetBessFaults;
 using Backend.Application.BatteryStorage.Queries.GetBessHealth;
@@ -23,6 +24,7 @@ public class BatteryStorage : EndpointGroupBase
             .WithTags("BatteryStorage")
             .RequireAuthorization();
 
+        group.MapGet("/DeviceTree", GetDeviceTree);
         group.MapGet("/Units", GetUnits);
         group.MapGet("/Units/{unitId}", GetUnitDetail);
         group.MapGet("/Units/{unitId}/Hierarchy", GetHierarchy);
@@ -126,6 +128,13 @@ public class BatteryStorage : EndpointGroupBase
         ISender sender, Guid unitId)
     {
         var result = await sender.Send(new GetDeviceTreeQuery { DeviceId = unitId });
+        return TypedResults.Ok(result);
+    }
+
+    public static async Task<Ok<BessDeviceTreeResponseDto>> GetDeviceTree(
+        ISender sender)
+    {
+        var result = await sender.Send(new GetBessDeviceTreeQuery());
         return TypedResults.Ok(result);
     }
 }
