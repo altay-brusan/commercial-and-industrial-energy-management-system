@@ -37,12 +37,12 @@ spec:
         DOCKER_REGISTRY = 'REDACTED_HOST:30500'
         DOCKER_IMAGE_NAME = 'cni-frontend'
         GIT_COMMIT_SHORT = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-        ENV_NAME = "${env.BRANCH_NAME == 'stg' ? 'stg' : 'dev'}"
+        ENV_NAME = "${env.BRANCH_NAME == 'main' ? 'prod' : (env.BRANCH_NAME == 'stg' ? 'stg' : 'dev')}"
         K8S_NAMESPACE = "cni-${ENV_NAME}"
         BUILD_TAG = "${ENV_NAME}-${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
         IMAGE_LATEST = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${ENV_NAME}-latest"
-        DEPLOY_URL = "${ENV_NAME == 'stg' ? 'cni-app-stg.oklidis.com.tr' : 'cni-app-dev.oklidis.com.tr'}"
-        API_URL = "${ENV_NAME == 'stg' ? 'https://cni-api-stg.oklidis.com.tr/api' : 'https://cni-api-dev.oklidis.com.tr/api'}"
+        DEPLOY_URL = "${ENV_NAME == 'prod' ? 'cni.n2nenergy.com' : (ENV_NAME == 'stg' ? 'cni-app-stg.n2nenergy.com' : 'cni-app-dev.n2nenergy.com')}"
+        API_URL = "${ENV_NAME == 'dev' ? 'https://cni-api-dev.oklidis.com.tr/api' : 'https://cni-api-stg.oklidis.com.tr/api'}"
     }
 
     stages {
@@ -76,7 +76,7 @@ spec:
                                     -Dsonar.sources=. \
                                     -Dsonar.host.url=http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
                                     -Dsonar.token=\${SONAR_TOKEN} \
-                                    -Dsonar.branch.name=${ENV_NAME} \
+                                    -Dsonar.branch.name=${env.BRANCH_NAME} \
                                     -Dsonar.exclusions=node_modules/**,.next/**,public/**
                             """
                         }
