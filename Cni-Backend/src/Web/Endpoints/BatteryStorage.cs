@@ -5,7 +5,6 @@ using Backend.Application.BatteryStorage.Queries.GetBessFaults;
 using Backend.Application.BatteryStorage.Queries.GetBessHealth;
 using Backend.Application.BatteryStorage.Queries.GetBessHierarchy;
 using Backend.Application.BatteryStorage.Queries.GetBessHierarchyLevel;
-using Backend.Application.BatteryStorage.Queries.GetBessSchema;
 using Backend.Application.BatteryStorage.Queries.GetBessSettings;
 using Backend.Application.BatteryStorage.Queries.GetBessSummary;
 using Backend.Application.BatteryStorage.Queries.GetBessUnitDetail;
@@ -37,7 +36,6 @@ public class BatteryStorage : EndpointGroupBase
         group.MapGet("/Units/{unitId}/FaultFlags", GetFaultFlags);
         group.MapGet("/Units/{unitId}/Notifications", GetNotifications);
         group.MapGet("/Units/{unitId}/Settings", GetSettings);
-        group.MapGet("/Schema", GetSchema);
     }
 
     public static async Task<Ok<BessUnitsResultDto>> GetUnits(
@@ -124,12 +122,6 @@ public class BatteryStorage : EndpointGroupBase
         ISender sender, Guid unitId)
     {
         var result = await sender.Send(new GetBessSettingsQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
-    }
-
-    public static async Task<Ok<SchemaResponseDto>> GetSchema(ISender sender)
-    {
-        var result = await sender.Send(new GetBessSchemaQuery());
         return TypedResults.Ok(result);
     }
 

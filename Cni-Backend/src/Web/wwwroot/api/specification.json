@@ -885,31 +885,6 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Schema": {
-      "get": {
-        "tags": [
-          "BatteryStorage"
-        ],
-        "operationId": "GetApiV1BatteryStorageSchema",
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
     "/api/v1/DeviceData/Ingest": {
       "post": {
         "tags": [
@@ -5482,74 +5457,6 @@
           }
         }
       },
-      "SchemaResponseDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "productTypes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProductTypeSchemaDto"
-            }
-          }
-        }
-      },
-      "ProductTypeSchemaDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "hierarchy": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "supportedTabs": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "summarySections": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "healthSections": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "faultSources": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "curveCharts": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "features": {
-            "type": "object",
-            "additionalProperties": {}
-          },
-          "connectedDevices": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        }
-      },
       "IngestResultDto": {
         "type": "object",
         "additionalProperties": false,
@@ -7570,6 +7477,74 @@
           "status": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "SchemaResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "productTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductTypeSchemaDto"
+            }
+          }
+        }
+      },
+      "ProductTypeSchemaDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "hierarchy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportedTabs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "summarySections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "healthSections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "faultSources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "curveCharts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "features": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "connectedDevices": {
+            "type": "object",
+            "additionalProperties": {}
           }
         }
       },
