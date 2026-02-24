@@ -5,7 +5,7 @@ using Backend.Application.BatteryStorage.Queries.GetBessFaults;
 using Backend.Application.BatteryStorage.Queries.GetBessHealth;
 using Backend.Application.BatteryStorage.Queries.GetBessSettings;
 using Backend.Application.BatteryStorage.Queries.GetBessSummary;
-using Backend.Application.BatteryStorage.Queries.GetBessUnitDetail;
+using Backend.Application.BatteryStorage.Queries.GetBessUnitHeader;
 using Backend.Application.BatteryStorage.Queries.GetBessUnits;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Devices.Queries.GetDeviceTree;
@@ -24,7 +24,7 @@ public class BatteryStorage : EndpointGroupBase
 
         group.MapGet("/DeviceTree", GetDeviceTree);
         group.MapGet("/Units", GetUnits);
-        group.MapGet("/Units/{unitId}", GetUnitDetail);
+        group.MapGet("/Units/Header/{unitId}", GetUnitHeader);
         group.MapGet("/Units/{unitId}/Tree", GetTree);
         group.MapGet("/Units/{unitId}/Summary", GetSummary);
         group.MapGet("/Units/{unitId}/Health", GetHealth);
@@ -41,10 +41,10 @@ public class BatteryStorage : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<BessUnitDetailDto>> GetUnitDetail(
+    public static async Task<Ok<BessUnitHeaderDto>> GetUnitHeader(
         ISender sender, Guid unitId)
     {
-        var result = await sender.Send(new GetBessUnitDetailQuery { UnitId = unitId });
+        var result = await sender.Send(new GetBessUnitHeaderQuery { UnitId = unitId });
         return TypedResults.Ok(result);
     }
 

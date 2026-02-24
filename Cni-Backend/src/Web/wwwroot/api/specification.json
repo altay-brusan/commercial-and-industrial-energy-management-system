@@ -441,12 +441,12 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Units/{unitId}": {
+    "/api/v1/BatteryStorage/Units/Header/{unitId}": {
       "get": {
         "tags": [
           "BatteryStorage"
         ],
-        "operationId": "GetApiV1BatteryStorageUnits2",
+        "operationId": "GetApiV1BatteryStorageUnitsHeader",
         "parameters": [
           {
             "name": "unitId",
@@ -465,7 +465,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BessUnitDetailDto"
+                  "$ref": "#/components/schemas/BessUnitHeaderDto"
                 }
               }
             }
@@ -4658,7 +4658,7 @@
           }
         }
       },
-      "BessUnitDetailDto": {
+      "BessUnitHeaderDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {

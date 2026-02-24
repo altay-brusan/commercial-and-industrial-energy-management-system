@@ -5,25 +5,25 @@ using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
 using Backend.Domain.Constants;
 
-namespace Backend.Application.BatteryStorage.Queries.GetBessUnitDetail;
+namespace Backend.Application.BatteryStorage.Queries.GetBessUnitHeader;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.BessView)]
-public record GetBessUnitDetailQuery : IRequest<BessUnitDetailDto>
+public record GetBessUnitHeaderQuery : IRequest<BessUnitHeaderDto>
 {
     public Guid UnitId { get; init; }
 }
 
-public class GetBessUnitDetailQueryHandler : IRequestHandler<GetBessUnitDetailQuery, BessUnitDetailDto>
+public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQuery, BessUnitHeaderDto>
 {
     private readonly IApplicationDbContext _context;
 
-    public GetBessUnitDetailQueryHandler(IApplicationDbContext context)
+    public GetBessUnitHeaderQueryHandler(IApplicationDbContext context)
     {
         _context = context;
     }
 
-    public async Task<BessUnitDetailDto> Handle(GetBessUnitDetailQuery request, CancellationToken cancellationToken)
+    public async Task<BessUnitHeaderDto> Handle(GetBessUnitHeaderQuery request, CancellationToken cancellationToken)
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
@@ -36,7 +36,7 @@ public class GetBessUnitDetailQueryHandler : IRequestHandler<GetBessUnitDetailQu
 
         var tabs = GetAvailableTabs(device.SpecificationTemplate?.SpecificationsTemplate);
 
-        return new BessUnitDetailDto
+        return new BessUnitHeaderDto
         {
             Id = device.Id,
             Name = device.Name,

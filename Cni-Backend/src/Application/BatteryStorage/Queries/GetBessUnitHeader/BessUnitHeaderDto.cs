@@ -1,8 +1,8 @@
 using Backend.Application.Common.Models.Monitoring;
 
-namespace Backend.Application.BatteryStorage.Queries.GetBessUnitDetail;
+namespace Backend.Application.BatteryStorage.Queries.GetBessUnitHeader;
 
-public record BessUnitDetailDto
+public record BessUnitHeaderDto
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
