@@ -10,27 +10,11 @@ public class DeviceAlarmConfiguration : IEntityTypeConfiguration<DeviceAlarm>
     {
         builder.ToTable("DeviceAlarms");
 
-        builder.Property(da => da.Code)
-            .HasMaxLength(50)
-            .IsRequired();
+        builder.Property(da => da.IsRead)
+            .HasDefaultValue(false);
 
-        builder.Property(da => da.Name)
-            .HasMaxLength(200)
-            .IsRequired();
-
-        builder.Property(da => da.Severity)
-            .HasMaxLength(20)
-            .IsRequired();
-
-        builder.Property(da => da.Category)
-            .HasMaxLength(50)
-            .IsRequired();
-
-        builder.Property(da => da.Source)
-            .HasMaxLength(500);
-
-        builder.Property(da => da.FaultKey)
-            .HasMaxLength(200);
+        builder.Property(da => da.IsProcessed)
+            .HasDefaultValue(false);
 
         builder.Property(da => da.Details)
             .HasColumnType("jsonb");
@@ -41,11 +25,20 @@ public class DeviceAlarmConfiguration : IEntityTypeConfiguration<DeviceAlarm>
             .HasForeignKey(da => da.DeviceId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Relationship to AlarmType catalog (required — every alarm is typed)
+        builder.HasOne(da => da.AlarmType)
+            .WithMany()
+            .HasForeignKey(da => da.DeviceAlarmTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Index for active alarm queries per device
         builder.HasIndex(da => new { da.DeviceId, da.IsActive });
 
         // Index for paginated fault history by device
         builder.HasIndex(da => new { da.DeviceId, da.OccurredAt })
             .IsDescending(false, true);
+
+        // Index for dedup during alarm processing (one active alarm per type per device)
+        builder.HasIndex(da => new { da.DeviceId, da.DeviceAlarmTypeId, da.IsActive });
     }
 }

@@ -38,12 +38,13 @@ public class GetBessFaultsQueryHandler : IRequestHandler<GetBessFaultsQuery, Fau
             .ToListAsync(cancellationToken);
 
         var query = _context.DeviceAlarms
+            .Include(a => a.AlarmType)
             .Where(a => rtuDeviceIds.Contains(a.DeviceId));
 
         if (!string.IsNullOrWhiteSpace(request.Severity))
         {
             var sev = request.Severity.ToLowerInvariant();
-            query = query.Where(a => a.Severity.ToLower() == sev);
+            query = query.Where(a => a.AlarmType!.Severity.ToLower() == sev);
         }
 
         if (request.IsActive.HasValue)
@@ -60,11 +61,11 @@ public class GetBessFaultsQueryHandler : IRequestHandler<GetBessFaultsQuery, Fau
             .Select(a => new FaultRecordDto
             {
                 Id = a.Id,
-                Code = a.Code,
-                Name = a.Name,
-                Severity = FaultRecordDto.SeverityBadge(a.Severity),
+                Code = a.AlarmType!.Code,
+                Name = a.AlarmType.Name,
+                Severity = FaultRecordDto.SeverityBadge(a.AlarmType.Severity),
                 Status = FaultRecordDto.FaultStatusBadge(a.IsActive),
-                Source = a.Source,
+                Source = a.AlarmType.Source,
                 OccurredAt = a.OccurredAt,
                 RecoveredAt = a.RecoveredAt,
                 RelatedAlarmId = a.Id

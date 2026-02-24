@@ -65,6 +65,11 @@ public class Device : BaseAuditableEntity
     public string? Specifications { get; set; }
 
     /// <summary>
+    /// 0-based position within parent's children. Maps to edge addressing (e.g., bmuLoc for racks).
+    /// </summary>
+    public int? HierarchyIndex { get; set; }
+
+    /// <summary>
     /// Current device status: online/offline/standby/fault/maintenance
     /// </summary>
     public string? Status { get; set; }

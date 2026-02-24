@@ -167,6 +167,9 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<Guid>("DeviceTypeId")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("HierarchyIndex")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
 
@@ -222,7 +225,7 @@ namespace Backend.Infrastructure.Migrations
 
                     b.HasIndex("DeviceTypeId");
 
-                    b.HasIndex("ParentDeviceId");
+                    b.HasIndex("ParentDeviceId", "HierarchyIndex");
 
                     b.HasIndex("RtuId", "Status");
 
@@ -235,16 +238,6 @@ namespace Backend.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -254,15 +247,24 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("Details")
                         .HasColumnType("jsonb");
 
+                    b.Property<Guid>("DeviceAlarmTypeId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("DeviceId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("FaultKey")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsProcessed")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -270,16 +272,97 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("RecoveredAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceAlarmTypeId");
+
+                    b.HasIndex("DeviceId", "IsActive");
+
+                    b.HasIndex("DeviceId", "OccurredAt")
+                        .IsDescending(false, true);
+
+                    b.HasIndex("DeviceId", "DeviceAlarmTypeId", "IsActive");
+
+                    b.ToTable("DeviceAlarms", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarmType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DetectionStrategy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("BooleanFlag");
+
+                    b.Property<Guid>("DeviceTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FaultKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Manufacturer")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("MatchPattern")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Severity")
                         .IsRequired()
@@ -287,17 +370,19 @@ namespace Backend.Infrastructure.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.Property<string>("Source")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DeviceId", "IsActive");
+                    b.HasIndex("Kind");
 
-                    b.HasIndex("DeviceId", "OccurredAt")
-                        .IsDescending(false, true);
+                    b.HasIndex("DeviceTypeId", "Model", "Manufacturer");
 
-                    b.ToTable("DeviceAlarms", (string)null);
+                    b.HasIndex("DeviceTypeId", "Model", "Manufacturer", "FaultKey")
+                        .IsUnique();
+
+                    b.ToTable("DeviceAlarmTypes", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceData.DeviceBatteryData", b =>
@@ -1652,13 +1737,32 @@ namespace Backend.Infrastructure.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarm", b =>
                 {
+                    b.HasOne("Backend.Domain.Entities.DeviceAlarmType", "AlarmType")
+                        .WithMany()
+                        .HasForeignKey("DeviceAlarmTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Backend.Domain.Entities.Device", "Device")
                         .WithMany("Alarms")
                         .HasForeignKey("DeviceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("AlarmType");
+
                     b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarmType", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.DeviceType", "DeviceType")
+                        .WithMany()
+                        .HasForeignKey("DeviceTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DeviceType");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceData.DeviceBatteryData", b =>

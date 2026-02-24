@@ -32,6 +32,7 @@ public interface IApplicationDbContext
 
     // Device alarms, connectivity
     DbSet<DeviceAlarm> DeviceAlarms { get; }
+    DbSet<DeviceAlarmType> DeviceAlarmTypes { get; }
     DbSet<Rtu> Rtus { get; }
 
     // Device specification templates

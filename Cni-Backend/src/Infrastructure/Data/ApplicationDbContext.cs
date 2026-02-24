@@ -33,6 +33,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<DeviceLink> DeviceLinks => Set<DeviceLink>();
     public DbSet<Rtu> Rtus => Set<Rtu>();
     public DbSet<DeviceAlarm> DeviceAlarms => Set<DeviceAlarm>();
+    public DbSet<DeviceAlarmType> DeviceAlarmTypes => Set<DeviceAlarmType>();
     public DbSet<DeviceSpecificationTemplate> DeviceSpecificationTemplates => Set<DeviceSpecificationTemplate>();
 
     // Device telemetry data (time-series with JSON payload)
@@ -85,7 +86,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<TenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
         builder.Entity<TenantRolePermission>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
         builder.Entity<UserTenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
-        // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories are global - no tenant query filter
+        // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories, DeviceAlarmTypes are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 

@@ -118,7 +118,8 @@ public class RegisterDeviceCompositeCommandHandler : IRequestHandler<RegisterDev
                 Name = childName,
                 Model = deviceTypeName,
                 SerialNumber = $"{parent.SerialNumber}-{childName.Replace(" ", "-")}",
-                Manufacturer = parent.Manufacturer
+                Manufacturer = parent.Manufacturer,
+                HierarchyIndex = i - 1 // 0-based to match edge addressing (e.g., bmuLoc)
             };
 
             child.AddDomainEvent(new DeviceCreatedEvent(child));

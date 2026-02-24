@@ -66,5 +66,8 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
 
         // Index for unit listing with status filters
         builder.HasIndex(d => new { d.RtuId, d.Status });
+
+        // Index for address resolution (bmuLoc → child device)
+        builder.HasIndex(d => new { d.ParentDeviceId, d.HierarchyIndex });
     }
 }
