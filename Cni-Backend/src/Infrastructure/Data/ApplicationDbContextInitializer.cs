@@ -613,7 +613,127 @@ public class ApplicationDbContextInitializer
                             { "key": "soc", "label": "SOC", "sourcePath": "stateOfCharge", "unit": "%", "color": "#2196F3" }
                           ]
                         }
-                      ]
+                      ],
+                      "parameterMap": {
+                        "version": 1,
+                        "parameters": {
+                          "soc": {
+                            "type": "number", "unit": "%",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["socPercent", "stateOfCharge", "soc"] }
+                          },
+                          "soh": {
+                            "type": "number", "unit": "%",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["sohPercent", "stateOfHealth"] }
+                          },
+                          "voltage": {
+                            "type": "number", "unit": "V",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["totalVoltageV"] }
+                          },
+                          "current": {
+                            "type": "number", "unit": "A",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["instantCurrentA"] }
+                          },
+                          "power": {
+                            "type": "number", "unit": "kW",
+                            "formula": {
+                              "expression": "round(multiply(voltage, current, 0.001), 1)",
+                              "inputs": { "voltage": {"$ref":"voltage"}, "current": {"$ref":"current"} }
+                            },
+                            "fallback": { "kind": "ContainerBatteryState", "paths": ["dcPower.power", "power"] }
+                          },
+                          "powerDirection": {
+                            "type": "string",
+                            "formula": {
+                              "expression": "cond(lt(current, 0), 'discharging', cond(gt(current, 0), 'charging', 'idle'))",
+                              "inputs": { "current": {"$ref":"current"} }
+                            }
+                          },
+                          "tempMin": {
+                            "type": "number", "unit": "C",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["minCellTempC"] }
+                          },
+                          "tempMax": {
+                            "type": "number", "unit": "C",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["maxCellTempC"] }
+                          },
+                          "tempAvg": {
+                            "type": "number", "unit": "C",
+                            "formula": {
+                              "expression": "round(avg(tempMin, tempMax), 1)",
+                              "inputs": { "tempMin": {"$ref":"tempMin"}, "tempMax": {"$ref":"tempMax"} }
+                            }
+                          },
+                          "cellVoltageMax": {
+                            "type": "number", "unit": "mV",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["maxCellVoltageMv"] }
+                          },
+                          "cellVoltageMin": {
+                            "type": "number", "unit": "mV",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["minCellVoltageMv"] }
+                          },
+                          "voltageSpread": {
+                            "type": "number", "unit": "mV",
+                            "formula": {
+                              "expression": "subtract(cellVoltageMax, cellVoltageMin)",
+                              "inputs": { "cellVoltageMax": {"$ref":"cellVoltageMax"}, "cellVoltageMin": {"$ref":"cellVoltageMin"} }
+                            }
+                          },
+                          "pcsActivePower": {
+                            "type": "number", "unit": "kW",
+                            "source": { "kind": "PcsPowerState", "paths": ["pcs_outActPwrKw"] }
+                          },
+                          "pcsDcPower": {
+                            "type": "number", "unit": "kW",
+                            "source": { "kind": "PcsDcMeasState", "paths": ["pcs_dcPwrKw"] }
+                          },
+                          "pcsGridFreq": {
+                            "type": "number", "unit": "Hz",
+                            "source": { "kind": "PcsStatusState", "paths": ["pcs_gridFreqHz"] }
+                          },
+                          "cycleCount": {
+                            "type": "number",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["cycleCount"] }
+                          },
+                          "cycleLifePct": {
+                            "type": "number", "unit": "%",
+                            "formula": {
+                              "expression": "round(multiply(divide(cycles, designed), 100), 1)",
+                              "inputs": {
+                                "cycles": {"$ref":"cycleCount"},
+                                "designed": {"source": {"origin":"metadata", "paths":["designedCycleLife"], "default":6000}}
+                              }
+                            }
+                          },
+                          "operatingMode": {
+                            "type": "string",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["state"] }
+                          },
+                          "remainingEnergy": {
+                            "type": "number", "unit": "kWh",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["remainingEnergyKwh"] }
+                          },
+                          "availableEnergy": {
+                            "type": "number", "unit": "kWh",
+                            "source": { "kind": "ContainerBatteryState", "paths": ["availableEnergyKwh"] }
+                          },
+                          "chillerCoolantOut": {
+                            "type": "number", "unit": "C",
+                            "source": { "kind": "ChillerState", "paths": ["outletCoolantTempC"] }
+                          },
+                          "chillerCoolantIn": {
+                            "type": "number", "unit": "C",
+                            "source": { "kind": "ChillerState", "paths": ["inletCoolantTempC"] }
+                          },
+                          "compressorRunning": {
+                            "type": "boolean",
+                            "source": { "kind": "ChillerState", "paths": ["compressorStatus"] }
+                          },
+                          "ambientTemp": {
+                            "type": "number", "unit": "C",
+                            "source": { "kind": "ChillerState", "paths": ["ambientTempC"] }
+                          }
+                        }
+                      }
                     }
                     """,
                     MetadataTemplate = """

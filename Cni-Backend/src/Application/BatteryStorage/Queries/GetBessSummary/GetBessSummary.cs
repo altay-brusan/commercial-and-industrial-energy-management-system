@@ -3,7 +3,9 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Application.Common.Services.ParameterMapper;
 using Backend.Domain.Constants;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessSummary;
 
@@ -18,11 +20,13 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 {
     private readonly IApplicationDbContext _context;
     private readonly ContainerTelemetryLoader _telemetryLoader;
+    private readonly IMemoryCache _cache;
 
-    public GetBessSummaryQueryHandler(IApplicationDbContext context)
+    public GetBessSummaryQueryHandler(IApplicationDbContext context, IMemoryCache cache)
     {
         _context = context;
         _telemetryLoader = new ContainerTelemetryLoader(context);
+        _cache = cache;
     }
 
     public async Task<SummaryResponseDto> Handle(GetBessSummaryQuery request, CancellationToken cancellationToken)
@@ -77,12 +81,18 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         var hvcu = payloads.GetValueOrDefault("HVCUControlState");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
+        // Build parameter resolver from Specifications parameterMap (if present)
+        var parameterMap = ParameterMapParser.ParseCached(device.Specifications, _cache);
+        var resolver = parameterMap.Count > 0
+            ? new ParameterResolver(parameterMap, payloads, metadata)
+            : null;
+
         var sections = new List<DynamicSectionDto>();
 
         sections.Add(BuildNameplateSection(device, metadata));
-        sections.Add(BuildLiveStatusSection(batt));
-        sections.Add(BuildEnergyLimitsSection(batt));
-        sections.Add(BuildCellExtremesSection(batt));
+        sections.Add(BuildLiveStatusSection(batt, resolver));
+        sections.Add(BuildEnergyLimitsSection(batt, resolver));
+        sections.Add(BuildCellExtremesSection(batt, resolver));
         sections.Add(BuildContactorsSafetySection(batt));
 
         if (chiller.HasValue)
@@ -145,22 +155,26 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         };
     }
 
-    private static DynamicSectionDto BuildLiveStatusSection(JsonElement? batt)
+    private static DynamicSectionDto BuildLiveStatusSection(JsonElement? batt, ParameterResolver? resolver = null)
     {
-        var soc = ExtractNum(batt, "socPercent");
-        var soh = ExtractNum(batt, "sohPercent");
-        var voltage = ExtractNum(batt, "totalVoltageV");
-        var current = ExtractNum(batt, "instantCurrentA");
-        var power = (voltage.HasValue && current.HasValue)
-            ? Math.Round(voltage.Value * current.Value / 1000.0, 1)
-            : (double?)null;
-        var state = batt.HasValue ? PayloadDeserializer.ExtractValue(batt.Value, "state") as string : null;
-        var minTemp = ExtractNum(batt, "minCellTempC");
-        var maxTemp = ExtractNum(batt, "maxCellTempC");
-        var avgTemp = (minTemp.HasValue && maxTemp.HasValue) ? Math.Round((minTemp.Value + maxTemp.Value) / 2.0, 1) : (double?)null;
+        var soc = resolver?.ResolveNumber(ParameterKeys.Soc) ?? ExtractNum(batt, "socPercent");
+        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "sohPercent");
+        var voltage = resolver?.ResolveNumber(ParameterKeys.Voltage) ?? ExtractNum(batt, "totalVoltageV");
+        var current = resolver?.ResolveNumber(ParameterKeys.Current) ?? ExtractNum(batt, "instantCurrentA");
+        var power = resolver?.ResolveNumber(ParameterKeys.Power)
+            ?? ((voltage.HasValue && current.HasValue)
+                ? Math.Round(voltage.Value * current.Value / 1000.0, 1)
+                : (double?)null);
+        var state = resolver?.ResolveString(ParameterKeys.OperatingMode)
+            ?? (batt.HasValue ? PayloadDeserializer.ExtractValue(batt.Value, "state") as string : null);
+        var minTemp = resolver?.ResolveNumber(ParameterKeys.TempMin) ?? ExtractNum(batt, "minCellTempC");
+        var maxTemp = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "maxCellTempC");
+        var avgTemp = resolver?.ResolveNumber(ParameterKeys.TempAvg)
+            ?? ((minTemp.HasValue && maxTemp.HasValue) ? Math.Round((minTemp.Value + maxTemp.Value) / 2.0, 1) : (double?)null);
         var freq = ExtractNum(batt, "frequency");
 
-        var powerDirection = (current.HasValue && current.Value < 0) ? "discharging" : (current.HasValue && current.Value > 0) ? "charging" : "idle";
+        var powerDirection = resolver?.ResolveString(ParameterKeys.PowerDirection)
+            ?? ((current.HasValue && current.Value < 0) ? "discharging" : (current.HasValue && current.Value > 0) ? "charging" : "idle");
 
         return new DynamicSectionDto
         {
@@ -196,7 +210,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         };
     }
 
-    private static DynamicSectionDto BuildEnergyLimitsSection(JsonElement? batt)
+    private static DynamicSectionDto BuildEnergyLimitsSection(JsonElement? batt, ParameterResolver? resolver = null)
     {
         return new DynamicSectionDto
         {
@@ -207,14 +221,16 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
             Columns = 3,
             Fields = new List<SectionFieldDto>
             {
-                new() { Key = "remainingEnergy", Label = "Remaining Energy", Value = ExtractNum(batt, "remainingEnergyKwh"),
+                new() { Key = "remainingEnergy", Label = "Remaining Energy",
+                    Value = resolver?.ResolveNumber(ParameterKeys.RemainingEnergy) ?? ExtractNum(batt, "remainingEnergyKwh"),
                     Type = "number", Unit = "kWh", Format = "progress",
                     Meta = new Dictionary<string, object?> { ["thresholds"] = new[] {
                         new Dictionary<string, object?> { ["min"] = 60, ["color"] = "green" },
                         new Dictionary<string, object?> { ["min"] = 30, ["color"] = "orange" },
                         new Dictionary<string, object?> { ["min"] = 0, ["color"] = "red" }
                     }}},
-                NumField("availableEnergy", "Available Energy", ExtractNum(batt, "availableEnergyKwh"), "kWh"),
+                NumField("availableEnergy", "Available Energy",
+                    resolver?.ResolveNumber(ParameterKeys.AvailableEnergy) ?? ExtractNum(batt, "availableEnergyKwh"), "kWh"),
                 NumField("dmccA", "DMCC", ExtractNum(batt, "dmccA"), "A"),
                 NumField("dmdcA", "DMDC", ExtractNum(batt, "dmdcA"), "A"),
                 NumField("outVoltPosV", "Output V (+)", ExtractNum(batt, "outVoltPosV"), "V"),
@@ -224,14 +240,15 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         };
     }
 
-    private static DynamicSectionDto BuildCellExtremesSection(JsonElement? batt)
+    private static DynamicSectionDto BuildCellExtremesSection(JsonElement? batt, ParameterResolver? resolver = null)
     {
-        var maxV = ExtractNum(batt, "maxCellVoltageMv");
-        var minV = ExtractNum(batt, "minCellVoltageMv");
-        var avgV = ExtractNum(batt, "avgCellVoltageMv");
+        var maxV = resolver?.ResolveNumber(ParameterKeys.CellVoltageMax) ?? ExtractNum(batt, "maxCellVoltageMv");
+        var minV = resolver?.ResolveNumber(ParameterKeys.CellVoltageMin) ?? ExtractNum(batt, "minCellVoltageMv");
+        var avgV = resolver?.ResolveNumber(ParameterKeys.CellVoltageAvg) ?? ExtractNum(batt, "avgCellVoltageMv");
         var maxT = ExtractNum(batt, "maxCellTempC");
         var minT = ExtractNum(batt, "minCellTempC");
-        var spread = (maxV.HasValue && minV.HasValue) ? maxV.Value - minV.Value : (double?)null;
+        var spread = resolver?.ResolveNumber(ParameterKeys.VoltageSpread)
+            ?? ((maxV.HasValue && minV.HasValue) ? maxV.Value - minV.Value : (double?)null);
 
         return new DynamicSectionDto
         {

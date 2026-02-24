@@ -1,8 +1,11 @@
+using System.Text.Json;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Application.Common.Services.ParameterMapper;
 using Backend.Domain.Constants;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessUnits;
 
@@ -19,10 +22,12 @@ public record GetBessUnitsQuery : IRequest<BessUnitsResultDto>
 public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessUnitsResultDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IMemoryCache _cache;
 
-    public GetBessUnitsQueryHandler(IApplicationDbContext context)
+    public GetBessUnitsQueryHandler(IApplicationDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<BessUnitsResultDto> Handle(GetBessUnitsQuery request, CancellationToken cancellationToken)
@@ -86,9 +91,20 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
                 ? PayloadDeserializer.GetElement(data.Payload)
                 : null;
 
-            var stateStr = payload.HasValue
-                ? PayloadDeserializer.ExtractValue(payload.Value, "state") as string
-                : null;
+            // Build resolver from device Specifications parameterMap (if present)
+            var parameterMap = ParameterMapParser.ParseCached(device.Specifications, _cache);
+            ParameterResolver? resolver = null;
+            if (parameterMap.Count > 0 && payload.HasValue)
+            {
+                var payloadsByKind = new Dictionary<string, JsonElement?>();
+                if (data?.Kind != null)
+                    payloadsByKind[data.Kind] = payload;
+                var metadata = PayloadDeserializer.GetElement(device.Metadata);
+                resolver = new ParameterResolver(parameterMap, payloadsByKind, metadata);
+            }
+
+            var stateStr = resolver?.ResolveString(ParameterKeys.OperatingMode)
+                ?? (payload.HasValue ? PayloadDeserializer.ExtractValue(payload.Value, "state") as string : null);
 
             return new BessUnitListItemDto
             {
@@ -96,20 +112,25 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
                 Name = device.Name,
                 Status = StatusBadgeDto.FromStatus(device.Status),
                 OperatingMode = StatusBadgeDto.FromOperatingMode(stateStr),
-                Soc = ExtractDouble(payload, "socPercent", "stateOfCharge", "soc"),
-                Soh = ExtractDouble(payload, "sohPercent", "stateOfHealth", "soh"),
-                Power = ExtractDouble(payload, "instantCurrentA") is double current
-                        && ExtractDouble(payload, "totalVoltageV") is double voltage
-                    ? Math.Round(voltage * current / 1000.0, 1)
-                    : ExtractDouble(payload, "dcPower.power", "power"),
-                CapacityKwh = ExtractDouble(payload, "availableEnergyKwh", "capacityKwh", "ratedEnergyKwh"),
+                Soc = resolver?.ResolveNumber(ParameterKeys.Soc)
+                    ?? ExtractDouble(payload, "socPercent", "stateOfCharge", "soc"),
+                Soh = resolver?.ResolveNumber(ParameterKeys.Soh)
+                    ?? ExtractDouble(payload, "sohPercent", "stateOfHealth", "soh"),
+                Power = resolver?.ResolveNumber(ParameterKeys.Power)
+                    ?? (ExtractDouble(payload, "instantCurrentA") is double current
+                            && ExtractDouble(payload, "totalVoltageV") is double voltage
+                        ? Math.Round(voltage * current / 1000.0, 1)
+                        : ExtractDouble(payload, "dcPower.power", "power")),
+                CapacityKwh = resolver?.ResolveNumber(ParameterKeys.AvailableEnergy)
+                    ?? ExtractDouble(payload, "availableEnergyKwh", "capacityKwh", "ratedEnergyKwh"),
                 ActiveAlarmCount = rootAlarmCounts.GetValueOrDefault(device.Id, 0),
                 Brand = device.Manufacturer,
                 Model = device.Model,
                 SerialNumber = device.SerialNumber,
                 FacilityName = device.Rtu?.Facility?.Name,
                 FacilityId = device.Rtu!.FacilityId,
-                TemperatureC = ExtractDouble(payload, "ambientTempC", "batteryTemperature"),
+                TemperatureC = resolver?.ResolveNumber(ParameterKeys.AmbientTemp)
+                    ?? ExtractDouble(payload, "ambientTempC", "batteryTemperature"),
                 LastSeenUtc = device.LastSeenUtc
             };
         }).ToList();
