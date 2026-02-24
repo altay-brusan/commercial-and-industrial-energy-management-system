@@ -423,6 +423,7 @@ public class ApplicationDbContextInitializer
             new DeviceType { Name = "EV Charger", Created = DateTime.UtcNow },
             new DeviceType { Name = "Heat Pump", Created = DateTime.UtcNow },
             // EnergyStorage hierarchy sub-types
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageBattery, Created = DateTime.UtcNow },
             new DeviceType { Name = DeviceTypeNames.EnergyStorageRack, Created = DateTime.UtcNow },
             new DeviceType { Name = DeviceTypeNames.EnergyStoragePack, Created = DateTime.UtcNow },
             new DeviceType { Name = DeviceTypeNames.EnergyStorageModule, Created = DateTime.UtcNow },
@@ -750,22 +751,30 @@ public class ApplicationDbContextInitializer
                     {
                       "children": [
                         {
-                          "key": "rack",
-                          "deviceTypeName": "EnergyStorage.Rack",
-                          "count": 4,
-                          "namePattern": "Rack {index}",
+                          "key": "battery",
+                          "deviceTypeName": "EnergyStorage.Battery",
+                          "count": 1,
+                          "namePattern": "Battery",
                           "children": [
                             {
-                              "key": "pack",
-                              "deviceTypeName": "EnergyStorage.Pack",
+                              "key": "rack",
+                              "deviceTypeName": "EnergyStorage.Rack",
                               "count": 4,
-                              "namePattern": "Pack {index}",
+                              "namePattern": "Rack {index}",
                               "children": [
                                 {
-                                  "key": "module",
-                                  "deviceTypeName": "EnergyStorage.Module",
-                                  "count": 8,
-                                  "namePattern": "Module {index}"
+                                  "key": "pack",
+                                  "deviceTypeName": "EnergyStorage.Pack",
+                                  "count": 4,
+                                  "namePattern": "Pack {index}",
+                                  "children": [
+                                    {
+                                      "key": "module",
+                                      "deviceTypeName": "EnergyStorage.Module",
+                                      "count": 8,
+                                      "namePattern": "Module {index}"
+                                    }
+                                  ]
                                 }
                               ]
                             }

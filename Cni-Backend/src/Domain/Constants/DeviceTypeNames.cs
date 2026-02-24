@@ -8,6 +8,7 @@ public abstract class DeviceTypeNames
     public const string EnergyStorageModule = "EnergyStorage.Module";
     public const string EnergyStorageController = "EnergyStorage.Controller";
     public const string EnergyStorageTMS = "EnergyStorage.TMS";
+    public const string EnergyStorageBattery = "EnergyStorage.Battery";
     public const string EnergyStoragePrefix = "EnergyStorage.";
 
     public const string Pcs = "PCS";

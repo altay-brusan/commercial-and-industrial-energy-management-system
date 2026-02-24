@@ -1032,6 +1032,43 @@
         ]
       }
     },
+    "/api/Devices/{id}/Status": {
+      "get": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "GetDeviceStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/Devices/RegisterComposite": {
       "post": {
         "tags": [
@@ -4471,12 +4508,12 @@
           "tree": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DeviceTreeNodeDto"
+              "$ref": "#/components/schemas/BessTreeNodeDto"
             }
           }
         }
       },
-      "DeviceTreeNodeDto": {
+      "BessTreeNodeDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -4490,27 +4527,22 @@
           "type": {
             "type": "string"
           },
-          "deviceTypeName": {
+          "status": {
             "type": "string"
           },
-          "status": {
+          "parentDeviceId": {
             "type": "string",
+            "format": "guid",
             "nullable": true
           },
           "alarmCount": {
             "type": "integer",
             "format": "int32"
           },
-          "availableTabs": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "children": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/DeviceTreeNodeDto"
+              "$ref": "#/components/schemas/BessTreeNodeDto"
             }
           }
         }
@@ -4721,6 +4753,45 @@
           "order": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "DeviceTreeNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "deviceTypeName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "alarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceTreeNodeDto"
+            }
           }
         }
       },
@@ -5363,6 +5434,19 @@
           },
           "hasNextPage": {
             "type": "boolean"
+          }
+        }
+      },
+      "DeviceStatusDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "status": {
+            "type": "string"
           }
         }
       },
@@ -7685,13 +7769,13 @@
             "nullable": true,
             "oneOf": [
               {
-                "$ref": "#/components/schemas/DeviceStatusDto"
+                "$ref": "#/components/schemas/DeviceStatusDto2"
               }
             ]
           }
         }
       },
-      "DeviceStatusDto": {
+      "DeviceStatusDto2": {
         "type": "object",
         "additionalProperties": false,
         "properties": {

@@ -109,6 +109,7 @@ public static class DeviceTreeBuilder
     public static string MapDeviceType(string? deviceTypeName) => deviceTypeName switch
     {
         DeviceTypeNames.EnergyStorage => "unit",
+        DeviceTypeNames.EnergyStorageBattery => "battery",
         DeviceTypeNames.EnergyStorageRack => "rack",
         DeviceTypeNames.EnergyStoragePack => "pack",
         DeviceTypeNames.EnergyStorageModule => "module",
