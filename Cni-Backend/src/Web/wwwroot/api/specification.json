@@ -340,12 +340,12 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/DeviceTree": {
+    "/api/v1/BatteryStorage/Tree": {
       "get": {
         "tags": [
           "BatteryStorage"
         ],
-        "operationId": "GetApiV1BatteryStorageDeviceTree",
+        "operationId": "GetApiV1BatteryStorageTree",
         "parameters": [
           {
             "name": "facilityId",
@@ -466,43 +466,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BessUnitHeaderDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/v1/BatteryStorage/Units/{unitId}/Tree": {
-      "get": {
-        "tags": [
-          "BatteryStorage"
-        ],
-        "operationId": "GetApiV1BatteryStorageUnitsTree",
-        "parameters": [
-          {
-            "name": "unitId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DeviceTreeNodeDto"
                 }
               }
             }
@@ -4756,45 +4719,6 @@
           }
         }
       },
-      "DeviceTreeNodeDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "deviceTypeName": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
-          },
-          "alarmCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "availableTabs": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "children": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DeviceTreeNodeDto"
-            }
-          }
-        }
-      },
       "SummaryResponseDto": {
         "type": "object",
         "additionalProperties": false,
@@ -5434,6 +5358,45 @@
           },
           "hasNextPage": {
             "type": "boolean"
+          }
+        }
+      },
+      "DeviceTreeNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "deviceTypeName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "alarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceTreeNodeDto"
+            }
           }
         }
       },

@@ -8,7 +8,6 @@ using Backend.Application.BatteryStorage.Queries.GetBessSummary;
 using Backend.Application.BatteryStorage.Queries.GetBessUnitHeader;
 using Backend.Application.BatteryStorage.Queries.GetBessUnits;
 using Backend.Application.Common.Models.Monitoring;
-using Backend.Application.Devices.Queries.GetDeviceTree;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Web.Endpoints;
@@ -22,10 +21,9 @@ public class BatteryStorage : EndpointGroupBase
             .WithTags("BatteryStorage")
             .RequireAuthorization();
 
-        group.MapGet("/DeviceTree", GetDeviceTree);
+        group.MapGet("/Tree", GetTree);
         group.MapGet("/Units", GetUnits);
         group.MapGet("/Units/Header/{unitId}", GetUnitHeader);
-        group.MapGet("/Units/{unitId}/Tree", GetTree);
         group.MapGet("/Units/{unitId}/Summary", GetSummary);
         group.MapGet("/Units/{unitId}/Health", GetHealth);
         group.MapGet("/Units/{unitId}/Curves", GetCurves);
@@ -102,14 +100,7 @@ public class BatteryStorage : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<DeviceTreeNodeDto>> GetTree(
-        ISender sender, Guid unitId)
-    {
-        var result = await sender.Send(new GetDeviceTreeQuery { DeviceId = unitId });
-        return TypedResults.Ok(result);
-    }
-
-    public static async Task<Ok<BessDeviceTreeResponseDto>> GetDeviceTree(
+    public static async Task<Ok<BessDeviceTreeResponseDto>> GetTree(
         ISender sender, Guid? facilityId)
     {
         var result = await sender.Send(new GetBessDeviceTreeQuery { FacilityId = facilityId });
