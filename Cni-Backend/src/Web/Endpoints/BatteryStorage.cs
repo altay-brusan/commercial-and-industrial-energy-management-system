@@ -3,8 +3,6 @@ using Backend.Application.BatteryStorage.Queries.GetBessDeviceTree;
 using Backend.Application.BatteryStorage.Queries.GetBessFaultFlags;
 using Backend.Application.BatteryStorage.Queries.GetBessFaults;
 using Backend.Application.BatteryStorage.Queries.GetBessHealth;
-using Backend.Application.BatteryStorage.Queries.GetBessHierarchy;
-using Backend.Application.BatteryStorage.Queries.GetBessHierarchyLevel;
 using Backend.Application.BatteryStorage.Queries.GetBessSettings;
 using Backend.Application.BatteryStorage.Queries.GetBessSummary;
 using Backend.Application.BatteryStorage.Queries.GetBessUnitDetail;
@@ -27,8 +25,6 @@ public class BatteryStorage : EndpointGroupBase
         group.MapGet("/DeviceTree", GetDeviceTree);
         group.MapGet("/Units", GetUnits);
         group.MapGet("/Units/{unitId}", GetUnitDetail);
-        group.MapGet("/Units/{unitId}/Hierarchy", GetHierarchy);
-        group.MapGet("/Units/{unitId}/HierarchyLevel", GetHierarchyLevel);
         group.MapGet("/Units/{unitId}/Tree", GetTree);
         group.MapGet("/Units/{unitId}/Summary", GetSummary);
         group.MapGet("/Units/{unitId}/Health", GetHealth);
@@ -49,25 +45,6 @@ public class BatteryStorage : EndpointGroupBase
         ISender sender, Guid unitId)
     {
         var result = await sender.Send(new GetBessUnitDetailQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
-    }
-
-    public static async Task<Ok<HierarchyResponseDto>> GetHierarchy(
-        ISender sender, Guid unitId)
-    {
-        var result = await sender.Send(new GetBessHierarchyQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
-    }
-
-    public static async Task<Ok<HierarchyLevelResponseDto>> GetHierarchyLevel(
-        ISender sender, Guid unitId, string level, string? parentId)
-    {
-        var result = await sender.Send(new GetBessHierarchyLevelQuery
-        {
-            UnitId = unitId,
-            Level = level,
-            ParentId = parentId
-        });
         return TypedResults.Ok(result);
     }
 
