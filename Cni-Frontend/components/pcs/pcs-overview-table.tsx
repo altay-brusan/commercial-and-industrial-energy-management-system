@@ -16,10 +16,10 @@ type SortDir = "asc" | "desc";
 
 function statusBadge(status: PcsUnit["status"]) {
   const styles: Record<PcsUnit["status"], string> = {
-    online: "bg-sky-500/15 text-sky-600 border-sky-500/30",
+    online: "bg-status-operational/15 text-status-operational border-status-operational/30",
     offline: "bg-muted text-muted-foreground",
-    fault: "bg-energy-grid/15 text-energy-grid border-energy-grid/30",
-    standby: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30",
+    fault: "bg-status-critical/15 text-status-critical border-status-critical/30",
+    standby: "bg-status-standby/15 text-status-standby border-status-standby/30",
   };
   return <Badge className={styles[status]} >{status}</Badge>;
 }
@@ -121,7 +121,7 @@ export function PcsOverviewTable({ units, onUnitSelect }: PcsOverviewTableProps)
                 <td className="px-4 py-3 text-right font-mono">{unit.temperatures.igbtTempC} °C</td>
                 <td className="px-4 py-3 text-right">
                   {fc > 0 ? (
-                    <Badge className="bg-energy-grid/15 text-energy-grid border-energy-grid/30 text-xs">{fc}</Badge>
+                    <Badge className="bg-severity-critical/15 text-severity-critical border-severity-critical/30 text-xs">{fc}</Badge>
                   ) : (
                     <span className="text-muted-foreground">0</span>
                   )}

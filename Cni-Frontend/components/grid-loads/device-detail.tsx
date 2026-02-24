@@ -193,10 +193,10 @@ export function DeviceDetail({ device, onBack, onAlarmOpen }: DeviceDetailProps)
                   <span className="text-sm text-muted-foreground">Oil condition</span>
                   <Badge className={
                     device.oilCondition === "good"
-                      ? "bg-energy-solar/15 text-energy-solar border-energy-solar/30"
+                      ? "bg-status-operational/15 text-status-operational border-status-operational/30"
                       : device.oilCondition === "fair"
-                        ? "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30"
-                        : "bg-energy-grid/15 text-energy-grid border-energy-grid/30"
+                        ? "bg-severity-high/15 text-severity-high border-severity-high/30"
+                        : "bg-severity-critical/15 text-severity-critical border-severity-critical/30"
                   }>
                     {device.oilCondition ? device.oilCondition.charAt(0).toUpperCase() + device.oilCondition.slice(1) : "--"}
                   </Badge>
@@ -278,7 +278,7 @@ export function DeviceDetail({ device, onBack, onAlarmOpen }: DeviceDetailProps)
                       const expDate = new Date(Number(parts[2]), monthMap[parts[1]], Number(parts[0]));
                       const expired = Date.now() > expDate.getTime();
                       return (
-                        <Badge className={expired ? "bg-energy-grid/15 text-energy-grid border-energy-grid/30" : "bg-energy-solar/15 text-energy-solar border-energy-solar/30"}>
+                        <Badge className={expired ? "bg-severity-critical/15 text-severity-critical border-severity-critical/30" : "bg-status-operational/15 text-status-operational border-status-operational/30"}>
                           {expired ? "Expired" : "Active"}
                         </Badge>
                       );
@@ -316,11 +316,11 @@ export function DeviceDetail({ device, onBack, onAlarmOpen }: DeviceDetailProps)
                 <Badge
                   className={
                     device.status === "normal"
-                      ? "bg-energy-solar/15 text-energy-solar border-energy-solar/30"
+                      ? "bg-status-operational/15 text-status-operational border-status-operational/30"
                       : device.status === "warning"
-                        ? "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30"
+                        ? "bg-status-warning/15 text-status-warning border-status-warning/30"
                         : device.status === "fault" || device.status === "tripped"
-                          ? "bg-energy-grid/15 text-energy-grid border-energy-grid/30"
+                          ? "bg-status-critical/15 text-status-critical border-status-critical/30"
                           : "bg-muted text-muted-foreground"
                   }
                 >

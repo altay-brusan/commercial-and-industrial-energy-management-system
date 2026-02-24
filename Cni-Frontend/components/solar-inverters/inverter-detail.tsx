@@ -227,12 +227,12 @@ export function InverterDetail({ inverter, onBack, onAlarmOpen }: InverterDetail
                 <span className="text-sm text-muted-foreground">Current status</span>
                 <Badge
                   className={
-                    inverter.status === "normal"
-                      ? "bg-energy-solar/15 text-energy-solar border-energy-solar/30"
+                    inverter.status === "online"
+                      ? "bg-status-operational/15 text-status-operational border-status-operational/30"
                       : inverter.status === "warning"
-                        ? "bg-energy-consumption/15 text-energy-consumption border-energy-consumption/30"
+                        ? "bg-status-warning/15 text-status-warning border-status-warning/30"
                         : inverter.status === "fault"
-                          ? "bg-energy-grid/15 text-energy-grid border-energy-grid/30"
+                          ? "bg-status-critical/15 text-status-critical border-status-critical/30"
                           : "bg-muted text-muted-foreground"
                   }
                 >

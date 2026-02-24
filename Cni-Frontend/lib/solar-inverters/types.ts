@@ -1,4 +1,4 @@
-export type InverterStatus = "normal" | "offline" | "warning" | "fault";
+export type InverterStatus = "online" | "offline" | "warning" | "fault";
 
 export interface MpptData {
   id: number;

@@ -62,11 +62,11 @@ const alarms: Alarm[] = [
 function getPriorityColor(priority: AlarmPriority): string {
   switch (priority) {
     case "critical":
-      return "bg-energy-grid text-white";
+      return "bg-severity-critical text-white";
     case "high":
-      return "bg-energy-consumption text-white";
+      return "bg-severity-high text-white";
     case "medium":
-      return "bg-energy-battery text-white";
+      return "bg-severity-medium text-white";
     case "low":
       return "bg-muted text-muted-foreground";
   }
@@ -107,7 +107,7 @@ export function ActiveAlarms() {
           <CardTitle className="text-base">Active Alarms</CardTitle>
           <div className="flex items-center gap-2">
             {alarmCounts.critical > 0 && (
-              <Badge className="bg-energy-grid text-white">
+              <Badge className="bg-severity-critical text-white">
                 {alarmCounts.critical} Critical
               </Badge>
             )}

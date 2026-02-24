@@ -53,19 +53,32 @@ hooks/
 
 ### Color System
 
-Domain-specific colors defined as CSS variables in `app/globals.css` with light/dark mode support:
+Two separate color sets defined as CSS variables in `app/globals.css` with light/dark mode support:
 
-| Variable                | Semantic Use               | Tailwind Class              |
-|------------------------|----------------------------|-----------------------------|
-| `--energy-solar`       | Green — solar, operational | `bg-energy-solar`           |
-| `--energy-grid`        | Red — critical severity    | `bg-energy-grid`            |
-| `--energy-battery`     | Purple — medium severity   | `bg-energy-battery`         |
-| `--energy-consumption` | Orange — high severity     | `bg-energy-consumption`     |
-| `--status-operational` | Alias for energy-solar     | `bg-status-operational`     |
-| `--status-warning`     | Alias for energy-consumption | `bg-status-warning`       |
-| `--status-critical`    | Alias for energy-grid      | `bg-status-critical`        |
+**Energy Domain Colors** (charts, power flow, visualization — NOT for severity):
 
-Severity-to-color mapping: `critical → energy-grid`, `high → energy-consumption`, `medium → energy-battery`, `low → muted`.
+| Variable                | Color          | Tailwind Class              |
+|------------------------|----------------|-----------------------------|
+| `--energy-solar`       | Amber (hue 86) | `bg-energy-solar`           |
+| `--energy-grid`        | Blue (hue 260) | `bg-energy-grid`            |
+| `--energy-battery`     | Teal (hue 150) | `bg-energy-battery`         |
+| `--energy-consumption` | Purple (hue 277)| `bg-energy-consumption`    |
+
+**Severity & Status Colors** (badges, alerts, health indicators):
+
+| Variable                | Color          | Tailwind Class              |
+|------------------------|----------------|-----------------------------|
+| `--severity-critical`  | Red (hue 29)   | `bg-severity-critical`      |
+| `--severity-high`      | Orange (hue 55)| `bg-severity-high`          |
+| `--severity-medium`    | Yellow (hue 85)| `bg-severity-medium`        |
+| `--severity-minor`     | Purple (hue 295)| `bg-severity-minor`        |
+| `--status-operational` | Green (hue 145)| `bg-status-operational`     |
+| `--status-warning`     | = severity-high| `bg-status-warning`         |
+| `--status-critical`    | = severity-critical| `bg-status-critical`    |
+| `--status-standby`     | Yellow (hue 90)| `bg-status-standby`         |
+| `--status-offline`     | = muted-foreground| `bg-status-offline`      |
+
+Severity-to-color mapping: `critical → severity-critical`, `high → severity-high`, `medium → severity-medium`, `low → muted`.
 
 ### Page Layout Pattern
 

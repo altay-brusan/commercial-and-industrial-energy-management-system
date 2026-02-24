@@ -44,10 +44,10 @@ const typeLabels: Record<TransactionType, string> = {
 };
 
 const statusColors: Record<TransactionStatus, string> = {
-  completed: "bg-energy-solar/15 text-energy-solar border-energy-solar/30",
-  pending: "bg-energy-battery/15 text-energy-battery border-energy-battery/30",
+  completed: "bg-status-operational/15 text-status-operational border-status-operational/30",
+  pending: "bg-severity-medium/15 text-severity-medium border-severity-medium/30",
   invoiced: "bg-primary/15 text-primary border-primary/30",
-  overdue: "bg-energy-grid/15 text-energy-grid border-energy-grid/30",
+  overdue: "bg-severity-critical/15 text-severity-critical border-severity-critical/30",
 };
 
 function SortableHeader({
@@ -245,7 +245,7 @@ export function TransactionsView({ currency }: TransactionsViewProps) {
                 <td className="px-4 py-3 text-right font-mono text-xs">
                   {formatCurrency(tx.unitPrice, currency)}
                 </td>
-                <td className={`px-4 py-3 text-right font-medium ${tx.amount >= 0 ? "text-energy-solar" : "text-energy-grid"}`}>
+                <td className={`px-4 py-3 text-right font-medium ${tx.amount >= 0 ? "text-status-operational" : "text-severity-critical"}`}>
                   {formatCurrency(tx.amount, currency)}
                 </td>
                 <td className="px-4 py-3">
@@ -265,13 +265,13 @@ export function TransactionsView({ currency }: TransactionsViewProps) {
         <span>{filtered.length} transactions</span>
         <div className="flex items-center gap-4">
           <span>
-            Revenue: <span className="text-energy-solar font-medium">{formatCurrency(summary.totalRevenue, currency)}</span>
+            Revenue: <span className="text-status-operational font-medium">{formatCurrency(summary.totalRevenue, currency)}</span>
           </span>
           <span>
-            Expense: <span className="text-energy-grid font-medium">{formatCurrency(summary.totalExpense, currency)}</span>
+            Expense: <span className="text-severity-critical font-medium">{formatCurrency(summary.totalExpense, currency)}</span>
           </span>
           <span>
-            Net: <span className={`font-medium ${summary.net >= 0 ? "text-energy-solar" : "text-energy-grid"}`}>
+            Net: <span className={`font-medium ${summary.net >= 0 ? "text-status-operational" : "text-severity-critical"}`}>
               {formatCurrency(summary.net, currency)}
             </span>
           </span>

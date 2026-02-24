@@ -17,10 +17,10 @@ type DetailTab = "general" | "fault" | "curve" | "settings";
 
 function StatusBadge({ status }: { status: PcsUnit["status"] }) {
   const styles: Record<PcsUnit["status"], string> = {
-    online: "bg-sky-500/15 text-sky-600 border-sky-500/30",
+    online: "bg-status-operational/15 text-status-operational border-status-operational/30",
     offline: "bg-muted text-muted-foreground",
-    fault: "bg-energy-grid/15 text-energy-grid border-energy-grid/30",
-    standby: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30",
+    fault: "bg-status-critical/15 text-status-critical border-status-critical/30",
+    standby: "bg-status-standby/15 text-status-standby border-status-standby/30",
   };
   return <Badge className={styles[status]}>{status}</Badge>;
 }

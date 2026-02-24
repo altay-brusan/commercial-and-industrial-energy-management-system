@@ -29,15 +29,15 @@ interface ProjectionsViewProps {
 }
 
 const projectionLineConfig = {
-  revenue: { label: "Revenue", color: "var(--color-energy-solar)" },
-  cost: { label: "Cost", color: "var(--color-energy-grid)" },
+  revenue: { label: "Revenue", color: "var(--color-status-operational)" },
+  cost: { label: "Cost", color: "var(--color-severity-critical)" },
   netIncome: { label: "Net Income", color: "var(--color-primary)" },
 } satisfies ChartConfig;
 
 const cumulativeConfig = {
   cumulative: {
     label: "Cumulative Net Income",
-    color: "var(--color-energy-solar)",
+    color: "var(--color-status-operational)",
   },
 } satisfies ChartConfig;
 
@@ -71,7 +71,7 @@ export function ProjectionsView({ currency }: ProjectionsViewProps) {
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="border border-border rounded-lg p-4">
             <p className="text-sm text-muted-foreground mb-1">Net Present Value</p>
-            <p className={`text-2xl font-semibold tracking-tight ${scenario.npv >= 0 ? "text-energy-solar" : "text-energy-grid"}`}>
+            <p className={`text-2xl font-semibold tracking-tight ${scenario.npv >= 0 ? "text-status-operational" : "text-severity-critical"}`}>
               {formatCurrencyCompact(scenario.npv, currency)}
             </p>
           </div>
@@ -114,18 +114,18 @@ export function ProjectionsView({ currency }: ProjectionsViewProps) {
                 />
               }
             />
-            <Line type="monotone" dataKey="revenue" stroke="var(--color-energy-solar)" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="cost" stroke="var(--color-energy-grid)" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="revenue" stroke="var(--color-status-operational)" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="cost" stroke="var(--color-severity-critical)" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="netIncome" stroke="var(--color-primary)" strokeWidth={2} dot={false} strokeDasharray="5 5" />
           </LineChart>
         </ChartContainer>
         <div className="flex gap-6 mt-3 justify-center text-xs">
           <div className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded-full bg-energy-solar" />
+            <span className="h-0.5 w-4 rounded-full bg-status-operational" />
             <span className="text-muted-foreground">Revenue</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded-full bg-energy-grid" />
+            <span className="h-0.5 w-4 rounded-full bg-severity-critical" />
             <span className="text-muted-foreground">Cost</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -162,8 +162,8 @@ export function ProjectionsView({ currency }: ProjectionsViewProps) {
             <Area
               type="monotone"
               dataKey="cumulative"
-              stroke="var(--color-energy-solar)"
-              fill="var(--color-energy-solar)"
+              stroke="var(--color-status-operational)"
+              fill="var(--color-status-operational)"
               fillOpacity={0.2}
               strokeWidth={2}
             />
@@ -193,7 +193,7 @@ export function ProjectionsView({ currency }: ProjectionsViewProps) {
               <tr className="border-b border-border">
                 <td className="px-4 py-3 font-medium">NPV</td>
                 {projectionScenarios.map((s) => (
-                  <td key={s.name} className={`px-4 py-3 text-right ${s.npv >= 0 ? "text-energy-solar" : "text-energy-grid"}`}>
+                  <td key={s.name} className={`px-4 py-3 text-right ${s.npv >= 0 ? "text-status-operational" : "text-severity-critical"}`}>
                     {formatCurrencyCompact(s.npv, currency)}
                   </td>
                 ))}
@@ -215,7 +215,7 @@ export function ProjectionsView({ currency }: ProjectionsViewProps) {
                 {projectionScenarios.map((s) => {
                   const last = s.months[s.months.length - 1];
                   return (
-                    <td key={s.name} className={`px-4 py-3 text-right font-medium ${last.cumulative >= 0 ? "text-energy-solar" : "text-energy-grid"}`}>
+                    <td key={s.name} className={`px-4 py-3 text-right font-medium ${last.cumulative >= 0 ? "text-status-operational" : "text-severity-critical"}`}>
                       {formatCurrencyCompact(last.cumulative, currency)}
                     </td>
                   );

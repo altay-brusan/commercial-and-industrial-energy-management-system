@@ -13,15 +13,15 @@ export function getStatusColor(status: TaskStatus): string {
     case "scheduled":
       return "border-muted-foreground/50 text-muted-foreground bg-transparent";
     case "pending":
-      return "border-energy-battery text-energy-battery bg-energy-battery/10";
+      return "border-severity-medium text-severity-medium bg-severity-medium/10";
     case "in_progress":
-      return "border-energy-consumption text-energy-consumption bg-energy-consumption/10";
+      return "border-severity-high text-severity-high bg-severity-high/10";
     case "completed":
-      return "border-energy-solar text-energy-solar bg-energy-solar/10";
+      return "border-status-operational text-status-operational bg-status-operational/10";
     case "closed":
       return "border-muted-foreground text-muted-foreground bg-muted";
     case "overdue":
-      return "border-energy-grid text-energy-grid bg-energy-grid/10";
+      return "border-severity-critical text-severity-critical bg-severity-critical/10";
   }
 }
 
@@ -62,11 +62,11 @@ interface TaskPriorityBadgeProps {
 export function getPriorityColor(priority: TaskPriority): string {
   switch (priority) {
     case "critical":
-      return "bg-energy-grid text-white hover:bg-energy-grid/90";
+      return "bg-severity-critical text-white hover:bg-severity-critical/90";
     case "high":
-      return "bg-energy-consumption text-white hover:bg-energy-consumption/90";
+      return "bg-severity-high text-white hover:bg-severity-high/90";
     case "medium":
-      return "bg-energy-battery text-white hover:bg-energy-battery/90";
+      return "bg-severity-medium text-white hover:bg-severity-medium/90";
     case "low":
       return "bg-muted text-muted-foreground hover:bg-muted/90";
   }
