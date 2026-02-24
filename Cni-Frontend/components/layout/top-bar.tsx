@@ -70,6 +70,13 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
                 <Link href="/monitoring">Monitoring</Link>
               </TabsTrigger>
               <TabsTrigger
+                value="configuration"
+                className="data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm"
+                asChild
+              >
+                <Link href="/configuration">Configuration</Link>
+              </TabsTrigger>
+              <TabsTrigger
                 value="alarms"
                 className="data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm"
                 asChild
@@ -82,13 +89,6 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
                 asChild
               >
                 <Link href="/financials">Financials</Link>
-              </TabsTrigger>
-              <TabsTrigger
-                value="configuration"
-                className="data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm"
-                asChild
-              >
-                <Link href="/configuration">Configuration</Link>
               </TabsTrigger>
             </TabsList>
           </Tabs>
