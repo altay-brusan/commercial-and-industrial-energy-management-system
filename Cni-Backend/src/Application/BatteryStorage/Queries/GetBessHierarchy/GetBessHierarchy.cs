@@ -27,10 +27,13 @@ public class GetBessHierarchyQueryHandler : IRequestHandler<GetBessHierarchyQuer
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
+
+        var specsJson = device.SpecificationTemplate?.SpecificationsTemplate;
 
         // Check if this device has child Device entities (real hierarchy)
         var hasChildDevices = await _context.Devices
@@ -38,11 +41,11 @@ public class GetBessHierarchyQueryHandler : IRequestHandler<GetBessHierarchyQuer
 
         if (hasChildDevices)
         {
-            return await BuildFromDeviceEntities(request.UnitId, device.Specifications, cancellationToken);
+            return await BuildFromDeviceEntities(request.UnitId, specsJson, cancellationToken);
         }
 
         // Fallback: extract from payload JSON (legacy behavior)
-        return await BuildFromPayload(request.UnitId, device.Specifications, cancellationToken);
+        return await BuildFromPayload(request.UnitId, specsJson, cancellationToken);
     }
 
     private async Task<HierarchyResponseDto> BuildFromDeviceEntities(

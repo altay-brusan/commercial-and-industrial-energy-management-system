@@ -40,9 +40,6 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
         builder.Property(d => d.Metadata)
             .HasColumnType("jsonb");
 
-        builder.Property(d => d.Specifications)
-            .HasColumnType("jsonb");
-
         builder.Property(d => d.Status)
             .HasMaxLength(50);
 
@@ -57,6 +54,12 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
             .WithMany()
             .HasForeignKey(d => d.DeviceTypeId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Relationship to DeviceSpecificationTemplate
+        builder.HasOne(d => d.SpecificationTemplate)
+            .WithMany(t => t.Devices)
+            .HasForeignKey(d => d.DeviceSpecificationTemplateId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Self-referencing relationship for composite devices
         builder.HasOne(d => d.ParentDevice)

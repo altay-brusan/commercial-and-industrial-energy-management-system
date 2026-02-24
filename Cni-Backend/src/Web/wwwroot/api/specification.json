@@ -5713,8 +5713,9 @@
             "type": "string",
             "nullable": true
           },
-          "specifications": {
+          "deviceSpecificationTemplateId": {
             "type": "string",
+            "format": "guid",
             "nullable": true
           }
         }
@@ -5769,6 +5770,10 @@
           "specificationsTemplate": {
             "type": "string"
           },
+          "parameterMapTemplate": {
+            "type": "string",
+            "nullable": true
+          },
           "metadataTemplate": {
             "type": "string"
           },
@@ -5799,6 +5804,10 @@
           "specificationsTemplate": {
             "type": "string"
           },
+          "parameterMapTemplate": {
+            "type": "string",
+            "nullable": true
+          },
           "metadataTemplate": {
             "type": "string"
           },
@@ -5828,6 +5837,10 @@
           },
           "specificationsTemplate": {
             "type": "string"
+          },
+          "parameterMapTemplate": {
+            "type": "string",
+            "nullable": true
           },
           "metadataTemplate": {
             "type": "string"

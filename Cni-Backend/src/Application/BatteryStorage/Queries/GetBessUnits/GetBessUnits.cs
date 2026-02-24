@@ -34,6 +34,7 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
     {
         var query = _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage);
 
@@ -91,8 +92,8 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
                 ? PayloadDeserializer.GetElement(data.Payload)
                 : null;
 
-            // Build resolver from device Specifications parameterMap (if present)
-            var parameterMap = ParameterMapParser.ParseCached(device.Specifications, _cache);
+            // Build resolver from template's ParameterMapTemplate (if present)
+            var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);
             ParameterResolver? resolver = null;
             if (parameterMap.Count > 0 && payload.HasValue)
             {

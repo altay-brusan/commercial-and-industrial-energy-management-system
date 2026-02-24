@@ -18,6 +18,12 @@ public class Device : BaseAuditableEntity
     public Guid DeviceTypeId { get; set; }
 
     /// <summary>
+    /// Reference to the specification template (UI layout, parameter map, hierarchy).
+    /// Null for legacy devices or devices without a template.
+    /// </summary>
+    public Guid? DeviceSpecificationTemplateId { get; set; }
+
+    /// <summary>
     /// Self-reference for composite devices (e.g., cabinet → child subsystems)
     /// </summary>
     public Guid? ParentDeviceId { get; set; }
@@ -60,11 +66,6 @@ public class Device : BaseAuditableEntity
     public string? Metadata { get; set; }
 
     /// <summary>
-    /// Device specifications as JSON (tabs, curves, fault flags, hierarchy definitions, etc.)
-    /// </summary>
-    public string? Specifications { get; set; }
-
-    /// <summary>
     /// 0-based position within parent's children. Maps to edge addressing (e.g., bmuLoc for racks).
     /// </summary>
     public int? HierarchyIndex { get; set; }
@@ -82,6 +83,7 @@ public class Device : BaseAuditableEntity
     // Navigation properties
     public Rtu? Rtu { get; set; }
     public DeviceType? DeviceType { get; set; }
+    public DeviceSpecificationTemplate? SpecificationTemplate { get; set; }
     public Device? ParentDevice { get; set; }
     public ICollection<Device> ChildDevices { get; set; } = new List<Device>();
     public ICollection<DeviceAlarm> Alarms { get; set; } = new List<DeviceAlarm>();

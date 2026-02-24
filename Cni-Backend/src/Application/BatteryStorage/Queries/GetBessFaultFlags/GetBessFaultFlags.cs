@@ -29,6 +29,7 @@ public class GetBessFaultFlagsQueryHandler : IRequestHandler<GetBessFaultFlagsQu
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -38,7 +39,7 @@ public class GetBessFaultFlagsQueryHandler : IRequestHandler<GetBessFaultFlagsQu
         var telemetry = await _telemetryLoader.LoadLatest(request.UnitId, cancellationToken);
         var mergedPayloads = telemetry.GetPayloadsByKind();
         var payload = mergedPayloads.Values.FirstOrDefault(p => p.HasValue);
-        var specs = PayloadDeserializer.GetElement(device.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
 
         return BuildFaultFlags(specs, payload);
     }

@@ -39,6 +39,7 @@ public class GetDeviceSpecificationTemplatesQueryHandler : IRequestHandler<GetDe
                 Model = t.Model,
                 Manufacturer = t.Manufacturer,
                 SpecificationsTemplate = t.SpecificationsTemplate,
+                ParameterMapTemplate = t.ParameterMapTemplate,
                 MetadataTemplate = t.MetadataTemplate,
                 HierarchyTemplate = t.HierarchyTemplate,
                 IsDefault = t.IsDefault

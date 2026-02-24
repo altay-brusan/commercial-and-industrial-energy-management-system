@@ -27,10 +27,24 @@ public static class ParameterMapParser
             using var doc = JsonDocument.Parse(specifications);
             var root = doc.RootElement;
 
-            if (!root.TryGetProperty("parameterMap", out var parameterMap))
+            // Support two formats:
+            // 1. Standalone: {"version":1,"parameters":{...}} (ParameterMapTemplate column)
+            // 2. Nested: {"parameterMap":{"parameters":{...}}} (legacy, inside SpecificationsTemplate)
+            JsonElement parametersContainer;
+            if (root.TryGetProperty("parameters", out _))
+            {
+                parametersContainer = root;
+            }
+            else if (root.TryGetProperty("parameterMap", out var parameterMap))
+            {
+                parametersContainer = parameterMap;
+            }
+            else
+            {
                 return new Dictionary<string, ParameterDefinition>();
+            }
 
-            if (!parameterMap.TryGetProperty("parameters", out var parameters))
+            if (!parametersContainer.TryGetProperty("parameters", out var parameters))
                 return new Dictionary<string, ParameterDefinition>();
 
             if (parameters.ValueKind != JsonValueKind.Object)

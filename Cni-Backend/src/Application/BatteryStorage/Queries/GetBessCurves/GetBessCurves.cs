@@ -41,6 +41,7 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
@@ -75,7 +76,7 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
             pcsSampled = SamplePcsData(pcsRawData, intervalMinutes);
         }
 
-        var specs = PayloadDeserializer.GetElement(device.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
         var charts = BuildCharts(specs, sampled, timeFormat, pcsSampled);
 
         return new ChartResponseDto { Charts = charts };

@@ -164,6 +164,9 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("DeviceSpecificationTemplateId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("DeviceTypeId")
                         .HasColumnType("uuid");
 
@@ -210,9 +213,6 @@ namespace Backend.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Specifications")
-                        .HasColumnType("jsonb");
-
                     b.Property<string>("Status")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -222,6 +222,8 @@ namespace Backend.Infrastructure.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DeviceSpecificationTemplateId");
 
                     b.HasIndex("DeviceTypeId");
 
@@ -677,6 +679,9 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ParameterMapTemplate")
+                        .HasColumnType("jsonb");
 
                     b.Property<string>("SpecificationsTemplate")
                         .IsRequired()
@@ -1711,6 +1716,11 @@ namespace Backend.Infrastructure.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.Device", b =>
                 {
+                    b.HasOne("Backend.Domain.Entities.DeviceSpecificationTemplate", "SpecificationTemplate")
+                        .WithMany("Devices")
+                        .HasForeignKey("DeviceSpecificationTemplateId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Backend.Domain.Entities.DeviceType", "DeviceType")
                         .WithMany()
                         .HasForeignKey("DeviceTypeId")
@@ -1733,6 +1743,8 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("ParentDevice");
 
                     b.Navigation("Rtu");
+
+                    b.Navigation("SpecificationTemplate");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarm", b =>
@@ -2087,6 +2099,11 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("Alarms");
 
                     b.Navigation("ChildDevices");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceSpecificationTemplate", b =>
+                {
+                    b.Navigation("Devices");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Facility", b =>

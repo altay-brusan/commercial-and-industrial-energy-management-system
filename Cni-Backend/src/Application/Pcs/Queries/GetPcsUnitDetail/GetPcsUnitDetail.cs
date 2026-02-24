@@ -27,6 +27,7 @@ public class GetPcsUnitDetailQueryHandler : IRequestHandler<GetPcsUnitDetailQuer
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "PCS")
             .FirstOrDefaultAsync(cancellationToken);
@@ -39,7 +40,7 @@ public class GetPcsUnitDetailQueryHandler : IRequestHandler<GetPcsUnitDetailQuer
             .Where(d => d.Rtu!.FacilityId == device.Rtu!.FacilityId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
-        var tabs = GetAvailableTabs(device.Specifications);
+        var tabs = GetAvailableTabs(device.SpecificationTemplate?.SpecificationsTemplate);
 
         return new PcsUnitDetailDto
         {

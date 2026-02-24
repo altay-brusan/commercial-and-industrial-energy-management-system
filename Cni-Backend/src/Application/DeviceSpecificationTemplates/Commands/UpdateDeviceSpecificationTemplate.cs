@@ -11,6 +11,7 @@ public record UpdateDeviceSpecificationTemplateCommand : IRequest
     public string Model { get; init; } = string.Empty;
     public string? Manufacturer { get; init; }
     public string SpecificationsTemplate { get; init; } = "{}";
+    public string? ParameterMapTemplate { get; init; }
     public string MetadataTemplate { get; init; } = "{}";
     public string? HierarchyTemplate { get; init; }
     public bool IsDefault { get; init; }
@@ -46,6 +47,7 @@ public class UpdateDeviceSpecificationTemplateCommandHandler : IRequestHandler<U
         entity.Model = request.Model;
         entity.Manufacturer = request.Manufacturer;
         entity.SpecificationsTemplate = request.SpecificationsTemplate;
+        entity.ParameterMapTemplate = request.ParameterMapTemplate;
         entity.MetadataTemplate = request.MetadataTemplate;
         entity.HierarchyTemplate = request.HierarchyTemplate;
         entity.IsDefault = request.IsDefault;

@@ -29,12 +29,13 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
         // Check if Specifications defines custom health sections
-        var specs = PayloadDeserializer.GetElement(device.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
         if (specs.HasValue && specs.Value.TryGetProperty("tabs", out var tabs) &&
             tabs.TryGetProperty("health", out var healthTab) &&
             healthTab.TryGetProperty("sections", out var sectionsElement) &&

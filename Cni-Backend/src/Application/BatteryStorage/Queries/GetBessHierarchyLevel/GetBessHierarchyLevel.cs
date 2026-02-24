@@ -31,13 +31,14 @@ public class GetBessHierarchyLevelQueryHandler : IRequestHandler<GetBessHierarch
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
         // Parse hierarchy level definitions to check for virtual levels
-        var levels = GetHierarchyLevels(device.Specifications);
+        var levels = GetHierarchyLevels(device.SpecificationTemplate?.SpecificationsTemplate);
         var levelDef = levels.FirstOrDefault(l => l.Key == request.Level.ToLowerInvariant());
 
         // Check if parentId is a valid GUID (indicates entity-based hierarchy)

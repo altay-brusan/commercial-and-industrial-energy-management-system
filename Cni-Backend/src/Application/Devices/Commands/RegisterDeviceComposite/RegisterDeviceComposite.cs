@@ -52,7 +52,7 @@ public class RegisterDeviceCompositeCommandHandler : IRequestHandler<RegisterDev
             Model = template.Model,
             SerialNumber = request.SerialNumber,
             Manufacturer = template.Manufacturer,
-            Specifications = template.SpecificationsTemplate,
+            DeviceSpecificationTemplateId = template.Id,
             Metadata = template.MetadataTemplate
         };
 

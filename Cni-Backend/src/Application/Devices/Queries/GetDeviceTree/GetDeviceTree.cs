@@ -30,6 +30,7 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
 
         var allDevices = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Where(d => d.RtuId == rootDevice.RtuId)
             .ToListAsync(cancellationToken);
 
@@ -69,11 +70,12 @@ public static class DeviceTreeBuilder
         var descendantAlarms = children.Sum(c => c.AlarmCount);
 
         var availableTabs = new List<string>();
-        if (!string.IsNullOrWhiteSpace(device.Specifications))
+        var specsJson = device.SpecificationTemplate?.SpecificationsTemplate;
+        if (!string.IsNullOrWhiteSpace(specsJson))
         {
             try
             {
-                var specDoc = System.Text.Json.JsonDocument.Parse(device.Specifications);
+                var specDoc = System.Text.Json.JsonDocument.Parse(specsJson);
                 if (specDoc.RootElement.TryGetProperty("supportedTabs", out var tabsElement) &&
                     tabsElement.ValueKind == System.Text.Json.JsonValueKind.Array)
                 {

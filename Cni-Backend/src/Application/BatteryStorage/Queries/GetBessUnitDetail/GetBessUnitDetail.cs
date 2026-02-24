@@ -27,13 +27,14 @@ public class GetBessUnitDetailQueryHandler : IRequestHandler<GetBessUnitDetailQu
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
-        var tabs = GetAvailableTabs(device.Specifications);
+        var tabs = GetAvailableTabs(device.SpecificationTemplate?.SpecificationsTemplate);
 
         return new BessUnitDetailDto
         {

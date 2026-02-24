@@ -33,12 +33,15 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
+        var specsJson = device.SpecificationTemplate?.SpecificationsTemplate;
+
         // Check if Specifications defines custom summary sections
-        var specs = PayloadDeserializer.GetElement(device.Specifications);
+        var specs = PayloadDeserializer.GetElement(specsJson);
         if (specs.HasValue && specs.Value.TryGetProperty("tabs", out var tabs) &&
             tabs.TryGetProperty("summary", out var summaryTab) &&
             summaryTab.TryGetProperty("sections", out var sectionsElement) &&
@@ -81,8 +84,8 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         var hvcu = payloads.GetValueOrDefault("HVCUControlState");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
-        // Build parameter resolver from Specifications parameterMap (if present)
-        var parameterMap = ParameterMapParser.ParseCached(device.Specifications, _cache);
+        // Build parameter resolver from template's ParameterMapTemplate (if present)
+        var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);
         var resolver = parameterMap.Count > 0
             ? new ParameterResolver(parameterMap, payloads, metadata)
             : null;
