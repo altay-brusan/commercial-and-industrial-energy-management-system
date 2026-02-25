@@ -2941,12 +2941,12 @@
         ]
       }
     },
-    "/api/v1/Pcs/Units/{unitId}": {
+    "/api/v1/Pcs/Units/Header/{unitId}": {
       "get": {
         "tags": [
           "Pcs"
         ],
-        "operationId": "GetApiV1PcsUnits2",
+        "operationId": "GetApiV1PcsUnitsHeader",
         "parameters": [
           {
             "name": "unitId",
@@ -2965,7 +2965,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PcsUnitDetailDto"
+                  "$ref": "#/components/schemas/PcsHeaderDto"
                 }
               }
             }
@@ -7354,7 +7354,7 @@
           }
         }
       },
-      "PcsUnitDetailDto": {
+      "PcsHeaderDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -7362,54 +7362,32 @@
             "type": "string",
             "format": "guid"
           },
+          "deviceId": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
-          "serialNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "modelName": {
-            "type": "string",
-            "nullable": true
-          },
-          "manufacturer": {
-            "type": "string",
-            "nullable": true
-          },
-          "facilityId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "facilityName": {
-            "type": "string",
-            "nullable": true
-          },
           "status": {
             "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "linkedBessUnit": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PcsHeaderLinkedBessDto"
+              }
+            ]
           },
           "availableTabs": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TabInfoDto"
             }
-          },
-          "linkedBessUnit": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PcsLinkedBessDto"
-              }
-            ]
-          },
-          "lastSeenUtc": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
           }
         }
       },
-      "PcsLinkedBessDto": {
+      "PcsHeaderLinkedBessDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -7419,10 +7397,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
