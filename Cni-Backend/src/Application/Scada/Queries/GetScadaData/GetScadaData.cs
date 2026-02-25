@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Scada.DTOs;
+using Backend.Domain.Constants;
 using Backend.Domain.Entities;
 using Backend.Domain.Enums;
 
@@ -47,7 +48,7 @@ public class GetScadaQueryHandler : IRequestHandler<GetScadaQuery, FacilityHubDt
                 case "Solar":
                     await ProcessSolarDevice(device, facilityHub, cancellationToken, request.Time);
                     break;
-                case "Battery":
+                case DeviceTypeNames.EnergyStorage:
                     await ProcessBessDevice(device, facilityHub, cancellationToken, request.Time);
                     break;
                 case "PCS":

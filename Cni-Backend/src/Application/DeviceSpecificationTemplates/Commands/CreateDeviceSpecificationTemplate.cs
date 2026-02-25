@@ -12,6 +12,7 @@ public record CreateDeviceSpecificationTemplateCommand : IRequest<Guid>
     public string Model { get; init; } = string.Empty;
     public string? Manufacturer { get; init; }
     public string SpecificationsTemplate { get; init; } = "{}";
+    public string? ParameterMapTemplate { get; init; }
     public string MetadataTemplate { get; init; } = "{}";
     public string? HierarchyTemplate { get; init; }
     public bool IsDefault { get; init; }
@@ -45,6 +46,7 @@ public class CreateDeviceSpecificationTemplateCommandHandler : IRequestHandler<C
             Model = request.Model,
             Manufacturer = request.Manufacturer,
             SpecificationsTemplate = request.SpecificationsTemplate,
+            ParameterMapTemplate = request.ParameterMapTemplate,
             MetadataTemplate = request.MetadataTemplate,
             HierarchyTemplate = request.HierarchyTemplate,
             IsDefault = request.IsDefault

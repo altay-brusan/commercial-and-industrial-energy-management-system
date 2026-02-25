@@ -1,6 +1,7 @@
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.Pcs.Queries.GetPcsUnits;
 
@@ -8,6 +9,7 @@ namespace Backend.Application.Pcs.Queries.GetPcsUnits;
 [RequirePermission(Backend.Domain.Constants.Permissions.PcsView)]
 public record GetPcsUnitsQuery : IRequest<PcsUnitsResultDto>
 {
+    public Guid? FacilityId { get; init; }
     public string? Search { get; init; }
     public string? SortBy { get; init; }
     public string? SortDirection { get; init; }
@@ -24,11 +26,15 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
 
     public async Task<PcsUnitsResultDto> Handle(GetPcsUnitsQuery request, CancellationToken cancellationToken)
     {
-        var pcsDevices = await _context.Devices
+        var pcsQuery = _context.Devices
             .Include(d => d.DeviceType)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == "PCS")
-            .ToListAsync(cancellationToken);
+            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs);
+
+        if (request.FacilityId.HasValue)
+            pcsQuery = pcsQuery.Where(d => d.Rtu!.FacilityId == request.FacilityId.Value);
+
+        var pcsDevices = await pcsQuery.ToListAsync(cancellationToken);
 
         var deviceIds = pcsDevices.Select(d => d.Id).ToList();
         var facilityIds = pcsDevices.Select(d => d.Rtu!.FacilityId).Distinct().ToList();
@@ -44,7 +50,7 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
         // Find linked BESS units (Battery devices in same facility)
         var batteryDevices = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => facilityIds.Contains(d.Rtu!.FacilityId) && d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Where(d => facilityIds.Contains(d.Rtu!.FacilityId) && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .ToListAsync(cancellationToken);
 
         var batteryByFacility = batteryDevices

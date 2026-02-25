@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Backend.Application.Common.Interfaces;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.Scada.Queries.GetScadaDataMinimal;
 
@@ -34,7 +35,7 @@ public class GetScadaDataMinimalQueryHandler : IRequestHandler<GetScadaDataMinim
             .ToListAsync(cancellationToken);
 
         var bessDeviceIds = await _context.Devices
-            .Where(d => d.DeviceType!.Name == "Battery")
+            .Where(d => d.DeviceType!.Name == DeviceTypeNames.EnergyStorage)
             .Select(d => d.Id)
             .ToListAsync(cancellationToken);
 

@@ -4,6 +4,31 @@ using Backend.Application.Common.Security;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessFaults;
 
+// TODO: Review and rework this notifications/faults endpoint.
+//
+// 1. SCOPE: Currently fetches alarms for ALL devices in the same RTU (line 35-38).
+//    This means requesting notifications for a single rack returns faults from the
+//    entire container + all siblings. It should scope to the requested device and its
+//    descendants only (walk ParentDeviceId tree), so the frontend can show faults
+//    specific to the selected node in the device tree.
+//
+// 2. DEVICE INFO: The response only includes alarm type details (code, name, severity)
+//    but not which device raised the alarm. Add DeviceId, DeviceName, and DeviceType
+//    to FaultRecordDto so the frontend can show "Rack-01 > Pack-03: Over-temperature"
+//    instead of just "Over-temperature".
+//
+// 3. IsRead / IsProcessed: DeviceAlarm has IsRead and IsProcessed fields but they are
+//    not exposed in the query or response. The frontend needs these to show read/unread
+//    badge counts and to mark notifications as read. Add filter parameters and include
+//    them in FaultRecordDto.
+//
+// 4. DATE RANGE FILTER: No time-based filtering — the query returns all historical
+//    alarms paginated. Consider adding optional startDate/endDate parameters so the
+//    frontend can request "last 24h" or "last 7d" of notifications.
+//
+// 5. SORTING: Currently sorts by OccurredAt descending only. Consider adding a sortBy
+//    parameter (e.g. severity, status, device) for frontend table sorting support.
+
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.BessView)]
 public record GetBessFaultsQuery : IRequest<FaultsPaginatedResponseDto>
@@ -38,12 +63,13 @@ public class GetBessFaultsQueryHandler : IRequestHandler<GetBessFaultsQuery, Fau
             .ToListAsync(cancellationToken);
 
         var query = _context.DeviceAlarms
+            .Include(a => a.AlarmType)
             .Where(a => rtuDeviceIds.Contains(a.DeviceId));
 
         if (!string.IsNullOrWhiteSpace(request.Severity))
         {
             var sev = request.Severity.ToLowerInvariant();
-            query = query.Where(a => a.Severity.ToLower() == sev);
+            query = query.Where(a => a.AlarmType!.Severity.ToLower() == sev);
         }
 
         if (request.IsActive.HasValue)
@@ -60,11 +86,11 @@ public class GetBessFaultsQueryHandler : IRequestHandler<GetBessFaultsQuery, Fau
             .Select(a => new FaultRecordDto
             {
                 Id = a.Id,
-                Code = a.Code,
-                Name = a.Name,
-                Severity = FaultRecordDto.SeverityBadge(a.Severity),
+                Code = a.AlarmType!.Code,
+                Name = a.AlarmType.Name,
+                Severity = FaultRecordDto.SeverityBadge(a.AlarmType.Severity),
                 Status = FaultRecordDto.FaultStatusBadge(a.IsActive),
-                Source = a.Source,
+                Source = a.AlarmType.Source,
                 OccurredAt = a.OccurredAt,
                 RecoveredAt = a.RecoveredAt,
                 RelatedAlarmId = a.Id

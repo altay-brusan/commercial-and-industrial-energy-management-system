@@ -60,8 +60,8 @@ public class Pcs : EndpointGroupBase
         var result = await sender.Send(new GetPcsCurvesQuery
         {
             UnitId = unitId,
-            Period = period ?? MonitoringPeriods.Day,
-            Interval = interval ?? MonitoringIntervals.FifteenMin
+            Period = period ?? MonitoringPeriods.TwentyFourHours,
+            Interval = interval
         });
         return TypedResults.Ok(result);
     }

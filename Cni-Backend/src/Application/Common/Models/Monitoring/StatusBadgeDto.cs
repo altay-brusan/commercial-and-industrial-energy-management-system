@@ -11,6 +11,8 @@ public record StatusBadgeDto
         "online" => new StatusBadgeDto { Value = "online", Label = "Online", Color = "green" },
         "offline" => new StatusBadgeDto { Value = "offline", Label = "Offline", Color = "red" },
         "standby" => new StatusBadgeDto { Value = "standby", Label = "Standby", Color = "yellow" },
+        "normal" => new StatusBadgeDto { Value = "normal", Label = "Normal", Color = "green" },
+        "warning" => new StatusBadgeDto { Value = "warning", Label = "Warning", Color = "orange" },
         "fault" => new StatusBadgeDto { Value = "fault", Label = "Fault", Color = "red" },
         "maintenance" => new StatusBadgeDto { Value = "maintenance", Label = "Maintenance", Color = "orange" },
         "charging" => new StatusBadgeDto { Value = "charging", Label = "Charging", Color = "blue" },

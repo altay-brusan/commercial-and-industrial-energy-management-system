@@ -1,5 +1,6 @@
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.Devices.Queries.GetDeviceTree;
 
@@ -29,6 +30,7 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
 
         var allDevices = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Where(d => d.RtuId == rootDevice.RtuId)
             .ToListAsync(cancellationToken);
 
@@ -42,7 +44,7 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
         var childrenMap = allDevices
             .Where(d => d.ParentDeviceId.HasValue)
             .GroupBy(d => d.ParentDeviceId!.Value)
-            .ToDictionary(g => g.Key, g => g.OrderBy(d => d.Name).ToList());
+            .ToDictionary(g => g.Key, g => g.OrderBy(d => d.HierarchyIndex).ThenBy(d => d.Name).ToList());
 
         return DeviceTreeBuilder.BuildTreeNode(rootDevice, childrenMap, alarmCounts);
     }
@@ -68,11 +70,12 @@ public static class DeviceTreeBuilder
         var descendantAlarms = children.Sum(c => c.AlarmCount);
 
         var availableTabs = new List<string>();
-        if (!string.IsNullOrWhiteSpace(device.Specifications))
+        var specsJson = device.SpecificationTemplate?.SpecificationsTemplate;
+        if (!string.IsNullOrWhiteSpace(specsJson))
         {
             try
             {
-                var specDoc = System.Text.Json.JsonDocument.Parse(device.Specifications);
+                var specDoc = System.Text.Json.JsonDocument.Parse(specsJson);
                 if (specDoc.RootElement.TryGetProperty("supportedTabs", out var tabsElement) &&
                     tabsElement.ValueKind == System.Text.Json.JsonValueKind.Array)
                 {
@@ -105,14 +108,15 @@ public static class DeviceTreeBuilder
 
     public static string MapDeviceType(string? deviceTypeName) => deviceTypeName switch
     {
-        "Battery" => "unit",
-        "Battery.Rack" => "rack",
-        "Battery.Pack" => "pack",
-        "Battery.Module" => "module",
-        "Battery.Controller" => "esc",
-        "Battery.TMS" => "hvac",
-        "PCS" => "pcs",
-        "Solar" => "solar",
+        DeviceTypeNames.EnergyStorage => "unit",
+        DeviceTypeNames.EnergyStorageBattery => "battery",
+        DeviceTypeNames.EnergyStorageRack => "rack",
+        DeviceTypeNames.EnergyStoragePack => "pack",
+        DeviceTypeNames.EnergyStorageModule => "module",
+        DeviceTypeNames.EnergyStorageController => "esc",
+        DeviceTypeNames.EnergyStorageTMS => "hvac",
+        DeviceTypeNames.Pcs => "pcs",
+        DeviceTypeNames.Solar => "solar",
         "SmartMeter" => "meter",
         _ => deviceTypeName?.Split('.').Last().ToLowerInvariant() ?? "unknown"
     };

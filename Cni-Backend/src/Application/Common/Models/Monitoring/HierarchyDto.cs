@@ -12,6 +12,9 @@ public record HierarchyLevelDefinitionDto
     public string Label { get; init; } = string.Empty;
     public int Depth { get; init; }
     public bool HasChildren { get; init; }
+    public bool IsDataLevel { get; init; } = true;
+    public bool IsVirtual { get; init; }
+    public string? InheritsFrom { get; init; }
 }
 
 public record HierarchyItemDto
@@ -23,6 +26,7 @@ public record HierarchyItemDto
     public Dictionary<string, object?>? Data { get; init; }
     public bool HasChildren { get; init; }
     public int ChildCount { get; init; }
+    public bool IsVirtual { get; init; }
 }
 
 public record HierarchyLevelResponseDto

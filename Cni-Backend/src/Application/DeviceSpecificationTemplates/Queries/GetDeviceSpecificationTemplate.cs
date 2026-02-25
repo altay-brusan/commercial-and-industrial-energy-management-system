@@ -35,6 +35,7 @@ public class GetDeviceSpecificationTemplateQueryHandler : IRequestHandler<GetDev
             Model = entity.Model,
             Manufacturer = entity.Manufacturer,
             SpecificationsTemplate = entity.SpecificationsTemplate,
+            ParameterMapTemplate = entity.ParameterMapTemplate,
             MetadataTemplate = entity.MetadataTemplate,
             HierarchyTemplate = entity.HierarchyTemplate,
             IsDefault = entity.IsDefault

@@ -3,8 +3,32 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessFaultFlags;
+
+// TODO: Review and rework this endpoint.
+//
+// 1. SCOPE: Currently filters by EnergyStorage DeviceType only (line 33). It should work
+//    for any device level (rack, pack, module) so the frontend can show fault flags
+//    scoped to the selected node in the device tree, not just the root container.
+//
+// 2. TELEMETRY SOURCE: Uses ContainerTelemetryLoader then picks the first payload it finds
+//    (line 41: mergedPayloads.Values.FirstOrDefault). This is fragile — fault flags may
+//    come from multiple Kinds (e.g. ChillerState, HVCUState, PcsStatusState), not just
+//    the first one in the dictionary. Each Kind should be checked against its own flag
+//    definitions from the schema.
+//
+// 3. DEFAULT FALLBACK: ExtractDefaultFaultFlags (line 106) assumes a "status.faultStatus"
+//    / "status.warningStatus" payload shape that is specific to one vendor. Should be
+//    replaced by ParameterResolver-driven extraction per device model, or removed entirely
+//    once all models have faultFlags defined in SpecificationsTemplate.
+//
+// 4. ALARM INTEGRATION: This endpoint reads raw telemetry fault bits, but we also have
+//    the DeviceAlarm system (AlarmProcessingService) that creates/recovers alarm records
+//    from the same fault bits during ingestion. Consider whether this endpoint should
+//    read from DeviceAlarm records instead of re-parsing raw telemetry, to avoid
+//    inconsistencies between fault flags shown here and notifications shown in GetBessFaults.
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.BessView)]
@@ -16,28 +40,29 @@ public record GetBessFaultFlagsQuery : IRequest<FaultFlagsResponseDto>
 public class GetBessFaultFlagsQueryHandler : IRequestHandler<GetBessFaultFlagsQuery, FaultFlagsResponseDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ContainerTelemetryLoader _telemetryLoader;
 
     public GetBessFaultFlagsQueryHandler(IApplicationDbContext context)
     {
         _context = context;
+        _telemetryLoader = new ContainerTelemetryLoader(context);
     }
 
     public async Task<FaultFlagsResponseDto> Handle(GetBessFaultFlagsQuery request, CancellationToken cancellationToken)
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == "Battery")
+            .Include(d => d.SpecificationTemplate)
+            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
-        var latestData = await _context.DeviceBatteryData
-            .Where(dd => dd.DeviceId == request.UnitId)
-            .OrderByDescending(dd => dd.DeviceLocalTime)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var payload = PayloadDeserializer.GetElement(latestData?.Payload);
-        var specs = PayloadDeserializer.GetElement(device.Specifications);
+        // Load multi-table telemetry for the container and all child devices
+        var telemetry = await _telemetryLoader.LoadLatest(request.UnitId, cancellationToken);
+        var mergedPayloads = telemetry.GetPayloadsByKind();
+        var payload = mergedPayloads.Values.FirstOrDefault(p => p.HasValue);
+        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
 
         return BuildFaultFlags(specs, payload);
     }

@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessHealth;
 
@@ -16,40 +17,40 @@ public record GetBessHealthQuery : IRequest<SummaryResponseDto>
 public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, SummaryResponseDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ContainerTelemetryLoader _telemetryLoader;
 
     public GetBessHealthQueryHandler(IApplicationDbContext context)
     {
         _context = context;
+        _telemetryLoader = new ContainerTelemetryLoader(context);
     }
 
     public async Task<SummaryResponseDto> Handle(GetBessHealthQuery request, CancellationToken cancellationToken)
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
         // Check if Specifications defines custom health sections
-        var specs = PayloadDeserializer.GetElement(device.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
         if (specs.HasValue && specs.Value.TryGetProperty("tabs", out var tabs) &&
             tabs.TryGetProperty("health", out var healthTab) &&
             healthTab.TryGetProperty("sections", out var sectionsElement) &&
             sectionsElement.ValueKind == JsonValueKind.Array)
         {
-            var latestData = await _context.DeviceBatteryData
-                .Where(dd => dd.DeviceId == request.UnitId)
-                .OrderByDescending(dd => dd.DeviceLocalTime)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            var payload = PayloadDeserializer.GetElement(latestData?.Payload);
+            var telemetry = await _telemetryLoader.LoadLatest(request.UnitId, cancellationToken);
+            var mergedPayloads = telemetry.GetPayloadsByKind();
+            var payload = mergedPayloads.Values.FirstOrDefault(p => p.HasValue);
             return new SummaryResponseDto { Sections = BuildFromSchema(sectionsElement, payload) };
         }
 
         // Default: build based on device type
         var sections = device.DeviceType?.Name switch
         {
-            "Battery" => await BuildBatteryHealthSections(device, cancellationToken),
+            DeviceTypeNames.EnergyStorage => await BuildBatteryHealthSections(device, cancellationToken),
             _ => await BuildGenericHealthSections(device, cancellationToken)
         };
 
@@ -61,19 +62,9 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
     private async Task<List<DynamicSectionDto>> BuildBatteryHealthSections(
         Domain.Entities.Device device, CancellationToken ct)
     {
-        // Load latest payload per Kind
-        var latestByKind = await _context.DeviceBatteryData
-            .Where(dd => dd.DeviceId == device.Id)
-            .GroupBy(dd => dd.Kind)
-            .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
-            .ToListAsync(ct);
-
-        var payloads = new Dictionary<string, JsonElement?>();
-        foreach (var d in latestByKind)
-        {
-            if (d.Kind is not null)
-                payloads[d.Kind] = PayloadDeserializer.GetElement(d.Payload);
-        }
+        // Load multi-table telemetry for the container and all child devices
+        var telemetry = await _telemetryLoader.LoadLatest(device.Id, ct);
+        var payloads = telemetry.GetPayloadsByKind();
 
         var batt = payloads.GetValueOrDefault("ContainerBatteryState");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);

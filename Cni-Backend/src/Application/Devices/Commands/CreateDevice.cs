@@ -19,7 +19,7 @@ public record CreateDeviceCommand : IRequest<Guid>
     public string? Manufacturer { get; init; }
     public string Ports { get; init; } = "[]";
     public string? Metadata { get; init; }
-    public string? Specifications { get; init; }
+    public Guid? DeviceSpecificationTemplateId { get; init; }
 }
 
 public class CreateDeviceCommandHandler : IRequestHandler<CreateDeviceCommand, Guid>
@@ -44,7 +44,7 @@ public class CreateDeviceCommandHandler : IRequestHandler<CreateDeviceCommand, G
             Manufacturer = request.Manufacturer,
             Ports = request.Ports,
             Metadata = request.Metadata,
-            Specifications = request.Specifications
+            DeviceSpecificationTemplateId = request.DeviceSpecificationTemplateId
         };
 
         entity.AddDomainEvent(new DeviceCreatedEvent(entity));

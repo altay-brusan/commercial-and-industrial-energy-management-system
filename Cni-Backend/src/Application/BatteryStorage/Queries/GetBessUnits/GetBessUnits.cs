@@ -1,7 +1,11 @@
+using System.Text.Json;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Application.Common.Services.ParameterMapper;
+using Backend.Domain.Constants;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessUnits;
 
@@ -9,6 +13,7 @@ namespace Backend.Application.BatteryStorage.Queries.GetBessUnits;
 [RequirePermission(Backend.Domain.Constants.Permissions.BessView)]
 public record GetBessUnitsQuery : IRequest<BessUnitsResultDto>
 {
+    public Guid? FacilityId { get; init; }
     public string? Search { get; init; }
     public string? SortBy { get; init; }
     public string? SortDirection { get; init; }
@@ -17,30 +22,66 @@ public record GetBessUnitsQuery : IRequest<BessUnitsResultDto>
 public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessUnitsResultDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IMemoryCache _cache;
+    private readonly IDeviceStatusService _statusService;
 
-    public GetBessUnitsQueryHandler(IApplicationDbContext context)
+    public GetBessUnitsQueryHandler(IApplicationDbContext context, IMemoryCache cache, IDeviceStatusService statusService)
     {
         _context = context;
+        _cache = cache;
+        _statusService = statusService;
     }
 
     public async Task<BessUnitsResultDto> Handle(GetBessUnitsQuery request, CancellationToken cancellationToken)
     {
-        var batteryDevices = await _context.Devices
+        var query = _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == "Battery")
-            .ToListAsync(cancellationToken);
+            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage);
+
+        if (request.FacilityId.HasValue)
+            query = query.Where(d => d.Rtu!.FacilityId == request.FacilityId.Value);
+
+        var batteryDevices = await query.ToListAsync(cancellationToken);
 
         var deviceIds = batteryDevices.Select(d => d.Id).ToList();
 
-        // Load latest telemetry per device
-        var latestData = await _context.DeviceBatteryData
+        // Load latest telemetry per device per Kind from all relevant tables
+        var batteryEntries = await _context.DeviceBatteryData
             .Where(dd => deviceIds.Contains(dd.DeviceId))
-            .GroupBy(dd => dd.DeviceId)
+            .GroupBy(dd => new { dd.DeviceId, dd.Kind })
             .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
             .ToListAsync(cancellationToken);
 
-        var dataByDevice = latestData.ToDictionary(d => d.DeviceId);
+        var pcsEntries = await _context.DevicePcsData
+            .Where(dd => deviceIds.Contains(dd.DeviceId))
+            .GroupBy(dd => new { dd.DeviceId, dd.Kind })
+            .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
+            .ToListAsync(cancellationToken);
+
+        // Build per-device payloadsByKind dictionary
+        var telemetryByDevice = new Dictionary<Guid, Dictionary<string, JsonElement?>>();
+        foreach (var entry in batteryEntries)
+        {
+            if (!telemetryByDevice.TryGetValue(entry.DeviceId, out var kindMap))
+            {
+                kindMap = new Dictionary<string, JsonElement?>();
+                telemetryByDevice[entry.DeviceId] = kindMap;
+            }
+            if (entry.Kind != null)
+                kindMap[entry.Kind] = PayloadDeserializer.GetElement(entry.Payload);
+        }
+        foreach (var entry in pcsEntries)
+        {
+            if (!telemetryByDevice.TryGetValue(entry.DeviceId, out var kindMap))
+            {
+                kindMap = new Dictionary<string, JsonElement?>();
+                telemetryByDevice[entry.DeviceId] = kindMap;
+            }
+            if (entry.Kind != null)
+                kindMap[entry.Kind] = PayloadDeserializer.GetElement(entry.Payload);
+        }
 
         // Load active alarm counts per device (includes descendant devices)
         var allDescendantIds = await _context.Devices
@@ -73,37 +114,52 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
             rootAlarmCounts[device.Id] = rtuDeviceIds.Sum(id => alarmCounts.GetValueOrDefault(id, 0));
         }
 
+        // Batch-resolve device statuses from active alarms
+        var statuses = await _statusService.GetStatusBatchAsync(deviceIds, cancellationToken);
+
         var units = batteryDevices.Select(device =>
         {
-            dataByDevice.TryGetValue(device.Id, out var data);
-            var payload = data != null
-                ? PayloadDeserializer.GetElement(data.Payload)
+            var payloadsByKind = telemetryByDevice.GetValueOrDefault(device.Id)
+                ?? new Dictionary<string, JsonElement?>();
+
+            // Fallback payload for legacy extraction (ContainerBatteryState)
+            var payload = payloadsByKind.GetValueOrDefault("ContainerBatteryState");
+
+            // Build resolver from template's ParameterMapTemplate (if present)
+            var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);
+            var metadata = PayloadDeserializer.GetElement(device.Metadata);
+            var resolver = parameterMap.Count > 0 && payloadsByKind.Count > 0
+                ? new ParameterResolver(parameterMap, payloadsByKind, metadata)
                 : null;
 
-            var stateStr = payload.HasValue
-                ? PayloadDeserializer.ExtractValue(payload.Value, "state") as string
-                : null;
+            var stateStr = resolver?.ResolveString(ParameterKeys.OperatingMode)
+                ?? (payload.HasValue ? PayloadDeserializer.ExtractValue(payload.Value, "state") as string : null);
 
             return new BessUnitListItemDto
             {
                 Id = device.Id,
                 Name = device.Name,
-                Status = StatusBadgeDto.FromStatus(device.Status),
+                Status = StatusBadgeDto.FromStatus(statuses.GetValueOrDefault(device.Id, "normal")),
                 OperatingMode = StatusBadgeDto.FromOperatingMode(stateStr),
-                Soc = ExtractDouble(payload, "socPercent", "stateOfCharge", "soc"),
-                Soh = ExtractDouble(payload, "sohPercent", "stateOfHealth", "soh"),
-                Power = ExtractDouble(payload, "instantCurrentA") is double current
-                        && ExtractDouble(payload, "totalVoltageV") is double voltage
-                    ? Math.Round(voltage * current / 1000.0, 1)
-                    : ExtractDouble(payload, "dcPower.power", "power"),
-                CapacityKwh = ExtractDouble(payload, "availableEnergyKwh", "capacityKwh", "ratedEnergyKwh"),
+                Soc = resolver?.ResolveNumber(ParameterKeys.Soc)
+                    ?? ExtractDouble(payload, "socPercent", "stateOfCharge", "soc"),
+                Soh = resolver?.ResolveNumber(ParameterKeys.Soh)
+                    ?? ExtractDouble(payload, "sohPercent", "stateOfHealth", "soh"),
+                Power = resolver?.ResolveNumber(ParameterKeys.Power)
+                    ?? (ExtractDouble(payload, "instantCurrentA") is double current
+                            && ExtractDouble(payload, "totalVoltageV") is double voltage
+                        ? Math.Round(voltage * current / 1000.0, 1)
+                        : ExtractDouble(payload, "dcPower.power", "power")),
+                CapacityKwh = resolver?.ResolveNumber(ParameterKeys.AvailableEnergy)
+                    ?? ExtractDouble(payload, "availableEnergyKwh", "capacityKwh", "ratedEnergyKwh"),
                 ActiveAlarmCount = rootAlarmCounts.GetValueOrDefault(device.Id, 0),
                 Brand = device.Manufacturer,
                 Model = device.Model,
                 SerialNumber = device.SerialNumber,
                 FacilityName = device.Rtu?.Facility?.Name,
                 FacilityId = device.Rtu!.FacilityId,
-                TemperatureC = ExtractDouble(payload, "ambientTempC", "batteryTemperature"),
+                TemperatureC = resolver?.ResolveNumber(ParameterKeys.AmbientTemp)
+                    ?? ExtractDouble(payload, "ambientTempC", "batteryTemperature"),
                 LastSeenUtc = device.LastSeenUtc
             };
         }).ToList();

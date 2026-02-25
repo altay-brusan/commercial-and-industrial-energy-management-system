@@ -5,6 +5,7 @@ using Backend.Application.Devices.Queries;
 using Backend.Application.Common.Models;
 using Backend.Application.Devices.Queries.GetDeviceList;
 using Backend.Application.Devices.Queries.GetDeviceTree;
+using Backend.Application.Devices.Queries.GetDeviceStatus;
 using Backend.Application.Devices.Commands;
 using Backend.Application.Devices.Commands.RegisterDeviceComposite;
 
@@ -19,6 +20,7 @@ public class Devices : EndpointGroupBase
             .MapGet(GetDevice, "{id}")
             .MapGet(GetDevicesWithPagination)
             .MapGet(GetDeviceTree, "{id}/Tree")
+            .MapGet(GetDeviceStatus, "{id}/Status")
             .MapPost(CreateDevice)
             .MapPost(RegisterComposite, "RegisterComposite");
     }
@@ -38,6 +40,12 @@ public class Devices : EndpointGroupBase
     public async Task<Ok<DeviceTreeNodeDto>> GetDeviceTree(ISender sender, Guid id)
     {
         var result = await sender.Send(new GetDeviceTreeQuery { DeviceId = id });
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<DeviceStatusDto>> GetDeviceStatus(ISender sender, Guid id)
+    {
+        var result = await sender.Send(new GetDeviceStatusQuery { DeviceId = id });
         return TypedResults.Ok(result);
     }
 

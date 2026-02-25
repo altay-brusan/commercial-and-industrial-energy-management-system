@@ -6,6 +6,48 @@ using Backend.Application.Common.Services;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessSettings;
 
+// TODO: Rework settings storage and this endpoint.
+//
+// CURRENT STATE:
+// Settings values are read from Device.Metadata (a general-purpose JSONB column).
+// Most values come back as null because Metadata doesn't contain setting keys like
+// tempAlarmThreshold, socLowAlarm, chargeStopSoc, firmwareVersion, balancingEnabled, etc.
+// There is no dedicated settings storage and no update command to write settings back.
+//
+// PROBLEMS:
+// 1. NO DEDICATED STORAGE: Device.Metadata mixes device identity info (protocol, firmware)
+//    with user-editable configuration (alarm thresholds, operating mode, balancing).
+//    There is no DeviceSettings table or column — settings have nowhere to persist.
+//
+// 2. NO DEFAULT VALUES: When a setting has no stored value, it returns null. The template
+//    (SpecificationsTemplate) defines which settings fields exist but not their default
+//    values. A new device should inherit sensible defaults from its template.
+//
+// 3. NO UPDATE COMMAND: There is no UpdateBessSettings command. The frontend has editable
+//    fields but no way to save changes. Need a command that validates field types/ranges
+//    and persists to the settings storage.
+//
+// 4. NO WRITE-BACK TO DEVICE: For settings like operatingMode or chargeStopSoc, the
+//    actual device (RTU/edge) needs to receive the new value via Modbus/MQTT command.
+//    The update flow should be: API → DB → MQTT publish → device confirms → update status.
+//
+// PROPOSED SOLUTION:
+// 1. Add a Device.Settings JSONB column (or a DeviceSettings table with DeviceId FK)
+//    to store per-device configuration key-value pairs separately from Metadata.
+//
+// 2. Define default setting values in SpecificationsTemplate under a "settingsDefaults"
+//    section. When reading, merge: template defaults ← device-specific overrides.
+//    Example in template: { "settingsDefaults": { "tempAlarmThreshold": 45, "socLowAlarm": 10 } }
+//
+// 3. Create UpdateBessSettings command that:
+//    - Validates keys exist in the template's settings schema
+//    - Validates value types and ranges (e.g. SoC between 0-100)
+//    - Writes to Device.Settings
+//    - Optionally publishes MQTT command for real-time device config push
+//
+// 4. Populate Metadata with read-only device info (protocol, firmwareVersion, modbusAddress)
+//    during device registration or from telemetry, keeping it separate from editable settings.
+
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.BessView)]
 public record GetBessSettingsQuery : IRequest<SummaryResponseDto>
@@ -26,12 +68,13 @@ public class GetBessSettingsQueryHandler : IRequestHandler<GetBessSettingsQuery,
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
 
         // Check if Specifications defines custom settings sections
-        var specs = PayloadDeserializer.GetElement(device.Specifications);
+        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
         if (specs.HasValue && specs.Value.TryGetProperty("tabs", out var tabs) &&
             tabs.TryGetProperty("settings", out var settingsTab) &&
             settingsTab.TryGetProperty("sections", out var sectionsElement) &&

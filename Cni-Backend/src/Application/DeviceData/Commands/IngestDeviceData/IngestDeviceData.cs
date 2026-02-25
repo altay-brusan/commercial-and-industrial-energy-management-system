@@ -22,6 +22,7 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
     private readonly IApplicationDbContext _context;
     private readonly IMemoryCache _cache;
     private readonly ILogger<IngestDeviceDataCommandHandler> _logger;
+    private readonly AlarmProcessingService _alarmProcessor;
 
     private static readonly MemoryCacheEntryOptions CacheOptions = new()
     {
@@ -31,11 +32,13 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
     public IngestDeviceDataCommandHandler(
         IApplicationDbContext context,
         IMemoryCache cache,
-        ILogger<IngestDeviceDataCommandHandler> logger)
+        ILogger<IngestDeviceDataCommandHandler> logger,
+        ILoggerFactory loggerFactory)
     {
         _context = context;
         _cache = cache;
         _logger = logger;
+        _alarmProcessor = new AlarmProcessingService(cache, loggerFactory.CreateLogger<AlarmProcessingService>());
     }
 
     public async Task<bool> Handle(IngestDeviceDataCommand request, CancellationToken cancellationToken)
@@ -128,8 +131,21 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
         rtu.LastSeenUtc = now;
 
         var device = await _context.Devices.IgnoreQueryFilters()
+            .Include(d => d.DeviceType)
             .FirstAsync(d => d.Id == deviceId.Value, cancellationToken);
         device.LastSeenUtc = now;
+
+        // Process alarm flags from the payload (creates/recovers DeviceAlarm records)
+        await _alarmProcessor.ProcessAsync(
+            _context,
+            deviceId.Value,
+            device.DeviceTypeId,
+            device.Manufacturer,
+            device.Model,
+            request.Kind,
+            request.Payload,
+            deviceLocalTime,
+            cancellationToken);
 
         await _context.SaveChangesAsync(cancellationToken);
 

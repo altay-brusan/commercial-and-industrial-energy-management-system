@@ -409,25 +409,26 @@ public class ApplicationDbContextInitializer
 
         var deviceTypes = new List<DeviceType>
         {
-            new DeviceType { Name = "Solar", Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.Solar, Created = DateTime.UtcNow },
             new DeviceType { Name = "Generator", Created = DateTime.UtcNow },
             new DeviceType { Name = "Wind Turbine", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Inverter", Created = DateTime.UtcNow },
-            new DeviceType { Name = "PCS", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Smart Meter", Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorage, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.Inverter, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.Pcs, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.SmartMeter, Created = DateTime.UtcNow },
             new DeviceType { Name = "Grid", Created = DateTime.UtcNow },
             new DeviceType { Name = "DC Bus", Created = DateTime.UtcNow },
             new DeviceType { Name = "Transformer", Created = DateTime.UtcNow },
             new DeviceType { Name = "Load", Created = DateTime.UtcNow },
             new DeviceType { Name = "EV Charger", Created = DateTime.UtcNow },
             new DeviceType { Name = "Heat Pump", Created = DateTime.UtcNow },
-            // Battery hierarchy sub-types
-            new DeviceType { Name = "Battery.Rack", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery.Pack", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery.Module", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery.Controller", Created = DateTime.UtcNow },
-            new DeviceType { Name = "Battery.TMS", Created = DateTime.UtcNow }
+            // EnergyStorage hierarchy sub-types
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageBattery, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageRack, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStoragePack, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageModule, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageController, Created = DateTime.UtcNow },
+            new DeviceType { Name = DeviceTypeNames.EnergyStorageTMS, Created = DateTime.UtcNow }
         };
         if (!_context.DeviceTypes.Any())
         {
@@ -479,7 +480,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 RtuId = rtuId,
-                DeviceTypeId = dtLookup["Battery"],
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
                 Name = "BESS_001",
                 Model = "Tesla Megapack",
                 SerialNumber = "BESS-SN-001",
@@ -489,7 +490,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 RtuId = rtuId,
-                DeviceTypeId = dtLookup["Solar"],
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
                 Name = "PV_001",
                 Model = "SunPower Maxeon 6",
                 SerialNumber = "PV-SN-001",
@@ -499,7 +500,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 RtuId = rtuId,
-                DeviceTypeId = dtLookup["Inverter"],
+                DeviceTypeId = dtLookup[DeviceTypeNames.Inverter],
                 Name = "INVERTER_001",
                 Model = "SMA Sunny Tripower",
                 SerialNumber = "INV-SN-001",
@@ -509,7 +510,7 @@ public class ApplicationDbContextInitializer
             new Device
             {
                 RtuId = rtuId,
-                DeviceTypeId = dtLookup["Smart Meter"],
+                DeviceTypeId = dtLookup[DeviceTypeNames.SmartMeter],
                 Name = "SM_001",
                 Model = "Schneider PM5560",
                 SerialNumber = "SM-SN-001",
@@ -546,7 +547,7 @@ public class ApplicationDbContextInitializer
         // Seed DeviceSpecificationTemplate for Tesla Megapack
         if (!_context.DeviceSpecificationTemplates.Any())
         {
-            var batteryTypeId = dtLookup.GetValueOrDefault("Battery");
+            var batteryTypeId = dtLookup.GetValueOrDefault(DeviceTypeNames.EnergyStorage);
             if (batteryTypeId != Guid.Empty)
             {
                 var teslaMegapackTemplate = new DeviceSpecificationTemplate
@@ -616,34 +617,165 @@ public class ApplicationDbContextInitializer
                       ]
                     }
                     """,
+                    ParameterMapTemplate = """
+                    {
+                      "version": 1,
+                      "parameters": {
+                        "soc": {
+                          "type": "number", "unit": "%",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["socPercent", "stateOfCharge", "soc"] }
+                        },
+                        "soh": {
+                          "type": "number", "unit": "%",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["sohPercent", "stateOfHealth"] }
+                        },
+                        "voltage": {
+                          "type": "number", "unit": "V",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["totalVoltageV"] }
+                        },
+                        "current": {
+                          "type": "number", "unit": "A",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["instantCurrentA"] }
+                        },
+                        "power": {
+                          "type": "number", "unit": "kW",
+                          "formula": {
+                            "expression": "round(multiply(voltage, current, 0.001), 1)",
+                            "inputs": { "voltage": {"$ref":"voltage"}, "current": {"$ref":"current"} }
+                          },
+                          "fallback": { "kind": "ContainerBatteryState", "paths": ["dcPower.power", "power"] }
+                        },
+                        "powerDirection": {
+                          "type": "string",
+                          "formula": {
+                            "expression": "cond(lt(current, 0), 'discharging', cond(gt(current, 0), 'charging', 'idle'))",
+                            "inputs": { "current": {"$ref":"current"} }
+                          }
+                        },
+                        "tempMin": {
+                          "type": "number", "unit": "C",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["minCellTempC"] }
+                        },
+                        "tempMax": {
+                          "type": "number", "unit": "C",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["maxCellTempC"] }
+                        },
+                        "tempAvg": {
+                          "type": "number", "unit": "C",
+                          "formula": {
+                            "expression": "round(avg(tempMin, tempMax), 1)",
+                            "inputs": { "tempMin": {"$ref":"tempMin"}, "tempMax": {"$ref":"tempMax"} }
+                          }
+                        },
+                        "cellVoltageMax": {
+                          "type": "number", "unit": "mV",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["maxCellVoltageMv"] }
+                        },
+                        "cellVoltageMin": {
+                          "type": "number", "unit": "mV",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["minCellVoltageMv"] }
+                        },
+                        "voltageSpread": {
+                          "type": "number", "unit": "mV",
+                          "formula": {
+                            "expression": "subtract(cellVoltageMax, cellVoltageMin)",
+                            "inputs": { "cellVoltageMax": {"$ref":"cellVoltageMax"}, "cellVoltageMin": {"$ref":"cellVoltageMin"} }
+                          }
+                        },
+                        "pcsActivePower": {
+                          "type": "number", "unit": "kW",
+                          "source": { "kind": "PcsPowerState", "paths": ["pcs_outActPwrKw"] }
+                        },
+                        "pcsDcPower": {
+                          "type": "number", "unit": "kW",
+                          "source": { "kind": "PcsDcMeasState", "paths": ["pcs_dcPwrKw"] }
+                        },
+                        "pcsGridFreq": {
+                          "type": "number", "unit": "Hz",
+                          "source": { "kind": "PcsStatusState", "paths": ["pcs_gridFreqHz"] }
+                        },
+                        "cycleCount": {
+                          "type": "number",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["cycleCount"] }
+                        },
+                        "cycleLifePct": {
+                          "type": "number", "unit": "%",
+                          "formula": {
+                            "expression": "round(multiply(divide(cycles, designed), 100), 1)",
+                            "inputs": {
+                              "cycles": {"$ref":"cycleCount"},
+                              "designed": {"source": {"origin":"metadata", "paths":["designedCycleLife"], "default":6000}}
+                            }
+                          }
+                        },
+                        "operatingMode": {
+                          "type": "string",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["state"] }
+                        },
+                        "remainingEnergy": {
+                          "type": "number", "unit": "kWh",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["remainingEnergyKwh"] }
+                        },
+                        "availableEnergy": {
+                          "type": "number", "unit": "kWh",
+                          "source": { "kind": "ContainerBatteryState", "paths": ["availableEnergyKwh"] }
+                        },
+                        "chillerCoolantOut": {
+                          "type": "number", "unit": "C",
+                          "source": { "kind": "ChillerState", "paths": ["outletCoolantTempC"] }
+                        },
+                        "chillerCoolantIn": {
+                          "type": "number", "unit": "C",
+                          "source": { "kind": "ChillerState", "paths": ["inletCoolantTempC"] }
+                        },
+                        "compressorRunning": {
+                          "type": "boolean",
+                          "source": { "kind": "ChillerState", "paths": ["compressorStatus"] }
+                        },
+                        "ambientTemp": {
+                          "type": "number", "unit": "C",
+                          "source": { "kind": "ChillerState", "paths": ["ambientTempC"] }
+                        }
+                      }
+                    }
+                    """,
                     MetadataTemplate = """
                     {
                       "ratedCapacityKwh": 3916,
                       "ratedPowerKw": 1550,
                       "nominalVoltage": 1500,
-                      "cellChemistry": "LFP"
+                      "cellChemistry": "LFP",
+                      "cellsPerModule": 14
                     }
                     """,
                     HierarchyTemplate = """
                     {
                       "children": [
                         {
-                          "key": "rack",
-                          "deviceTypeName": "Battery.Rack",
-                          "count": 4,
-                          "namePattern": "Rack {index}",
+                          "key": "battery",
+                          "deviceTypeName": "EnergyStorage.Battery",
+                          "count": 1,
+                          "namePattern": "Battery",
                           "children": [
                             {
-                              "key": "pack",
-                              "deviceTypeName": "Battery.Pack",
+                              "key": "rack",
+                              "deviceTypeName": "EnergyStorage.Rack",
                               "count": 4,
-                              "namePattern": "Pack {index}",
+                              "namePattern": "Rack {index}",
                               "children": [
                                 {
-                                  "key": "module",
-                                  "deviceTypeName": "Battery.Module",
-                                  "count": 8,
-                                  "namePattern": "Module {index}"
+                                  "key": "pack",
+                                  "deviceTypeName": "EnergyStorage.Pack",
+                                  "count": 4,
+                                  "namePattern": "Pack {index}",
+                                  "children": [
+                                    {
+                                      "key": "module",
+                                      "deviceTypeName": "EnergyStorage.Module",
+                                      "count": 8,
+                                      "namePattern": "Module {index}"
+                                    }
+                                  ]
                                 }
                               ]
                             }
@@ -651,13 +783,13 @@ public class ApplicationDbContextInitializer
                         },
                         {
                           "key": "esc",
-                          "deviceTypeName": "Battery.Controller",
+                          "deviceTypeName": "EnergyStorage.Controller",
                           "count": 1,
                           "namePattern": "ESC-{index}"
                         },
                         {
                           "key": "hvac",
-                          "deviceTypeName": "Battery.TMS",
+                          "deviceTypeName": "EnergyStorage.TMS",
                           "count": 2,
                           "namePattern": "HVAC-{index}"
                         }
@@ -733,6 +865,23 @@ public class ApplicationDbContextInitializer
 
         #endregion
 
+        #region DeviceAlarmTypes
+
+        // Seed DeviceAlarmTypes for Demo BESS model (global entity — no tenant filter)
+        if (!_context.DeviceAlarmTypes.Any())
+        {
+            var esTypeId = dtLookup.GetValueOrDefault(DeviceTypeNames.EnergyStorage);
+            if (esTypeId != Guid.Empty)
+            {
+                var alarmTypes = BuildDemoBessAlarmTypes(esTypeId);
+                _context.DeviceAlarmTypes.AddRange(alarmTypes);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Seeded {Count} DeviceAlarmTypes for DEMO-BG", alarmTypes.Count);
+            }
+        }
+
+        #endregion
+
         #region Tariffs
 
         // Seed default tariffs
@@ -793,5 +942,126 @@ public class ApplicationDbContextInitializer
         }
 
         #endregion
+    }
+
+    private static List<DeviceAlarmType> BuildDemoBessAlarmTypes(Guid energyStorageTypeId)
+    {
+        var now = DateTime.UtcNow;
+
+        DeviceAlarmType T(string code, string faultKey, string kind, string name, string category, string severity, string source, string? desc = null)
+            => new()
+            {
+                DeviceTypeId = energyStorageTypeId,
+                Model = "DEMO-BG",
+                Manufacturer = "Demo",
+                Code = code,
+                FaultKey = faultKey,
+                Kind = kind,
+                Name = name,
+                Description = desc,
+                Category = category,
+                Severity = severity,
+                Source = source,
+                IsEnabled = true,
+                Created = now
+            };
+
+        return new List<DeviceAlarmType>
+        {
+            // ContainerBatteryFaultState — BMS faults
+            T("BATT_CELL_OV_WARN", "faultCellOverVoltageWarning", "ContainerBatteryFaultState", "Cell Over Voltage Warning", "battery", "Warning", "BMS"),
+            T("BATT_CELL_UV_WARN", "faultCellUnderVoltageWarning", "ContainerBatteryFaultState", "Cell Under Voltage Warning", "battery", "Warning", "BMS"),
+            T("BATT_CELL_OV_FAULT", "faultCellOverVoltageFault", "ContainerBatteryFaultState", "Cell Over Voltage Fault", "battery", "Critical", "BMS"),
+            T("BATT_CELL_UV_FAULT", "faultCellUnderVoltageFault", "ContainerBatteryFaultState", "Cell Under Voltage Fault", "battery", "Critical", "BMS"),
+            T("BATT_PACK_OC", "faultPackOC", "ContainerBatteryFaultState", "Pack Over Current", "battery", "Critical", "BMS"),
+            T("BATT_PACK_OV", "faultPackOV", "ContainerBatteryFaultState", "Pack Over Voltage", "battery", "Major", "BMS"),
+            T("BATT_PACK_UV", "faultPackUV", "ContainerBatteryFaultState", "Pack Under Voltage", "battery", "Major", "BMS"),
+            T("BATT_OT_WARN", "faultOverTempWarning", "ContainerBatteryFaultState", "Over Temperature Warning", "battery", "Warning", "BMS"),
+            T("BATT_OT_FAULT", "faultOverTempFault", "ContainerBatteryFaultState", "Over Temperature Fault", "battery", "Critical", "BMS"),
+            T("BATT_UT_WARN", "faultUnderTempWarning", "ContainerBatteryFaultState", "Under Temperature Warning", "battery", "Warning", "BMS"),
+            T("BATT_UT_FAULT", "faultUnderTempFault", "ContainerBatteryFaultState", "Under Temperature Fault", "battery", "Critical", "BMS"),
+            T("BATT_INSUL_WARN", "faultInsulationWarning", "ContainerBatteryFaultState", "Insulation Warning", "battery", "Warning", "BMS"),
+            T("BATT_INSUL_FAULT", "faultInsulationFault", "ContainerBatteryFaultState", "Insulation Fault", "battery", "Critical", "BMS"),
+            T("BATT_VDIFF_WARN", "faultVoltageDiffWarning", "ContainerBatteryFaultState", "Voltage Difference Warning", "battery", "Warning", "BMS"),
+            T("BATT_VDIFF_FAULT", "faultVoltageDiffFault", "ContainerBatteryFaultState", "Voltage Difference Fault", "battery", "Major", "BMS"),
+            T("BATT_TDIFF_WARN", "faultTempDiffWarning", "ContainerBatteryFaultState", "Temperature Difference Warning", "battery", "Warning", "BMS"),
+            T("BATT_TDIFF_FAULT", "faultTempDiffFault", "ContainerBatteryFaultState", "Temperature Difference Fault", "battery", "Major", "BMS"),
+            T("BATT_SOC_LOW_WARN", "faultSocLowWarning", "ContainerBatteryFaultState", "SOC Low Warning", "battery", "Warning", "BMS"),
+            T("BATT_SOC_LOW_FAULT", "faultSocLowFault", "ContainerBatteryFaultState", "SOC Low Fault", "battery", "Major", "BMS"),
+            T("BATT_SOC_HIGH_WARN", "faultSocHighWarning", "ContainerBatteryFaultState", "SOC High Warning", "battery", "Warning", "BMS"),
+            T("BATT_BMS_COMM", "faultBmsCommFailure", "ContainerBatteryFaultState", "BMS Communication Failure", "battery", "Critical", "BMS"),
+            T("BATT_CONTACTOR", "faultContactorFailure", "ContainerBatteryFaultState", "Contactor Failure", "battery", "Critical", "BMS"),
+            T("BATT_FUSE", "faultFuseBlown", "ContainerBatteryFaultState", "Fuse Blown", "battery", "Critical", "BMS"),
+            T("BATT_CHG_OC", "faultChargeOverCurrent", "ContainerBatteryFaultState", "Charge Over Current", "battery", "Major", "BMS"),
+            T("BATT_DISCHG_OC", "faultDischargeOverCurrent", "ContainerBatteryFaultState", "Discharge Over Current", "battery", "Major", "BMS"),
+            T("BATT_EMRG_STOP", "faultEmergencyStop", "ContainerBatteryFaultState", "Emergency Stop", "battery", "Critical", "BMS"),
+            T("BATT_PRECHARGE", "faultPrechargeFailure", "ContainerBatteryFaultState", "Precharge Failure", "battery", "Major", "BMS"),
+
+            // ChillerAlarmState — TMS alarms
+            T("TMS_COOLANT_SHORT", "systemCoolantShortage", "ChillerAlarmState", "System Coolant Shortage", "chiller", "Major", "TMS"),
+            T("TMS_VFD_OC", "compressorVfdOcAlarm", "ChillerAlarmState", "Compressor VFD Over Current", "chiller", "Major", "TMS"),
+            T("TMS_PWR_OV", "powerSupplyOV", "ChillerAlarmState", "Power Supply Over Voltage", "chiller", "Warning", "TMS"),
+            T("TMS_PWR_UV", "powerSupplyUV", "ChillerAlarmState", "Power Supply Under Voltage", "chiller", "Warning", "TMS"),
+            T("TMS_COMP_OT", "compressorOverTemp", "ChillerAlarmState", "Compressor Over Temperature", "chiller", "Major", "TMS"),
+            T("TMS_COMP_HP", "compressorHighPressure", "ChillerAlarmState", "Compressor High Pressure", "chiller", "Major", "TMS"),
+            T("TMS_COMP_LP", "compressorLowPressure", "ChillerAlarmState", "Compressor Low Pressure", "chiller", "Warning", "TMS"),
+            T("TMS_PUMP_FAULT", "coolantPumpFault", "ChillerAlarmState", "Coolant Pump Fault", "chiller", "Critical", "TMS"),
+            T("TMS_FAN_FAULT", "condenserFanFault", "ChillerAlarmState", "Condenser Fan Fault", "chiller", "Major", "TMS"),
+            T("TMS_FLOW_LOW", "coolantFlowLow", "ChillerAlarmState", "Coolant Flow Low", "chiller", "Warning", "TMS"),
+            T("TMS_OUTLET_OT", "outletOverTemp", "ChillerAlarmState", "Outlet Over Temperature", "chiller", "Warning", "TMS"),
+            T("TMS_OUTLET_UT", "outletUnderTemp", "ChillerAlarmState", "Outlet Under Temperature", "chiller", "Warning", "TMS"),
+            T("TMS_COMM", "chillerCommFailure", "ChillerAlarmState", "Chiller Communication Failure", "chiller", "Major", "TMS"),
+            T("TMS_VFD_COMM", "compressorVfdCommFault", "ChillerAlarmState", "VFD Communication Fault", "chiller", "Major", "TMS"),
+            T("TMS_HEATER", "heaterFault", "ChillerAlarmState", "Heater Fault", "chiller", "Warning", "TMS"),
+
+            // PcsFaultGrp1State — PCS hardware & grid faults
+            T("PCS_HW_EPO", "pcs_hwEpoFault", "PcsFaultGrp1State", "Hardware EPO Fault", "pcs", "Critical", "PCS"),
+            T("PCS_GRID_A_OV", "pcs_gridAOvFault", "PcsFaultGrp1State", "Grid Phase A Over Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_B_OV", "pcs_gridBOvFault", "PcsFaultGrp1State", "Grid Phase B Over Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_C_OV", "pcs_gridCOvFault", "PcsFaultGrp1State", "Grid Phase C Over Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_A_UV", "pcs_gridAUvFault", "PcsFaultGrp1State", "Grid Phase A Under Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_B_UV", "pcs_gridBUvFault", "PcsFaultGrp1State", "Grid Phase B Under Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_C_UV", "pcs_gridCUvFault", "PcsFaultGrp1State", "Grid Phase C Under Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_FREQ_HI", "pcs_gridFreqHighFault", "PcsFaultGrp1State", "Grid Frequency High", "pcs", "Major", "PCS"),
+            T("PCS_GRID_FREQ_LO", "pcs_gridFreqLowFault", "PcsFaultGrp1State", "Grid Frequency Low", "pcs", "Major", "PCS"),
+            T("PCS_DC_OV", "pcs_dcBusOvFault", "PcsFaultGrp1State", "DC Bus Over Voltage", "pcs", "Critical", "PCS"),
+            T("PCS_DC_UV", "pcs_dcBusUvFault", "PcsFaultGrp1State", "DC Bus Under Voltage", "pcs", "Major", "PCS"),
+            T("PCS_IGBT_OT", "pcs_igbtOverTempFault", "PcsFaultGrp1State", "IGBT Over Temperature", "pcs", "Critical", "PCS"),
+            T("PCS_AC_OC_A", "pcs_acOverCurrentAFault", "PcsFaultGrp1State", "AC Over Current Phase A", "pcs", "Major", "PCS"),
+            T("PCS_AC_OC_B", "pcs_acOverCurrentBFault", "PcsFaultGrp1State", "AC Over Current Phase B", "pcs", "Major", "PCS"),
+            T("PCS_AC_OC_C", "pcs_acOverCurrentCFault", "PcsFaultGrp1State", "AC Over Current Phase C", "pcs", "Major", "PCS"),
+            T("PCS_DC_OC", "pcs_dcOverCurrentFault", "PcsFaultGrp1State", "DC Over Current", "pcs", "Critical", "PCS"),
+            T("PCS_AMBIENT_OT", "pcs_ambientOverTempFault", "PcsFaultGrp1State", "Ambient Over Temperature", "pcs", "Warning", "PCS"),
+            T("PCS_INDUCT_OT", "pcs_inductanceOverTempFault", "PcsFaultGrp1State", "Inductance Over Temperature", "pcs", "Major", "PCS"),
+
+            // PcsFaultGrp2State — PCS protection & relay faults
+            T("PCS_PREREL_CLOSE", "pcs_preRelCloseFail", "PcsFaultGrp2State", "Pre-charge Relay Close Failure", "pcs", "Critical", "PCS"),
+            T("PCS_PREREL_OPEN", "pcs_preRelOpenFail", "PcsFaultGrp2State", "Pre-charge Relay Open Failure", "pcs", "Critical", "PCS"),
+            T("PCS_MAINREL_CLOSE", "pcs_mainRelCloseFail", "PcsFaultGrp2State", "Main Relay Close Failure", "pcs", "Critical", "PCS"),
+            T("PCS_MAINREL_OPEN", "pcs_mainRelOpenFail", "PcsFaultGrp2State", "Main Relay Open Failure", "pcs", "Critical", "PCS"),
+            T("PCS_ACBKR_CLOSE", "pcs_acBreakerCloseFail", "PcsFaultGrp2State", "AC Breaker Close Failure", "pcs", "Critical", "PCS"),
+            T("PCS_ACBKR_OPEN", "pcs_acBreakerOpenFail", "PcsFaultGrp2State", "AC Breaker Open Failure", "pcs", "Critical", "PCS"),
+            T("PCS_GROUND_FAULT", "pcs_groundFault", "PcsFaultGrp2State", "Ground Fault", "pcs", "Critical", "PCS"),
+            T("PCS_FAN_FAULT", "pcs_coolingFanFault", "PcsFaultGrp2State", "Cooling Fan Fault", "pcs", "Major", "PCS"),
+            T("PCS_FUSE_FAULT", "pcs_dcFuseFault", "PcsFaultGrp2State", "DC Fuse Fault", "pcs", "Critical", "PCS"),
+            T("PCS_SPD_FAULT", "pcs_surgeSpdFault", "PcsFaultGrp2State", "Surge Protector Fault", "pcs", "Major", "PCS"),
+            T("PCS_PHASE_SEQ", "pcs_phaseSeqFault", "PcsFaultGrp2State", "Phase Sequence Fault", "pcs", "Major", "PCS"),
+            T("PCS_SYNC_FAIL", "pcs_gridSyncFail", "PcsFaultGrp2State", "Grid Sync Failure", "pcs", "Major", "PCS"),
+            T("PCS_SW_EPO", "pcs_swEpoFault", "PcsFaultGrp2State", "Software EPO Fault", "pcs", "Critical", "PCS"),
+            T("PCS_COMM_BMS", "pcs_bmsCommFault", "PcsFaultGrp2State", "BMS Communication Fault", "pcs", "Major", "PCS"),
+            T("PCS_COMM_EMS", "pcs_emsCommFault", "PcsFaultGrp2State", "EMS Communication Fault", "pcs", "Warning", "PCS"),
+
+            // PcsTimeoutsState — PCS protection timeouts
+            T("PCS_DC_OC_TOUT", "pcs_dcOcProtTout", "PcsTimeoutsState", "DC Over Current Protection Timeout", "pcs", "Critical", "PCS"),
+            T("PCS_AC_OC_TOUT", "pcs_acOcProtTout", "PcsTimeoutsState", "AC Over Current Protection Timeout", "pcs", "Critical", "PCS"),
+            T("PCS_DC_OV_TOUT", "pcs_dcOvProtTout", "PcsTimeoutsState", "DC Over Voltage Protection Timeout", "pcs", "Critical", "PCS"),
+            T("PCS_GRID_OV_TOUT", "pcs_gridOvProtTout", "PcsTimeoutsState", "Grid Over Voltage Protection Timeout", "pcs", "Critical", "PCS"),
+            T("PCS_GRID_UV_TOUT", "pcs_gridUvProtTout", "PcsTimeoutsState", "Grid Under Voltage Protection Timeout", "pcs", "Critical", "PCS"),
+            T("PCS_GRID_FREQ_TOUT", "pcs_gridFreqProtTout", "PcsTimeoutsState", "Grid Frequency Protection Timeout", "pcs", "Critical", "PCS"),
+            T("PCS_OT_PROT_TOUT", "pcs_overTempProtTout", "PcsTimeoutsState", "Over Temperature Protection Timeout", "pcs", "Critical", "PCS"),
+            T("PCS_PRECHARGE_TOUT", "pcs_prechargeTout", "PcsTimeoutsState", "Precharge Timeout", "pcs", "Major", "PCS"),
+            T("PCS_STARTUP_TOUT", "pcs_startupTout", "PcsTimeoutsState", "Startup Timeout", "pcs", "Major", "PCS"),
+            T("PCS_SHUTDOWN_TOUT", "pcs_shutdownTout", "PcsTimeoutsState", "Shutdown Timeout", "pcs", "Warning", "PCS"),
+        };
     }
 }

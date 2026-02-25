@@ -152,5 +152,12 @@ public static class DependencyInjection
 
         // Background job workers for Hangfire
         builder.Services.AddScoped<EnergyPriceFetchWorker>();
+
+        // MQTT subscriber for direct EMQX telemetry ingestion
+        builder.Services.Configure<MqttSettings>(configuration.GetSection("MqttSettings"));
+        if (!isTestEnvironment)
+        {
+            builder.Services.AddHostedService<MqttSubscriberService>();
+        }
     }
 }

@@ -8,6 +8,7 @@ public record DeviceSpecificationTemplateDto
     public string Model { get; init; } = string.Empty;
     public string? Manufacturer { get; init; }
     public string SpecificationsTemplate { get; init; } = "{}";
+    public string? ParameterMapTemplate { get; init; }
     public string MetadataTemplate { get; init; } = "{}";
     public string? HierarchyTemplate { get; init; }
     public bool IsDefault { get; init; }
