@@ -2,8 +2,8 @@ using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Pcs.Queries.GetPcsCurves;
 using Backend.Application.Pcs.Queries.GetPcsFaultFlags;
 using Backend.Application.Pcs.Queries.GetPcsGeneral;
+using Backend.Application.Pcs.Queries.GetPcsHeader;
 using Backend.Application.Pcs.Queries.GetPcsSchema;
-using Backend.Application.Pcs.Queries.GetPcsUnitDetail;
 using Backend.Application.Pcs.Queries.GetPcsUnits;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -19,7 +19,7 @@ public class Pcs : EndpointGroupBase
             .RequireAuthorization();
 
         group.MapGet("/Units", GetUnits);
-        group.MapGet("/Units/{unitId}", GetUnitDetail);
+        group.MapGet("/Units/Header/{unitId}", GetHeader);
         group.MapGet("/Units/{unitId}/General", GetGeneral);
         group.MapGet("/Units/{unitId}/FaultFlags", GetFaultFlags);
         group.MapGet("/Units/{unitId}/Curves", GetCurves);
@@ -33,10 +33,10 @@ public class Pcs : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<PcsUnitDetailDto>> GetUnitDetail(
+    public static async Task<Ok<PcsHeaderDto>> GetHeader(
         ISender sender, Guid unitId)
     {
-        var result = await sender.Send(new GetPcsUnitDetailQuery { UnitId = unitId });
+        var result = await sender.Send(new GetPcsHeaderQuery { UnitId = unitId });
         return TypedResults.Ok(result);
     }
 
