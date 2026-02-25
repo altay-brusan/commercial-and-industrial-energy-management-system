@@ -33,8 +33,13 @@ public abstract class ParameterKeys
 
     // PCS
     public const string PcsActivePower = "pcsActivePower";
+    public const string PcsReactivePower = "pcsReactivePower";
     public const string PcsDcPower = "pcsDcPower";
     public const string PcsGridFreq = "pcsGridFreq";
+    public const string PcsGridMode = "pcsGridMode";
+    public const string PcsIgbtTemp = "pcsIgbtTemp";
+    public const string PcsPowerFactor = "pcsPowerFactor";
+    public const string PcsEfficiency = "pcsEfficiency";
 
     // Chiller/TMS
     public const string ChillerCoolantOut = "chillerCoolantOut";
