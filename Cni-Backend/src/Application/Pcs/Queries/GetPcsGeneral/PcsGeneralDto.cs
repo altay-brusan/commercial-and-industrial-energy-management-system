@@ -1,8 +1,8 @@
 using Backend.Application.Common.Models.Monitoring;
 
-namespace Backend.Application.Pcs.Queries.GetPcsUnitDetail;
+namespace Backend.Application.Pcs.Queries.GetPcsGeneral;
 
-public record PcsUnitDetailDto
+public record PcsGeneralDto
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
@@ -12,14 +12,15 @@ public record PcsUnitDetailDto
     public Guid FacilityId { get; init; }
     public string? FacilityName { get; init; }
     public StatusBadgeDto Status { get; init; } = new();
+    public PcsGeneralLinkedBessDto? LinkedBessUnit { get; init; }
     public List<TabInfoDto> AvailableTabs { get; init; } = new();
-    public PcsLinkedBessDto? LinkedBessUnit { get; init; }
+    public int ActiveFaultCount { get; init; }
     public DateTimeOffset? LastSeenUtc { get; init; }
+    public List<DynamicSectionDto> Sections { get; init; } = new();
 }
 
-public record PcsLinkedBessDto
+public record PcsGeneralLinkedBessDto
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
-    public string? Status { get; init; }
 }

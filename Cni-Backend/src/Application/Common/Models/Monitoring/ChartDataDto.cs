@@ -12,8 +12,10 @@ public record ChartDefinitionDto
     public string Key { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
     public string Type { get; init; } = "line";
+    public bool? Optional { get; init; }
     public CurveXAxisDto XAxis { get; init; } = new();
     public List<CurveSeriesDto> Series { get; init; } = new();
+    public List<ChartReferenceLineDto>? ReferenceLines { get; init; }
     public List<Dictionary<string, object?>> Data { get; init; } = new();
 }
 

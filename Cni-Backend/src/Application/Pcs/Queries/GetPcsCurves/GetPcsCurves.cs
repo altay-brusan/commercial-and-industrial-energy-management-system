@@ -3,14 +3,9 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.Pcs.Queries.GetPcsCurves;
-
-// TODO: Review period/interval validation — the sampling interval should be validated
-// against the selected period to prevent nonsensical combinations (e.g. 1d interval on 1h period).
-// Consider deriving a default interval from the period when the client doesn't provide one,
-// and moving chart series definitions + source paths to the ParameterMapTemplate schema
-// so they are config-driven instead of hardcoded per device type.
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.PcsView)]
@@ -44,12 +39,10 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
 
     public async Task<ChartResponseDto> Handle(GetPcsCurvesQuery request, CancellationToken cancellationToken)
     {
-        var device = await _context.Devices
-            .Include(d => d.DeviceType)
-            .Include(d => d.SpecificationTemplate)
-            .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
-
-        Guard.Against.NotFound(request.UnitId, device);
+        _ = await _context.Devices
+            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new NotFoundException(request.UnitId.ToString(), "Device");
 
         var (start, end) = GetPeriodRange(request.Period);
         var intervalMinutes = request.Interval != null
@@ -62,11 +55,229 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
             .OrderBy(dd => dd.DeviceLocalTime)
             .ToListAsync(cancellationToken);
 
-        var sampled = SampleData(rawData, intervalMinutes);
-        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
-        var charts = BuildCharts(specs, sampled, timeFormat);
+        var buckets = BucketByInterval(rawData, intervalMinutes);
 
-        return new ChartResponseDto { Charts = charts };
+        return new ChartResponseDto { Charts = BuildCharts(buckets, timeFormat) };
+    }
+
+    // ── Time bucketing ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Groups raw PCS data rows into time buckets, merging payloads from all Kinds
+    /// within each bucket so a single data point has access to power, DC, AC, temp values.
+    /// </summary>
+    private static List<(DateTimeOffset Time, List<JsonElement> Payloads)> BucketByInterval(
+        List<Domain.Entities.DeviceData.DevicePcsData> rawData, int intervalMinutes)
+    {
+        if (rawData.Count == 0) return new();
+
+        var result = new List<(DateTimeOffset, List<JsonElement>)>();
+        var bucketStart = rawData[0].DeviceLocalTime;
+        var currentPayloads = new List<JsonElement>();
+
+        foreach (var row in rawData)
+        {
+            if ((row.DeviceLocalTime - bucketStart).TotalMinutes >= intervalMinutes && currentPayloads.Count > 0)
+            {
+                result.Add((bucketStart, currentPayloads));
+                currentPayloads = new List<JsonElement>();
+                bucketStart = row.DeviceLocalTime;
+            }
+
+            var el = PayloadDeserializer.GetElement(row.Payload);
+            if (el.HasValue)
+                currentPayloads.Add(el.Value);
+        }
+
+        if (currentPayloads.Count > 0)
+            result.Add((bucketStart, currentPayloads));
+
+        return result;
+    }
+
+    // ── Chart builders ───────────────────────────────────────────────────────
+
+    private static List<ChartDefinitionDto> BuildCharts(
+        List<(DateTimeOffset Time, List<JsonElement> Payloads)> buckets, string timeFormat)
+    {
+        return new List<ChartDefinitionDto>
+        {
+            BuildPowerChart(buckets, timeFormat),
+            BuildDcChart(buckets, timeFormat),
+            BuildPhaseCurrentsChart(buckets, timeFormat),
+            BuildFrequencyChart(buckets, timeFormat),
+            BuildTemperaturesChart(buckets, timeFormat),
+            BuildEfficiencyChart(buckets, timeFormat),
+        };
+    }
+
+    private static ChartDefinitionDto BuildPowerChart(
+        List<(DateTimeOffset Time, List<JsonElement> Payloads)> buckets, string timeFormat)
+    {
+        return new ChartDefinitionDto
+        {
+            Key = "powerProfile",
+            Title = "Active & Reactive Power",
+            Type = "area",
+            XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = timeFormat },
+            Series = new List<CurveSeriesDto>
+            {
+                new() { Key = "activePowerKw", Label = "Active Power", Unit = "kW", Color = "#8b5cf6", YAxis = "left", Type = "area" },
+                new() { Key = "reactivePowerKvar", Label = "Reactive Power", Unit = "kVar", Color = "#f97316", YAxis = "right", Type = "line" },
+            },
+            Data = buckets.Select(b => new Dictionary<string, object?>
+            {
+                ["time"] = b.Time.ToString(timeFormat),
+                ["activePowerKw"] = Extract(b.Payloads, "pcs_outActPwrKw"),
+                ["reactivePowerKvar"] = Extract(b.Payloads, "pcs_outReaPwrKvar"),
+            }).ToList()
+        };
+    }
+
+    private static ChartDefinitionDto BuildDcChart(
+        List<(DateTimeOffset Time, List<JsonElement> Payloads)> buckets, string timeFormat)
+    {
+        return new ChartDefinitionDto
+        {
+            Key = "dcProfile",
+            Title = "DC Voltage & Current",
+            Type = "line",
+            XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = timeFormat },
+            Series = new List<CurveSeriesDto>
+            {
+                new() { Key = "dcBusV", Label = "DC Bus Voltage", Unit = "V", Color = "#22c55e", YAxis = "left", Type = "line" },
+                new() { Key = "dcCurrentA", Label = "DC Current", Unit = "A", Color = "#f97316", YAxis = "right", Type = "line" },
+            },
+            Data = buckets.Select(b => new Dictionary<string, object?>
+            {
+                ["time"] = b.Time.ToString(timeFormat),
+                ["dcBusV"] = Extract(b.Payloads, "pcs_totalDcBusV"),
+                ["dcCurrentA"] = Extract(b.Payloads, "pcs_totalDcCurrA"),
+            }).ToList()
+        };
+    }
+
+    private static ChartDefinitionDto BuildPhaseCurrentsChart(
+        List<(DateTimeOffset Time, List<JsonElement> Payloads)> buckets, string timeFormat)
+    {
+        return new ChartDefinitionDto
+        {
+            Key = "phaseCurrents",
+            Title = "AC Phase Currents",
+            Type = "line",
+            XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = timeFormat },
+            Series = new List<CurveSeriesDto>
+            {
+                new() { Key = "phaseA", Label = "Phase A", Unit = "A", Color = "#ef4444", Type = "line" },
+                new() { Key = "phaseB", Label = "Phase B", Unit = "A", Color = "#22c55e", Type = "line" },
+                new() { Key = "phaseC", Label = "Phase C", Unit = "A", Color = "#3b82f6", Type = "line" },
+            },
+            Data = buckets.Select(b => new Dictionary<string, object?>
+            {
+                ["time"] = b.Time.ToString(timeFormat),
+                ["phaseA"] = Extract(b.Payloads, "pcs_phaseCurrA"),
+                ["phaseB"] = Extract(b.Payloads, "pcs_phaseCurrB"),
+                ["phaseC"] = Extract(b.Payloads, "pcs_phaseCurrC"),
+            }).ToList()
+        };
+    }
+
+    private static ChartDefinitionDto BuildFrequencyChart(
+        List<(DateTimeOffset Time, List<JsonElement> Payloads)> buckets, string timeFormat)
+    {
+        return new ChartDefinitionDto
+        {
+            Key = "gridFrequency",
+            Title = "Grid Frequency",
+            Type = "line",
+            XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = timeFormat },
+            Series = new List<CurveSeriesDto>
+            {
+                new() { Key = "freqHz", Label = "Frequency", Unit = "Hz", Color = "#8b5cf6", Type = "line" },
+            },
+            ReferenceLines = new List<ChartReferenceLineDto>
+            {
+                new() { Y = 50, Label = "Nominal", Color = "#22c55e", StrokeDasharray = "5 5" },
+                new() { Y = 50.5, Label = "High Limit", Color = "#f97316", StrokeDasharray = "3 3" },
+                new() { Y = 49.5, Label = "Low Limit", Color = "#f97316", StrokeDasharray = "3 3" },
+            },
+            Data = buckets.Select(b => new Dictionary<string, object?>
+            {
+                ["time"] = b.Time.ToString(timeFormat),
+                ["freqHz"] = Extract(b.Payloads, "pcs_gridFreqHz"),
+            }).ToList()
+        };
+    }
+
+    private static ChartDefinitionDto BuildTemperaturesChart(
+        List<(DateTimeOffset Time, List<JsonElement> Payloads)> buckets, string timeFormat)
+    {
+        return new ChartDefinitionDto
+        {
+            Key = "temperatures",
+            Title = "Temperature Trends",
+            Type = "area",
+            XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = timeFormat },
+            Series = new List<CurveSeriesDto>
+            {
+                new() { Key = "igbt", Label = "IGBT", Unit = "\u00b0C", Color = "#ef4444", Type = "area" },
+                new() { Key = "inductance", Label = "Inductance", Unit = "\u00b0C", Color = "#f97316", Type = "area" },
+                new() { Key = "ambient", Label = "Ambient", Unit = "\u00b0C", Color = "#22c55e", Type = "area" },
+            },
+            Data = buckets.Select(b => new Dictionary<string, object?>
+            {
+                ["time"] = b.Time.ToString(timeFormat),
+                ["igbt"] = Extract(b.Payloads, "pcs_igbtTempC"),
+                ["inductance"] = Extract(b.Payloads, "pcs_inductTempC"),
+                ["ambient"] = Extract(b.Payloads, "pcs_ambTempC"),
+            }).ToList()
+        };
+    }
+
+    private static ChartDefinitionDto BuildEfficiencyChart(
+        List<(DateTimeOffset Time, List<JsonElement> Payloads)> buckets, string timeFormat)
+    {
+        return new ChartDefinitionDto
+        {
+            Key = "efficiencyTrend",
+            Title = "Efficiency",
+            Type = "line",
+            Optional = true,
+            XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = timeFormat },
+            Series = new List<CurveSeriesDto>
+            {
+                new() { Key = "efficiency", Label = "Efficiency", Unit = "%", Color = "#22c55e", Type = "line" },
+            },
+            ReferenceLines = new List<ChartReferenceLineDto>
+            {
+                new() { Y = 94, Label = "Min Threshold", Color = "#f97316", StrokeDasharray = "3 3" },
+            },
+            Data = buckets.Select(b => new Dictionary<string, object?>
+            {
+                ["time"] = b.Time.ToString(timeFormat),
+                ["efficiency"] = Extract(b.Payloads, "pcs_efficiency"),
+            }).ToList()
+        };
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Searches all payloads in a time bucket for the first non-null numeric value at the given path.
+    /// </summary>
+    private static object? Extract(List<JsonElement> payloads, string path)
+    {
+        foreach (var payload in payloads)
+        {
+            var value = PayloadDeserializer.ExtractValue(payload, path);
+            switch (value)
+            {
+                case double d: return Math.Round(d, 1);
+                case int i: return i;
+                case long l: return l;
+            }
+        }
+        return null;
     }
 
     private static (DateTimeOffset start, DateTimeOffset end) GetPeriodRange(string period)
@@ -85,9 +296,6 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
         };
     }
 
-    /// <summary>
-    /// Default sampling interval when the client does not provide one.
-    /// </summary>
     private static int GetDefaultIntervalMinutes(string period) => period switch
     {
         MonitoringPeriods.OneHour => 1,
@@ -122,167 +330,4 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
         MonitoringPeriods.ThirtyDays => "dd MMM",
         _ => "HH:mm"
     };
-
-    private static List<(DateTimeOffset Time, JsonElement? Payload)> SampleData(
-        List<Domain.Entities.DeviceData.DevicePcsData> rawData, int intervalMinutes)
-    {
-        if (rawData.Count == 0) return new();
-
-        var result = new List<(DateTimeOffset, JsonElement?)>();
-        var lastTimestamp = DateTimeOffset.MinValue;
-
-        foreach (var row in rawData)
-        {
-            if ((row.DeviceLocalTime - lastTimestamp).TotalMinutes >= intervalMinutes)
-            {
-                result.Add((row.DeviceLocalTime, PayloadDeserializer.GetElement(row.Payload)));
-                lastTimestamp = row.DeviceLocalTime;
-            }
-        }
-
-        return result;
-    }
-
-    private static List<ChartDefinitionDto> BuildCharts(
-        JsonElement? specs, List<(DateTimeOffset Time, JsonElement? Payload)> data, string timeFormat)
-    {
-        if (specs.HasValue && specs.Value.TryGetProperty("curveCharts", out var chartsElement) &&
-            chartsElement.ValueKind == JsonValueKind.Array)
-        {
-            return BuildFromSchema(chartsElement, data, timeFormat);
-        }
-
-        return BuildDefaultCharts(data, timeFormat);
-    }
-
-    private static List<ChartDefinitionDto> BuildFromSchema(
-        JsonElement chartsElement, List<(DateTimeOffset Time, JsonElement? Payload)> data, string timeFormat)
-    {
-        var charts = new List<ChartDefinitionDto>();
-
-        foreach (var chart in chartsElement.EnumerateArray())
-        {
-            var key = chart.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
-            var title = chart.TryGetProperty("title", out var t) ? t.GetString() ?? key : key;
-            var chartType = chart.TryGetProperty("type", out var ct) ? ct.GetString() ?? "line" : "line";
-            var xFormat = chart.TryGetProperty("xAxis", out var xa) && xa.TryGetProperty("format", out var xf)
-                ? xf.GetString() ?? timeFormat : timeFormat;
-
-            var seriesDefs = new List<CurveSeriesDto>();
-            var sourcePaths = new List<(string Key, string SourcePath)>();
-
-            if (chart.TryGetProperty("series", out var seriesElement) && seriesElement.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var s in seriesElement.EnumerateArray())
-                {
-                    var sKey = s.TryGetProperty("key", out var sk) ? sk.GetString() ?? "" : "";
-                    var sLabel = s.TryGetProperty("label", out var sl) ? sl.GetString() ?? sKey : sKey;
-                    var sUnit = s.TryGetProperty("unit", out var su) ? su.GetString() : null;
-                    var sColor = s.TryGetProperty("color", out var sc) ? sc.GetString() : null;
-                    var sYAxis = s.TryGetProperty("yAxis", out var sy) ? sy.GetString() : null;
-                    var sType = s.TryGetProperty("type", out var st) ? st.GetString() : null;
-                    var sourcePath = s.TryGetProperty("sourcePath", out var sp) ? sp.GetString() : null;
-
-                    seriesDefs.Add(new CurveSeriesDto
-                    {
-                        Key = sKey, Label = sLabel, Unit = sUnit, Color = sColor,
-                        YAxis = sYAxis, Type = sType, SourcePath = sourcePath
-                    });
-
-                    if (sourcePath != null)
-                        sourcePaths.Add((sKey, sourcePath));
-                }
-            }
-
-            var chartData = BuildUnifiedData(data, sourcePaths, xFormat);
-
-            charts.Add(new ChartDefinitionDto
-            {
-                Key = key, Title = title, Type = chartType,
-                XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = xFormat },
-                Series = seriesDefs,
-                Data = chartData
-            });
-        }
-
-        return charts;
-    }
-
-    private static List<ChartDefinitionDto> BuildDefaultCharts(
-        List<(DateTimeOffset Time, JsonElement? Payload)> data, string timeFormat)
-    {
-        return new List<ChartDefinitionDto>
-        {
-            BuildChart("acPower", "AC Power", "area", timeFormat, data,
-                new CurveSeriesDto { Key = "activePower", Label = "Active Power", Unit = "kW", Color = "#3b82f6", YAxis = "left", Type = "area", SourcePath = "acPower.totalActivePower" },
-                new CurveSeriesDto { Key = "reactivePower", Label = "Reactive Power", Unit = "kVAR", Color = "#f59e0b", YAxis = "right", Type = "line", SourcePath = "acPower.totalReactivePower" }),
-
-            BuildChart("dcPower", "DC Power", "line", timeFormat, data,
-                new CurveSeriesDto { Key = "dcPower", Label = "DC Power", Unit = "kW", Color = "#10b981", YAxis = "left", Type = "line", SourcePath = "dcPower.power" },
-                new CurveSeriesDto { Key = "dcVoltage", Label = "DC Voltage", Unit = "V", Color = "#8b5cf6", YAxis = "right", Type = "line", SourcePath = "dcPower.voltage" }),
-
-            BuildChart("frequency", "Grid Frequency", "line", timeFormat, data,
-                new CurveSeriesDto { Key = "gridFreq", Label = "Frequency", Unit = "Hz", Color = "#06b6d4", Type = "line", SourcePath = "acPower.frequency" }),
-
-            BuildChart("temperature", "Temperature", "area", timeFormat, data,
-                new CurveSeriesDto { Key = "pcsTemp", Label = "PCS Temperature", Unit = "\u00b0C", Color = "#ef4444", Type = "area", SourcePath = "temperaturePcs" }),
-
-            BuildChart("efficiency", "Efficiency", "line", timeFormat, data,
-                new CurveSeriesDto { Key = "efficiency", Label = "Efficiency", Unit = "%", Color = "#22c55e", Type = "line", SourcePath = "efficiency" }),
-        };
-    }
-
-    private static ChartDefinitionDto BuildChart(
-        string key, string title, string type, string timeFormat,
-        List<(DateTimeOffset Time, JsonElement? Payload)> data,
-        params CurveSeriesDto[] seriesDefs)
-    {
-        var sourcePaths = seriesDefs
-            .Where(s => s.SourcePath != null)
-            .Select(s => (s.Key, s.SourcePath!))
-            .ToList();
-
-        return new ChartDefinitionDto
-        {
-            Key = key, Title = title, Type = type,
-            XAxis = new CurveXAxisDto { Key = "time", Label = "Time", Format = timeFormat },
-            Series = seriesDefs.ToList(),
-            Data = BuildUnifiedData(data, sourcePaths, timeFormat)
-        };
-    }
-
-    private static List<Dictionary<string, object?>> BuildUnifiedData(
-        List<(DateTimeOffset Time, JsonElement? Payload)> data,
-        List<(string Key, string SourcePath)> sourcePaths,
-        string timeFormat)
-    {
-        return data.Select(d =>
-        {
-            var row = new Dictionary<string, object?>
-            {
-                ["time"] = d.Time.ToString(timeFormat)
-            };
-
-            foreach (var (seriesKey, sourcePath) in sourcePaths)
-            {
-                row[seriesKey] = d.Payload.HasValue
-                    ? ExtractNumber(d.Payload.Value, sourcePath)
-                    : null;
-            }
-
-            return row;
-        }).ToList();
-    }
-
-    private static object? ExtractNumber(JsonElement payload, string path)
-    {
-        var value = PayloadDeserializer.ExtractValue(payload, path);
-        return value switch
-        {
-            double d => Math.Round(d, 1),
-            int i => i,
-            long l => l,
-            _ => null
-        };
-    }
 }

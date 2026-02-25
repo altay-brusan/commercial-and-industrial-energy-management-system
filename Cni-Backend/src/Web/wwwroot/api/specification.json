@@ -2920,33 +2920,6 @@
               "nullable": true
             },
             "x-position": 1
-          },
-          {
-            "name": "Search",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "nullable": true
-            },
-            "x-position": 2
-          },
-          {
-            "name": "SortBy",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "nullable": true
-            },
-            "x-position": 3
-          },
-          {
-            "name": "SortDirection",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "nullable": true
-            },
-            "x-position": 4
           }
         ],
         "responses": {
@@ -2968,12 +2941,12 @@
         ]
       }
     },
-    "/api/v1/Pcs/Units/{unitId}": {
+    "/api/v1/Pcs/Units/Header/{unitId}": {
       "get": {
         "tags": [
           "Pcs"
         ],
-        "operationId": "GetApiV1PcsUnits2",
+        "operationId": "GetApiV1PcsUnitsHeader",
         "parameters": [
           {
             "name": "unitId",
@@ -2992,7 +2965,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PcsUnitDetailDto"
+                  "$ref": "#/components/schemas/PcsHeaderDto"
                 }
               }
             }
@@ -3029,10 +3002,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DynamicSectionDto"
-                  }
+                  "$ref": "#/components/schemas/PcsGeneralDto"
                 }
               }
             }
@@ -5059,6 +5029,10 @@
           "type": {
             "type": "string"
           },
+          "optional": {
+            "type": "boolean",
+            "nullable": true
+          },
           "xAxis": {
             "$ref": "#/components/schemas/CurveXAxisDto"
           },
@@ -5066,6 +5040,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CurveSeriesDto"
+            }
+          },
+          "referenceLines": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ChartReferenceLineDto"
             }
           },
           "data": {
@@ -7273,11 +7254,24 @@
           "status": {
             "$ref": "#/components/schemas/StatusBadgeDto"
           },
+          "linkedBessUnit": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PcsLinkedBessUnitDto"
+              }
+            ]
+          },
           "gridMode": {
             "type": "string",
             "nullable": true
           },
           "activePowerKw": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "reactivePowerKvar": {
             "type": "number",
             "format": "double",
             "nullable": true
@@ -7302,19 +7296,27 @@
             "format": "double",
             "nullable": true
           },
-          "linkedBessUnitId": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          },
-          "linkedBessUnitName": {
-            "type": "string",
-            "nullable": true
+          "activeFaultCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "lastSeenUtc": {
             "type": "string",
             "format": "date-time",
             "nullable": true
+          }
+        }
+      },
+      "PcsLinkedBessUnitDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
@@ -7338,24 +7340,78 @@
             "type": "integer",
             "format": "int32"
           },
+          "standbyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "totalActivePowerKw": {
             "type": "number",
             "format": "double",
             "nullable": true
           },
-          "avgEfficiencyPct": {
+          "totalReactivePowerKvar": {
             "type": "number",
             "format": "double",
             "nullable": true
           },
-          "avgPowerFactor": {
+          "totalActiveFaults": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageEfficiencyPct": {
             "type": "number",
             "format": "double",
             "nullable": true
           }
         }
       },
-      "PcsUnitDetailDto": {
+      "PcsHeaderDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "linkedBessUnit": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PcsHeaderLinkedBessDto"
+              }
+            ]
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TabInfoDto"
+            }
+          }
+        }
+      },
+      "PcsHeaderLinkedBessDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "PcsGeneralDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -7389,28 +7445,38 @@
           "status": {
             "$ref": "#/components/schemas/StatusBadgeDto"
           },
+          "linkedBessUnit": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PcsGeneralLinkedBessDto"
+              }
+            ]
+          },
           "availableTabs": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TabInfoDto"
             }
           },
-          "linkedBessUnit": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PcsLinkedBessDto"
-              }
-            ]
+          "activeFaultCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "lastSeenUtc": {
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DynamicSectionDto"
+            }
           }
         }
       },
-      "PcsLinkedBessDto": {
+      "PcsGeneralLinkedBessDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -7420,10 +7486,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
