@@ -820,6 +820,41 @@
         }
       }
     },
+    "/api/v1/DeviceData/Ingest/ThingsBoard": {
+      "post": {
+        "tags": [
+          "DeviceData"
+        ],
+        "operationId": "PostApiV1DeviceDataIngestThingsBoard",
+        "requestBody": {
+          "x-name": "messages",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ThingsBoardTelemetryDto"
+                }
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestBatchResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Devices/{id}": {
       "get": {
         "tags": [
@@ -5348,6 +5383,37 @@
             "items": {
               "$ref": "#/components/schemas/IngestDeviceDataCommand"
             }
+          }
+        }
+      },
+      "ThingsBoardTelemetryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceSn": {
+            "type": "string"
+          },
+          "rtuSn": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "payload": {},
+          "deviceLocalTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "payloadVersion": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
