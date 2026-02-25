@@ -5029,6 +5029,10 @@
           "type": {
             "type": "string"
           },
+          "optional": {
+            "type": "boolean",
+            "nullable": true
+          },
           "xAxis": {
             "$ref": "#/components/schemas/CurveXAxisDto"
           },
@@ -5036,6 +5040,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CurveSeriesDto"
+            }
+          },
+          "referenceLines": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ChartReferenceLineDto"
             }
           },
           "data": {
