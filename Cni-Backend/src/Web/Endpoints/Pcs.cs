@@ -40,7 +40,7 @@ public class Pcs : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<List<DynamicSectionDto>>> GetGeneral(
+    public static async Task<Ok<PcsGeneralDto>> GetGeneral(
         ISender sender, Guid unitId)
     {
         var result = await sender.Send(new GetPcsGeneralQuery { UnitId = unitId });
