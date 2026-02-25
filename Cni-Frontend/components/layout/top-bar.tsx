@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Bell, AlertTriangle, Sun, Moon, Wrench, RefreshCw, CheckCircle2, CalendarClock, ChevronsUpDown, Check } from "lucide-react";
@@ -49,8 +50,15 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
     <header className="sticky top-0 z-50 border-b border-border bg-background">
       <div className="flex h-14 items-center justify-between px-6">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-xl tracking-tight" style={{ fontFamily: "'Cocon', sans-serif" }}>
-            N2N Energy
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.svg"
+              alt="N2N Energy"
+              width={160}
+              height={30}
+              priority
+              className="dark:[filter:invert(1)_hue-rotate(180deg)]"
+            />
           </Link>
 
           <Tabs value={activeTab} className="hidden md:block">
