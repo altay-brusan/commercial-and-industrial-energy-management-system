@@ -22,7 +22,11 @@ public class DeviceData : EndpointGroupBase
         // ThingsBoard HTTP Integration sends an array of telemetry messages with PascalCase
         // property names and Payload as a JSON object (not a string). This endpoint translates
         // that format into our standard IngestDeviceDataCommand pipeline.
-        group.MapPost("/Ingest/ThingsBoard", IngestThingsBoard);
+        // No API key auth — ThingsBoard cannot send custom headers in its HTTP integration.
+        app.MapGroup("/api/v1/DeviceData")
+            .WithGroupName("DeviceData")
+            .WithTags("DeviceData")
+            .MapPost("/Ingest/ThingsBoard", IngestThingsBoard);
     }
 
     public static async Task<Ok<IngestResultDto>> Ingest(ISender sender, IngestDeviceDataCommand command)
