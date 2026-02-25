@@ -62,7 +62,7 @@ public class GetBessDeviceTreeQueryHandler : IRequestHandler<GetBessDeviceTreeQu
         var childrenMap = allDevices
             .Where(d => d.ParentDeviceId.HasValue)
             .GroupBy(d => d.ParentDeviceId!.Value)
-            .ToDictionary(g => g.Key, g => g.OrderBy(d => d.Name).ToList());
+            .ToDictionary(g => g.Key, g => g.OrderBy(d => d.HierarchyIndex).ThenBy(d => d.Name).ToList());
 
         // Build a tree for each root BESS unit
         var trees = new List<BessTreeNodeDto>();

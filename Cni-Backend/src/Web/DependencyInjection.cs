@@ -104,6 +104,15 @@ public static class DependencyInjection
                 Description = "Type into the textbox: Bearer {your JWT token}."
             });
 
+            // Add X-API-Key for device data ingestion endpoints
+            configure.AddSecurity("ApiKey", Enumerable.Empty<string>(), new OpenApiSecurityScheme
+            {
+                Type = OpenApiSecuritySchemeType.ApiKey,
+                Name = "X-API-Key",
+                In = OpenApiSecurityApiKeyLocation.Header,
+                Description = "API key for device data ingestion endpoints."
+            });
+
             configure.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
         });
     }

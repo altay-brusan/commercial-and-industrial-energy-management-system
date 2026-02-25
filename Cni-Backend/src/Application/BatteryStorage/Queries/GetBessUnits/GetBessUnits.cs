@@ -23,11 +23,13 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
 {
     private readonly IApplicationDbContext _context;
     private readonly IMemoryCache _cache;
+    private readonly IDeviceStatusService _statusService;
 
-    public GetBessUnitsQueryHandler(IApplicationDbContext context, IMemoryCache cache)
+    public GetBessUnitsQueryHandler(IApplicationDbContext context, IMemoryCache cache, IDeviceStatusService statusService)
     {
         _context = context;
         _cache = cache;
+        _statusService = statusService;
     }
 
     public async Task<BessUnitsResultDto> Handle(GetBessUnitsQuery request, CancellationToken cancellationToken)
@@ -45,14 +47,41 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
 
         var deviceIds = batteryDevices.Select(d => d.Id).ToList();
 
-        // Load latest telemetry per device
-        var latestData = await _context.DeviceBatteryData
+        // Load latest telemetry per device per Kind from all relevant tables
+        var batteryEntries = await _context.DeviceBatteryData
             .Where(dd => deviceIds.Contains(dd.DeviceId))
-            .GroupBy(dd => dd.DeviceId)
+            .GroupBy(dd => new { dd.DeviceId, dd.Kind })
             .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
             .ToListAsync(cancellationToken);
 
-        var dataByDevice = latestData.ToDictionary(d => d.DeviceId);
+        var pcsEntries = await _context.DevicePcsData
+            .Where(dd => deviceIds.Contains(dd.DeviceId))
+            .GroupBy(dd => new { dd.DeviceId, dd.Kind })
+            .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
+            .ToListAsync(cancellationToken);
+
+        // Build per-device payloadsByKind dictionary
+        var telemetryByDevice = new Dictionary<Guid, Dictionary<string, JsonElement?>>();
+        foreach (var entry in batteryEntries)
+        {
+            if (!telemetryByDevice.TryGetValue(entry.DeviceId, out var kindMap))
+            {
+                kindMap = new Dictionary<string, JsonElement?>();
+                telemetryByDevice[entry.DeviceId] = kindMap;
+            }
+            if (entry.Kind != null)
+                kindMap[entry.Kind] = PayloadDeserializer.GetElement(entry.Payload);
+        }
+        foreach (var entry in pcsEntries)
+        {
+            if (!telemetryByDevice.TryGetValue(entry.DeviceId, out var kindMap))
+            {
+                kindMap = new Dictionary<string, JsonElement?>();
+                telemetryByDevice[entry.DeviceId] = kindMap;
+            }
+            if (entry.Kind != null)
+                kindMap[entry.Kind] = PayloadDeserializer.GetElement(entry.Payload);
+        }
 
         // Load active alarm counts per device (includes descendant devices)
         var allDescendantIds = await _context.Devices
@@ -85,24 +114,23 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
             rootAlarmCounts[device.Id] = rtuDeviceIds.Sum(id => alarmCounts.GetValueOrDefault(id, 0));
         }
 
+        // Batch-resolve device statuses from active alarms
+        var statuses = await _statusService.GetStatusBatchAsync(deviceIds, cancellationToken);
+
         var units = batteryDevices.Select(device =>
         {
-            dataByDevice.TryGetValue(device.Id, out var data);
-            var payload = data != null
-                ? PayloadDeserializer.GetElement(data.Payload)
-                : null;
+            var payloadsByKind = telemetryByDevice.GetValueOrDefault(device.Id)
+                ?? new Dictionary<string, JsonElement?>();
+
+            // Fallback payload for legacy extraction (ContainerBatteryState)
+            var payload = payloadsByKind.GetValueOrDefault("ContainerBatteryState");
 
             // Build resolver from template's ParameterMapTemplate (if present)
             var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);
-            ParameterResolver? resolver = null;
-            if (parameterMap.Count > 0 && payload.HasValue)
-            {
-                var payloadsByKind = new Dictionary<string, JsonElement?>();
-                if (data?.Kind != null)
-                    payloadsByKind[data.Kind] = payload;
-                var metadata = PayloadDeserializer.GetElement(device.Metadata);
-                resolver = new ParameterResolver(parameterMap, payloadsByKind, metadata);
-            }
+            var metadata = PayloadDeserializer.GetElement(device.Metadata);
+            var resolver = parameterMap.Count > 0 && payloadsByKind.Count > 0
+                ? new ParameterResolver(parameterMap, payloadsByKind, metadata)
+                : null;
 
             var stateStr = resolver?.ResolveString(ParameterKeys.OperatingMode)
                 ?? (payload.HasValue ? PayloadDeserializer.ExtractValue(payload.Value, "state") as string : null);
@@ -111,7 +139,7 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
             {
                 Id = device.Id,
                 Name = device.Name,
-                Status = StatusBadgeDto.FromStatus(device.Status),
+                Status = StatusBadgeDto.FromStatus(statuses.GetValueOrDefault(device.Id, "normal")),
                 OperatingMode = StatusBadgeDto.FromOperatingMode(stateStr),
                 Soc = resolver?.ResolveNumber(ParameterKeys.Soc)
                     ?? ExtractDouble(payload, "socPercent", "stateOfCharge", "soc"),

@@ -8706,12 +8706,21 @@
         "description": "Type into the textbox: Bearer {your JWT token}.",
         "name": "Authorization",
         "in": "header"
+      },
+      "ApiKey": {
+        "type": "apiKey",
+        "description": "API key for device data ingestion endpoints.",
+        "name": "X-API-Key",
+        "in": "header"
       }
     }
   },
   "security": [
     {
       "JWT": []
+    },
+    {
+      "ApiKey": []
     }
   ]
 }

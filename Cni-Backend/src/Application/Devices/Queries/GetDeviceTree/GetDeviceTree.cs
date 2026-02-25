@@ -44,7 +44,7 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
         var childrenMap = allDevices
             .Where(d => d.ParentDeviceId.HasValue)
             .GroupBy(d => d.ParentDeviceId!.Value)
-            .ToDictionary(g => g.Key, g => g.OrderBy(d => d.Name).ToList());
+            .ToDictionary(g => g.Key, g => g.OrderBy(d => d.HierarchyIndex).ThenBy(d => d.Name).ToList());
 
         return DeviceTreeBuilder.BuildTreeNode(rootDevice, childrenMap, alarmCounts);
     }
