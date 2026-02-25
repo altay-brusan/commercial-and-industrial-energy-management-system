@@ -523,45 +523,307 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
     private async Task<List<DynamicSectionDto>> BuildSubDeviceSummary(
         Domain.Entities.Device device, CancellationToken ct)
     {
-        var latestData = await _context.DeviceBatteryData
-            .Where(dd => dd.DeviceId == device.Id)
-            .OrderByDescending(dd => dd.DeviceLocalTime)
-            .FirstOrDefaultAsync(ct);
+        // Load telemetry for the device and its descendants
+        var telemetry = await _telemetryLoader.LoadLatest(device.Id, ct);
+        var payloads = telemetry.GetPayloadsByKind();
 
-        var payload = PayloadDeserializer.GetElement(latestData?.Payload);
+        // Find battery payload — try known kind, then first available
+        var batt = payloads.GetValueOrDefault("ContainerBatteryState")
+            ?? payloads.Values.FirstOrDefault(p => p.HasValue);
+
         bool isInherited = false;
-
-        // If no own data, try to inherit from nearest ancestor
-        if (!payload.HasValue)
+        if (!batt.HasValue)
         {
             var inherited = await _telemetryLoader.ResolveInheritedData(device.Id, ct);
             if (inherited.HasValue)
             {
-                payload = inherited.Value.Payload;
+                batt = inherited.Value.Payload;
                 isInherited = true;
             }
         }
 
-        var sections = new List<DynamicSectionDto>
-        {
-            BuildNameplateSection(device, PayloadDeserializer.GetElement(device.Metadata)),
-        };
+        var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
-        if (payload.HasValue)
+        // Build parameter resolver from template's ParameterMapTemplate
+        var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);
+        var resolver = parameterMap.Count > 0
+            ? new ParameterResolver(parameterMap, payloads, metadata)
+            : null;
+
+        var deviceTypeName = device.DeviceType?.Name;
+        var sections = new List<DynamicSectionDto>();
+
+        // SoC progress bar (separate section matching frontend layout)
+        var socSection = BuildSocSection(resolver, batt);
+        if (isInherited)
+            socSection = socSection with { Title = "State of Charge (Inherited)" };
+        sections.Add(socSection);
+
+        // Electrical section: SoH, Voltage, Current, Power
+        sections.Add(BuildElectricalSection(resolver, batt));
+
+        // Temperature section: Temp Min, Max, Avg
+        sections.Add(BuildTemperatureSection(resolver, batt));
+
+        // Composition section: child counts + alarm counts (level-appropriate)
+        sections.Add(await BuildCompositionSection(telemetry, deviceTypeName, metadata, ct));
+
+        // Module-level: cell voltage distribution chart (if cell data in payload)
+        if (deviceTypeName == DeviceTypeNames.EnergyStorageModule)
         {
-            var statusSection = new DynamicSectionDto
-            {
-                Key = "liveStatus",
-                Title = isInherited ? "Live Status (Inherited)" : "Live Status",
-                Icon = "activity",
-                Variant = "card",
-                Columns = 3,
-                Fields = BuildFieldsFromPayload(payload.Value)
-            };
-            sections.Add(statusSection);
+            var voltageChart = BuildCellVoltageDistribution(batt);
+            if (voltageChart != null)
+                sections.Add(voltageChart);
+
+            var tempHeatmap = BuildCellTemperatureHeatmap(batt);
+            if (tempHeatmap != null)
+                sections.Add(tempHeatmap);
         }
 
         return sections;
+    }
+
+    // ── Sub-device section builders ───────────────────────────────────────
+
+    private static DynamicSectionDto BuildSocSection(ParameterResolver? resolver, JsonElement? batt)
+    {
+        var soc = resolver?.ResolveNumber(ParameterKeys.Soc) ?? ExtractNum(batt, "socPercent");
+        return new DynamicSectionDto
+        {
+            Key = "soc",
+            Title = "State of Charge",
+            Variant = "card",
+            Columns = 1,
+            Fields = new List<SectionFieldDto>
+            {
+                new() { Key = "soc", Label = "State of Charge", Value = soc, Type = "number", Unit = "%", Format = "progress",
+                    Meta = new Dictionary<string, object?> { ["thresholds"] = new[] {
+                        new Dictionary<string, object?> { ["min"] = 60, ["color"] = "green" },
+                        new Dictionary<string, object?> { ["min"] = 30, ["color"] = "orange" },
+                        new Dictionary<string, object?> { ["min"] = 0, ["color"] = "red" }
+                    }}}
+            }
+        };
+    }
+
+    private static DynamicSectionDto BuildElectricalSection(ParameterResolver? resolver, JsonElement? batt)
+    {
+        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "sohPercent");
+        var voltage = resolver?.ResolveNumber(ParameterKeys.Voltage) ?? ExtractNum(batt, "totalVoltageV");
+        var current = resolver?.ResolveNumber(ParameterKeys.Current) ?? ExtractNum(batt, "instantCurrentA");
+        var power = resolver?.ResolveNumber(ParameterKeys.Power)
+            ?? ((voltage.HasValue && current.HasValue)
+                ? Math.Round(voltage.Value * current.Value / 1000.0, 1)
+                : (double?)null);
+
+        return new DynamicSectionDto
+        {
+            Key = "electrical",
+            Title = "Electrical",
+            Icon = "zap",
+            Variant = "card",
+            Columns = 3,
+            Fields = new List<SectionFieldDto>
+            {
+                NumField("soh", "SoH", soh, "%"),
+                NumField("voltage", "Voltage", voltage, "V"),
+                NumField("current", "Current", current, "A"),
+                NumField("power", "Power", power, "kW"),
+            }
+        };
+    }
+
+    private static DynamicSectionDto BuildTemperatureSection(ParameterResolver? resolver, JsonElement? batt)
+    {
+        var minTemp = resolver?.ResolveNumber(ParameterKeys.TempMin) ?? ExtractNum(batt, "minCellTempC");
+        var maxTemp = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "maxCellTempC");
+        var avgTemp = resolver?.ResolveNumber(ParameterKeys.TempAvg)
+            ?? ((minTemp.HasValue && maxTemp.HasValue) ? Math.Round((minTemp.Value + maxTemp.Value) / 2.0, 1) : (double?)null);
+
+        return new DynamicSectionDto
+        {
+            Key = "temperature",
+            Title = "Temperature",
+            Icon = "thermometer",
+            Variant = "card",
+            Columns = 3,
+            Fields = new List<SectionFieldDto>
+            {
+                new() { Key = "tempMin", Label = "Temp Min", Value = minTemp, Type = "number", Unit = "\u00b0C", Format = "temperature" },
+                new() { Key = "tempMax", Label = "Temp Max", Value = maxTemp, Type = "number", Unit = "\u00b0C", Format = "temperature" },
+                new() { Key = "tempAvg", Label = "Temp Avg", Value = avgTemp, Type = "number", Unit = "\u00b0C", Format = "temperature" },
+            }
+        };
+    }
+
+    private async Task<DynamicSectionDto> BuildCompositionSection(
+        ContainerTelemetryContext telemetry, string? deviceTypeName, JsonElement? metadata,
+        CancellationToken ct)
+    {
+        var packCount = telemetry.Devices.Count(d => d.DeviceTypeName == DeviceTypeNames.EnergyStoragePack);
+        var moduleCount = telemetry.Devices.Count(d => d.DeviceTypeName == DeviceTypeNames.EnergyStorageModule);
+
+        // Try to get cell count from metadata
+        var cellsPerModule = ExtractNum(metadata, "cellsPerModule");
+        int? totalCells = null;
+
+        if (cellsPerModule.HasValue)
+        {
+            var cellsPer = (int)cellsPerModule.Value;
+            totalCells = deviceTypeName switch
+            {
+                DeviceTypeNames.EnergyStorageModule => cellsPer,
+                DeviceTypeNames.EnergyStoragePack => Math.Max(moduleCount, 1) * cellsPer,
+                DeviceTypeNames.EnergyStorageRack => Math.Max(packCount, 1) * Math.Max(moduleCount / Math.Max(packCount, 1), 1) * cellsPer,
+                _ => null
+            };
+        }
+
+        // Query active alarm counts by severity for this device and all descendants
+        var deviceIds = telemetry.Devices.Select(d => d.Id).ToList();
+        var alarmCounts = await _context.DeviceAlarms
+            .Where(a => a.IsActive && deviceIds.Contains(a.DeviceId))
+            .Select(a => a.AlarmType!.Severity)
+            .GroupBy(s => s)
+            .Select(g => new { Severity = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var warningCount = alarmCounts
+            .Where(a => a.Severity is "Warning" or "Major")
+            .Sum(a => a.Count);
+        var faultCount = alarmCounts
+            .Where(a => a.Severity == "Critical")
+            .Sum(a => a.Count);
+
+        var fields = new List<SectionFieldDto>();
+
+        // Level-appropriate child counts
+        if (deviceTypeName == DeviceTypeNames.EnergyStorageRack && packCount > 0)
+            fields.Add(NumField("packs", "Packs", packCount, ""));
+        if (deviceTypeName == DeviceTypeNames.EnergyStoragePack && moduleCount > 0)
+            fields.Add(NumField("modules", "Modules", moduleCount, ""));
+
+        if (totalCells.HasValue)
+            fields.Add(NumField("totalCells", "Total Cells", totalCells.Value, ""));
+
+        fields.Add(new SectionFieldDto { Key = "warningCells", Label = "Warning Cells", Value = warningCount, Type = "number",
+            Meta = warningCount > 0 ? new Dictionary<string, object?> { ["color"] = "orange" } : null });
+        fields.Add(new SectionFieldDto { Key = "faultCells", Label = "Fault Cells", Value = faultCount, Type = "number",
+            Meta = faultCount > 0 ? new Dictionary<string, object?> { ["color"] = "red" } : null });
+
+        return new DynamicSectionDto
+        {
+            Key = "composition",
+            Title = "Composition",
+            Icon = "layers",
+            Variant = "card",
+            Columns = 2,
+            Fields = fields
+        };
+    }
+
+    // ── Module-level cell visualizations ──────────────────────────────────
+
+    private static DynamicSectionDto? BuildCellVoltageDistribution(JsonElement? payload)
+    {
+        if (!payload.HasValue) return null;
+
+        if (!payload.Value.TryGetProperty("cellVoltages", out var cellVoltages) ||
+            cellVoltages.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var chartData = new List<Dictionary<string, object?>>();
+        int index = 1;
+        foreach (var v in cellVoltages.EnumerateArray())
+        {
+            if (v.ValueKind == JsonValueKind.Number)
+            {
+                chartData.Add(new Dictionary<string, object?>
+                {
+                    ["cell"] = $"C{index}",
+                    ["voltage"] = v.GetDouble()
+                });
+            }
+            index++;
+        }
+
+        if (chartData.Count == 0) return null;
+
+        return new DynamicSectionDto
+        {
+            Key = "voltageDistribution",
+            Title = "Voltage Distribution",
+            Icon = "bar-chart-3",
+            Variant = "chart",
+            ChartConfig = new ChartConfigDto
+            {
+                Type = "bar",
+                XAxis = new ChartAxisDto { Key = "cell", Label = "Cell" },
+                YAxis = new ChartAxisDto { Key = "voltage", Label = "Voltage", Unit = "V" },
+                Color = "#22c55e"
+            },
+            ChartData = chartData
+        };
+    }
+
+    private static DynamicSectionDto? BuildCellTemperatureHeatmap(JsonElement? payload)
+    {
+        if (!payload.HasValue) return null;
+
+        if (!payload.Value.TryGetProperty("cellTemperatures", out var cellTemps) ||
+            cellTemps.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var chartData = new List<Dictionary<string, object?>>();
+        int index = 1;
+        foreach (var t in cellTemps.EnumerateArray())
+        {
+            if (t.ValueKind == JsonValueKind.Number)
+            {
+                var temp = t.GetDouble();
+                var color = temp switch
+                {
+                    < 25 => "yellow",
+                    < 30 => "orange",
+                    < 35 => "purple",
+                    < 40 => "indigo",
+                    _ => "blue"
+                };
+                chartData.Add(new Dictionary<string, object?>
+                {
+                    ["cell"] = $"C{index}",
+                    ["temperature"] = temp,
+                    ["color"] = color
+                });
+            }
+            index++;
+        }
+
+        if (chartData.Count == 0) return null;
+
+        return new DynamicSectionDto
+        {
+            Key = "temperatureHeatmap",
+            Title = "Temperature Heatmap",
+            Icon = "grid-3x3",
+            Variant = "heatmap",
+            Fields = new List<SectionFieldDto>
+            {
+                new() { Key = "legend", Label = "Legend", Type = "string",
+                    Meta = new Dictionary<string, object?>
+                    {
+                        ["bands"] = new[]
+                        {
+                            new Dictionary<string, object?> { ["max"] = 25, ["color"] = "yellow", ["label"] = "<25\u00b0C" },
+                            new Dictionary<string, object?> { ["max"] = 30, ["color"] = "orange", ["label"] = "25-30\u00b0C" },
+                            new Dictionary<string, object?> { ["max"] = 35, ["color"] = "purple", ["label"] = "30-35\u00b0C" },
+                            new Dictionary<string, object?> { ["max"] = 40, ["color"] = "indigo", ["label"] = "35-40\u00b0C" },
+                            new Dictionary<string, object?> { ["color"] = "blue", ["label"] = ">40\u00b0C" },
+                        }
+                    }}
+            },
+            ChartData = chartData
+        };
     }
 
     // ── TMS Summary ───────────────────────────────────────────────────────

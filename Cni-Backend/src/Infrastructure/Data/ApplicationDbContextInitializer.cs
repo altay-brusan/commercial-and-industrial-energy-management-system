@@ -744,7 +744,8 @@ public class ApplicationDbContextInitializer
                       "ratedCapacityKwh": 3916,
                       "ratedPowerKw": 1550,
                       "nominalVoltage": 1500,
-                      "cellChemistry": "LFP"
+                      "cellChemistry": "LFP",
+                      "cellsPerModule": 14
                     }
                     """,
                     HierarchyTemplate = """
