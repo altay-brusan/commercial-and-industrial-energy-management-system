@@ -880,6 +880,16 @@ public class ApplicationDbContextInitializer
             }
         }
 
+        // Seed DeviceAlarmTypes for Demo PCS model
+        var pcsTypeId = dtLookup.GetValueOrDefault(DeviceTypeNames.Pcs);
+        if (pcsTypeId != Guid.Empty && !_context.DeviceAlarmTypes.Any(t => t.DeviceTypeId == pcsTypeId))
+        {
+            var pcsAlarmTypes = BuildDemoPcsAlarmTypes(pcsTypeId);
+            _context.DeviceAlarmTypes.AddRange(pcsAlarmTypes);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} DeviceAlarmTypes for DEMO-PCS", pcsAlarmTypes.Count);
+        }
+
         #endregion
 
         #region Tariffs
@@ -1062,6 +1072,158 @@ public class ApplicationDbContextInitializer
             T("PCS_PRECHARGE_TOUT", "pcs_prechargeTout", "PcsTimeoutsState", "Precharge Timeout", "pcs", "Major", "PCS"),
             T("PCS_STARTUP_TOUT", "pcs_startupTout", "PcsTimeoutsState", "Startup Timeout", "pcs", "Major", "PCS"),
             T("PCS_SHUTDOWN_TOUT", "pcs_shutdownTout", "PcsTimeoutsState", "Shutdown Timeout", "pcs", "Warning", "PCS"),
+        };
+    }
+
+    private static List<DeviceAlarmType> BuildDemoPcsAlarmTypes(Guid pcsTypeId)
+    {
+        var now = DateTime.UtcNow;
+
+        DeviceAlarmType T(string code, string faultKey, string name, string category, string severity)
+            => new()
+            {
+                DeviceTypeId = pcsTypeId,
+                Model = "DEMO-PCS",
+                Manufacturer = "Demo",
+                Code = code,
+                FaultKey = faultKey,
+                Kind = "PcsFaultState",
+                Name = name,
+                Category = category,
+                Severity = severity,
+                Source = "PCS",
+                DetectionStrategy = "BooleanFlag",
+                IsEnabled = true,
+                Created = now
+            };
+
+        return new List<DeviceAlarmType>
+        {
+            // Hardware faults (20)
+            T("PCS_HW_IGBT_OT", "hwIgbtOverTemp", "IGBT Over Temperature", "hardware", "Critical"),
+            T("PCS_HW_FAN1", "hwFanFault1", "Fan 1 Fault", "hardware", "Major"),
+            T("PCS_HW_IGBT_A", "hwIgbtFaultA", "IGBT Fault Phase A", "hardware", "Critical"),
+            T("PCS_HW_IGBT_B", "hwIgbtFaultB", "IGBT Fault Phase B", "hardware", "Critical"),
+            T("PCS_HW_IGBT_C", "hwIgbtFaultC", "IGBT Fault Phase C", "hardware", "Critical"),
+            T("PCS_HW_FAN2", "hwFanFault2", "Fan 2 Fault", "hardware", "Major"),
+            T("PCS_HW_FUSE_A", "hwFuseFaultA", "Fuse Fault Phase A", "hardware", "Critical"),
+            T("PCS_HW_FUSE_B", "hwFuseFaultB", "Fuse Fault Phase B", "hardware", "Critical"),
+            T("PCS_HW_FUSE_C", "hwFuseFaultC", "Fuse Fault Phase C", "hardware", "Critical"),
+            T("PCS_HW_CT", "hwCtFault", "CT Sensor Fault", "hardware", "Major"),
+            T("PCS_HW_DSP", "hwDspFault", "DSP Fault", "hardware", "Critical"),
+            T("PCS_HW_AUX_PWR", "hwAuxPowerFault", "Auxiliary Power Supply Fault", "hardware", "Major"),
+            T("PCS_HW_INDUCT_OT", "hwInductorOverTemp", "Inductor Over Temperature", "hardware", "Major"),
+            T("PCS_HW_AMB_OT", "hwAmbientOverTemp", "Ambient Over Temperature", "hardware", "Warning"),
+            T("PCS_HW_DC_RELAY", "hwDcRelayFault", "DC Relay Fault", "hardware", "Critical"),
+            T("PCS_HW_PRECHARGE", "hwPreChargeRelay", "Pre-charge Relay Fault", "hardware", "Critical"),
+            T("PCS_HW_SPD", "hwSurgeProtFault", "Surge Protector Fault", "hardware", "Major"),
+            T("PCS_HW_XFMR", "hwTransformerFault", "Transformer Fault", "hardware", "Critical"),
+            T("PCS_HW_CAP", "hwCapacitorFault", "DC Link Capacitor Fault", "hardware", "Critical"),
+            T("PCS_HW_FILTER", "hwFilterFault", "EMI Filter Fault", "hardware", "Major"),
+
+            // Grid faults (18)
+            T("PCS_GRID_OV_A", "gridOverVoltageA", "Grid Over Voltage Phase A", "grid", "Major"),
+            T("PCS_GRID_OV_B", "gridOverVoltageB", "Grid Over Voltage Phase B", "grid", "Major"),
+            T("PCS_GRID_OV_C", "gridOverVoltageC", "Grid Over Voltage Phase C", "grid", "Major"),
+            T("PCS_GRID_UV_A", "gridUnderVoltageA", "Grid Under Voltage Phase A", "grid", "Major"),
+            T("PCS_GRID_UV_B", "gridUnderVoltageB", "Grid Under Voltage Phase B", "grid", "Major"),
+            T("PCS_GRID_UV_C", "gridUnderVoltageC", "Grid Under Voltage Phase C", "grid", "Major"),
+            T("PCS_GRID_OFREQ", "gridOverFreq", "Grid Over Frequency", "grid", "Major"),
+            T("PCS_GRID_UFREQ", "gridUnderFreq", "Grid Under Frequency", "grid", "Major"),
+            T("PCS_GRID_PHSEQ", "gridPhaseSeqFault", "Grid Phase Sequence Fault", "grid", "Major"),
+            T("PCS_GRID_VTHD", "gridVoltageThdHigh", "Grid Voltage THD High", "grid", "Warning"),
+            T("PCS_GRID_ITHD", "gridCurrentThdHigh", "Grid Current THD High", "grid", "Warning"),
+            T("PCS_GRID_ISLAND", "gridIslandDetect", "Grid Island Detection", "grid", "Critical"),
+            T("PCS_GRID_LOSYNC", "gridLossOfSync", "Grid Loss of Sync", "grid", "Major"),
+            T("PCS_GRID_RCLOSE", "gridReclosingFault", "Grid Reclosing Fault", "grid", "Major"),
+            T("PCS_GRID_VUNBAL", "gridVoltageUnbalance", "Grid Voltage Unbalance", "grid", "Warning"),
+            T("PCS_GRID_IUNBAL", "gridCurrentUnbalance", "Grid Current Unbalance", "grid", "Warning"),
+            T("PCS_GRID_ROCOF", "gridRocofTrip", "ROCOF Trip", "grid", "Critical"),
+            T("PCS_GRID_VSHIFT", "gridVectorShift", "Vector Shift Trip", "grid", "Critical"),
+
+            // Bus / Battery faults (11)
+            T("PCS_BUS_OV", "busOverVoltage", "DC Bus Over Voltage", "bus_battery", "Critical"),
+            T("PCS_BUS_UV", "busUnderVoltage", "DC Bus Under Voltage", "bus_battery", "Major"),
+            T("PCS_BUS_GND", "busGroundFault", "DC Bus Ground Fault", "bus_battery", "Critical"),
+            T("PCS_BUS_VUNBAL", "busVoltageUnbalance", "DC Bus Voltage Unbalance", "bus_battery", "Warning"),
+            T("PCS_BAT_OV", "batOverVoltage", "Battery Over Voltage", "bus_battery", "Major"),
+            T("PCS_BAT_UV", "batUnderVoltage", "Battery Under Voltage", "bus_battery", "Major"),
+            T("PCS_BAT_OC", "batOverCurrent", "Battery Over Current", "bus_battery", "Critical"),
+            T("PCS_BAT_RPOL", "batReversePolarity", "Battery Reverse Polarity", "bus_battery", "Critical"),
+            T("PCS_BAT_INSUL", "batInsulationLow", "Battery Insulation Low", "bus_battery", "Warning"),
+            T("PCS_BUS_PRECHG", "busPreChargeFail", "Bus Pre-charge Failure", "bus_battery", "Major"),
+            T("PCS_BUS_SSTART", "busSoftStartFail", "Bus Soft Start Failure", "bus_battery", "Major"),
+
+            // AC Protection faults (12)
+            T("PCS_AC_OC_A", "acOverCurrentA", "AC Over Current Phase A", "ac_protection", "Major"),
+            T("PCS_AC_OC_B", "acOverCurrentB", "AC Over Current Phase B", "ac_protection", "Major"),
+            T("PCS_AC_OC_C", "acOverCurrentC", "AC Over Current Phase C", "ac_protection", "Major"),
+            T("PCS_AC_SC", "acShortCircuit", "AC Short Circuit", "ac_protection", "Critical"),
+            T("PCS_AC_OV", "acOverVoltage", "AC Output Over Voltage", "ac_protection", "Major"),
+            T("PCS_AC_UV", "acUnderVoltage", "AC Output Under Voltage", "ac_protection", "Major"),
+            T("PCS_AC_OPWR", "acOverPower", "AC Over Power", "ac_protection", "Major"),
+            T("PCS_AC_GND", "acGroundFault", "AC Ground Fault", "ac_protection", "Critical"),
+            T("PCS_AC_LEAK", "acLeakageCurrent", "AC Leakage Current High", "ac_protection", "Warning"),
+            T("PCS_AC_DCI", "acDcInjection", "AC DC Injection High", "ac_protection", "Warning"),
+            T("PCS_AC_INDOC", "acInductorOverCurrent", "Inductor Over Current", "ac_protection", "Major"),
+            T("PCS_AC_NEUTOC", "acNeutralOverCurrent", "Neutral Over Current", "ac_protection", "Major"),
+
+            // System faults (15)
+            T("PCS_SYS_ESTOP", "sysEmergencyStop", "Emergency Stop", "system", "Critical"),
+            T("PCS_SYS_SPD", "sysSpdFault", "SPD (Surge Protector) Fault", "system", "Major"),
+            T("PCS_SYS_DOOR", "sysDoorOpen", "Cabinet Door Open", "system", "Warning"),
+            T("PCS_SYS_FIRE", "sysFireDetect", "Fire Detection", "system", "Critical"),
+            T("PCS_SYS_WATER", "sysWaterDetect", "Water Ingress Detection", "system", "Critical"),
+            T("PCS_SYS_MODE", "sysModeConflict", "Operating Mode Conflict", "system", "Warning"),
+            T("PCS_SYS_CFG", "sysConfigError", "Configuration Error", "system", "Warning"),
+            T("PCS_SYS_FW", "sysFirmwareMismatch", "Firmware Version Mismatch", "system", "Warning"),
+            T("PCS_SYS_CAL", "sysCalibrationNeeded", "Calibration Needed", "system", "Warning"),
+            T("PCS_SYS_EEPROM", "sysEepromFault", "EEPROM Fault", "system", "Major"),
+            T("PCS_SYS_WDG", "sysWatchdogReset", "Watchdog Reset", "system", "Major"),
+            T("PCS_SYS_PARAM", "sysParamOutOfRange", "Parameter Out Of Range", "system", "Warning"),
+            T("PCS_SYS_RTC", "sysRtcFault", "RTC Clock Fault", "system", "Warning"),
+            T("PCS_SYS_LOG", "sysLoggingFull", "Logging Storage Full", "system", "Warning"),
+            T("PCS_SYS_LIC", "sysLicenseExpired", "License Expired", "system", "Warning"),
+
+            // Relay faults (8)
+            T("PCS_REL_AC", "relayAcContactorFault", "AC Contactor Fault", "relay", "Critical"),
+            T("PCS_REL_DC", "relayDcContactorFault", "DC Contactor Fault", "relay", "Critical"),
+            T("PCS_REL_PRECHG", "relayPreChargeFault", "Pre-charge Relay Fault", "relay", "Critical"),
+            T("PCS_REL_PID", "relayAntiPidFault", "Anti-PID Relay Fault", "relay", "Major"),
+            T("PCS_REL_GND", "relayGroundFault", "Ground Relay Fault", "relay", "Critical"),
+            T("PCS_REL_BYP", "relayBypassFault", "Bypass Relay Fault", "relay", "Major"),
+            T("PCS_REL_XFER", "relayTransferFault", "Transfer Switch Fault", "relay", "Major"),
+            T("PCS_REL_NEUT", "relayNeutralFault", "Neutral Relay Fault", "relay", "Major"),
+
+            // Inverter faults (14)
+            T("PCS_INV_SWTRIP", "invSoftwareTrip", "Inverter Software Trip", "inverter", "Major"),
+            T("PCS_INV_HWTRIP", "invHardwareTrip", "Inverter Hardware Trip", "inverter", "Critical"),
+            T("PCS_INV_OLOAD", "invOverload", "Inverter Overload", "inverter", "Major"),
+            T("PCS_INV_EFF", "invEfficiencyLow", "Inverter Efficiency Low", "inverter", "Warning"),
+            T("PCS_INV_PLL", "invPllLockFail", "PLL Lock Failure", "inverter", "Major"),
+            T("PCS_INV_PWM", "invPwmFault", "PWM Generation Fault", "inverter", "Critical"),
+            T("PCS_INV_DEAD", "invDeadTimeFault", "Dead Time Fault", "inverter", "Critical"),
+            T("PCS_INV_MOD", "invModulationError", "Modulation Error", "inverter", "Major"),
+            T("PCS_INV_DCOFS", "invDcOffsetHigh", "DC Offset High", "inverter", "Warning"),
+            T("PCS_INV_START", "invStartupFail", "Startup Failure", "inverter", "Major"),
+            T("PCS_INV_STOP", "invShutdownFail", "Shutdown Failure", "inverter", "Warning"),
+            T("PCS_INV_MXFER", "invModeTransitionFail", "Mode Transition Failure", "inverter", "Major"),
+            T("PCS_INV_ILOOP", "invCurrentLoop", "Current Loop Fault", "inverter", "Major"),
+            T("PCS_INV_VLOOP", "invVoltageLoop", "Voltage Loop Fault", "inverter", "Major"),
+
+            // Timeout faults (12)
+            T("PCS_TO_BMS", "timeoutBmsComm", "BMS Communication Timeout", "timeout", "Major"),
+            T("PCS_TO_EMS", "timeoutEmsComm", "EMS Communication Timeout", "timeout", "Warning"),
+            T("PCS_TO_SCADA", "timeoutScadaComm", "SCADA Communication Timeout", "timeout", "Warning"),
+            T("PCS_TO_METER", "timeoutMeterComm", "Meter Communication Timeout", "timeout", "Warning"),
+            T("PCS_TO_RELAY", "timeoutGridRelay", "Grid Relay Response Timeout", "timeout", "Major"),
+            T("PCS_TO_PRECHG", "timeoutPreCharge", "Pre-charge Timeout", "timeout", "Major"),
+            T("PCS_TO_SYNC", "timeoutSyncTimeout", "Grid Sync Timeout", "timeout", "Major"),
+            T("PCS_TO_START", "timeoutStartup", "Startup Timeout", "timeout", "Major"),
+            T("PCS_TO_STOP", "timeoutShutdown", "Shutdown Timeout", "timeout", "Warning"),
+            T("PCS_TO_MODE", "timeoutModeSwitch", "Mode Switch Timeout", "timeout", "Warning"),
+            T("PCS_TO_HB", "timeoutHeartbeat", "Heartbeat Timeout", "timeout", "Major"),
+            T("PCS_TO_FW", "timeoutFirmwareUpdate", "Firmware Update Timeout", "timeout", "Warning"),
         };
     }
 }
