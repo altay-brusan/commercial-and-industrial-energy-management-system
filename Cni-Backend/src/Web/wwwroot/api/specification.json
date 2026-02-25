@@ -2920,33 +2920,6 @@
               "nullable": true
             },
             "x-position": 1
-          },
-          {
-            "name": "Search",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "nullable": true
-            },
-            "x-position": 2
-          },
-          {
-            "name": "SortBy",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "nullable": true
-            },
-            "x-position": 3
-          },
-          {
-            "name": "SortDirection",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "nullable": true
-            },
-            "x-position": 4
           }
         ],
         "responses": {
@@ -3029,10 +3002,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DynamicSectionDto"
-                  }
+                  "$ref": "#/components/schemas/PcsGeneralDto"
                 }
               }
             }
@@ -7273,11 +7243,24 @@
           "status": {
             "$ref": "#/components/schemas/StatusBadgeDto"
           },
+          "linkedBessUnit": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PcsLinkedBessUnitDto"
+              }
+            ]
+          },
           "gridMode": {
             "type": "string",
             "nullable": true
           },
           "activePowerKw": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "reactivePowerKvar": {
             "type": "number",
             "format": "double",
             "nullable": true
@@ -7302,19 +7285,27 @@
             "format": "double",
             "nullable": true
           },
-          "linkedBessUnitId": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          },
-          "linkedBessUnitName": {
-            "type": "string",
-            "nullable": true
+          "activeFaultCount": {
+            "type": "integer",
+            "format": "int32"
           },
           "lastSeenUtc": {
             "type": "string",
             "format": "date-time",
             "nullable": true
+          }
+        }
+      },
+      "PcsLinkedBessUnitDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
@@ -7338,17 +7329,25 @@
             "type": "integer",
             "format": "int32"
           },
+          "standbyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "totalActivePowerKw": {
             "type": "number",
             "format": "double",
             "nullable": true
           },
-          "avgEfficiencyPct": {
+          "totalReactivePowerKvar": {
             "type": "number",
             "format": "double",
             "nullable": true
           },
-          "avgPowerFactor": {
+          "totalActiveFaults": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageEfficiencyPct": {
             "type": "number",
             "format": "double",
             "nullable": true
@@ -7424,6 +7423,84 @@
           "status": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "PcsGeneralDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "facilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "linkedBessUnit": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PcsGeneralLinkedBessDto"
+              }
+            ]
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TabInfoDto"
+            }
+          },
+          "activeFaultCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastSeenUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DynamicSectionDto"
+            }
+          }
+        }
+      },
+      "PcsGeneralLinkedBessDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
