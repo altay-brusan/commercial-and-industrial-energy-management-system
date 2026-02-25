@@ -29,20 +29,25 @@ public record ProductTypeSchemaDto
 
 public static class MonitoringPeriods
 {
-    public const string Day = "day";
-    public const string Week = "week";
-    public const string Month = "month";
-    public const string Year = "year";
+    public const string OneHour = "1h";
+    public const string SixHours = "6h";
+    public const string TwelveHours = "12h";
+    public const string TwentyFourHours = "24h";
+    public const string FortyEightHours = "48h";
+    public const string SevenDays = "7d";
+    public const string ThirtyDays = "30d";
 
-    public static readonly string[] All = { Day, Week, Month, Year };
+    public static readonly string[] All = { OneHour, SixHours, TwelveHours, TwentyFourHours, FortyEightHours, SevenDays, ThirtyDays };
 }
 
 public static class MonitoringIntervals
 {
+    public const string OneMin = "1m";
     public const string FiveMin = "5m";
     public const string FifteenMin = "15m";
+    public const string ThirtyMin = "30m";
     public const string OneHour = "1h";
     public const string OneDay = "1d";
 
-    public static readonly string[] All = { FiveMin, FifteenMin, OneHour, OneDay };
+    public static readonly string[] All = { OneMin, FiveMin, FifteenMin, ThirtyMin, OneHour, OneDay };
 }

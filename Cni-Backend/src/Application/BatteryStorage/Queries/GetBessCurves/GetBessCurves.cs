@@ -7,13 +7,19 @@ using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessCurves;
 
+// TODO: Review period/interval validation — the sampling interval should be validated
+// against the selected period to prevent nonsensical combinations (e.g. 1d interval on 1h period).
+// Consider deriving a default interval from the period when the client doesn't provide one,
+// and moving chart series definitions + source paths to the ParameterMapTemplate schema
+// so they are config-driven instead of hardcoded per device type.
+
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.BessView)]
 public record GetBessCurvesQuery : IRequest<ChartResponseDto>
 {
     public Guid UnitId { get; init; }
-    public string Period { get; init; } = MonitoringPeriods.Day;
-    public string Interval { get; init; } = MonitoringIntervals.FifteenMin;
+    public string Period { get; init; } = MonitoringPeriods.TwentyFourHours;
+    public string? Interval { get; init; }
 }
 
 public class GetBessCurvesQueryValidator : AbstractValidator<GetBessCurvesQuery>
@@ -23,7 +29,7 @@ public class GetBessCurvesQueryValidator : AbstractValidator<GetBessCurvesQuery>
         RuleFor(x => x.UnitId).NotEmpty();
         RuleFor(x => x.Period).Must(p => MonitoringPeriods.All.Contains(p))
             .WithMessage($"Period must be one of: {string.Join(", ", MonitoringPeriods.All)}");
-        RuleFor(x => x.Interval).Must(i => MonitoringIntervals.All.Contains(i))
+        RuleFor(x => x.Interval).Must(i => i == null || MonitoringIntervals.All.Contains(i))
             .WithMessage($"Interval must be one of: {string.Join(", ", MonitoringIntervals.All)}");
     }
 }
@@ -47,13 +53,15 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         Guard.Against.NotFound(request.UnitId, device);
 
         var (start, end) = GetPeriodRange(request.Period);
-        var intervalMinutes = GetIntervalMinutes(request.Interval);
+        var intervalMinutes = request.Interval != null
+            ? GetIntervalMinutes(request.Interval)
+            : GetDefaultIntervalMinutes(request.Period);
         var timeFormat = GetTimeFormat(request.Period);
 
-        // Load Battery table time-series for root device (ContainerBatteryState only for chart data)
+        // Load Battery table time-series for root device (ContainerBatteryState for chart data)
         var rawData = await _context.DeviceBatteryData
             .Where(dd => dd.DeviceId == request.UnitId
-                && dd.Kind == "ContainerBatteryState"
+                && dd.Kind == "ContainerBatteryCellMapState"
                 && dd.DeviceLocalTime >= start && dd.DeviceLocalTime <= end)
             .OrderBy(dd => dd.DeviceLocalTime)
             .ToListAsync(cancellationToken);
@@ -89,18 +97,38 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         var now = DateTimeOffset.UtcNow;
         return period switch
         {
-            MonitoringPeriods.Day => (now.AddDays(-1), now),
-            MonitoringPeriods.Week => (now.AddDays(-7), now),
-            MonitoringPeriods.Month => (now.AddMonths(-1), now),
-            MonitoringPeriods.Year => (now.AddYears(-1), now),
-            _ => (now.AddDays(-1), now)
+            MonitoringPeriods.OneHour => (now.AddHours(-1), now),
+            MonitoringPeriods.SixHours => (now.AddHours(-6), now),
+            MonitoringPeriods.TwelveHours => (now.AddHours(-12), now),
+            MonitoringPeriods.TwentyFourHours => (now.AddHours(-24), now),
+            MonitoringPeriods.FortyEightHours => (now.AddHours(-48), now),
+            MonitoringPeriods.SevenDays => (now.AddDays(-7), now),
+            MonitoringPeriods.ThirtyDays => (now.AddDays(-30), now),
+            _ => (now.AddHours(-24), now)
         };
     }
 
+    /// <summary>
+    /// Default sampling interval when the client does not provide one.
+    /// </summary>
+    private static int GetDefaultIntervalMinutes(string period) => period switch
+    {
+        MonitoringPeriods.OneHour => 1,
+        MonitoringPeriods.SixHours => 5,
+        MonitoringPeriods.TwelveHours => 15,
+        MonitoringPeriods.TwentyFourHours => 15,
+        MonitoringPeriods.FortyEightHours => 30,
+        MonitoringPeriods.SevenDays => 60,
+        MonitoringPeriods.ThirtyDays => 1440,
+        _ => 15
+    };
+
     private static int GetIntervalMinutes(string interval) => interval switch
     {
+        MonitoringIntervals.OneMin => 1,
         MonitoringIntervals.FiveMin => 5,
         MonitoringIntervals.FifteenMin => 15,
+        MonitoringIntervals.ThirtyMin => 30,
         MonitoringIntervals.OneHour => 60,
         MonitoringIntervals.OneDay => 1440,
         _ => 15
@@ -108,10 +136,13 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
 
     private static string GetTimeFormat(string period) => period switch
     {
-        MonitoringPeriods.Day => "HH:mm",
-        MonitoringPeriods.Week => "ddd HH:mm",
-        MonitoringPeriods.Month => "dd MMM",
-        MonitoringPeriods.Year => "MMM yy",
+        MonitoringPeriods.OneHour => "HH:mm",
+        MonitoringPeriods.SixHours => "HH:mm",
+        MonitoringPeriods.TwelveHours => "HH:mm",
+        MonitoringPeriods.TwentyFourHours => "HH:mm",
+        MonitoringPeriods.FortyEightHours => "dd/MM HH:mm",
+        MonitoringPeriods.SevenDays => "dd/MM HH:mm",
+        MonitoringPeriods.ThirtyDays => "dd MMM",
         _ => "HH:mm"
     };
 
@@ -223,6 +254,36 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         return charts;
     }
 
+    // TODO: Remove this entire hardcoded fallback and make curves fully config-driven.
+    //
+    // PROBLEM:
+    // BuildDefaultCharts uses source paths and computed fields that are specific to the
+    // Tesla Megapack ContainerBatteryState payload shape. For example:
+    //   - "socPercent", "totalVoltageV", "instantCurrentA", "maxCellTempC" are Tesla field names
+    //   - "@computed:power" hardcodes the formula: totalVoltageV * instantCurrentA / 1000
+    // A different manufacturer (e.g. BYD, Sungrow) will send ContainerBatteryState with
+    // completely different field names (e.g. "batteryVoltage", "stateOfCharge", "dcPowerKw"),
+    // causing all chart series to return null because the paths won't match.
+    //
+    // SOLUTION:
+    // We already have the ParameterResolver + FormulaEvaluator + ParameterMapParser system
+    // (see Application/Common/Services/ParameterMapper/) that resolves parameters dynamically
+    // per device model. Each model's DeviceSpecificationTemplate.ParameterMapTemplate defines:
+    //   - Source parameters: { "type": "source", "sourcePath": "socPercent" }
+    //   - Computed parameters: { "type": "formula", "formula": "multiply(totalVoltageV, instantCurrentA, 0.001)" }
+    //
+    // To fix this:
+    // 1. Add a "curveCharts" section to ParameterMapTemplate (or SpecificationsTemplate) for
+    //    each device model, defining chart keys, titles, series, and which parameter keys to use.
+    // 2. In the handler, iterate over time-series rows, call ParameterResolver.ResolveAsync()
+    //    per row to compute each series value using the model-specific parameter definitions.
+    // 3. Remove BuildDefaultCharts entirely — BuildFromSchema (the schema-driven path above)
+    //    should become the only path, reading chart definitions from the template.
+    // 4. Remove the "@computed:power" hack from ExtractNumber — power computation should be
+    //    a formula definition in the ParameterMapTemplate like all other computed parameters.
+    //
+    // This makes the curves endpoint fully dynamic: adding a new device model only requires
+    // seeding its ParameterMapTemplate with the right field mappings — zero C# code changes.
     private static List<ChartDefinitionDto> BuildDefaultCharts(
         List<(DateTimeOffset Time, JsonElement? Payload)> data,
         string timeFormat,
@@ -231,7 +292,7 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         var charts = new List<ChartDefinitionDto>
         {
             BuildChart("powerSoc", "Power & State of Charge", "area", timeFormat, data,
-                new CurveSeriesDto { Key = "power", Label = "Power", Unit = "kW", Color = "#8b5cf6", YAxis = "left", Type = "area", SourcePath = "dcPower.power" },
+                new CurveSeriesDto { Key = "power", Label = "Power", Unit = "kW", Color = "#8b5cf6", YAxis = "left", Type = "area", SourcePath = "@computed:power" },
                 new CurveSeriesDto { Key = "soc", Label = "SoC", Unit = "%", Color = "#22c55e", YAxis = "right", Type = "line", SourcePath = "socPercent" }),
 
             BuildChart("voltageCurrent", "Voltage & Current", "line", timeFormat, data,
@@ -299,6 +360,23 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
 
     private static object? ExtractNumber(JsonElement payload, string path)
     {
+        // Computed fields: voltage * current / 1000 = power in kW
+        if (path == "@computed:power")
+        {
+            var voltage = PayloadDeserializer.ExtractValue(payload, "totalVoltageV");
+            var current = PayloadDeserializer.ExtractValue(payload, "instantCurrentA");
+            if (voltage is double v && current is double c)
+                return Math.Round(v * c / 1000.0, 1);
+            if (voltage is int vi && current is int ci)
+                return Math.Round((double)vi * ci / 1000.0, 1);
+            // Mixed types
+            var vd = voltage switch { double d => d, int i => (double)i, long l => (double)l, _ => (double?)null };
+            var cd = current switch { double d => d, int i => (double)i, long l => (double)l, _ => (double?)null };
+            if (vd.HasValue && cd.HasValue)
+                return Math.Round(vd.Value * cd.Value / 1000.0, 1);
+            return null;
+        }
+
         var value = PayloadDeserializer.ExtractValue(payload, path);
         return value switch
         {

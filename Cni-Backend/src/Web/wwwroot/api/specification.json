@@ -4687,10 +4687,51 @@
           "status": {
             "$ref": "#/components/schemas/StatusBadgeDto"
           },
+          "operatingMode": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/StatusBadgeDto"
+              }
+            ]
+          },
+          "soc": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "soh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "power": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "capacityKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "activeAlarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "availableTabs": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TabInfoDto"
+            }
+          },
+          "connectedDevices": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ConnectedDeviceDto"
+              }
             }
           },
           "lastSeenUtc": {
@@ -4716,6 +4757,19 @@
           "order": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ConnectedDeviceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },

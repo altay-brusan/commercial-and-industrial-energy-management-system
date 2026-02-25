@@ -66,8 +66,8 @@ public class BatteryStorage : EndpointGroupBase
         var result = await sender.Send(new GetBessCurvesQuery
         {
             UnitId = unitId,
-            Period = period ?? MonitoringPeriods.Day,
-            Interval = interval ?? MonitoringIntervals.FifteenMin
+            Period = period ?? MonitoringPeriods.TwentyFourHours,
+            Interval = interval
         });
         return TypedResults.Ok(result);
     }
