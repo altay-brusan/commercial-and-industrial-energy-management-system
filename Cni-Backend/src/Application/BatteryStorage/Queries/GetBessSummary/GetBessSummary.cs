@@ -92,7 +92,19 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 
         var sections = new List<DynamicSectionDto>();
 
-        sections.Add(BuildNameplateSection(device, metadata));
+        // TODO: Move hierarchy counting to schema-driven approach. All summary fields
+        // (including hierarchy) should be resolved via ParameterResolver using delegates
+        // defined in the DeviceSpecificationTemplate's ParameterMapTemplate, instead of
+        // being hardcoded per device type here.
+        var hierarchyCounts = new List<(string Label, int Count)>();
+        var rackCount = telemetry.Devices.Count(d => d.DeviceTypeName == DeviceTypeNames.EnergyStorageRack);
+        var packCount = telemetry.Devices.Count(d => d.DeviceTypeName == DeviceTypeNames.EnergyStoragePack);
+        var moduleCount = telemetry.Devices.Count(d => d.DeviceTypeName == DeviceTypeNames.EnergyStorageModule);
+        if (rackCount > 0) hierarchyCounts.Add(("Rack", rackCount));
+        if (packCount > 0) hierarchyCounts.Add(("Pack", packCount));
+        if (moduleCount > 0) hierarchyCounts.Add(("Module", moduleCount));
+
+        sections.Add(BuildNameplateSection(device, metadata, hierarchyCounts));
         sections.Add(BuildLiveStatusSection(batt, resolver));
         sections.Add(BuildEnergyLimitsSection(batt, resolver));
         sections.Add(BuildCellExtremesSection(batt, resolver));
@@ -114,7 +126,9 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         return sections;
     }
 
-    private static DynamicSectionDto BuildNameplateSection(Domain.Entities.Device device, JsonElement? metadata)
+    private static DynamicSectionDto BuildNameplateSection(
+        Domain.Entities.Device device, JsonElement? metadata,
+        List<(string Label, int Count)>? hierarchyCounts = null)
     {
         var fields = new List<SectionFieldDto>
         {
@@ -145,6 +159,38 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
             var voltMax = ExtractNum(metadata, "voltageMax");
             if (voltMin.HasValue && voltMax.HasValue)
                 fields.Add(new SectionFieldDto { Key = "voltageRange", Label = "Voltage Range", Value = $"{voltMin} – {voltMax}", Type = "string", Unit = "V" });
+        }
+
+        if (hierarchyCounts is { Count: > 0 })
+        {
+            var shortLabels = hierarchyCounts.Select(h =>
+            {
+                var abbr = h.Label switch
+                {
+                    "Rack" => "R",
+                    "Pack" => "P",
+                    "Module" => "M",
+                    "Cell" => "C",
+                    _ => h.Label[..1]
+                };
+                return $"{h.Count}{abbr}";
+            });
+
+            fields.Add(new SectionFieldDto
+            {
+                Key = "hierarchy",
+                Label = "Hierarchy",
+                Value = string.Join(" / ", shortLabels),
+                Type = "string",
+                Meta = new Dictionary<string, object?>
+                {
+                    ["detail"] = hierarchyCounts.Select(h => new Dictionary<string, object?>
+                    {
+                        ["label"] = h.Label,
+                        ["count"] = h.Count
+                    }).ToList()
+                }
+            });
         }
 
         return new DynamicSectionDto

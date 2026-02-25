@@ -50,9 +50,11 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         var intervalMinutes = GetIntervalMinutes(request.Interval);
         var timeFormat = GetTimeFormat(request.Period);
 
-        // Load Battery table time-series for root device
+        // Load Battery table time-series for root device (ContainerBatteryState only for chart data)
         var rawData = await _context.DeviceBatteryData
-            .Where(dd => dd.DeviceId == request.UnitId && dd.DeviceLocalTime >= start && dd.DeviceLocalTime <= end)
+            .Where(dd => dd.DeviceId == request.UnitId
+                && dd.Kind == "ContainerBatteryState"
+                && dd.DeviceLocalTime >= start && dd.DeviceLocalTime <= end)
             .OrderBy(dd => dd.DeviceLocalTime)
             .ToListAsync(cancellationToken);
 
