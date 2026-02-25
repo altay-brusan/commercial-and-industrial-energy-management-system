@@ -827,14 +827,11 @@
         ],
         "operationId": "PostApiV1DeviceDataIngestThingsBoard",
         "requestBody": {
-          "x-name": "messages",
+          "x-name": "message",
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/ThingsBoardTelemetryDto"
-                }
+                "$ref": "#/components/schemas/ThingsBoardTelemetryDto"
               }
             }
           },
@@ -847,7 +844,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IngestBatchResultDto"
+                  "$ref": "#/components/schemas/IngestResultDto"
                 }
               }
             }

@@ -19,7 +19,7 @@ public class DeviceData : EndpointGroupBase
 
         // TODO: TEMPORARY — ThingsBoard demo integration endpoint. Remove once MQTT-based ingestion
         // from ThingsBoard is fully operational and this HTTP bridge is no longer needed.
-        // ThingsBoard HTTP Integration sends an array of telemetry messages with PascalCase
+        // ThingsBoard HTTP Integration sends a single telemetry message with PascalCase
         // property names and Payload as a JSON object (not a string). This endpoint translates
         // that format into our standard IngestDeviceDataCommand pipeline.
         // No API key auth — ThingsBoard cannot send custom headers in its HTTP integration.
@@ -42,20 +42,19 @@ public class DeviceData : EndpointGroupBase
     }
 
     // TODO: TEMPORARY — Remove this endpoint when ThingsBoard demo is decommissioned.
-    public static async Task<Ok<IngestBatchResultDto>> IngestThingsBoard(ISender sender, List<ThingsBoardTelemetryDto> messages)
+    public static async Task<Ok<IngestResultDto>> IngestThingsBoard(ISender sender, ThingsBoardTelemetryDto message)
     {
-        var commands = messages.Select(m => new IngestDeviceDataCommand
+        var command = new IngestDeviceDataCommand
         {
-            RtuSn = m.RtuSn,
-            DeviceSn = m.DeviceSn,
-            Kind = m.Kind,
-            Payload = m.Payload.GetRawText(),
-            DeviceLocalTime = m.DeviceLocalTime
-        }).ToList();
+            RtuSn = message.RtuSn,
+            DeviceSn = message.DeviceSn,
+            Kind = message.Kind,
+            Payload = message.Payload.GetRawText(),
+            DeviceLocalTime = message.DeviceLocalTime
+        };
 
-        var batchCommand = new IngestDeviceDataBatchCommand { Messages = commands };
-        var result = await sender.Send(batchCommand);
-        return TypedResults.Ok(result);
+        var result = await sender.Send(command);
+        return TypedResults.Ok(new IngestResultDto { Success = result });
     }
 }
 
@@ -66,7 +65,7 @@ public record IngestResultDto
 
 /// <summary>
 /// TODO: TEMPORARY DTO for ThingsBoard HTTP Integration.
-/// ThingsBoard sends telemetry as a JSON array with PascalCase property names
+/// ThingsBoard sends a single telemetry message with PascalCase property names
 /// and Payload as a JSON object. Remove when ThingsBoard demo is decommissioned.
 /// </summary>
 public record ThingsBoardTelemetryDto
