@@ -21,21 +21,22 @@ public class BatteryStorage : EndpointGroupBase
             .WithTags("BatteryStorage")
             .RequireAuthorization();
 
-        group.MapGet("/Tree", GetTree);
-        group.MapGet("/Units", GetUnits);
-        group.MapGet("/Units/Header/{unitId}", GetUnitHeader);
-        group.MapGet("/Units/{unitId}/Summary", GetSummary);
-        group.MapGet("/Units/{unitId}/Health", GetHealth);
-        group.MapGet("/Units/{unitId}/Curves", GetCurves);
-        group.MapGet("/Units/{unitId}/FaultFlags", GetFaultFlags);
-        group.MapGet("/Units/{unitId}/Notifications", GetNotifications);
-        group.MapGet("/Units/{unitId}/Settings", GetSettings);
+        group.MapGet("/Tree/{facilityId}", GetTree);
+        group.MapGet("/Units/{facilityId}", GetUnits);
+        group.MapGet("/Units/{unitId}/Header", GetUnitHeader);
+        group.MapGet("/Units/{unitId}/{tab}", GetTabContent);
     }
 
     public static async Task<Ok<BessUnitsResultDto>> GetUnits(
-        ISender sender, [AsParameters] GetBessUnitsQuery query)
+        ISender sender, Guid facilityId, string? search, string? sortBy, string? sortDirection)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(new GetBessUnitsQuery
+        {
+            FacilityId = facilityId,
+            Search = search,
+            SortBy = sortBy,
+            SortDirection = sortDirection
+        });
         return TypedResults.Ok(result);
     }
 
@@ -46,62 +47,56 @@ public class BatteryStorage : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<SummaryResponseDto>> GetSummary(
-        ISender sender, Guid unitId)
+    public static async Task<IResult> GetTabContent(
+        ISender sender, Guid unitId, string tab,
+        string? period, string? interval,
+        int? page, int? pageSize, string? severity, bool? isActive)
     {
-        var result = await sender.Send(new GetBessSummaryQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
-    }
-
-    public static async Task<Ok<SummaryResponseDto>> GetHealth(
-        ISender sender, Guid unitId)
-    {
-        var result = await sender.Send(new GetBessHealthQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
-    }
-
-    public static async Task<Ok<ChartResponseDto>> GetCurves(
-        ISender sender, Guid unitId, string? period, string? interval)
-    {
-        var result = await sender.Send(new GetBessCurvesQuery
+        switch (tab.ToLowerInvariant())
         {
-            UnitId = unitId,
-            Period = period ?? MonitoringPeriods.TwentyFourHours,
-            Interval = interval
-        });
-        return TypedResults.Ok(result);
-    }
+            case "summary":
+                var summary = await sender.Send(new GetBessSummaryQuery { UnitId = unitId });
+                return TypedResults.Ok(summary);
 
-    public static async Task<Ok<FaultFlagsResponseDto>> GetFaultFlags(
-        ISender sender, Guid unitId)
-    {
-        var result = await sender.Send(new GetBessFaultFlagsQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
-    }
+            case "health":
+                var health = await sender.Send(new GetBessHealthQuery { UnitId = unitId });
+                return TypedResults.Ok(health);
 
-    public static async Task<Ok<FaultsPaginatedResponseDto>> GetNotifications(
-        ISender sender, Guid unitId, int? page, int? pageSize, string? severity, bool? isActive)
-    {
-        var result = await sender.Send(new GetBessFaultsQuery
-        {
-            UnitId = unitId,
-            Page = page ?? 1,
-            PageSize = pageSize ?? 20,
-            Severity = severity,
-            IsActive = isActive
-        });
-        return TypedResults.Ok(result);
-    }
+            case "curves":
+                var curves = await sender.Send(new GetBessCurvesQuery
+                {
+                    UnitId = unitId,
+                    Period = period ?? MonitoringPeriods.TwentyFourHours,
+                    Interval = interval
+                });
+                return TypedResults.Ok(curves);
 
-    public static async Task<Ok<SummaryResponseDto>> GetSettings(
-        ISender sender, Guid unitId)
-    {
-        var result = await sender.Send(new GetBessSettingsQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
+            case "faultflags":
+                var flags = await sender.Send(new GetBessFaultFlagsQuery { UnitId = unitId });
+                return TypedResults.Ok(flags);
+
+            case "faults":
+                var faults = await sender.Send(new GetBessFaultsQuery
+                {
+                    UnitId = unitId,
+                    Page = page ?? 1,
+                    PageSize = pageSize ?? 20,
+                    Severity = severity,
+                    IsActive = isActive
+                });
+                return TypedResults.Ok(faults);
+
+            case "settings":
+                var settings = await sender.Send(new GetBessSettingsQuery { UnitId = unitId });
+                return TypedResults.Ok(settings);
+
+            default:
+                return TypedResults.NotFound();
+        }
     }
 
     public static async Task<Ok<BessDeviceTreeResponseDto>> GetTree(
-        ISender sender, Guid? facilityId)
+        ISender sender, Guid facilityId)
     {
         var result = await sender.Send(new GetBessDeviceTreeQuery { FacilityId = facilityId });
         return TypedResults.Ok(result);

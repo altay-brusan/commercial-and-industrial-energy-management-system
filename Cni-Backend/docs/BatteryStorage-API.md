@@ -5,15 +5,44 @@
 
 ---
 
-## 1. GET `/BatteryStorage/Units`
+## Endpoints
 
-List all BESS (Battery Energy Storage System) units with real-time telemetry and fleet aggregates.
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/Tree/{facilityId}` | Hierarchical device tree for a facility |
+| GET | `/Units/{facilityId}` | All BESS units for a facility with telemetry |
+| GET | `/Units/{unitId}/Header` | Unit header info and available tabs |
+| GET | `/Units/{unitId}/{tab}` | Tab content dispatch (see tab keys below) |
+
+### Tab Keys
+
+| Key | Response DTO | Query Params |
+|-----|-------------|--------------|
+| `summary` | `SummaryResponseDto` | — |
+| `health` | `SummaryResponseDto` | — |
+| `curves` | `ChartResponseDto` | `period`, `interval` |
+| `faultflags` | `FaultFlagsResponseDto` | — |
+| `faults` | `FaultsPaginatedResponseDto` | `page`, `pageSize`, `severity`, `isActive` |
+| `settings` | `SummaryResponseDto` | — |
+
+Unknown tab keys return `404 Not Found`. Tab matching is case-insensitive.
+
+---
+
+## 1. GET `/BatteryStorage/Units/{facilityId}`
+
+List all BESS (Battery Energy Storage System) units for a facility with real-time telemetry and fleet aggregates.
+
+### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `facilityId` | `Guid` | Yes | The facility to list units for. |
 
 ### Query Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `facilityId` | `Guid` | No | Filter units by facility. Omit to return all facilities. |
 | `search` | `string` | No | Free-text search on unit name or serial number (case-insensitive). |
 | `sortBy` | `string` | No | Sort field: `name`, `soc`, `power`, `status`. Default: `name`. |
 | `sortDirection` | `string` | No | `asc` or `desc`. Default: `asc`. |
@@ -70,7 +99,7 @@ List all BESS (Battery Energy Storage System) units with real-time telemetry and
 
 ---
 
-## 2. GET `/BatteryStorage/Units/Header/{unitId}`
+## 2. GET `/BatteryStorage/Units/{unitId}/Header`
 
 Lightweight header info for a single BESS unit. Used to render the unit detail page header and tab navigation.
 
@@ -103,7 +132,7 @@ Lightweight header info for a single BESS unit. Used to render the unit detail p
     { "key": "health", "label": "Health", "isEnabled": true, "order": 1 },
     { "key": "curves", "label": "Curves", "isEnabled": true, "order": 2 },
     { "key": "faultFlags", "label": "Fault Flags", "isEnabled": true, "order": 3 },
-    { "key": "notifications", "label": "Notifications", "isEnabled": true, "order": 4 },
+    { "key": "faults", "label": "Faults", "isEnabled": true, "order": 4 },
     { "key": "settings", "label": "Settings", "isEnabled": true, "order": 5 }
   ],
   "connectedDevices": {
@@ -125,7 +154,7 @@ Lightweight header info for a single BESS unit. Used to render the unit detail p
 
 | Field | Description |
 |-------|-------------|
-| `availableTabs` | Ordered list of tabs the frontend should render. Derived from the device's `SpecificationTemplate`. |
+| `availableTabs` | Ordered list of tabs the frontend should render. Each `key` maps to a `{tab}` value in the dispatch endpoint. |
 | `connectedDevices` | Child devices grouped by display type (`esc`, `hvac`, `pcs`, `solar`, `meter`). Used for sub-device navigation/selectors. |
 
 ---
@@ -157,62 +186,7 @@ The response is an array of `sections`. Each section has a `key`, `title`, layou
       "fields": [
         { "key": "soc", "label": "State of Charge", "value": 85.5, "type": "number", "unit": "%" },
         { "key": "soh", "label": "State of Health", "value": 98.0, "type": "number", "unit": "%" },
-        { "key": "power", "label": "Power", "value": -33.2, "type": "number", "unit": "kW" },
-        { "key": "voltage", "label": "Voltage", "value": 793.6, "type": "number", "unit": "V" },
-        { "key": "current", "label": "Current", "value": -30.7, "type": "number", "unit": "A" },
-        { "key": "state", "label": "Operating State", "value": "Discharge", "type": "string" },
-        { "key": "cycleCount", "label": "Cycle Count", "value": 145, "type": "number" },
-        { "key": "remainingEnergy", "label": "Remaining Energy", "value": 186.24, "type": "number", "unit": "kWh" },
-        { "key": "availableEnergy", "label": "Available Energy", "value": 258.67, "type": "number", "unit": "kWh" }
-      ],
-      "tableData": null,
-      "chartConfig": null,
-      "chartData": null
-    },
-    {
-      "key": "cellExtremes",
-      "title": "Cell Extremes",
-      "icon": null,
-      "variant": "card",
-      "columns": 2,
-      "optional": false,
-      "fields": [
-        { "key": "maxCellVoltage", "label": "Max Cell Voltage", "value": 3315, "type": "number", "unit": "mV" },
-        { "key": "minCellVoltage", "label": "Min Cell Voltage", "value": 3299, "type": "number", "unit": "mV" },
-        { "key": "avgCellVoltage", "label": "Avg Cell Voltage", "value": 3308, "type": "number", "unit": "mV" },
-        { "key": "maxCellTemp", "label": "Max Cell Temp", "value": 25, "type": "number", "unit": "°C" },
-        { "key": "minCellTemp", "label": "Min Cell Temp", "value": 21, "type": "number", "unit": "°C" },
-        { "key": "ambientTemp", "label": "Ambient Temp", "value": 22, "type": "number", "unit": "°C" }
-      ]
-    },
-    {
-      "key": "pcs",
-      "title": "PCS",
-      "icon": null,
-      "variant": "card",
-      "columns": 3,
-      "optional": true,
-      "fields": [
-        { "key": "activePower", "label": "Active Power", "value": -33.0, "type": "number", "unit": "kW" },
-        { "key": "apparentPower", "label": "Apparent Power", "value": 33.0, "type": "number", "unit": "kVA" },
-        { "key": "reactivePower", "label": "Reactive Power", "value": -0.3, "type": "number", "unit": "kVar" },
-        { "key": "gridFrequency", "label": "Grid Frequency", "value": 50.05, "type": "number", "unit": "Hz" },
-        { "key": "dcPower", "label": "DC Power", "value": -32.6, "type": "number", "unit": "kW" }
-      ]
-    },
-    {
-      "key": "chiller",
-      "title": "Thermal Management",
-      "icon": null,
-      "variant": "card",
-      "columns": 3,
-      "optional": true,
-      "fields": [
-        { "key": "operatingMode", "label": "Operating Mode", "value": "Off", "type": "string" },
-        { "key": "outletTemp", "label": "Outlet Coolant Temp", "value": -40, "type": "number", "unit": "°C" },
-        { "key": "inletTemp", "label": "Inlet Coolant Temp", "value": -40, "type": "number", "unit": "°C" },
-        { "key": "compressorStatus", "label": "Compressor", "value": false, "type": "boolean" },
-        { "key": "pumpStatus", "label": "Pump", "value": false, "type": "boolean" }
+        { "key": "power", "label": "Power", "value": -33.2, "type": "number", "unit": "kW" }
       ]
     }
   ]
@@ -229,7 +203,7 @@ The response is an array of `sections`. Each section has a `key`, `title`, layou
 | `select` | Dropdown with `options` array |
 
 ### Notes
-- Sections with `optional: true` may be absent if the device has no child of that type (e.g. no PCS child → no PCS section).
+- Sections with `optional: true` may be absent if the device has no child of that type (e.g. no PCS child -> no PCS section).
 - Sub-device pages (rack, pack, module, ESC, TMS) also use this endpoint — they return sections relevant to that device level.
 
 ---
@@ -278,50 +252,7 @@ Time-series chart data for a BESS unit. Returns chart definitions with series me
         { "key": "current", "label": "Current", "unit": "A", "color": "#ef4444", "yAxis": "right" }
       ],
       "data": [
-        { "time": "2026-02-25T00:00:00Z", "voltage": 807.1, "current": -38.9 },
-        { "time": "2026-02-25T00:15:00Z", "voltage": 805.3, "current": -37.2 },
-        { "time": "2026-02-25T00:30:00Z", "voltage": 803.8, "current": -36.1 }
-      ]
-    },
-    {
-      "key": "power",
-      "title": "Power",
-      "type": "line",
-      "xAxis": { "key": "time", "label": "Time", "format": "HH:mm" },
-      "series": [
-        { "key": "power", "label": "Power", "unit": "kW", "color": "#8b5cf6" }
-      ],
-      "data": [
-        { "time": "2026-02-25T00:00:00Z", "power": -31.4 },
-        { "time": "2026-02-25T00:15:00Z", "power": -30.0 },
-        { "time": "2026-02-25T00:30:00Z", "power": -29.1 }
-      ]
-    },
-    {
-      "key": "temperature",
-      "title": "Temperature",
-      "type": "line",
-      "xAxis": { "key": "time", "label": "Time", "format": "HH:mm" },
-      "series": [
-        { "key": "maxTemp", "label": "Max Cell Temp", "unit": "°C", "color": "#ef4444" },
-        { "key": "minTemp", "label": "Min Cell Temp", "unit": "°C", "color": "#3b82f6" }
-      ],
-      "data": [
-        { "time": "2026-02-25T00:00:00Z", "maxTemp": 25, "minTemp": 21 },
-        { "time": "2026-02-25T00:15:00Z", "maxTemp": 25, "minTemp": 21 }
-      ]
-    },
-    {
-      "key": "pcs_power",
-      "title": "PCS Power",
-      "type": "line",
-      "xAxis": { "key": "time", "label": "Time", "format": "HH:mm" },
-      "series": [
-        { "key": "activePower", "label": "Active Power", "unit": "kW", "color": "#10b981" },
-        { "key": "reactivePower", "label": "Reactive Power", "unit": "kVar", "color": "#f59e0b" }
-      ],
-      "data": [
-        { "time": "2026-02-25T00:00:00Z", "activePower": -33.0, "reactivePower": -0.3 }
+        { "time": "2026-02-25T00:00:00Z", "voltage": 807.1, "current": -38.9 }
       ]
     }
   ]
@@ -347,72 +278,7 @@ Battery health assessment with SoH trends, cycle life, thermal stress, and maint
 
 ### Response — `SummaryResponseDto`
 
-Same `sections` structure as Summary. Typical sections:
-
-```json
-{
-  "sections": [
-    {
-      "key": "healthOverview",
-      "title": "Health Overview",
-      "variant": "card",
-      "columns": 3,
-      "fields": [
-        { "key": "soh", "label": "State of Health", "value": 98.0, "type": "number", "unit": "%" },
-        { "key": "cycleCount", "label": "Cycle Count", "value": 145, "type": "number" },
-        { "key": "remainingUsefulLife", "label": "Remaining Useful Life", "value": "~12 years", "type": "string" },
-        { "key": "degradationRate", "label": "Annual Degradation", "value": 1.5, "type": "number", "unit": "%/year" }
-      ]
-    },
-    {
-      "key": "sohTrend",
-      "title": "SoH Trend (12 Months)",
-      "variant": "card",
-      "columns": 1,
-      "fields": [],
-      "chartConfig": {
-        "type": "line",
-        "xAxis": { "key": "month", "label": "Month" },
-        "yAxis": { "key": "soh", "label": "SoH", "unit": "%", "domain": [80, 100] },
-        "referenceLines": [
-          { "y": 80, "label": "End of Life", "color": "red", "strokeDasharray": "5 5" }
-        ]
-      },
-      "chartData": [
-        { "month": "2025-03", "soh": 99.8 },
-        { "month": "2025-06", "soh": 99.5 },
-        { "month": "2025-09", "soh": 99.1 },
-        { "month": "2025-12", "soh": 98.5 },
-        { "month": "2026-02", "soh": 98.0 }
-      ]
-    },
-    {
-      "key": "cycleLife",
-      "title": "Cycle Life",
-      "variant": "card",
-      "columns": 2,
-      "fields": [
-        { "key": "totalCycles", "label": "Total Cycles", "value": 145, "type": "number" },
-        { "key": "ratedCycles", "label": "Rated Cycles", "value": 6000, "type": "number" },
-        { "key": "cycleLifeRemaining", "label": "Remaining", "value": 5855, "type": "number" },
-        { "key": "avgDod", "label": "Avg Depth of Discharge", "value": 78.5, "type": "number", "unit": "%" }
-      ]
-    },
-    {
-      "key": "thermalStress",
-      "title": "Thermal Stress",
-      "variant": "card",
-      "columns": 2,
-      "fields": [
-        { "key": "maxRecordedTemp", "label": "Max Recorded Temp", "value": 38, "type": "number", "unit": "°C" },
-        { "key": "minRecordedTemp", "label": "Min Recorded Temp", "value": 12, "type": "number", "unit": "°C" },
-        { "key": "avgOperatingTemp", "label": "Avg Operating Temp", "value": 24, "type": "number", "unit": "°C" },
-        { "key": "thermalEvents", "label": "Thermal Events", "value": 0, "type": "number" }
-      ]
-    }
-  ]
-}
-```
+Same `sections` structure as Summary. Typical sections: `healthOverview`, `sohTrend` (chart variant), `cycleLife`, `thermalStress`.
 
 ---
 
@@ -437,31 +303,7 @@ Device configuration and settings. Currently read-only — values sourced from d
       "variant": "card",
       "columns": 2,
       "fields": [
-        { "key": "tempAlarmThreshold", "label": "Temperature Alarm", "value": 45, "type": "number", "unit": "°C", "editable": true },
-        { "key": "socLowAlarm", "label": "SoC Low Alarm", "value": 10, "type": "number", "unit": "%", "editable": true },
-        { "key": "socHighAlarm", "label": "SoC High Alarm", "value": 95, "type": "number", "unit": "%", "editable": true }
-      ]
-    },
-    {
-      "key": "operatingParams",
-      "title": "Operating Parameters",
-      "variant": "card",
-      "columns": 2,
-      "fields": [
-        { "key": "chargeStopSoc", "label": "Charge Stop SoC", "value": 95, "type": "number", "unit": "%" },
-        { "key": "dischargeStopSoc", "label": "Discharge Stop SoC", "value": 5, "type": "number", "unit": "%" },
-        { "key": "operatingMode", "label": "Operating Mode", "value": "Auto", "type": "select", "options": ["Auto", "Manual", "Maintenance"] }
-      ]
-    },
-    {
-      "key": "deviceInfo",
-      "title": "Device Information",
-      "variant": "card",
-      "columns": 2,
-      "fields": [
-        { "key": "firmwareVersion", "label": "Firmware Version", "value": "2.1.4", "type": "string" },
-        { "key": "protocol", "label": "Communication Protocol", "value": "Modbus TCP", "type": "string" },
-        { "key": "modbusAddress", "label": "Modbus Address", "value": 1, "type": "number" }
+        { "key": "tempAlarmThreshold", "label": "Temperature Alarm", "value": 45, "type": "number", "unit": "°C", "editable": true }
       ]
     }
   ]
@@ -474,15 +316,15 @@ Device configuration and settings. Currently read-only — values sourced from d
 
 ---
 
-## 7. GET `/BatteryStorage/Tree`
+## 7. GET `/BatteryStorage/Tree/{facilityId}`
 
-Hierarchical device tree for all BESS units. Returns a recursive tree structure: Unit → Battery/PCS/TMS → Rack → Pack → Module.
+Hierarchical device tree for all BESS units in a facility. Returns a recursive tree structure: Unit -> Battery/PCS/TMS -> Rack -> Pack -> Module.
 
-### Query Parameters
+### Path Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `facilityId` | `Guid` | No | Filter tree to a single facility. Omit to return all facilities. |
+| `facilityId` | `Guid` | Yes | The facility to load the tree for. |
 
 ### Response — `BessDeviceTreeResponseDto`
 
@@ -504,34 +346,6 @@ Hierarchical device tree for all BESS units. Returns a recursive tree structure:
           "status": "normal",
           "parentDeviceId": "a1b2c3d4-...",
           "alarmCount": 0,
-          "children": [
-            {
-              "id": "c3d4e5f6-...",
-              "name": "Rack 1",
-              "type": "rack",
-              "status": "normal",
-              "parentDeviceId": "b2c3d4e5-...",
-              "alarmCount": 0,
-              "children": []
-            }
-          ]
-        },
-        {
-          "id": "d4e5f6g7-...",
-          "name": "PCS-01",
-          "type": "pcs",
-          "status": "normal",
-          "parentDeviceId": "a1b2c3d4-...",
-          "alarmCount": 0,
-          "children": []
-        },
-        {
-          "id": "e5f6g7h8-...",
-          "name": "Chiller-01",
-          "type": "hvac",
-          "status": "normal",
-          "parentDeviceId": "a1b2c3d4-...",
-          "alarmCount": 0,
           "children": []
         }
       ]
@@ -539,26 +353,6 @@ Hierarchical device tree for all BESS units. Returns a recursive tree structure:
   ]
 }
 ```
-
-### Device Types
-
-| `type` | Description |
-|--------|-------------|
-| `unit` | Root BESS container (EnergyStorage) |
-| `battery` | Battery sub-system |
-| `rack` | Battery rack |
-| `pack` | Battery pack |
-| `module` | Battery module |
-| `esc` | Energy Storage Controller |
-| `hvac` | Thermal Management System (chiller) |
-| `pcs` | Power Conversion System |
-| `solar` | Solar panel/inverter |
-| `meter` | Smart meter |
-
-### Notes
-- `alarmCount` is recursive — a parent's count includes all descendant alarms.
-- `status` values: `normal`, `warning`, `fault`. Derived from active alarm severity.
-- Children are ordered by `hierarchyIndex` then `name`.
 
 ---
 
@@ -593,5 +387,5 @@ All status fields share this shape:
 |--------|-----------|
 | `401` | Missing or invalid JWT token |
 | `403` | Insufficient role or missing `Bess.View` permission |
-| `404` | `unitId` not found |
-| `400` | Invalid `period` or `interval` value (Curves endpoint) |
+| `404` | Unknown `tab` key, or `unitId`/`facilityId` not found |
+| `400` | Invalid query parameter value |

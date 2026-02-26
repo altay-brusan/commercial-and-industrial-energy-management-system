@@ -340,7 +340,7 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Tree": {
+    "/api/v1/BatteryStorage/Tree/{facilityId}": {
       "get": {
         "tags": [
           "BatteryStorage"
@@ -349,11 +349,11 @@
         "parameters": [
           {
             "name": "facilityId",
-            "in": "query",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -377,7 +377,7 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Units": {
+    "/api/v1/BatteryStorage/Units/{facilityId}": {
       "get": {
         "tags": [
           "BatteryStorage"
@@ -385,17 +385,17 @@
         "operationId": "GetApiV1BatteryStorageUnits",
         "parameters": [
           {
-            "name": "FacilityId",
-            "in": "query",
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           },
           {
-            "name": "Search",
+            "name": "search",
             "in": "query",
             "schema": {
               "type": "string",
@@ -404,7 +404,7 @@
             "x-position": 2
           },
           {
-            "name": "SortBy",
+            "name": "sortBy",
             "in": "query",
             "schema": {
               "type": "string",
@@ -413,7 +413,7 @@
             "x-position": 3
           },
           {
-            "name": "SortDirection",
+            "name": "sortDirection",
             "in": "query",
             "schema": {
               "type": "string",
@@ -441,7 +441,7 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Units/Header/{unitId}": {
+    "/api/v1/BatteryStorage/Units/{unitId}/Header": {
       "get": {
         "tags": [
           "BatteryStorage"
@@ -478,12 +478,12 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Units/{unitId}/Summary": {
+    "/api/v1/BatteryStorage/Units/{unitId}/{tab}": {
       "get": {
         "tags": [
           "BatteryStorage"
         ],
-        "operationId": "GetApiV1BatteryStorageUnitsSummary",
+        "operationId": "GetApiV1BatteryStorageUnits2",
         "parameters": [
           {
             "name": "unitId",
@@ -494,80 +494,15 @@
               "format": "guid"
             },
             "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SummaryResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
+          },
           {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/v1/BatteryStorage/Units/{unitId}/Health": {
-      "get": {
-        "tags": [
-          "BatteryStorage"
-        ],
-        "operationId": "GetApiV1BatteryStorageUnitsHealth",
-        "parameters": [
-          {
-            "name": "unitId",
+            "name": "tab",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "guid"
+              "type": "string"
             },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SummaryResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/v1/BatteryStorage/Units/{unitId}/Curves": {
-      "get": {
-        "tags": [
-          "BatteryStorage"
-        ],
-        "operationId": "GetApiV1BatteryStorageUnitsCurves",
-        "parameters": [
-          {
-            "name": "unitId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
+            "x-position": 2
           },
           {
             "name": "period",
@@ -576,7 +511,7 @@
               "type": "string",
               "nullable": true
             },
-            "x-position": 2
+            "x-position": 3
           },
           {
             "name": "interval",
@@ -585,81 +520,7 @@
               "type": "string",
               "nullable": true
             },
-            "x-position": 3
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChartResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/v1/BatteryStorage/Units/{unitId}/FaultFlags": {
-      "get": {
-        "tags": [
-          "BatteryStorage"
-        ],
-        "operationId": "GetApiV1BatteryStorageUnitsFaultFlags",
-        "parameters": [
-          {
-            "name": "unitId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FaultFlagsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/v1/BatteryStorage/Units/{unitId}/Notifications": {
-      "get": {
-        "tags": [
-          "BatteryStorage"
-        ],
-        "operationId": "GetApiV1BatteryStorageUnitsNotifications",
-        "parameters": [
-          {
-            "name": "unitId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
+            "x-position": 4
           },
           {
             "name": "page",
@@ -669,7 +530,7 @@
               "format": "int32",
               "nullable": true
             },
-            "x-position": 2
+            "x-position": 5
           },
           {
             "name": "pageSize",
@@ -679,7 +540,7 @@
               "format": "int32",
               "nullable": true
             },
-            "x-position": 3
+            "x-position": 6
           },
           {
             "name": "severity",
@@ -688,7 +549,7 @@
               "type": "string",
               "nullable": true
             },
-            "x-position": 4
+            "x-position": 7
           },
           {
             "name": "isActive",
@@ -697,56 +558,12 @@
               "type": "boolean",
               "nullable": true
             },
-            "x-position": 5
+            "x-position": 8
           }
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FaultsPaginatedResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/v1/BatteryStorage/Units/{unitId}/Settings": {
-      "get": {
-        "tags": [
-          "BatteryStorage"
-        ],
-        "operationId": "GetApiV1BatteryStorageUnitsSettings",
-        "parameters": [
-          {
-            "name": "unitId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SummaryResponseDto"
-                }
-              }
-            }
+            "description": ""
           }
         },
         "security": [
@@ -2904,7 +2721,7 @@
         ]
       }
     },
-    "/api/v1/Pcs/Units": {
+    "/api/v1/Pcs/Units/{facilityId}": {
       "get": {
         "tags": [
           "Pcs"
@@ -2912,12 +2729,12 @@
         "operationId": "GetApiV1PcsUnits",
         "parameters": [
           {
-            "name": "FacilityId",
-            "in": "query",
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -2941,7 +2758,7 @@
         ]
       }
     },
-    "/api/v1/Pcs/Units/Header/{unitId}": {
+    "/api/v1/Pcs/Units/{unitId}/Header": {
       "get": {
         "tags": [
           "Pcs"
@@ -2978,12 +2795,12 @@
         ]
       }
     },
-    "/api/v1/Pcs/Units/{unitId}/General": {
+    "/api/v1/Pcs/Units/{unitId}/{tab}": {
       "get": {
         "tags": [
           "Pcs"
         ],
-        "operationId": "GetApiV1PcsUnitsGeneral",
+        "operationId": "GetApiV1PcsUnits2",
         "parameters": [
           {
             "name": "unitId",
@@ -2994,80 +2811,15 @@
               "format": "guid"
             },
             "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PcsGeneralDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
+          },
           {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/v1/Pcs/Units/{unitId}/FaultFlags": {
-      "get": {
-        "tags": [
-          "Pcs"
-        ],
-        "operationId": "GetApiV1PcsUnitsFaultFlags",
-        "parameters": [
-          {
-            "name": "unitId",
+            "name": "tab",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "guid"
+              "type": "string"
             },
-            "x-position": 1
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FaultFlagsResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
-    "/api/v1/Pcs/Units/{unitId}/Curves": {
-      "get": {
-        "tags": [
-          "Pcs"
-        ],
-        "operationId": "GetApiV1PcsUnitsCurves",
-        "parameters": [
-          {
-            "name": "unitId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "guid"
-            },
-            "x-position": 1
+            "x-position": 2
           },
           {
             "name": "period",
@@ -3076,7 +2828,7 @@
               "type": "string",
               "nullable": true
             },
-            "x-position": 2
+            "x-position": 3
           },
           {
             "name": "interval",
@@ -3085,19 +2837,12 @@
               "type": "string",
               "nullable": true
             },
-            "x-position": 3
+            "x-position": 4
           }
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChartResponseDto"
-                }
-              }
-            }
+            "description": ""
           }
         },
         "security": [
@@ -4772,533 +4517,6 @@
           },
           "name": {
             "type": "string"
-          }
-        }
-      },
-      "SummaryResponseDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "sections": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DynamicSectionDto"
-            }
-          }
-        }
-      },
-      "DynamicSectionDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "icon": {
-            "type": "string",
-            "nullable": true
-          },
-          "variant": {
-            "type": "string"
-          },
-          "columns": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "optional": {
-            "type": "boolean"
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SectionFieldDto"
-            }
-          },
-          "tableData": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/TableDataDto"
-              }
-            ]
-          },
-          "chartConfig": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/ChartConfigDto"
-              }
-            ]
-          },
-          "chartData": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "object",
-              "additionalProperties": {}
-            }
-          }
-        }
-      },
-      "SectionFieldDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "value": {
-            "nullable": true
-          },
-          "type": {
-            "type": "string"
-          },
-          "unit": {
-            "type": "string",
-            "nullable": true
-          },
-          "format": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "nullable": true
-          },
-          "editable": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "options": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            }
-          },
-          "meta": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": {}
-          }
-        }
-      },
-      "TableDataDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "columns": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TableColumnDto"
-            }
-          },
-          "rows": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": {}
-            }
-          }
-        }
-      },
-      "TableColumnDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          }
-        }
-      },
-      "ChartConfigDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "type": {
-            "type": "string"
-          },
-          "xAxis": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/ChartAxisDto"
-              }
-            ]
-          },
-          "yAxis": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/ChartAxisDto"
-              }
-            ]
-          },
-          "referenceLines": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/ChartReferenceLineDto"
-            }
-          },
-          "color": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "ChartAxisDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "unit": {
-            "type": "string",
-            "nullable": true
-          },
-          "domain": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "number",
-              "format": "double"
-            }
-          }
-        }
-      },
-      "ChartReferenceLineDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "y": {
-            "type": "number",
-            "format": "double"
-          },
-          "label": {
-            "type": "string"
-          },
-          "color": {
-            "type": "string",
-            "nullable": true
-          },
-          "strokeDasharray": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "ChartResponseDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "charts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ChartDefinitionDto"
-            }
-          }
-        }
-      },
-      "ChartDefinitionDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "optional": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "xAxis": {
-            "$ref": "#/components/schemas/CurveXAxisDto"
-          },
-          "series": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CurveSeriesDto"
-            }
-          },
-          "referenceLines": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/ChartReferenceLineDto"
-            }
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "additionalProperties": {}
-            }
-          }
-        }
-      },
-      "CurveXAxisDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "format": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "CurveSeriesDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "unit": {
-            "type": "string",
-            "nullable": true
-          },
-          "color": {
-            "type": "string",
-            "nullable": true
-          },
-          "yAxis": {
-            "type": "string",
-            "nullable": true
-          },
-          "type": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "FaultFlagsResponseDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "flags": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FaultFlagDto"
-            }
-          },
-          "sources": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/FaultSourceDto"
-            }
-          },
-          "categories": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FaultCategoryDto"
-            }
-          },
-          "summary": {
-            "$ref": "#/components/schemas/FaultFlagSummaryDto"
-          }
-        }
-      },
-      "FaultFlagDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "isActive": {
-            "type": "boolean"
-          },
-          "source": {
-            "type": "string",
-            "nullable": true
-          },
-          "category": {
-            "type": "string",
-            "nullable": true
-          },
-          "severity": {
-            "type": "string"
-          }
-        }
-      },
-      "FaultSourceDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "activeCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "FaultCategoryDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "activeCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "FaultFlagSummaryDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "totalFlags": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "activeFlags": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "activeBySource": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          "activeByCategory": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        }
-      },
-      "FaultsPaginatedResponseDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "faults": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FaultRecordDto"
-            }
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/PaginationDto"
-          }
-        }
-      },
-      "FaultRecordDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "severity": {
-            "$ref": "#/components/schemas/StatusBadgeDto"
-          },
-          "status": {
-            "$ref": "#/components/schemas/StatusBadgeDto"
-          },
-          "source": {
-            "type": "string",
-            "nullable": true
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "recoveredAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "relatedAlarmId": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          }
-        }
-      },
-      "PaginationDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalItems": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
           }
         }
       },
@@ -7399,84 +6617,6 @@
         }
       },
       "PcsHeaderLinkedBessDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "PcsGeneralDto": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "guid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "serialNumber": {
-            "type": "string",
-            "nullable": true
-          },
-          "modelName": {
-            "type": "string",
-            "nullable": true
-          },
-          "manufacturer": {
-            "type": "string",
-            "nullable": true
-          },
-          "facilityId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "facilityName": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "$ref": "#/components/schemas/StatusBadgeDto"
-          },
-          "linkedBessUnit": {
-            "nullable": true,
-            "oneOf": [
-              {
-                "$ref": "#/components/schemas/PcsGeneralLinkedBessDto"
-              }
-            ]
-          },
-          "availableTabs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TabInfoDto"
-            }
-          },
-          "activeFaultCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "lastSeenUtc": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "sections": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DynamicSectionDto"
-            }
-          }
-        }
-      },
-      "PcsGeneralLinkedBessDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
