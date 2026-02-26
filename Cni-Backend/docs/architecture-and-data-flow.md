@@ -45,10 +45,10 @@
 │  ┌─────────────┐ ┌────────────────┐ ┌──────────────────────────┐  │
 │  │ Commands     │ │ Queries        │ │ Services                 │  │
 │  │ IngestData   │ │ GetBessSummary │ │ DeviceDataCategorizer    │  │
-│  │ RegisterDev  │ │ GetBessHealth  │ │ PayloadDeserializer      │  │
-│  │ CreateDevice │ │ GetBessCurves  │ │ DeviceStatusResolver     │  │
-│  └─────────────┘ │ GetDeviceTree  │ └──────────────────────────┘  │
-│                   └────────────────┘                               │
+│  │ RegisterDev  │ │ GetBessHealth  │ │ ParameterResolver        │  │
+│  │ CreateDevice │ │ GetBessCurves  │ │ AlarmProcessingService   │  │
+│  └─────────────┘ │ GetDeviceTree  │ │ PayloadDeserializer      │  │
+│                   └────────────────┘ └──────────────────────────┘  │
 └────────────────────────────┬───────────────────────────────────────┘
                              │
 ┌────────────────────────────▼───────────────────────────────────────┐
@@ -86,7 +86,7 @@
 [EMQX Broker]                    [Frontend SPA]
      │                                │
      │ POST /api/v1/DeviceData/       │ GET /api/v1/BatteryStorage/
-     │     Ingest (X-API-Key)         │     Units/{id}/Summary (Bearer JWT)
+     │     Ingest (X-API-Key)         │     Units/{id}/summary (Bearer JWT)
      ▼                                ▼
 ┌─────────────────────────────────────────┐
 │            ASP.NET Core Pipeline        │
@@ -133,13 +133,14 @@ Tenant (multi-tenant root)
 |-------|------|---------|
 | `Id` | Guid | Primary key, used in all frontend communication |
 | `RtuId` | Guid | Parent RTU (gateway) |
-| `DeviceTypeId` | Guid | References DeviceType (e.g., "Battery", "Battery.Rack") |
+| `DeviceTypeId` | Guid | References DeviceType (e.g., "EnergyStorage", "EnergyStorage.Rack") |
 | `ParentDeviceId` | Guid? | Self-referential FK for hierarchy (rack → container, pack → rack) |
+| `DeviceSpecificationTemplateId` | Guid? | FK to `DeviceSpecificationTemplate` — links device to its UI/parameter template |
+| `HierarchyIndex` | int? | 0-based position among siblings (used for edge address resolution, e.g., bmuLoc) |
 | `Name` | string | Display name (e.g., "BESS Container 1", "Rack 1") |
 | `SerialNumber` | string | Unique device serial for telemetry matching |
 | `Model` | string? | Device model (e.g., "Megapack 2XL") |
 | `Manufacturer` | string? | Manufacturer (e.g., "Tesla") |
-| `Specifications` | JSON | **Dynamic UI definition** — tabs, sections, fields, charts, fault flags |
 | `Metadata` | JSON | Instance configuration (thresholds, site-specific values) |
 | `Status` | string? | Current status (online/offline/standby/fault/maintenance) |
 | `LastSeenUtc` | DateTimeOffset? | Timestamp of last received telemetry |
@@ -319,20 +320,18 @@ IngestDeviceDataHandler:
 #### Step 4: Frontend Requests Summary → Query Handler
 
 ```
-GET /api/v1/BatteryStorage/Units/{deviceGuid}/Summary
+GET /api/v1/BatteryStorage/Units/{deviceGuid}/summary
 Authorization: Bearer <jwt>
 ```
 
 `GetBessSummaryQueryHandler` executes:
 
 ```
-1. Load Device (includes Specifications JSON)
+1. Load Device + SpecificationTemplate (via FK Include)
 2. Load latest DeviceBatteryData for this device
-3. Parse Device.Specifications → find "tabs.summary.sections"
-4. For each section, for each field:
-     field.sourcePath = "socPercent"
-     field.value = PayloadDeserializer.ExtractValue(payload, "socPercent")
-                 → returns 9
+3. Parse device.SpecificationTemplate.SpecificationsTemplate → find "tabs.summary.sections"
+4. Resolve parameter values via ParameterResolver (uses ParameterMapTemplate formulas)
+     → Falls back to PayloadDeserializer.ExtractValue(payload, "socPercent") if no parameter map
 5. Return DynamicSectionDto[] to frontend
 ```
 
@@ -402,9 +401,9 @@ The frontend renders each `SectionFieldDto` as a labeled value card.
 │      Store payload as JSONB in DeviceBatteryData                    │
 │         │                                                           │
 │    GetBessSummaryHandler:                                           │
-│      Device.Specifications.tabs.summary.sections[0].fields[0]      │
-│        .sourcePath = "socPercent"                                   │
-│      PayloadDeserializer.ExtractValue(payload, "socPercent") → 9    │
+│      device.SpecificationTemplate.SpecificationsTemplate            │
+│        .tabs.summary.sections[0].fields[0].sourcePath = "socPercent"│
+│      ParameterResolver → PayloadDeserializer fallback → value: 9   │
 │         │                                                           │
 │    Response:                                                        │
 │      { key: "soc", label: "State of Charge", value: 9, unit: "%" } │
@@ -441,7 +440,7 @@ The sample.json contains 12 different message kinds from a single BESS container
 
 ### Core Concept
 
-The frontend UI is **not hardcoded** per device model. Instead, each `Device.Specifications` JSON defines what tabs, sections, fields, charts, and fault flags to display. This allows different manufacturers and models to have completely different UIs without any code changes.
+The frontend UI is **not hardcoded** per device model. Instead, each `DeviceSpecificationTemplate.SpecificationsTemplate` JSON defines what tabs, sections, fields, charts, and fault flags to display. Devices link to their template via the `DeviceSpecificationTemplateId` FK. This allows different manufacturers and models to have completely different UIs without any code changes.
 
 ### Specifications JSON Structure
 
@@ -537,15 +536,17 @@ This is how different manufacturers map their different register names to the sa
 ### Query Handler Flow (All Pages Follow This Pattern)
 
 ```
-1. Load Device + Specifications JSON
-2. Load latest DeviceBatteryData (or multiple for curves)
-3. Parse specs → find relevant tab config (summary/health/curves/faultFlags)
-4. If specs define the tab:
+1. Load Device + SpecificationTemplate (via .Include(d => d.SpecificationTemplate))
+2. Load latest telemetry from bucket table (or multiple for curves)
+3. Read device.SpecificationTemplate?.SpecificationsTemplate
+4. If ParameterMapTemplate exists:
+     → Use ParameterResolver (formulas + source extraction + caching)
+5. If specs define the tab:
      → Build response from specs-defined sections/fields
-     → Use sourcePath to extract values from payload
-5. If specs don't define the tab (or no specs):
+     → Use ParameterResolver ?? PayloadDeserializer for values
+6. If specs don't define the tab (or no specs):
      → Use hardcoded default sections with generic sourcePaths
-6. Return DTO[] to frontend
+7. Return DTO[] to frontend
 ```
 
 ### Response DTOs
@@ -713,15 +714,19 @@ BESS systems come from many manufacturers (Tesla, BYD, CATL, Samsung SDI, etc.),
 
 ```
 DeviceSpecificationTemplate
-├── DeviceTypeId      (Guid — e.g., "Battery" type)
+├── DeviceTypeId      (Guid — e.g., "EnergyStorage" type)
 ├── Model             (string — e.g., "Megapack 2XL")
 ├── Manufacturer      (string? — e.g., "Tesla")
 ├── SpecificationsTemplate  (JSONB — tabs, sections, fields, charts, fault flags)
+├── ParameterMapTemplate    (JSONB — standalone parameter map with formulas and source definitions)
 ├── MetadataTemplate        (JSONB — default instance config: thresholds, ratings)
 ├── HierarchyTemplate       (JSONB — child device tree blueprint)
 ├── IsDefault               (bool — default template for this DeviceType)
+├── Devices                 (navigation — collection of Device entities using this template)
 └── Unique Index: (DeviceTypeId, Model, Manufacturer)
 ```
+
+Devices link to their template via `Device.DeviceSpecificationTemplateId` (nullable FK, SetNull on delete). Query handlers use `.Include(d => d.SpecificationTemplate)` to eagerly load the template.
 
 ### HierarchyTemplate Example (Tesla Megapack 2XL)
 
@@ -730,19 +735,19 @@ DeviceSpecificationTemplate
   "children": [
     {
       "key": "rack",
-      "deviceTypeName": "Battery.Rack",
+      "deviceTypeName": "EnergyStorage.Rack",
       "count": 4,
       "namePattern": "Rack {index}",
       "children": [
         {
           "key": "pack",
-          "deviceTypeName": "Battery.Pack",
+          "deviceTypeName": "EnergyStorage.Pack",
           "count": 4,
           "namePattern": "Pack {index}",
           "children": [
             {
               "key": "module",
-              "deviceTypeName": "Battery.Module",
+              "deviceTypeName": "EnergyStorage.Module",
               "count": 8,
               "namePattern": "Module {index}"
             }
@@ -752,13 +757,13 @@ DeviceSpecificationTemplate
     },
     {
       "key": "esc",
-      "deviceTypeName": "Battery.Controller",
+      "deviceTypeName": "EnergyStorage.Controller",
       "count": 1,
       "namePattern": "ESC-{index}"
     },
     {
       "key": "hvac",
-      "deviceTypeName": "Battery.TMS",
+      "deviceTypeName": "EnergyStorage.TMS",
       "count": 2,
       "namePattern": "HVAC-{index}"
     }
@@ -776,17 +781,18 @@ When `RegisterDeviceCompositeCommand` is executed:
 1. Load template by TemplateId
 2. Create root Device:
      - DeviceType from template.DeviceTypeId
-     - Specifications = template.SpecificationsTemplate
+     - DeviceSpecificationTemplateId = template.Id (FK link, not copy)
      - Metadata = template.MetadataTemplate
      - Model = template.Model
      - Manufacturer = template.Manufacturer
 3. Parse HierarchyTemplate JSON
 4. For each child definition:
-     - Resolve DeviceType by name (e.g., "Battery.Rack")
+     - Resolve DeviceType by name (e.g., "EnergyStorage.Rack")
      - Create {count} child Device entities
      - Name = namePattern with {index} replaced (1-based)
      - SerialNumber = "{parent.SerialNumber}-{childName}"
      - ParentDeviceId = parent.Id
+     - HierarchyIndex = 0-based position among siblings
      - Recurse for nested children
 5. All devices created in single transaction
 ```
@@ -810,7 +816,7 @@ When `RegisterDeviceCompositeCommand` is executed:
 To add support for a BYD BESS container:
 
 1. **Create a DeviceSpecificationTemplate** via `POST /api/v1/DeviceSpecificationTemplates`:
-   - Set `Model: "Cube Pro"`, `Manufacturer: "BYD"`, `DeviceTypeId: <Battery type GUID>`
+   - Set `Model: "Cube Pro"`, `Manufacturer: "BYD"`, `DeviceTypeId: <EnergyStorage type GUID>`
    - Define `SpecificationsTemplate` with BYD's register names as sourcePaths:
      ```json
      { "tabs": { "summary": { "sections": [{
@@ -914,13 +920,16 @@ When edge devices use binary protocols (e.g., Modbus TCP raw frames), a thin ada
 ### DeviceType Hierarchy
 
 ```
-Battery          ← Root BESS container
-Battery.Rack     ← Rack within container
-Battery.Pack     ← Pack within rack
-Battery.Module   ← Module within pack
-Battery.Controller ← Energy Storage Controller (ESC)
-Battery.TMS      ← Thermal Management System (HVAC/Chiller)
+EnergyStorage          ← Root BESS container
+EnergyStorage.Rack     ← Rack within container
+EnergyStorage.Pack     ← Pack within rack
+EnergyStorage.Module   ← Module within pack
+EnergyStorage.Controller ← Energy Storage Controller (ESC)
+EnergyStorage.TMS      ← Thermal Management System (HVAC/Chiller)
+Pcs                    ← Power Conversion System (inverter)
 ```
+
+These names are defined as constants in `DeviceTypeNames` (`src/Domain/Constants/DeviceTypeNames.cs`).
 
 ### Tree Query
 
@@ -938,7 +947,7 @@ Battery.TMS      ← Thermal Management System (HVAC/Chiller)
     {
       "id": "def-456",
       "name": "Rack 1",
-      "deviceTypeName": "Battery.Rack",
+      "deviceTypeName": "EnergyStorage.Rack",
       "status": "online",
       "activeAlarmCount": 1,
       "availableTabs": ["summary", "faultFlags"],
@@ -946,7 +955,7 @@ Battery.TMS      ← Thermal Management System (HVAC/Chiller)
         {
           "id": "ghi-789",
           "name": "Pack 1",
-          "deviceTypeName": "Battery.Pack",
+          "deviceTypeName": "EnergyStorage.Pack",
           "status": "fault",
           "activeAlarmCount": 1,
           "availableTabs": ["summary"],
@@ -1006,23 +1015,34 @@ Every monitoring query follows the same pattern:
 
 ### Available Queries
 
-| Endpoint | Query | Returns | Data Source |
+**BESS** (all via tab dispatch: `GET /api/v1/BatteryStorage/Units/{unitId}/{tab}`)
+
+| Tab Key / Route | Query | Returns | Data Source |
 |----------|-------|---------|-------------|
-| `GET /BatteryStorage/Units` | GetBessUnitsQuery | BessUnitsResultDto | All Battery devices + latest telemetry |
-| `GET /BatteryStorage/Units/{id}` | GetBessUnitDetailQuery | BessUnitDetailDto | Single device detail |
-| `GET /BatteryStorage/Units/{id}/Summary` | GetBessSummaryQuery | DynamicSectionDto[] | specs.tabs.summary + payload |
-| `GET /BatteryStorage/Units/{id}/Health` | GetBessHealthQuery | DynamicSectionDto[] | specs.tabs.health + payload |
-| `GET /BatteryStorage/Units/{id}/Curves` | GetBessCurvesQuery | ChartResponseDto | specs.curveCharts + historical data |
-| `GET /BatteryStorage/Units/{id}/FaultFlags` | GetBessFaultFlagsQuery | FaultFlagsResponseDto | specs.faultFlags + payload |
-| `GET /BatteryStorage/Units/{id}/Faults` | GetBessFaultsQuery | FaultsPaginatedResponseDto | DeviceAlarm table |
-| `GET /BatteryStorage/Units/{id}/Hierarchy` | GetBessHierarchyQuery | HierarchyResponseDto | Device entities or payload |
-| `GET /BatteryStorage/Units/{id}/HierarchyLevel` | GetBessHierarchyLevelQuery | HierarchyLevelResponseDto | Device entities or payload |
-| `GET /BatteryStorage/Units/{id}/Tree` | GetDeviceTreeQuery | DeviceTreeNodeDto | Device parent-child tree |
-| `GET /BatteryStorage/Schema` | GetBessSchemaQuery | SchemaResponseDto | All Battery Specifications |
+| `GET /Units/{facilityId}` | GetBessUnitsQuery | BessUnitsResultDto | All EnergyStorage devices + latest telemetry |
+| `GET /Units/{unitId}/Header` | GetBessUnitHeaderQuery | BessUnitHeaderDto | Single device metadata |
+| `GET /Tree/{facilityId}` | GetBessDeviceTreeQuery | BessDeviceTreeResponseDto | Device parent-child tree with alarm counts |
+| Tab: `summary` | GetBessSummaryQuery | DynamicSectionDto[] | specs.tabs.summary + payload |
+| Tab: `health` | GetBessHealthQuery | DynamicSectionDto[] | specs.tabs.health + payload |
+| Tab: `curves` | GetBessCurvesQuery | ChartResponseDto | specs.curveCharts + historical data |
+| Tab: `faultflags` | GetBessFaultFlagsQuery | FaultFlagsResponseDto | DeviceAlarm system |
+| Tab: `faults` | GetBessFaultsQuery | FaultsPaginatedResponseDto | DeviceAlarm table (paginated) |
+| Tab: `settings` | GetBessSettingsQuery | DynamicSectionDto[] | specs.tabs.settings + metadata |
+
+**PCS** (all via tab dispatch: `GET /api/v1/Pcs/Units/{unitId}/{tab}`)
+
+| Tab Key / Route | Query | Returns | Data Source |
+|----------|-------|---------|-------------|
+| `GET /Units/{facilityId}` | GetPcsUnitsQuery | PcsUnitsResultDto | All PCS devices + linked BESS parent |
+| `GET /Units/{unitId}/Header` | GetPcsHeaderQuery | PcsHeaderDto | Single device metadata + available tabs |
+| `GET /Schema` | GetPcsSchemaQuery | SchemaResponseDto | All PCS Specifications |
+| Tab: `general` | GetPcsGeneralQuery | DynamicSectionDto[] | specs.tabs.general + payload |
+| Tab: `fault` | GetPcsFaultFlagsQuery | FaultFlagsResponseDto | DeviceAlarm system |
+| Tab: `curve` | GetPcsCurvesQuery | ChartResponseDto | specs.curveCharts + historical data |
 
 ### Default Sections (When No Specifications Defined)
 
-If a device has no `Specifications` JSON (or the JSON doesn't define a particular tab), hardcoded defaults are used:
+If a device has no linked `DeviceSpecificationTemplate` (or the template's `SpecificationsTemplate` JSON doesn't define a particular tab), hardcoded defaults are used:
 
 #### Summary Defaults
 
@@ -1064,17 +1084,36 @@ If a device has no `Specifications` JSON (or the JSON doesn't define a particula
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/v1/BatteryStorage/Units` | List all BESS units with aggregates |
-| GET | `/api/v1/BatteryStorage/Units/{id}` | Unit detail |
-| GET | `/api/v1/BatteryStorage/Units/{id}/Summary` | Dynamic summary sections |
-| GET | `/api/v1/BatteryStorage/Units/{id}/Health` | Dynamic health sections |
-| GET | `/api/v1/BatteryStorage/Units/{id}/Curves` | Time-series chart data |
-| GET | `/api/v1/BatteryStorage/Units/{id}/FaultFlags` | Active fault flags |
-| GET | `/api/v1/BatteryStorage/Units/{id}/Faults` | Fault history (paginated) |
-| GET | `/api/v1/BatteryStorage/Units/{id}/Hierarchy` | Hierarchy overview |
-| GET | `/api/v1/BatteryStorage/Units/{id}/HierarchyLevel` | Drill into hierarchy level |
-| GET | `/api/v1/BatteryStorage/Units/{id}/Tree` | Device tree with alarm counts |
-| GET | `/api/v1/BatteryStorage/Schema` | Specifications schema for all BESS |
+| GET | `/api/v1/BatteryStorage/Tree/{facilityId}` | Device tree with alarm counts for facility |
+| GET | `/api/v1/BatteryStorage/Units/{facilityId}` | List BESS units with aggregates for facility |
+| GET | `/api/v1/BatteryStorage/Units/{unitId}/Header` | Unit header (name, model, available tabs) |
+| GET | `/api/v1/BatteryStorage/Units/{unitId}/{tab}` | Tab content dispatch (see tab keys below) |
+
+**BESS Tab Keys** (case-insensitive):
+| Tab | Description | Extra Query Params |
+|-----|-------------|--------------------|
+| `summary` | Dynamic summary sections | — |
+| `health` | Dynamic health sections | — |
+| `curves` | Time-series chart data | `period`, `interval` |
+| `faultflags` | Active fault flags from alarm system | — |
+| `faults` | Fault history (paginated) | `page`, `pageSize`, `severity`, `isActive` |
+| `settings` | Device settings/configuration | — |
+
+### PCS Monitoring (JWT Auth)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/Pcs/Units/{facilityId}` | List PCS units for facility (with linked BESS parent) |
+| GET | `/api/v1/Pcs/Units/{unitId}/Header` | Unit header (name, model, available tabs) |
+| GET | `/api/v1/Pcs/Units/{unitId}/{tab}` | Tab content dispatch (see tab keys below) |
+| GET | `/api/v1/Pcs/Schema` | PCS specifications schema |
+
+**PCS Tab Keys** (case-insensitive):
+| Tab | Description | Extra Query Params |
+|-----|-------------|--------------------|
+| `general` | General PCS status and measurements | — |
+| `fault` | Fault flags from alarm system | — |
+| `curve` | Time-series chart data | `period`, `interval` |
 
 ### Device Management (JWT Auth)
 
