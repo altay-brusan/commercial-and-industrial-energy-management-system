@@ -19,10 +19,8 @@ public class Pcs : EndpointGroupBase
             .RequireAuthorization();
 
         group.MapGet("/Units", GetUnits);
-        group.MapGet("/Units/Header/{unitId}", GetHeader);
-        group.MapGet("/Units/{unitId}/General", GetGeneral);
-        group.MapGet("/Units/{unitId}/FaultFlags", GetFaultFlags);
-        group.MapGet("/Units/{unitId}/Curves", GetCurves);
+        group.MapGet("/Units/{unitId}/Header", GetHeader);
+        group.MapGet("/Units/{unitId}/{tab}", GetTabContent);
         group.MapGet("/Schema", GetSchema);
     }
 
@@ -40,30 +38,31 @@ public class Pcs : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<PcsGeneralDto>> GetGeneral(
-        ISender sender, Guid unitId)
+    public static async Task<IResult> GetTabContent(
+        ISender sender, Guid unitId, string tab, string? period, string? interval)
     {
-        var result = await sender.Send(new GetPcsGeneralQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
-    }
-
-    public static async Task<Ok<FaultFlagsResponseDto>> GetFaultFlags(
-        ISender sender, Guid unitId)
-    {
-        var result = await sender.Send(new GetPcsFaultFlagsQuery { UnitId = unitId });
-        return TypedResults.Ok(result);
-    }
-
-    public static async Task<Ok<ChartResponseDto>> GetCurves(
-        ISender sender, Guid unitId, string? period, string? interval)
-    {
-        var result = await sender.Send(new GetPcsCurvesQuery
+        switch (tab.ToLowerInvariant())
         {
-            UnitId = unitId,
-            Period = period ?? MonitoringPeriods.TwentyFourHours,
-            Interval = interval
-        });
-        return TypedResults.Ok(result);
+            case "general":
+                var general = await sender.Send(new GetPcsGeneralQuery { UnitId = unitId });
+                return TypedResults.Ok(general);
+
+            case "fault":
+                var faults = await sender.Send(new GetPcsFaultFlagsQuery { UnitId = unitId });
+                return TypedResults.Ok(faults);
+
+            case "curve":
+                var curves = await sender.Send(new GetPcsCurvesQuery
+                {
+                    UnitId = unitId,
+                    Period = period ?? MonitoringPeriods.TwentyFourHours,
+                    Interval = interval
+                });
+                return TypedResults.Ok(curves);
+
+            default:
+                return TypedResults.NotFound();
+        }
     }
 
     public static async Task<Ok<SchemaResponseDto>> GetSchema(ISender sender)
