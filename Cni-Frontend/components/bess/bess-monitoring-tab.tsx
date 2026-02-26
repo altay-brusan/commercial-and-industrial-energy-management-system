@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -17,48 +18,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { getCurveDataForUnit } from "@/lib/bess/mock-data";
+import * as bessService from "@/lib/bess/bess-service";
+import type { ChartDefinitionDto } from "@/lib/bess/api-types";
 
 interface BessMonitoringTabProps {
-  unitId: string;
+  deviceId: string;
 }
-
-const powerChartConfig = {
-  power: {
-    label: "Power (kW)",
-    color: "var(--color-energy-battery)",
-  },
-  soc: {
-    label: "SoC (%)",
-    color: "var(--color-energy-solar)",
-  },
-} satisfies ChartConfig;
-
-const voltageChartConfig = {
-  voltage: {
-    label: "Voltage (V)",
-    color: "var(--color-energy-solar)",
-  },
-  current: {
-    label: "Current (A)",
-    color: "var(--color-energy-consumption)",
-  },
-} satisfies ChartConfig;
-
-const temperatureChartConfig = {
-  tempAvg: {
-    label: "Avg Temp (°C)",
-    color: "var(--color-energy-consumption)",
-  },
-  tempMin: {
-    label: "Min Temp (°C)",
-    color: "var(--color-energy-solar)",
-  },
-  tempMax: {
-    label: "Max Temp (°C)",
-    color: "var(--color-energy-grid)",
-  },
-} satisfies ChartConfig;
 
 function ChartSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -82,10 +47,127 @@ function ChartLegend({ items }: { items: { color: string; label: string }[] }) {
   );
 }
 
-export function BessMonitoringTab({ unitId }: BessMonitoringTabProps) {
-  const data = useMemo(() => getCurveDataForUnit(unitId), [unitId]);
+function DynamicChart({ chart }: { chart: ChartDefinitionDto }) {
+  if (!chart.data || chart.data.length === 0) {
+    return (
+      <ChartSection title={chart.title}>
+        <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+          No data available
+        </div>
+      </ChartSection>
+    );
+  }
 
-  if (data.power.length === 0) {
+  const xKey = chart.xAxis.key;
+  const interval = Math.max(1, Math.floor(chart.data.length / 12));
+
+  // Build chart config from series
+  const config: ChartConfig = {};
+  chart.series.forEach((s) => {
+    config[s.key] = {
+      label: `${s.label}${s.unit ? ` (${s.unit})` : ""}`,
+      color: s.color ?? "var(--color-primary)",
+    };
+  });
+
+  // Determine if we have dual Y-axes
+  const leftSeries = chart.series.filter((s) => !s.yAxis || s.yAxis === "left");
+  const rightSeries = chart.series.filter((s) => s.yAxis === "right");
+  const hasDualAxis = rightSeries.length > 0;
+
+  const isLine = chart.type === "line";
+  const ChartComponent = isLine ? LineChart : AreaChart;
+
+  return (
+    <ChartSection title={chart.title}>
+      <ChartContainer config={config} className="h-[260px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <ChartComponent data={chart.data} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis dataKey={xKey} tickLine={false} axisLine={false} tickMargin={8} className="text-xs" interval={interval} />
+            <YAxis
+              yAxisId="left"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              className="text-xs"
+            />
+            {hasDualAxis && (
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                className="text-xs"
+              />
+            )}
+            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+            {chart.series.map((s) => {
+              const yAxisId = s.yAxis === "right" ? "right" : "left";
+              const color = s.color ?? "var(--color-primary)";
+
+              if (isLine || s.type === "line") {
+                return (
+                  <Line
+                    key={s.key}
+                    yAxisId={yAxisId}
+                    type="monotone"
+                    dataKey={s.key}
+                    stroke={color}
+                    strokeWidth={1.5}
+                    dot={false}
+                  />
+                );
+              }
+              return (
+                <Area
+                  key={s.key}
+                  yAxisId={yAxisId}
+                  type="monotone"
+                  dataKey={s.key}
+                  stroke={color}
+                  fill={color}
+                  fillOpacity={0.15}
+                  strokeWidth={2}
+                />
+              );
+            })}
+          </ChartComponent>
+        </ResponsiveContainer>
+      </ChartContainer>
+      <ChartLegend
+        items={chart.series.map((s) => ({
+          color: s.color ?? "var(--color-primary)",
+          label: `${s.label}${s.unit ? ` (${s.unit})` : ""}`,
+        }))}
+      />
+    </ChartSection>
+  );
+}
+
+export function BessMonitoringTab({ deviceId }: BessMonitoringTabProps) {
+  const [charts, setCharts] = useState<ChartDefinitionDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    bessService.getDeviceCurves(deviceId).then((data) => {
+      setCharts(data.charts);
+    }).catch(() => {
+      // handled by apiClient
+    }).finally(() => setLoading(false));
+  }, [deviceId]);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (charts.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-muted-foreground py-20">
         No monitoring data available for this unit.
@@ -93,74 +175,11 @@ export function BessMonitoringTab({ unitId }: BessMonitoringTabProps) {
     );
   }
 
-  const interval = Math.max(1, Math.floor(data.power.length / 12));
-
   return (
     <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8">
-      {/* Power & SoC */}
-      <ChartSection title="Power & State of Charge">
-        <ChartContainer config={powerChartConfig} className="h-[260px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data.power} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" interval={interval} />
-              <YAxis yAxisId="power" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" />
-              <YAxis yAxisId="soc" orientation="right" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" domain={[0, 100]} />
-              <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-              <Area yAxisId="power" type="monotone" dataKey="power" stroke="var(--color-energy-battery)" fill="var(--color-energy-battery)" fillOpacity={0.2} strokeWidth={2} />
-              <Area yAxisId="soc" type="monotone" dataKey="soc" stroke="var(--color-energy-solar)" fill="var(--color-energy-solar)" fillOpacity={0.1} strokeWidth={1.5} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-        <ChartLegend items={[
-          { color: "var(--color-energy-battery)", label: "Power (kW)" },
-          { color: "var(--color-energy-solar)", label: "SoC (%)" },
-        ]} />
-      </ChartSection>
-
-      {/* Voltage & Current */}
-      <ChartSection title="Voltage & Current">
-        <ChartContainer config={voltageChartConfig} className="h-[260px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data.voltage} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" interval={interval} />
-              <YAxis yAxisId="voltage" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" domain={["dataMin - 10", "dataMax + 10"]} />
-              <YAxis yAxisId="current" orientation="right" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" />
-              <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-              <Line yAxisId="voltage" type="monotone" dataKey="voltage" stroke="var(--color-energy-solar)" strokeWidth={1.5} dot={false} />
-              <Line yAxisId="current" type="monotone" dataKey="current" stroke="var(--color-energy-consumption)" strokeWidth={1.5} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-        <ChartLegend items={[
-          { color: "var(--color-energy-solar)", label: "Voltage (V)" },
-          { color: "var(--color-energy-consumption)", label: "Current (A)" },
-        ]} />
-      </ChartSection>
-
-      {/* Temperature */}
-      <ChartSection title="Temperature">
-        <ChartContainer config={temperatureChartConfig} className="h-[260px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data.temperature} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} className="text-xs" interval={interval} />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} className="text-xs" />
-              <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
-              <Area type="monotone" dataKey="tempMax" stroke="var(--color-energy-grid)" fill="var(--color-energy-grid)" fillOpacity={0.1} strokeWidth={1.5} />
-              <Area type="monotone" dataKey="tempAvg" stroke="var(--color-energy-consumption)" fill="var(--color-energy-consumption)" fillOpacity={0.15} strokeWidth={2} />
-              <Area type="monotone" dataKey="tempMin" stroke="var(--color-energy-solar)" fill="var(--color-energy-solar)" fillOpacity={0.1} strokeWidth={1.5} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-        <ChartLegend items={[
-          { color: "var(--color-energy-grid)", label: "Max Temp (°C)" },
-          { color: "var(--color-energy-consumption)", label: "Avg Temp (°C)" },
-          { color: "var(--color-energy-solar)", label: "Min Temp (°C)" },
-        ]} />
-      </ChartSection>
-
+      {charts.map((chart) => (
+        <DynamicChart key={chart.key} chart={chart} />
+      ))}
       <div className="h-6" />
     </div>
   );
