@@ -44,9 +44,26 @@ export interface SolarInverter {
   // Other
   dailyYieldTheoretical: number | null; // kWh
 
+  // New fields
+  internalTemperature: number | null; // °C
+  startupTime: string | null; // dd/MMM/yyyy HH:mm
+  shutdownTime: string | null; // dd/MMM/yyyy HH:mm or null => "--"
+  outputMode: string | null;
+  stringVoltages: (number | null)[];
+
   // Device info
   commissioningDate: string;
   manufacturer: string;
+}
+
+// Device tree types
+export interface SolarDeviceTreeNode {
+  id: string;
+  name: string;
+  type: "logger" | "inverter";
+  status: InverterStatus | "normal";
+  children?: SolarDeviceTreeNode[];
+  alarmCount: number;
 }
 
 export type InverterSortField =
@@ -102,4 +119,44 @@ export interface InverterCurveData {
   power: PowerCurvePoint[];
   voltage: VoltageCurvePoint[];
   current: CurrentCurvePoint[];
+}
+
+// History signal types
+export type HistorySignalPoint =
+  | "activePower"
+  | "reactivePower"
+  | "dcPower"
+  | "apparentPower"
+  | "powerFactor"
+  | "abVoltage"
+  | "bcVoltage"
+  | "caVoltage"
+  | "phaseACurrent"
+  | "phaseBCurrent"
+  | "phaseCCurrent"
+  | "gridFrequency"
+  | "internalTemp"
+  | "insulationImpedance"
+  | "yieldToday"
+  | "totalYield"
+  | "mppt1Voltage"
+  | "mppt1Current"
+  | "mppt2Voltage"
+  | "mppt2Current"
+  | "mppt3Voltage"
+  | "mppt3Current"
+  | "mppt4Voltage"
+  | "mppt4Current"
+  | "mppt5Voltage";
+
+export interface HistorySignalConfig {
+  key: HistorySignalPoint;
+  label: string;
+  unit: string;
+  group: "Power" | "Voltage" | "Current" | "MPPT" | "Other";
+}
+
+export interface HistoryDataPoint {
+  time: string;
+  [key: string]: number | string | null;
 }
