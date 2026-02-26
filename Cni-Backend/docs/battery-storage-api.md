@@ -5,9 +5,39 @@ Authorization: Bearer JWT token required on all endpoints.
 
 ---
 
-## 1. GET /DeviceTree
+## Endpoints Overview
 
-Returns the full device tree for all BESS units.
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/Tree/{facilityId}` | Device tree for a facility |
+| GET | `/Units/{facilityId}` | All BESS units for a facility |
+| GET | `/Units/{unitId}/Header` | Unit header with available tabs |
+| GET | `/Units/{unitId}/{tab}` | Tab content dispatch |
+
+### Available tabs (via `{tab}` parameter)
+
+| Tab key | Query | Description |
+|---------|-------|-------------|
+| `summary` | `GetBessSummaryQuery` | Dynamic key-value summary sections |
+| `health` | `GetBessHealthQuery` | Health analytics with SoH trend |
+| `curves` | `GetBessCurvesQuery` | Time-series chart data |
+| `faultflags` | `GetBessFaultFlagsQuery` | Current fault flag states |
+| `faults` | `GetBessFaultsQuery` | Paginated fault/alarm records |
+| `settings` | `GetBessSettingsQuery` | Device configuration sections |
+
+Unknown tab keys return `404 Not Found`.
+
+---
+
+## 1. GET /Tree/{facilityId}
+
+Returns the full device tree for all BESS units in a facility.
+
+### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `facilityId` | `Guid` | Yes | The facility to load the tree for. |
 
 **Response** `BessDeviceTreeResponseDto`
 ```json
@@ -17,20 +47,27 @@ Returns the full device tree for all BESS units.
       "id": "guid",
       "name": "Megapack Alpha",
       "type": "unit",
-      "deviceTypeName": "Battery",
-      "status": "online",
-      "alarmCount": 3,
-      "availableTabs": ["summary", "health", "curves"],
+      "status": "normal",
+      "parentDeviceId": null,
+      "alarmCount": 2,
       "children": [
         {
           "id": "guid",
-          "name": "Rack 1",
-          "type": "rack",
-          "deviceTypeName": "Battery.Rack",
-          "status": "online",
-          "alarmCount": 1,
-          "availableTabs": [],
+          "name": "Battery Pack 1",
+          "type": "battery",
+          "status": "normal",
+          "parentDeviceId": "guid",
+          "alarmCount": 0,
           "children": [...]
+        },
+        {
+          "id": "guid",
+          "name": "PCS-01",
+          "type": "pcs",
+          "status": "normal",
+          "parentDeviceId": "guid",
+          "alarmCount": 0,
+          "children": []
         }
       ]
     }
@@ -38,15 +75,40 @@ Returns the full device tree for all BESS units.
 }
 ```
 
-**Type mapping:** Battery → `unit`, Battery.Rack → `rack`, Battery.Pack → `pack`, Battery.Module → `module`, Battery.Controller → `esc`, Battery.TMS → `hvac`.
+### Device Types
+
+| `type` | Description |
+|--------|-------------|
+| `unit` | Root BESS container (EnergyStorage) |
+| `battery` | Battery sub-system |
+| `rack` | Battery rack |
+| `pack` | Battery pack |
+| `module` | Battery module |
+| `esc` | Energy Storage Controller |
+| `hvac` | Thermal Management System (chiller) |
+| `pcs` | Power Conversion System |
+| `solar` | Solar panel/inverter |
+| `meter` | Smart meter |
+
+### Notes
+- `alarmCount` is recursive — a parent's count includes all descendant alarms.
+- `status` values: `normal`, `warning`, `fault`. Derived from active alarm severity.
+- Children are ordered by `hierarchyIndex` then `name`.
 
 ---
 
-## 2. GET /Units
+## 2. GET /Units/{facilityId}
 
-Returns all BESS units with live telemetry and aggregates.
+Returns all BESS units for a facility with live telemetry and aggregates.
 
-**Query params:**
+### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `facilityId` | `Guid` | Yes | The facility to list units for. |
+
+### Query Parameters
+
 | Param | Type | Description |
 |-------|------|-------------|
 | `search` | string? | Filter by name or serial number |
@@ -59,28 +121,28 @@ Returns all BESS units with live telemetry and aggregates.
   "units": [
     {
       "id": "guid",
-      "name": "Megapack Alpha",
+      "name": "BESS Unit 01",
       "status": { "value": "online", "label": "Online", "color": "green" },
       "operatingMode": { "value": "discharging", "label": "Discharging", "color": "purple" },
-      "soc": 87.5,
-      "soh": 95.8,
-      "power": 245.3,
-      "capacityKwh": 3916.0,
-      "activeAlarmCount": 3,
-      "brand": "Tesla",
-      "model": "Megapack 2XL",
-      "serialNumber": "SN-BESS-01-42",
-      "facilityName": "Solar Farm Alpha",
+      "soc": 85.5,
+      "soh": 98.0,
+      "power": -33.2,
+      "capacityKwh": 258.67,
+      "activeAlarmCount": 0,
+      "brand": "CATL",
+      "model": "DEMO-BG",
+      "serialNumber": "DEMO-BG0RS3P12S0001",
+      "facilityName": "Sofia Facility",
       "facilityId": "guid",
-      "temperatureC": 32.5,
-      "lastSeenUtc": "2025-02-09T10:30:00Z"
+      "temperatureC": 22.0,
+      "lastSeenUtc": "2026-02-25T12:35:00Z"
     }
   ],
   "aggregates": {
     "totalUnits": 4,
-    "totalCapacityKwh": 15664.0,
-    "averageSoc": 82.3,
-    "totalActiveAlarms": 7,
+    "totalCapacityKwh": 1034.68,
+    "averageSoc": 72.3,
+    "totalActiveAlarms": 2,
     "onlineCount": 3,
     "offlineCount": 0,
     "faultCount": 1,
@@ -89,237 +151,152 @@ Returns all BESS units with live telemetry and aggregates.
 }
 ```
 
-**Power calculation:** `totalVoltageV * instantCurrentA / 1000` with fallback to `dcPower.power`.
-**Alarm counts** are aggregated across all devices in the same RTU (root + descendants).
+### Field Descriptions
+
+| Field | Description |
+|-------|-------------|
+| `status` | Device health status badge — `online`, `offline`, `standby`, `fault`, `normal` |
+| `operatingMode` | BMS operating state — `charging`, `discharging`, `idle`, `standby`, `fault` |
+| `soc` | State of Charge (%). `null` if no telemetry. |
+| `soh` | State of Health (%). `null` if no telemetry. |
+| `power` | Instantaneous DC power (kW). Negative = discharging, positive = charging. |
+| `capacityKwh` | Available energy capacity in kWh. |
+| `activeAlarmCount` | Count of active (unrecovered) alarms across all devices in the unit's RTU. |
+| `lastSeenUtc` | Timestamp of last received telemetry from the device. |
 
 ---
 
-## 3. GET /Units/{unitId}
+## 3. GET /Units/{unitId}/Header
 
-Returns detail for a single BESS unit including available tabs.
+Lightweight header info for a single BESS unit. Used to render the unit detail page header and tab navigation.
 
-**Response** `BessUnitDetailDto`
+### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `unitId` | `Guid` | Yes | The BESS unit device ID. |
+
+**Response** `BessUnitHeaderDto`
 ```json
 {
   "id": "guid",
-  "name": "Megapack Alpha",
-  "serialNumber": "SN-BESS-01-42",
-  "modelName": "Megapack 2XL",
-  "manufacturer": "Tesla",
+  "name": "BESS Unit 01",
+  "serialNumber": "DEMO-BG0RS3P12S0001",
+  "modelName": "DEMO-BG",
+  "manufacturer": "CATL",
   "facilityId": "guid",
-  "facilityName": "Solar Farm Alpha",
+  "facilityName": "Sofia Facility",
   "status": { "value": "online", "label": "Online", "color": "green" },
+  "operatingMode": { "value": "discharging", "label": "Discharging", "color": "purple" },
+  "soc": 85.5,
+  "soh": 98.0,
+  "power": -33.2,
+  "capacityKwh": 258.67,
+  "activeAlarmCount": 0,
   "availableTabs": [
-    { "key": "summary", "label": "Summary", "isEnabled": true, "order": 1 },
-    { "key": "health", "label": "Health", "isEnabled": true, "order": 2 }
+    { "key": "summary", "label": "Summary", "isEnabled": true, "order": 0 },
+    { "key": "health", "label": "Health", "isEnabled": true, "order": 1 },
+    { "key": "curves", "label": "Curves", "isEnabled": true, "order": 2 },
+    { "key": "faultFlags", "label": "Fault Flags", "isEnabled": true, "order": 3 },
+    { "key": "faults", "label": "Faults", "isEnabled": true, "order": 4 },
+    { "key": "settings", "label": "Settings", "isEnabled": true, "order": 5 }
   ],
-  "lastSeenUtc": "2025-02-09T10:30:00Z"
+  "connectedDevices": {
+    "esc": [{ "id": "guid", "name": "ESC-01" }],
+    "hvac": [{ "id": "guid", "name": "Chiller-01" }],
+    "pcs": [{ "id": "guid", "name": "PCS-01" }]
+  },
+  "lastSeenUtc": "2026-02-25T12:35:00Z"
 }
 ```
 
-Tabs are derived from `Device.Specifications.supportedTabs` JSON or defaults to: summary, health, curves, hierarchy, faultFlags, faults.
+### Field Descriptions
+
+| Field | Description |
+|-------|-------------|
+| `availableTabs` | Ordered list of tabs the frontend should render. Each `key` maps to a `{tab}` value in the dispatch endpoint. |
+| `connectedDevices` | Child devices grouped by display type (`esc`, `hvac`, `pcs`, `solar`, `meter`). Used for sub-device navigation. |
 
 ---
 
-## 4. GET /Units/{unitId}/Tree
+## 4. GET /Units/{unitId}/{tab}
 
-Returns the device tree for a single BESS unit (hierarchy of racks, packs, modules, ESC, HVAC).
+Unified dispatch endpoint — returns content for the requested tab. The response DTO varies by tab.
 
-**Response** `DeviceTreeNodeDto` — same node structure as `/DeviceTree` but rooted at the requested unit.
+### Path Parameters
 
----
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `unitId` | `Guid` | Yes | The BESS unit device ID. |
+| `tab` | `string` | Yes | Tab key (case-insensitive). See table above. |
 
-## 5. GET /Units/{unitId}/Hierarchy
+### Query Parameters (tab-specific)
 
-Legacy endpoint. Returns hierarchy data from `Device.Specifications` JSON.
+| Param | Type | Used by | Default | Description |
+|-------|------|---------|---------|-------------|
+| `period` | `string` | `curves` | `24h` | Time window: `1h`, `6h`, `12h`, `24h`, `48h`, `7d`, `30d` |
+| `interval` | `string` | `curves` | auto | Sampling interval: `1m`, `5m`, `15m`, `30m`, `1h`, `1d` |
+| `page` | `int` | `faults` | `1` | Page number |
+| `pageSize` | `int` | `faults` | `20` | Items per page |
+| `severity` | `string` | `faults` | | Filter: `critical`, `major`, `minor`, `warning`, `info` |
+| `isActive` | `bool` | `faults` | | Filter by active/recovered status |
 
----
-
-## 6. GET /Units/{unitId}/HierarchyLevel
-
-Legacy endpoint. Returns a single hierarchy level.
-
-**Query params:** `level` (string), `parentId` (string?)
-
----
-
-## 7. GET /Units/{unitId}/Summary
-
-Returns dynamic summary sections based on device type. Auto-discriminates between Battery containers, sub-devices (Rack/Pack/Module), TMS, and generic devices.
+### Tab: `summary`
 
 **Response** `SummaryResponseDto`
 ```json
 {
   "sections": [
     {
-      "key": "nameplate",
-      "title": "Nameplate Information",
-      "icon": "info",
-      "variant": "highlighted",
-      "columns": 3,
-      "fields": [
-        { "key": "brand", "label": "Brand", "value": "Tesla", "type": "string" },
-        { "key": "model", "label": "Model", "value": "Megapack 2XL", "type": "string" }
-      ]
-    },
-    {
-      "key": "liveStatus",
-      "title": "Live Status",
-      "icon": "activity",
+      "key": "overview",
+      "title": "Overview",
+      "icon": "battery",
       "variant": "card",
       "columns": 3,
       "fields": [
-        {
-          "key": "soc", "label": "State of Charge", "value": 87.5,
-          "type": "number", "unit": "%", "format": "progress",
-          "meta": { "thresholds": [{ "min": 60, "color": "green" }, { "min": 30, "color": "orange" }, { "min": 0, "color": "red" }] }
-        }
+        { "key": "soc", "label": "State of Charge", "value": 85.5, "type": "number", "unit": "%" },
+        { "key": "soh", "label": "State of Health", "value": 98.0, "type": "number", "unit": "%" },
+        { "key": "power", "label": "Power", "value": -33.2, "type": "number", "unit": "kW" }
       ]
     }
   ]
 }
 ```
 
-**Battery container sections (9):** `nameplate`, `liveStatus`, `energyLimits`, `cellExtremes`, `contactorsSafety`, `thermalManagement` (optional, from ChillerState), `hvcuControl` (optional, table variant with BCU rows), `healthPreview`, `connectedDevices` (from DeviceLink).
+### Tab: `health`
 
-**Multiple Kind loading:** Queries latest `ContainerBatteryState`, `ChillerState`, `HVCUControlState` in one grouped query.
+**Response** `SummaryResponseDto` — same wrapper as summary. Typical sections: `healthOverview`, `sohTrend` (chart variant), `cycleLife`, `thermalStress`.
 
-**Specs-driven mode:** If `Device.Specifications.tabs.summary.sections` exists, builds sections from that schema instead of defaults.
-
-### Section field types
-| Type | Description |
-|------|-------------|
-| `string` | Text value |
-| `number` | Numeric value, may have `unit` |
-| `boolean` | True/false, format `badge` shows colored label |
-| `select` | Dropdown (Settings only), has `options` list |
-
-### Field properties
-| Property | Type | Description |
-|----------|------|-------------|
-| `key` | string | Unique field identifier |
-| `label` | string | Display label |
-| `value` | any | Current value |
-| `type` | string | Field type |
-| `unit` | string? | Unit of measurement |
-| `format` | string? | `progress`, `temperature`, `badge`, `date` |
-| `status` | string? | Status indicator |
-| `editable` | bool? | Whether user can edit (Settings only) |
-| `options` | string[]? | Options for select type (Settings only) |
-| `meta` | object? | Extra metadata (thresholds, location, badge info) |
-
-### Section variants
-| Variant | Description |
-|---------|-------------|
-| `card` | Standard card layout |
-| `highlighted` | Emphasized section (e.g., nameplate) |
-| `table` | Contains `tableData` with columns/rows |
-| `chart` | Contains `chartConfig` + `chartData` |
-
----
-
-## 8. GET /Units/{unitId}/Health
-
-Returns health analytics sections with SoH degradation trend chart.
-
-**Response** `SummaryResponseDto` — same wrapper as Summary.
-
-**Battery sections (7):**
-
-| Section | Key | Variant | Description |
-|---------|-----|---------|-------------|
-| Health Overview | `healthOverview` | card (2 cols) | SoH, cycle/calendar life used (progress bars with thresholds), RTE, estimated RUL |
-| SoH Trend | `sohTrend` | chart | 12-month area chart with EOL reference line at 80% |
-| Degradation Metrics | `degradationMetrics` | card (3 cols) | Equivalent full cycles, designed cycle life, average DoD, total cycle count |
-| Energy Throughput | `energyThroughput` | card (3 cols) | Lifetime charged/discharged (MWh), RTE, daily charged/discharged |
-| Thermal Stress | `thermalStress` | card (2 cols) | Max recorded temp, thermal excursions, avg operating temp |
-| Operational History | `operationalHistory` | card (3 cols) | Total operating/standby hours, firmware version |
-| Maintenance & Warranty | `maintenanceWarranty` | highlighted (3 cols) | Last/next maintenance dates, warranty expiry with Active/Expired badge |
-
-**SoH trend chart config:**
-```json
-{
-  "chartConfig": {
-    "type": "area",
-    "xAxis": { "key": "month", "label": "Month" },
-    "yAxis": { "key": "soh", "label": "SoH", "unit": "%", "domain": [80, 100] },
-    "referenceLines": [{ "y": 80, "label": "EOL Threshold", "color": "red", "strokeDasharray": "5 5" }],
-    "color": "#8b5cf6"
-  },
-  "chartData": [
-    { "month": "Mar 24", "soh": 97.5 },
-    { "month": "Apr 24", "soh": 97.4 }
-  ]
-}
-```
-
-**Computed fields:** `cycleLifeUsed` = cycleCount / designedCycleLife * 100. `calendarLifeUsed` from commissioning date in metadata. `estimatedRUL` from remaining calendar life.
-
----
-
-## 9. GET /Units/{unitId}/Curves
-
-Returns time-series chart data for monitoring curves.
-
-**Query params:**
-| Param | Type | Default | Values |
-|-------|------|---------|--------|
-| `period` | string | `day` | `day`, `week`, `month`, `year` |
-| `interval` | string | `15m` | `5m`, `15m`, `1h`, `1d` |
+### Tab: `curves`
 
 **Response** `ChartResponseDto`
 ```json
 {
   "charts": [
     {
-      "key": "powerSoc",
-      "title": "Power & State of Charge",
-      "type": "area",
+      "key": "voltage_current",
+      "title": "Voltage & Current",
+      "type": "line",
       "xAxis": { "key": "time", "label": "Time", "format": "HH:mm" },
       "series": [
-        { "key": "power", "label": "Power", "unit": "kW", "color": "#8b5cf6", "yAxis": "left", "type": "area" },
-        { "key": "soc", "label": "SoC", "unit": "%", "color": "#22c55e", "yAxis": "right", "type": "line" }
+        { "key": "voltage", "label": "Voltage", "unit": "V", "color": "#3b82f6", "yAxis": "left" },
+        { "key": "current", "label": "Current", "unit": "A", "color": "#ef4444", "yAxis": "right" }
       ],
       "data": [
-        { "time": "00:00", "power": -150.2, "soc": 87.5 },
-        { "time": "00:05", "power": -157.5, "soc": 90.1 }
+        { "time": "2026-02-25T00:00:00Z", "voltage": 807.1, "current": -38.9 }
       ]
     }
   ]
 }
 ```
 
-**Default BESS charts (3):**
-| Chart | Key | Type | Series |
-|-------|-----|------|--------|
-| Power & SoC | `powerSoc` | area | power (kW, left), soc (%, right) |
-| Voltage & Current | `voltageCurrent` | line | voltage (V, left), current (A, right) |
-| Temperature | `temperature` | area | tempMax, tempAvg, tempMin (all C) |
-
-**Time format** varies by period: day → `HH:mm`, week → `ddd HH:mm`, month → `dd MMM`, year → `MMM yy`.
-
-**Data is unified** per chart (one data array with all series values per row), not per-series.
-
-**Specs-driven:** If `Device.Specifications.curveCharts` exists, builds charts from that schema.
-
----
-
-## 10. GET /Units/{unitId}/FaultFlags
-
-Returns current fault flag states from the latest telemetry payload.
+### Tab: `faultflags`
 
 **Response** `FaultFlagsResponseDto`
 ```json
 {
   "flags": [
-    {
-      "key": "faultStatus",
-      "label": "Fault Status",
-      "isActive": false,
-      "source": "battery",
-      "category": "general",
-      "severity": "Critical"
-    }
+    { "key": "faultStatus", "label": "Fault Status", "isActive": false, "source": "battery", "category": "general", "severity": "Critical" }
   ],
   "sources": [
     { "key": "battery", "label": "Battery", "activeCount": 0, "totalCount": 5 }
@@ -327,30 +304,11 @@ Returns current fault flag states from the latest telemetry payload.
   "categories": [
     { "key": "general", "label": "General", "activeCount": 0, "totalCount": 3 }
   ],
-  "summary": {
-    "totalFlags": 10,
-    "activeFlags": 0,
-    "activeBySource": {},
-    "activeByCategory": {}
-  }
+  "summary": { "totalFlags": 10, "activeFlags": 0, "activeBySource": {}, "activeByCategory": {} }
 }
 ```
 
-Flag definitions come from `Device.Specifications.faultFlags.flags` with `sourcePath` dot-notation into the payload. Falls back to extracting `status.faultStatus`, `status.warningStatus`, `status.faultMessages` from payload.
-
----
-
-## 11. GET /Units/{unitId}/Notifications
-
-Returns paginated fault/alarm records for the unit and all descendant devices in the same RTU.
-
-**Query params:**
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `page` | int | 1 | Page number |
-| `pageSize` | int | 20 | Items per page |
-| `severity` | string? | | Filter: `critical`, `major`, `minor`, `warning`, `info` |
-| `isActive` | bool? | | Filter by active/recovered status |
+### Tab: `faults`
 
 **Response** `FaultsPaginatedResponseDto`
 ```json
@@ -368,103 +326,48 @@ Returns paginated fault/alarm records for the unit and all descendant devices in
       "relatedAlarmId": "guid"
     }
   ],
-  "pagination": {
-    "page": 1,
-    "pageSize": 50,
-    "totalItems": 6,
-    "totalPages": 1
-  }
+  "pagination": { "page": 1, "pageSize": 20, "totalItems": 6, "totalPages": 1 }
 }
 ```
 
-**Severity badge colors:** critical → red, major → orange, minor → yellow, warning → yellow, info → blue.
-**Status badges:** active → red, recovered → grey.
-**Scope:** Queries `DeviceAlarm` across all devices sharing the same `RtuId`.
-
----
-
-## 12. GET /Units/{unitId}/Settings
-
-Returns device configuration sections with editable fields.
+### Tab: `settings`
 
 **Response** `SummaryResponseDto`
 ```json
 {
   "sections": [
     {
-      "key": "general",
-      "title": "General Settings",
-      "fields": [
-        { "key": "deviceName", "label": "Device Name", "value": "Megapack Alpha", "type": "string", "editable": true },
-        { "key": "serialNumber", "label": "Serial Number", "value": "SN-BESS-01-42", "type": "string", "editable": false }
-      ]
-    },
-    {
-      "key": "alarms",
+      "key": "alarmThresholds",
       "title": "Alarm Thresholds",
+      "variant": "card",
+      "columns": 2,
       "fields": [
-        { "key": "tempAlarmThreshold", "label": "Temperature Alarm Threshold", "value": 45, "type": "number", "unit": "C", "editable": true }
-      ]
-    },
-    {
-      "key": "operation",
-      "title": "Operation Settings",
-      "fields": [
-        { "key": "operatingMode", "label": "Operating Mode", "value": "auto", "type": "select", "options": ["auto", "manual", "maintenance"], "editable": true },
-        { "key": "balancingEnabled", "label": "Cell Balancing", "value": true, "type": "boolean", "editable": true }
-      ]
-    },
-    {
-      "key": "maintenance",
-      "title": "Maintenance",
-      "fields": [
-        { "key": "maintenanceIntervalDays", "label": "Maintenance Interval", "value": 90, "type": "number", "unit": "days", "editable": true }
+        { "key": "tempAlarmThreshold", "label": "Temperature Alarm", "value": 45, "type": "number", "unit": "°C", "editable": true }
       ]
     }
   ]
 }
 ```
-
-**Data sources:** Device entity fields (name, serialNumber) + `Device.Metadata` JSON (thresholds, operation settings, firmware version, protocol).
-**Specs-driven:** If `Device.Specifications.tabs.settings.sections` exists, builds from schema.
 
 ---
 
-## 13. GET /Schema
+## Section Field Types
 
-Returns capability manifest for all Battery product types (from `DeviceSpecificationTemplate` entity).
+| Type | Description |
+|------|-------------|
+| `string` | Text value |
+| `number` | Numeric value, may have `unit` |
+| `boolean` | True/false, format `badge` shows colored label |
+| `select` | Dropdown (Settings only), has `options` list |
 
-**Response** `SchemaResponseDto`
-```json
-{
-  "productTypes": [
-    {
-      "key": "megapack-2xl",
-      "label": "Tesla Megapack 2XL",
-      "hierarchy": ["rack", "pack", "module"],
-      "supportedTabs": ["summary", "health", "hierarchy", "monitoring", "fault", "alarms", "settings"],
-      "summarySections": ["nameplate", "liveStatus", "energyLimits", "cellExtremes", "contactorsSafety", "thermalManagement", "hvcuControl", "healthPreview", "connectedDevices"],
-      "healthSections": ["healthOverview", "sohTrend", "degradationMetrics", "energyThroughput", "thermalStress", "operationalHistory", "maintenanceWarranty"],
-      "faultSources": ["battery", "chiller"],
-      "curveCharts": ["powerSoc", "voltageCurrent", "temperature"],
-      "features": {
-        "hasTms": true,
-        "hasHvcu": true,
-        "hasCellBalancing": true,
-        "hasChillerFaults": true
-      },
-      "connectedDevices": {
-        "escCount": 1,
-        "hvacCount": 2
-      }
-    }
-  ]
-}
-```
+## Section Variants
 
-**Hierarchy levels** are derived by walking the `HierarchyTemplate` JSON tree (excluding `esc`/`hvac` auxiliary devices).
-**Features** come from `SpecificationsTemplate.features` or are inferred from section presence.
-**Connected devices** are counted from `HierarchyTemplate.children` entries with `key` of `esc`/`hvac`.
+| Variant | Description |
+|---------|-------------|
+| `card` | Standard card layout |
+| `highlighted` | Emphasized section (e.g., nameplate) |
+| `table` | Contains `tableData` with columns/rows |
+| `chart` | Contains `chartConfig` + `chartData` |
 
 ---
 
@@ -475,11 +378,28 @@ Returns capability manifest for all Battery product types (from `DeviceSpecifica
 { "value": "online", "label": "Online", "color": "green" }
 ```
 
-Used for: device status, operating mode, fault severity, fault status.
+**Color mapping:**
+
+| Value | Color |
+|-------|-------|
+| online / normal | green |
+| charging | green / blue |
+| discharging | purple / cyan |
+| idle | gray |
+| standby | yellow |
+| warning / maintenance | orange |
+| offline / fault | red |
 
 ### Authorization
 All endpoints require:
 - Role: `Administrator` or `Tenant.Admin`
 - Permission: `Bess.View`
 
-Enforced via `[Authorize]` + `[RequirePermission]` attributes on the MediatR command/query, not at the endpoint level.
+### Error Responses
+
+| Status | Condition |
+|--------|-----------|
+| `401` | Missing or invalid JWT token |
+| `403` | Insufficient role or missing `Bess.View` permission |
+| `404` | Unknown `tab` key, or `unitId`/`facilityId` not found |
+| `400` | Invalid query parameter value |
