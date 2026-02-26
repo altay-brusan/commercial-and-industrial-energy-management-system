@@ -514,7 +514,7 @@ Added fields:
 
 ## Features & Permissions
 
-### Feature List (15 features)
+### Feature List (16 features)
 
 | Key | Name | Category |
 |-----|------|----------|
@@ -524,6 +524,7 @@ Added fields:
 | `FacilityMap` | Facility Map | Core |
 | `Solar` | Solar | Energy |
 | `Bess` | BESS | Energy |
+| `Pcs` | PCS | Energy |
 | `GridAndLoads` | Grid & Loads | Energy |
 | `Scada` | SCADA | Energy |
 | `Analytics` | Analytics | Intelligence |
@@ -536,7 +537,7 @@ Added fields:
 
 **Constants file:** `src/Domain/Constants/Features.cs`
 
-### Permission List (33 permissions)
+### Permission List (34 permissions)
 
 | Permission Key | Name | Feature |
 |---------------|------|---------|
@@ -545,6 +546,7 @@ Added fields:
 | `Monitoring.View` | View Monitoring | Monitoring |
 | `Solar.View` | View Solar | Solar |
 | `Bess.View` | View BESS | Bess |
+| `Pcs.View` | View PCS | Pcs |
 | `GridAndLoads.View` | View Grid & Loads | GridAndLoads |
 | `Scada.View` | View SCADA | Scada |
 | `Scada.Control` | Control SCADA | Scada |
@@ -677,6 +679,21 @@ The following existing commands/queries have been annotated with `[RequirePermis
 | `DeleteUserCommand` | `UserManagement.Delete` | UserManagement |
 | `AddUserRoleCommand` | `UserManagement.Edit` | UserManagement |
 | `RemoveUserRoleCommand` | `UserManagement.Edit` | UserManagement |
+| `GetBessUnitsQuery` | `Bess.View` | Bess |
+| `GetBessUnitHeaderQuery` | `Bess.View` | Bess |
+| `GetBessDeviceTreeQuery` | `Bess.View` | Bess |
+| `GetBessSummaryQuery` | `Bess.View` | Bess |
+| `GetBessHealthQuery` | `Bess.View` | Bess |
+| `GetBessCurvesQuery` | `Bess.View` | Bess |
+| `GetBessFaultFlagsQuery` | `Bess.View` | Bess |
+| `GetBessFaultsQuery` | `Bess.View` | Bess |
+| `GetBessSettingsQuery` | `Bess.View` | Bess |
+| `GetPcsUnitsQuery` | `Pcs.View` | Pcs |
+| `GetPcsHeaderQuery` | `Pcs.View` | Pcs |
+| `GetPcsGeneralQuery` | `Pcs.View` | Pcs |
+| `GetPcsFaultFlagsQuery` | `Pcs.View` | Pcs |
+| `GetPcsCurvesQuery` | `Pcs.View` | Pcs |
+| `GetPcsSchemaQuery` | `Pcs.View` | Pcs |
 
 ---
 
