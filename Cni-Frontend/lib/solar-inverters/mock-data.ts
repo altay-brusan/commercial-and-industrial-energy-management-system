@@ -488,21 +488,7 @@ export function buildSolarDeviceTree(): SolarDeviceTreeNode[] {
     };
   });
 
-  const totalAlarms = inverterNodes.reduce((sum, n) => sum + n.alarmCount, 0);
-  const hasAnyIssue = solarInverters.some(
-    (inv) => inv.status === "fault" || inv.status === "warning" || inv.status === "offline"
-  );
-
-  return [
-    {
-      id: "logger-01",
-      name: "SmartLogger",
-      type: "logger",
-      status: hasAnyIssue ? "warning" : "normal",
-      children: inverterNodes,
-      alarmCount: totalAlarms,
-    },
-  ];
+  return inverterNodes;
 }
 
 // --- Fault mock data ---
