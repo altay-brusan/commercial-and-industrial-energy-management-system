@@ -340,7 +340,7 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Tree": {
+    "/api/v1/BatteryStorage/Tree/{facilityId}": {
       "get": {
         "tags": [
           "BatteryStorage"
@@ -349,11 +349,11 @@
         "parameters": [
           {
             "name": "facilityId",
-            "in": "query",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -377,7 +377,7 @@
         ]
       }
     },
-    "/api/v1/BatteryStorage/Units": {
+    "/api/v1/BatteryStorage/Units/{facilityId}": {
       "get": {
         "tags": [
           "BatteryStorage"
@@ -385,17 +385,17 @@
         "operationId": "GetApiV1BatteryStorageUnits",
         "parameters": [
           {
-            "name": "FacilityId",
-            "in": "query",
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           },
           {
-            "name": "Search",
+            "name": "search",
             "in": "query",
             "schema": {
               "type": "string",
@@ -404,7 +404,7 @@
             "x-position": 2
           },
           {
-            "name": "SortBy",
+            "name": "sortBy",
             "in": "query",
             "schema": {
               "type": "string",
@@ -413,7 +413,7 @@
             "x-position": 3
           },
           {
-            "name": "SortDirection",
+            "name": "sortDirection",
             "in": "query",
             "schema": {
               "type": "string",

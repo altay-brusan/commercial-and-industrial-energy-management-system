@@ -21,16 +21,22 @@ public class BatteryStorage : EndpointGroupBase
             .WithTags("BatteryStorage")
             .RequireAuthorization();
 
-        group.MapGet("/Tree", GetTree);
-        group.MapGet("/Units", GetUnits);
+        group.MapGet("/Tree/{facilityId}", GetTree);
+        group.MapGet("/Units/{facilityId}", GetUnits);
         group.MapGet("/Units/{unitId}/Header", GetUnitHeader);
         group.MapGet("/Units/{unitId}/{tab}", GetTabContent);
     }
 
     public static async Task<Ok<BessUnitsResultDto>> GetUnits(
-        ISender sender, [AsParameters] GetBessUnitsQuery query)
+        ISender sender, Guid facilityId, string? search, string? sortBy, string? sortDirection)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(new GetBessUnitsQuery
+        {
+            FacilityId = facilityId,
+            Search = search,
+            SortBy = sortBy,
+            SortDirection = sortDirection
+        });
         return TypedResults.Ok(result);
     }
 
@@ -90,7 +96,7 @@ public class BatteryStorage : EndpointGroupBase
     }
 
     public static async Task<Ok<BessDeviceTreeResponseDto>> GetTree(
-        ISender sender, Guid? facilityId)
+        ISender sender, Guid facilityId)
     {
         var result = await sender.Send(new GetBessDeviceTreeQuery { FacilityId = facilityId });
         return TypedResults.Ok(result);
