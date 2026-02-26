@@ -2721,7 +2721,7 @@
         ]
       }
     },
-    "/api/v1/Pcs/Units": {
+    "/api/v1/Pcs/Units/{facilityId}": {
       "get": {
         "tags": [
           "Pcs"
@@ -2729,12 +2729,12 @@
         "operationId": "GetApiV1PcsUnits",
         "parameters": [
           {
-            "name": "FacilityId",
-            "in": "query",
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           }

@@ -18,16 +18,16 @@ public class Pcs : EndpointGroupBase
             .WithTags("Pcs")
             .RequireAuthorization();
 
-        group.MapGet("/Units", GetUnits);
+        group.MapGet("/Units/{facilityId}", GetUnits);
         group.MapGet("/Units/{unitId}/Header", GetHeader);
         group.MapGet("/Units/{unitId}/{tab}", GetTabContent);
         group.MapGet("/Schema", GetSchema);
     }
 
     public static async Task<Ok<PcsUnitsResultDto>> GetUnits(
-        ISender sender, [AsParameters] GetPcsUnitsQuery query)
+        ISender sender, Guid facilityId)
     {
-        var result = await sender.Send(query);
+        var result = await sender.Send(new GetPcsUnitsQuery { FacilityId = facilityId });
         return TypedResults.Ok(result);
     }
 
