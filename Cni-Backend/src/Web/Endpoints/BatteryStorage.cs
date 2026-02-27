@@ -4,6 +4,7 @@ using Backend.Application.BatteryStorage.Queries.GetBessFaultFlags;
 using Backend.Application.BatteryStorage.Queries.GetBessFaults;
 using Backend.Application.BatteryStorage.Queries.GetBessHealth;
 using Backend.Application.BatteryStorage.Queries.GetBessSettings;
+using Backend.Application.BatteryStorage.Queries.GetBessCells;
 using Backend.Application.BatteryStorage.Queries.GetBessSummary;
 using Backend.Application.BatteryStorage.Queries.GetBessUnitHeader;
 using Backend.Application.BatteryStorage.Queries.GetBessUnits;
@@ -89,6 +90,10 @@ public class BatteryStorage : EndpointGroupBase
             case "settings":
                 var settings = await sender.Send(new GetBessSettingsQuery { UnitId = unitId });
                 return TypedResults.Ok(settings);
+
+            case "cells":
+                var cells = await sender.Send(new GetBessCellsQuery { UnitId = unitId });
+                return TypedResults.Ok(cells);
 
             default:
                 return TypedResults.NotFound();
