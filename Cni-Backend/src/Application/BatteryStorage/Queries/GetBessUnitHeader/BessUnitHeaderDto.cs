@@ -21,6 +21,12 @@ public record BessUnitHeaderDto
     public string? PackName { get; init; }
     public int? HierarchyNumber { get; init; }
 
+    /// <summary>
+    /// Device display type: "unit", "rack", "pack", "module", "hvac", "esc", "pcs", etc.
+    /// Used by the frontend to determine rendering mode.
+    /// </summary>
+    public string? DisplayType { get; init; }
+
     public StatusBadgeDto Status { get; init; } = new();
     public StatusBadgeDto? OperatingMode { get; init; }
     public double? Soc { get; init; }
@@ -30,17 +36,16 @@ public record BessUnitHeaderDto
     public double? Power { get; init; }
     public double? CapacityKwh { get; init; }
 
-    // HVAC/TMS-specific (populated when device type is hvac)
-    public double? OutletCoolantTemp { get; init; }
-    public double? InletCoolantTemp { get; init; }
-    public double? AmbientTemp { get; init; }
-    public bool? CompressorRunning { get; init; }
-    public string? TmsOperatingMode { get; init; }
-
     public int ActiveAlarmCount { get; init; }
     public List<TabInfoDto> AvailableTabs { get; init; } = new();
     public Dictionary<string, List<ConnectedDeviceDto>> ConnectedDevices { get; init; } = new();
     public DateTimeOffset? LastSeenUtc { get; init; }
+
+    /// <summary>
+    /// Sections-based content for HVAC/ESC devices.
+    /// When populated, the frontend renders dynamic sections instead of flat fields.
+    /// </summary>
+    public List<DynamicSectionDto>? Sections { get; init; }
 }
 
 public record ConnectedDeviceDto

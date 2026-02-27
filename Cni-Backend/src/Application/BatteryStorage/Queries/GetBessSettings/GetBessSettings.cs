@@ -3,6 +3,7 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Domain.Constants;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessSettings;
 
@@ -58,10 +59,12 @@ public record GetBessSettingsQuery : IRequest<SummaryResponseDto>
 public class GetBessSettingsQueryHandler : IRequestHandler<GetBessSettingsQuery, SummaryResponseDto>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ContainerTelemetryLoader _telemetryLoader;
 
     public GetBessSettingsQueryHandler(IApplicationDbContext context)
     {
         _context = context;
+        _telemetryLoader = new ContainerTelemetryLoader(context);
     }
 
     public async Task<SummaryResponseDto> Handle(GetBessSettingsQuery request, CancellationToken cancellationToken)
@@ -72,6 +75,13 @@ public class GetBessSettingsQueryHandler : IRequestHandler<GetBessSettingsQuery,
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
+
+        // TMS/HVAC devices get their own settings layout
+        if (device.DeviceType?.Name == DeviceTypeNames.EnergyStorageTMS)
+        {
+            var sections = await BuildTmsSettings(device, cancellationToken);
+            return new SummaryResponseDto { Sections = sections };
+        }
 
         // Check if Specifications defines custom settings sections
         var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
@@ -84,8 +94,8 @@ public class GetBessSettingsQueryHandler : IRequestHandler<GetBessSettingsQuery,
         }
 
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
-        var sections = BuildDefaultSettings(device, metadata);
-        return new SummaryResponseDto { Sections = sections };
+        var sections2 = BuildDefaultSettings(device, metadata);
+        return new SummaryResponseDto { Sections = sections2 };
     }
 
     private static List<DynamicSectionDto> BuildDefaultSettings(
@@ -173,6 +183,115 @@ public class GetBessSettingsQueryHandler : IRequestHandler<GetBessSettingsQuery,
             {
                 NumSetting("maintenanceIntervalDays", "Maintenance Interval", ExtractNum(metadata, "maintenanceIntervalDays"), "days"),
             }
+        };
+    }
+
+    // ── TMS/HVAC Settings ───────────────────────────────────────────────
+
+    private async Task<List<DynamicSectionDto>> BuildTmsSettings(
+        Domain.Entities.Device device, CancellationToken ct)
+    {
+        // Walk up to find root container (ChillerState data is stored there)
+        var rootId = device.Id;
+        var currentId = device.ParentDeviceId;
+
+        while (currentId.HasValue)
+        {
+            var parent = await _context.Devices
+                .Include(d => d.DeviceType)
+                .FirstOrDefaultAsync(d => d.Id == currentId.Value, ct);
+            if (parent == null) break;
+            rootId = parent.Id;
+            currentId = parent.ParentDeviceId;
+        }
+
+        var telemetry = await _telemetryLoader.LoadLatest(rootId, ct);
+        var payloads = telemetry.GetPayloadsByKind();
+        var chiller = payloads.GetValueOrDefault("ChillerState");
+        var metadata = PayloadDeserializer.GetElement(device.Metadata);
+
+        return new List<DynamicSectionDto>
+        {
+            BuildHvacGeneralSection(device, metadata),
+            BuildTemperatureSettingsSection(chiller),
+            BuildEquipmentSettingsSection(chiller, metadata),
+        };
+    }
+
+    private static DynamicSectionDto BuildHvacGeneralSection(
+        Domain.Entities.Device device, JsonElement? metadata)
+    {
+        var firmware = metadata.HasValue ? PayloadDeserializer.ExtractValue(metadata.Value, "firmware") as string : null;
+        var protocol = metadata.HasValue ? PayloadDeserializer.ExtractValue(metadata.Value, "protocol") as string : null;
+        var modbusAddress = ExtractNum(metadata, "modbusAddress");
+
+        return new DynamicSectionDto
+        {
+            Key = "general",
+            Title = "HVAC General Settings",
+            Fields = new List<SectionFieldDto>
+            {
+                new() { Key = "deviceName", Label = "Device Name", Value = device.Name, Type = "string", Editable = false },
+                new() { Key = "model", Label = "Model", Value = device.Model, Type = "string", Editable = false },
+                new() { Key = "serialNumber", Label = "Serial Number", Value = device.SerialNumber, Type = "string", Editable = false },
+                new() { Key = "firmware", Label = "Firmware", Value = firmware, Type = "string", Editable = false },
+                new() { Key = "protocol", Label = "Protocol", Value = protocol, Type = "string", Editable = false },
+                new() { Key = "modbusAddress", Label = "Modbus Address", Value = modbusAddress, Type = "number", Editable = true },
+            }
+        };
+    }
+
+    private static DynamicSectionDto BuildTemperatureSettingsSection(JsonElement? chiller)
+    {
+        var modeStr = chiller.HasValue
+            ? PayloadDeserializer.ExtractValue(chiller.Value, "operatingModeStr") as string
+            : null;
+
+        return new DynamicSectionDto
+        {
+            Key = "temperature",
+            Title = "Temperature Settings",
+            Fields = new List<SectionFieldDto>
+            {
+                new() { Key = "operatingMode", Label = "Operating Mode", Value = modeStr, Type = "select",
+                    Options = new List<string> { "Cooling", "Heating", "Standby", "Auto" }, Editable = true },
+                new() { Key = "coolantTempSetpoint", Label = "Coolant Temp Setpoint", Value = ExtractNum(chiller, "coolantTempSetpointC"), Type = "number", Unit = "\u00b0C", Editable = true },
+                new() { Key = "highTempAlarm", Label = "High Temp Alarm", Value = ExtractNum(chiller, "highAlarmTempC"), Type = "number", Unit = "\u00b0C", Editable = true },
+                new() { Key = "lowTempAlarm", Label = "Low Temp Alarm", Value = ExtractNum(chiller, "lowAlarmTempC"), Type = "number", Unit = "\u00b0C", Editable = true },
+            }
+        };
+    }
+
+    private static DynamicSectionDto BuildEquipmentSettingsSection(JsonElement? chiller, JsonElement? metadata)
+    {
+        var compressorMaxSpeed = ExtractNum(chiller, "compressorSpeedPercent") ?? ExtractNum(metadata, "compressorMaxSpeed");
+        var pumpMaxSpeed = ExtractNum(chiller, "pumpSpeedPercent") ?? ExtractNum(metadata, "pumpMaxSpeed");
+        var autoDefrost = ExtractBool(chiller, "autoDefrost") ?? ExtractBool(metadata, "autoDefrost");
+
+        return new DynamicSectionDto
+        {
+            Key = "equipment",
+            Title = "Equipment Settings",
+            Fields = new List<SectionFieldDto>
+            {
+                new() { Key = "compressorMaxSpeed", Label = "Compressor Max Speed", Value = compressorMaxSpeed, Type = "number", Unit = "%", Editable = true },
+                new() { Key = "pumpMaxSpeed", Label = "Pump Max Speed", Value = pumpMaxSpeed, Type = "number", Unit = "%", Editable = true },
+                new() { Key = "autoDefrost", Label = "Auto Defrost", Value = autoDefrost, Type = "boolean", Editable = true },
+            }
+        };
+    }
+
+    private static bool? ExtractBool(JsonElement? element, string path)
+    {
+        if (!element.HasValue) return null;
+        var value = PayloadDeserializer.ExtractValue(element.Value, path);
+        return value switch
+        {
+            bool b => b,
+            int i => i != 0,
+            long l => l != 0,
+            double d => d != 0,
+            _ => null
         };
     }
 

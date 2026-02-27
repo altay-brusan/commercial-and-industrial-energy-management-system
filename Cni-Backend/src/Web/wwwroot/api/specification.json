@@ -4463,6 +4463,10 @@
             "format": "int32",
             "nullable": true
           },
+          "displayType": {
+            "type": "string",
+            "nullable": true
+          },
           "status": {
             "$ref": "#/components/schemas/StatusBadgeDto"
           },
@@ -4504,29 +4508,6 @@
             "format": "double",
             "nullable": true
           },
-          "outletCoolantTemp": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "inletCoolantTemp": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "ambientTemp": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "compressorRunning": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "tmsOperatingMode": {
-            "type": "string",
-            "nullable": true
-          },
           "activeAlarmCount": {
             "type": "integer",
             "format": "int32"
@@ -4550,6 +4531,13 @@
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/DynamicSectionDto"
+            }
           }
         }
       },
@@ -4582,6 +4570,223 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "DynamicSectionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string",
+            "nullable": true
+          },
+          "variant": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SectionFieldDto"
+            }
+          },
+          "tableData": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TableDataDto"
+              }
+            ]
+          },
+          "chartConfig": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartConfigDto"
+              }
+            ]
+          },
+          "chartData": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        }
+      },
+      "SectionFieldDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "value": {
+            "nullable": true
+          },
+          "type": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "format": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "editable": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
+          }
+        }
+      },
+      "TableDataDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableColumnDto"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        }
+      },
+      "TableColumnDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "ChartConfigDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "xAxis": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartAxisDto"
+              }
+            ]
+          },
+          "yAxis": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartAxisDto"
+              }
+            ]
+          },
+          "referenceLines": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ChartReferenceLineDto"
+            }
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ChartAxisDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "domain": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
+      "ChartReferenceLineDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "y": {
+            "type": "number",
+            "format": "double"
+          },
+          "label": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "strokeDasharray": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
