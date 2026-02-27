@@ -100,10 +100,10 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
         // Status from alarms
         var status = await _statusService.GetStatusAsync(device.Id, cancellationToken);
 
-        // Tabs: root uses template/defaults, sub-units get summary + alarms
+        // Tabs: root uses template/defaults, sub-units get level-specific tabs
         var tabs = isRootUnit
             ? GetAvailableTabs(specTemplate?.SpecificationsTemplate)
-            : GetSubUnitTabs();
+            : GetSubUnitTabs(displayType);
 
         // Load telemetry for parameter resolution
         var batteryEntries = await _context.DeviceBatteryData
@@ -238,13 +238,19 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
         return null;
     }
 
-    private static List<TabInfoDto> GetSubUnitTabs()
+    private static List<TabInfoDto> GetSubUnitTabs(string? displayType)
     {
-        return new List<TabInfoDto>
+        var tabs = new List<TabInfoDto>
         {
-            new() { Key = "summary", Label = "Summary", Order = 1 },
-            new() { Key = "alarms", Label = "Alarms", Order = 2 }
+            new() { Key = "summary", Label = "Summary", Order = 1 }
         };
+
+        if (displayType == "module")
+            tabs.Add(new TabInfoDto { Key = "cells", Label = "Cells", Order = 2 });
+
+        tabs.Add(new TabInfoDto { Key = "alarms", Label = "Alarms", Order = tabs.Count + 1 });
+
+        return tabs;
     }
 
     private static List<TabInfoDto> GetAvailableTabs(string? specifications)
