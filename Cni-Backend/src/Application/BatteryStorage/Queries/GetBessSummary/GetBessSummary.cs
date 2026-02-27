@@ -875,16 +875,138 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         var telemetry = await _telemetryLoader.LoadLatest(rootId, ct);
         var payloads = telemetry.GetPayloadsByKind();
         var chiller = payloads.GetValueOrDefault("ChillerState");
+        var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
         var sections = new List<DynamicSectionDto>
         {
-            BuildNameplateSection(device, PayloadDeserializer.GetElement(device.Metadata)),
+            BuildTmsDeviceInfoSection(device, metadata),
+            BuildTmsChillerStateSection(chiller),
+            BuildTmsSetpointsSection(chiller),
         };
 
-        if (chiller.HasValue)
-            sections.Add(BuildThermalManagementSection(chiller));
+        // Status section with active alarm count
+        var alarmCount = await _context.DeviceAlarms
+            .Where(a => a.DeviceId == device.Id && a.IsActive)
+            .CountAsync(ct);
+        sections.Add(BuildTmsStatusSection(alarmCount));
 
         return sections;
+    }
+
+    private static DynamicSectionDto BuildTmsDeviceInfoSection(
+        Domain.Entities.Device device, JsonElement? metadata)
+    {
+        var fields = new List<SectionFieldDto>
+        {
+            StringField("model", "Model", device.Model),
+            StringField("serialNumber", "Serial Number", device.SerialNumber),
+        };
+
+        if (metadata.HasValue)
+        {
+            var firmware = PayloadDeserializer.ExtractValue(metadata.Value, "firmware") as string;
+            if (firmware != null)
+                fields.Add(StringField("firmware", "Firmware", firmware));
+
+            var protocol = PayloadDeserializer.ExtractValue(metadata.Value, "protocol") as string;
+            if (protocol != null)
+                fields.Add(StringField("protocol", "Protocol", protocol));
+
+            var modbusAddress = ExtractNum(metadata, "modbusAddress");
+            if (modbusAddress.HasValue)
+                fields.Add(NumField("modbusAddress", "Modbus Address", modbusAddress, ""));
+        }
+
+        return new DynamicSectionDto
+        {
+            Key = "deviceInfo",
+            Title = "Device Information",
+            Icon = "info",
+            Variant = "highlighted",
+            Columns = 3,
+            Fields = fields
+        };
+    }
+
+    private static DynamicSectionDto BuildTmsChillerStateSection(JsonElement? chiller)
+    {
+        var modeStr = chiller.HasValue
+            ? PayloadDeserializer.ExtractValue(chiller.Value, "operatingModeStr") as string
+            : null;
+
+        return new DynamicSectionDto
+        {
+            Key = "chillerState",
+            Title = "Chiller State",
+            Icon = "thermometer",
+            Variant = "card",
+            Columns = 3,
+            Fields = new List<SectionFieldDto>
+            {
+                new() { Key = "operatingMode", Label = "Operating Mode", Value = modeStr, Type = "string", Format = "badge",
+                    Meta = new Dictionary<string, object?> { ["badgeLabel"] = modeStr, ["badgeColor"] = "sky" } },
+                NumField("outletCoolantTemp", "Outlet Coolant Temp", ExtractNum(chiller, "outletCoolantTempC"), "\u00b0C"),
+                NumField("inletCoolantTemp", "Inlet Coolant Temp", ExtractNum(chiller, "inletCoolantTempC"), "\u00b0C"),
+                NumField("ambientTemp", "Ambient Temp", ExtractNum(chiller, "ambientTempC"), "\u00b0C"),
+                NumField("inletPressure", "Inlet Coolant Pressure", ExtractNum(chiller, "inletCoolantPressure"), "bar"),
+                NumField("outletPressure", "Outlet Coolant Pressure", ExtractNum(chiller, "outletCoolantPressure"), "bar"),
+                BoolBadgeFieldWithExtra("compressorStatus", "Compressor", ExtractBool(chiller, "compressorStatus"),
+                    "Running", "green", "Off", "grey",
+                    ExtractNum(chiller, "compressorSpeedPercent"), "%", "Speed"),
+                BoolBadgeFieldWithExtra("pumpStatus", "Pump", ExtractBool(chiller, "pumpStatus"),
+                    "Running", "green", "Off", "grey",
+                    ExtractNum(chiller, "pumpSpeedPercent"), "%", "Speed"),
+                BoolBadgeField("fanStatus", "Fan", ExtractBool(chiller, "fanRunStatus"),
+                    "Running", "green", "Off", "grey"),
+                BoolBadgeField("electricHeater", "Electric Heater", ExtractBool(chiller, "electricHeaterStatus"),
+                    "On", "orange", "Off", "grey"),
+            }
+        };
+    }
+
+    private static DynamicSectionDto BuildTmsSetpointsSection(JsonElement? chiller)
+    {
+        var modeStr = chiller.HasValue
+            ? PayloadDeserializer.ExtractValue(chiller.Value, "operatingModeStr") as string
+            : null;
+
+        return new DynamicSectionDto
+        {
+            Key = "setpoints",
+            Title = "Setpoints",
+            Icon = "sliders",
+            Variant = "card",
+            Columns = 2,
+            Fields = new List<SectionFieldDto>
+            {
+                NumField("coolantTempSetpoint", "Coolant Temp Setpoint", ExtractNum(chiller, "coolantTempSetpointC"), "\u00b0C"),
+                NumField("highAlarm", "High Alarm", ExtractNum(chiller, "highAlarmTempC"), "\u00b0C"),
+                NumField("lowAlarm", "Low Alarm", ExtractNum(chiller, "lowAlarmTempC"), "\u00b0C"),
+                StringField("operatingMode", "Operating Mode", modeStr),
+            }
+        };
+    }
+
+    private static DynamicSectionDto BuildTmsStatusSection(int activeAlarmCount)
+    {
+        var statusLabel = activeAlarmCount > 0 ? "Warning" : "Normal";
+        var statusColor = activeAlarmCount > 0 ? "orange" : "green";
+        var statusValue = activeAlarmCount > 0 ? "warning" : "normal";
+
+        return new DynamicSectionDto
+        {
+            Key = "status",
+            Title = "Status",
+            Icon = "shield",
+            Variant = "card",
+            Columns = 2,
+            Fields = new List<SectionFieldDto>
+            {
+                new() { Key = "componentStatus", Label = "Component Status", Value = statusValue, Type = "string", Format = "badge",
+                    Meta = new Dictionary<string, object?> { ["value"] = statusValue, ["label"] = statusLabel, ["color"] = statusColor } },
+                NumField("activeAlarmCount", "Active Alarms", activeAlarmCount, ""),
+            }
+        };
     }
 
     // ── Generic fallback ──────────────────────────────────────────────────
@@ -1030,6 +1152,22 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
             {
                 ["trueLabel"] = trueLabel, ["trueColor"] = trueColor,
                 ["falseLabel"] = falseLabel, ["falseColor"] = falseColor
+            }
+        };
+
+    private static SectionFieldDto BoolBadgeFieldWithExtra(string key, string label, bool? value,
+        string trueLabel, string trueColor, string falseLabel, string falseColor,
+        double? additionalValue, string? additionalUnit, string? additionalLabel) =>
+        new()
+        {
+            Key = key, Label = label, Value = value, Type = "boolean", Format = "badge",
+            Meta = new Dictionary<string, object?>
+            {
+                ["trueLabel"] = trueLabel, ["trueColor"] = trueColor,
+                ["falseLabel"] = falseLabel, ["falseColor"] = falseColor,
+                ["additionalValue"] = additionalValue,
+                ["additionalUnit"] = additionalUnit,
+                ["additionalLabel"] = additionalLabel
             }
         };
 
