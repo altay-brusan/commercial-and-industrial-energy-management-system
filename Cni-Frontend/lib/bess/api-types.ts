@@ -88,16 +88,27 @@ export interface BessUnitHeaderDto {
   manufacturer: string | null;
   facilityId: string;
   facilityName: string | null;
+  unitId: string | null;
+  unitName: string | null;
+  rackId: string | null;
+  rackName: string | null;
+  packId: string | null;
+  packName: string | null;
+  hierarchyNumber: number | null;
+  displayType: string;
   status: StatusBadgeDto;
   operatingMode: StatusBadgeDto | null;
   soc: number | null;
   soh: number | null;
+  voltage: number | null;
+  current: number | null;
   power: number | null;
   capacityKwh: number | null;
   activeAlarmCount: number;
   availableTabs: TabInfoDto[];
   connectedDevices: Record<string, ConnectedDeviceDto[]>;
   lastSeenUtc: string | null;
+  sections: unknown[] | null;
 }
 
 // --- Dynamic Sections (Summary, Health, Settings) ---

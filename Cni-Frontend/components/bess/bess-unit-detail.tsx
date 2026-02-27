@@ -46,6 +46,7 @@ function TabContent({ tabKey, deviceId }: { tabKey: string; deviceId: string }) 
     case "faultFlags":
       return <BessFaultTab deviceId={deviceId} />;
     case "faults":
+    case "alarms":
       return <BessNotificationsTab deviceId={deviceId} />;
     case "settings":
       return <BessUnitSettingsTab deviceId={deviceId} />;

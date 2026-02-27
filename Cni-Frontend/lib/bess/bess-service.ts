@@ -14,28 +14,29 @@ function withDeviceId(template: string, deviceId: string): string {
   return template.replace("{deviceId}", deviceId);
 }
 
-export async function getTree(facilityId?: string): Promise<BessDeviceTreeResponseDto> {
-  const params = facilityId ? `?facilityId=${facilityId}` : "";
-  return apiClient<BessDeviceTreeResponseDto>(`${BESS_ENDPOINTS.TREE}${params}`);
+function withFacilityId(template: string, facilityId: string): string {
+  return template.replace("{facilityId}", facilityId);
 }
 
-export async function getUnits(params?: {
-  facilityId?: string;
+export async function getTree(facilityId: string): Promise<BessDeviceTreeResponseDto> {
+  return apiClient<BessDeviceTreeResponseDto>(withFacilityId(BESS_ENDPOINTS.TREE, facilityId));
+}
+
+export async function getUnits(facilityId: string, params?: {
   search?: string;
   sortBy?: string;
   sortDirection?: string;
 }): Promise<BessUnitsResultDto> {
   const searchParams = new URLSearchParams();
-  if (params?.facilityId) searchParams.set("FacilityId", params.facilityId);
-  if (params?.search) searchParams.set("Search", params.search);
-  if (params?.sortBy) searchParams.set("SortBy", params.sortBy);
-  if (params?.sortDirection) searchParams.set("SortDirection", params.sortDirection);
+  if (params?.search) searchParams.set("search", params.search);
+  if (params?.sortBy) searchParams.set("sortBy", params.sortBy);
+  if (params?.sortDirection) searchParams.set("sortDirection", params.sortDirection);
   const qs = searchParams.toString();
-  return apiClient<BessUnitsResultDto>(`${BESS_ENDPOINTS.UNITS}${qs ? `?${qs}` : ""}`);
+  return apiClient<BessUnitsResultDto>(`${withFacilityId(BESS_ENDPOINTS.UNITS, facilityId)}${qs ? `?${qs}` : ""}`);
 }
 
 export async function getDeviceHeader(deviceId: string): Promise<BessUnitHeaderDto> {
-  return apiClient<BessUnitHeaderDto>(`${BESS_ENDPOINTS.DEVICE_HEADER}/${deviceId}`);
+  return apiClient<BessUnitHeaderDto>(withDeviceId(BESS_ENDPOINTS.DEVICE_HEADER, deviceId));
 }
 
 export async function getDeviceSummary(deviceId: string): Promise<SummaryResponseDto> {
@@ -63,7 +64,7 @@ export async function getDeviceFaultFlags(deviceId: string): Promise<FaultFlagsR
   return apiClient<FaultFlagsResponseDto>(withDeviceId(BESS_ENDPOINTS.DEVICE_FAULT_FLAGS, deviceId));
 }
 
-export async function getDeviceNotifications(
+export async function getDeviceFaults(
   deviceId: string,
   params?: { page?: number; pageSize?: number; severity?: string; isActive?: boolean }
 ): Promise<FaultsPaginatedResponseDto> {
@@ -74,7 +75,7 @@ export async function getDeviceNotifications(
   if (params?.isActive !== undefined) searchParams.set("isActive", String(params.isActive));
   const qs = searchParams.toString();
   return apiClient<FaultsPaginatedResponseDto>(
-    `${withDeviceId(BESS_ENDPOINTS.DEVICE_NOTIFICATIONS, deviceId)}${qs ? `?${qs}` : ""}`
+    `${withDeviceId(BESS_ENDPOINTS.DEVICE_FAULTS, deviceId)}${qs ? `?${qs}` : ""}`
   );
 }
 

@@ -53,7 +53,7 @@ export function BessNotificationsTab({ deviceId }: BessNotificationsTabProps) {
 
   useEffect(() => {
     setLoading(true);
-    bessService.getDeviceNotifications(deviceId, { pageSize: 200 }).then((res) => {
+    bessService.getDeviceFaults(deviceId, { pageSize: 200 }).then((res) => {
       setFaults(res.faults);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [deviceId]);

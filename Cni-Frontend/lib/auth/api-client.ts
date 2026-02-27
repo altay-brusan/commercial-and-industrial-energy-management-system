@@ -64,8 +64,10 @@ async function refreshAccessToken(): Promise<string> {
 
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  baseUrl?: string
 ): Promise<T> {
+  const base = baseUrl ?? API_BASE_URL;
   const token = getAccessToken();
 
   const headers: Record<string, string> = {
@@ -77,7 +79,7 @@ export async function apiClient<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  let res = await fetch(`${API_BASE_URL}${endpoint}`, {
+  let res = await fetch(`${base}${endpoint}`, {
     ...options,
     headers,
   });
@@ -87,7 +89,7 @@ export async function apiClient<T>(
     try {
       const newToken = await refreshAccessToken();
       headers["Authorization"] = `Bearer ${newToken}`;
-      res = await fetch(`${API_BASE_URL}${endpoint}`, {
+      res = await fetch(`${base}${endpoint}`, {
         ...options,
         headers,
       });

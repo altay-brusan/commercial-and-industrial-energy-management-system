@@ -8,6 +8,7 @@ import { BessDeviceTree } from "@/components/bess/bess-device-tree";
 import { BessOverviewTable } from "@/components/bess/bess-overview-table";
 import { BessUnitDetail } from "@/components/bess/bess-unit-detail";
 import * as bessService from "@/lib/bess/bess-service";
+import { useFacility } from "@/lib/facilities/facility-context";
 import type { BessTreeNodeDto, BessUnitsResultDto } from "@/lib/bess/api-types";
 
 interface SelectedDevice {
@@ -17,16 +18,19 @@ interface SelectedDevice {
 }
 
 export default function BatteryStoragePage() {
+  const { selectedFacilityId } = useFacility();
   const [selectedDevice, setSelectedDevice] = useState<SelectedDevice | null>(null);
   const [tree, setTree] = useState<BessTreeNodeDto[]>([]);
   const [unitsResult, setUnitsResult] = useState<BessUnitsResultDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    if (!selectedFacilityId) return;
+    setLoading(true);
     try {
       const [treeRes, unitsRes] = await Promise.all([
-        bessService.getTree(),
-        bessService.getUnits(),
+        bessService.getTree(selectedFacilityId),
+        bessService.getUnits(selectedFacilityId),
       ]);
       setTree(treeRes.tree);
       setUnitsResult(unitsRes);
@@ -35,7 +39,7 @@ export default function BatteryStoragePage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedFacilityId]);
 
   useEffect(() => {
     fetchData();
@@ -64,7 +68,7 @@ export default function BatteryStoragePage() {
             </div>
           ) : selectedDevice ? (
             <BessUnitDetail
-              deviceId={selectedDevice.id}
+              deviceId={selectedDevice.type === "battery" ? selectedDevice.unitId : selectedDevice.id}
               onBack={() => setSelectedDevice(null)}
             />
           ) : (

@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import * as bessService from "@/lib/bess/bess-service";
+import { useFacility } from "@/lib/facilities/facility-context";
 import type { BessTreeNodeDto } from "@/lib/bess/api-types";
 
 interface BessHierarchyTabProps {
@@ -80,16 +81,18 @@ function buildPath(nodes: BessTreeNodeDto[], targetId: string, path: BessTreeNod
 }
 
 export function BessHierarchyTab({ deviceId }: BessHierarchyTabProps) {
+  const { selectedFacilityId } = useFacility();
   const [tree, setTree] = useState<BessTreeNodeDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentNodeId, setCurrentNodeId] = useState<string>(deviceId);
 
   useEffect(() => {
+    if (!selectedFacilityId) return;
     setLoading(true);
-    bessService.getTree().then((res) => {
+    bessService.getTree(selectedFacilityId).then((res) => {
       setTree(res.tree);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [deviceId]);
+  }, [deviceId, selectedFacilityId]);
 
   const currentNode = useMemo(() => findNodeById(tree, currentNodeId), [tree, currentNodeId]);
   const children = currentNode?.children ?? [];

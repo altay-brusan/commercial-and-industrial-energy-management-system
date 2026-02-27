@@ -109,7 +109,7 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
           <Popover open={facilityOpen} onOpenChange={setFacilityOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" role="combobox" aria-expanded={facilityOpen} className="w-[260px] h-9 justify-between font-normal">
-                <span className="truncate">{selectedFacility.name}</span>
+                <span className="truncate">{selectedFacility?.name ?? "Tesis seçin..."}</span>
                 <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -130,7 +130,7 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
                       >
                         <div className="flex flex-col items-start">
                           <span>{facility.name}</span>
-                          <span className="text-xs text-muted-foreground">{facility.location}, {facility.country}</span>
+                          <span className="text-xs text-muted-foreground">{[facility.location, facility.country].filter(Boolean).join(", ")}</span>
                         </div>
                         {selectedFacilityId === facility.id && (
                           <Check className="ml-auto h-4 w-4 shrink-0" />
