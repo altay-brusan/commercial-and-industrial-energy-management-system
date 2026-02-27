@@ -1,7 +1,10 @@
 import type {
   SolarInverter,
+  SolarDeviceTreeNode,
   InverterFault,
   InverterCurveData,
+  HistorySignalConfig,
+  HistoryDataPoint,
 } from "./types";
 
 export const solarInverters: SolarInverter[] = [
@@ -39,6 +42,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 33725,
     dailyOperatingTime: 132,
     dailyYieldTheoretical: null,
+    internalTemperature: 42,
+    startupTime: "26/Feb/2026 06:12",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1054, 1053, 0, 1055, 1056, 1058, 1057, 1050, 1060, 1048, 1054, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -76,6 +84,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 42580,
     dailyOperatingTime: 138,
     dailyYieldTheoretical: null,
+    internalTemperature: 45,
+    startupTime: "26/Feb/2026 06:08",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1061, 1060, 0, 1062, 1063, 1065, 1064, 1058, 1067, 1055, 1061, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -113,6 +126,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 40780,
     dailyOperatingTime: 135,
     dailyYieldTheoretical: null,
+    internalTemperature: 43,
+    startupTime: "26/Feb/2026 06:10",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1058, 1057, 0, 1059, 1060, 1062, 1061, 1055, 1064, 1052, 1058, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -150,6 +168,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 43180,
     dailyOperatingTime: 139,
     dailyYieldTheoretical: null,
+    internalTemperature: 46,
+    startupTime: "26/Feb/2026 06:07",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1060, 1059, 0, 1061, 1062, 1064, 1063, 1057, 1066, 1054, 1060, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -187,6 +210,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: null,
     dailyOperatingTime: null,
     dailyYieldTheoretical: null,
+    internalTemperature: null,
+    startupTime: null,
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [null, null, null, null, null, null, null, null, null, null, null, null],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -224,6 +252,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 38650,
     dailyOperatingTime: 130,
     dailyYieldTheoretical: null,
+    internalTemperature: 39,
+    startupTime: "26/Feb/2026 06:15",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1050, 1049, 0, 1051, 1052, 1054, 1053, 1047, 1056, 1044, 1050, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -261,6 +294,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 37680,
     dailyOperatingTime: 128,
     dailyYieldTheoretical: null,
+    internalTemperature: 38,
+    startupTime: "26/Feb/2026 06:18",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1049, 1048, 0, 1050, 1051, 1053, 1052, 1046, 1055, 1043, 1049, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -298,6 +336,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 42870,
     dailyOperatingTime: 137,
     dailyYieldTheoretical: null,
+    internalTemperature: 44,
+    startupTime: "26/Feb/2026 06:09",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1060, 1059, 0, 1060, 1061, 1063, 1062, 1056, 1065, 1053, 1059, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -335,6 +378,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 37050,
     dailyOperatingTime: 126,
     dailyYieldTheoretical: null,
+    internalTemperature: 37,
+    startupTime: "26/Feb/2026 06:20",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1048, 1047, 0, 1048, 1050, 1052, 1050, 1044, 1054, 1042, 1047, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -372,6 +420,11 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 41270,
     dailyOperatingTime: 134,
     dailyYieldTheoretical: null,
+    internalTemperature: 41,
+    startupTime: "26/Feb/2026 06:11",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1057, 1056, 0, 1058, 1059, 1061, 1060, 1054, 1063, 1051, 1057, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
@@ -409,10 +462,34 @@ export const solarInverters: SolarInverter[] = [
     totalApparentPower: 43190,
     dailyOperatingTime: 140,
     dailyYieldTheoretical: null,
+    internalTemperature: 47,
+    startupTime: "26/Feb/2026 06:06",
+    shutdownTime: null,
+    outputMode: "3P4W",
+    stringVoltages: [1061, 1060, 0, 1062, 1063, 1065, 1064, 1058, 1067, 1055, 1061, 0],
     commissioningDate: "14/Jun/2024",
     manufacturer: "Huawei",
   },
 ];
+
+// --- Device tree ---
+
+export function buildSolarDeviceTree(): SolarDeviceTreeNode[] {
+  const inverterNodes: SolarDeviceTreeNode[] = solarInverters.map((inv) => {
+    const activeFaults = inverterFaults.filter(
+      (f) => f.inverterId === inv.id && f.status === "active"
+    );
+    return {
+      id: inv.id,
+      name: inv.deviceName,
+      type: "inverter" as const,
+      status: inv.status,
+      alarmCount: activeFaults.length,
+    };
+  });
+
+  return inverterNodes;
+}
 
 // --- Fault mock data ---
 
@@ -607,4 +684,94 @@ export function getCurveDataForInverter(inverterId: string): InverterCurveData {
   const data = generateCurveData(basePower);
   curveCache.set(inverterId, data);
   return data;
+}
+
+// --- History signal configs ---
+
+export const historySignalConfigs: HistorySignalConfig[] = [
+  { key: "activePower", label: "Active Power", unit: "kW", group: "Power" },
+  { key: "reactivePower", label: "Reactive Power", unit: "var", group: "Power" },
+  { key: "dcPower", label: "DC Power", unit: "kW", group: "Power" },
+  { key: "apparentPower", label: "Apparent Power", unit: "VA", group: "Power" },
+  { key: "powerFactor", label: "Power Factor", unit: "", group: "Power" },
+  { key: "abVoltage", label: "A-B Line Voltage", unit: "V", group: "Voltage" },
+  { key: "bcVoltage", label: "B-C Line Voltage", unit: "V", group: "Voltage" },
+  { key: "caVoltage", label: "C-A Line Voltage", unit: "V", group: "Voltage" },
+  { key: "phaseACurrent", label: "Phase A Current", unit: "A", group: "Current" },
+  { key: "phaseBCurrent", label: "Phase B Current", unit: "A", group: "Current" },
+  { key: "phaseCCurrent", label: "Phase C Current", unit: "A", group: "Current" },
+  { key: "gridFrequency", label: "Grid Frequency", unit: "Hz", group: "Other" },
+  { key: "internalTemp", label: "Internal Temperature", unit: "°C", group: "Other" },
+  { key: "insulationImpedance", label: "Insulation Impedance", unit: "kΩ", group: "Other" },
+  { key: "yieldToday", label: "Yield Today", unit: "kWh", group: "Other" },
+  { key: "totalYield", label: "Total Yield", unit: "MWh", group: "Other" },
+  { key: "mppt1Voltage", label: "MPPT1 Voltage", unit: "V", group: "MPPT" },
+  { key: "mppt1Current", label: "MPPT1 Current", unit: "A", group: "MPPT" },
+  { key: "mppt2Voltage", label: "MPPT2 Voltage", unit: "V", group: "MPPT" },
+  { key: "mppt2Current", label: "MPPT2 Current", unit: "A", group: "MPPT" },
+  { key: "mppt3Voltage", label: "MPPT3 Voltage", unit: "V", group: "MPPT" },
+  { key: "mppt3Current", label: "MPPT3 Current", unit: "A", group: "MPPT" },
+  { key: "mppt4Voltage", label: "MPPT4 Voltage", unit: "V", group: "MPPT" },
+  { key: "mppt4Current", label: "MPPT4 Current", unit: "A", group: "MPPT" },
+  { key: "mppt5Voltage", label: "MPPT5 Voltage", unit: "V", group: "MPPT" },
+];
+
+// --- History data generation (288 points, 5min intervals, solar bell curve) ---
+
+const historyCache = new Map<string, HistoryDataPoint[]>();
+
+export function generateHistoryData(inverterId: string): HistoryDataPoint[] {
+  if (historyCache.has(inverterId)) return historyCache.get(inverterId)!;
+
+  const inv = solarInverters.find((i) => i.id === inverterId);
+  const basePower = inv?.totalActivePower ?? 40;
+  const points: HistoryDataPoint[] = [];
+
+  for (let i = 0; i < 288; i++) {
+    const totalMinutes = i * 5;
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+
+    // Solar bell curve peaking at 12:00 (minute 720)
+    const minuteOfDay = totalMinutes;
+    const normalizedM = (minuteOfDay - 720) / 240;
+    const solarFactor = Math.max(0, Math.exp(-0.5 * normalizedM * normalizedM));
+    const noise = () => 1 + (Math.random() - 0.5) * 0.08;
+
+    const activePow = +(basePower * solarFactor * noise()).toFixed(1);
+    const dcPow = +(activePow * (1.01 + Math.random() * 0.02)).toFixed(1);
+
+    points.push({
+      time,
+      activePower: activePow,
+      reactivePower: +(0.5 + Math.random() * 1.5).toFixed(1),
+      dcPower: dcPow,
+      apparentPower: +(activePow * 1000 + Math.random() * 200).toFixed(0),
+      powerFactor: activePow > 1 ? +(0.98 + Math.random() * 0.02).toFixed(3) : 0,
+      abVoltage: +(804 + (Math.random() - 0.5) * 6).toFixed(1),
+      bcVoltage: +(803 + (Math.random() - 0.5) * 6).toFixed(1),
+      caVoltage: +(806 + (Math.random() - 0.5) * 6).toFixed(1),
+      phaseACurrent: +(activePow / 804 * 1000 / 1.732 + (Math.random() - 0.5) * 1).toFixed(1),
+      phaseBCurrent: +(activePow / 804 * 1000 / 1.732 + (Math.random() - 0.5) * 1).toFixed(1),
+      phaseCCurrent: +(activePow / 804 * 1000 / 1.732 + (Math.random() - 0.5) * 1).toFixed(1),
+      gridFrequency: +(50 + (Math.random() - 0.5) * 0.1).toFixed(2),
+      internalTemp: +(35 + solarFactor * 25 + (Math.random() - 0.5) * 3).toFixed(1),
+      insulationImpedance: +(300 + Math.random() * 50).toFixed(0),
+      yieldToday: +(basePower * solarFactor * (i / 288) * 0.8).toFixed(1),
+      totalYield: +(220 + basePower * solarFactor * (i / 288) * 0.001).toFixed(2),
+      mppt1Voltage: +(1050 + Math.random() * 20).toFixed(1),
+      mppt1Current: +(solarFactor * 7 * noise()).toFixed(2),
+      mppt2Voltage: +(1080 + Math.random() * 15).toFixed(1),
+      mppt2Current: +(solarFactor * 3.5 * noise()).toFixed(2),
+      mppt3Voltage: +(1065 + Math.random() * 18).toFixed(1),
+      mppt3Current: +(solarFactor * 7.2 * noise()).toFixed(2),
+      mppt4Voltage: +(1082 + Math.random() * 12).toFixed(1),
+      mppt4Current: +(solarFactor * 6.8 * noise()).toFixed(2),
+      mppt5Voltage: +(1058 + Math.random() * 15).toFixed(1),
+    });
+  }
+
+  historyCache.set(inverterId, points);
+  return points;
 }

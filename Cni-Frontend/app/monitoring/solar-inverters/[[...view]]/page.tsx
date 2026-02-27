@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { TopBar } from "@/components/layout/top-bar";
 import { MonitoringSidebar } from "@/components/monitoring/monitoring-sidebar";
 import { SolarInvertersSidebar } from "@/components/solar-inverters/solar-inverters-sidebar";
@@ -10,28 +10,43 @@ import { InverterDetail } from "@/components/solar-inverters/inverter-detail";
 import { AlarmDetailPanel } from "@/components/alarms/alarm-detail-panel";
 import { EnergyAnalyticsView } from "@/components/solar-inverters/energy-analytics-view";
 import { PerformanceView } from "@/components/solar-inverters/performance-view";
-import { solarInverters } from "@/lib/solar-inverters/mock-data";
+import { solarInverters, buildSolarDeviceTree } from "@/lib/solar-inverters/mock-data";
 import { getAlarmById } from "@/lib/alarms/mock-data";
-import type { SolarInverter } from "@/lib/solar-inverters/types";
 import type { Alarm } from "@/lib/alarms/types";
 import type { SolarInverterView } from "@/components/solar-inverters/solar-inverters-sidebar";
 
+type DetailTab = "general" | "fault" | "curve" | "history" | "settings";
+
 const validViews: SolarInverterView[] = ["energy-analytics", "performance"];
+const validTabs: DetailTab[] = ["general", "fault", "curve", "history", "settings"];
+const basePath = "/monitoring/solar-inverters";
 
 export default function SolarInvertersPage() {
   const pathname = usePathname();
-  const segment = pathname.replace("/monitoring/solar-inverters", "").replace(/^\//, "");
-  const activeView: SolarInverterView = validViews.includes(segment as SolarInverterView)
-    ? (segment as SolarInverterView)
+  const router = useRouter();
+  const segments = pathname
+    .replace(basePath, "")
+    .replace(/^\//, "")
+    .split("/")
+    .filter(Boolean);
+
+  // Determine what to show from URL
+  const activeView: SolarInverterView = validViews.includes(segments[0] as SolarInverterView)
+    ? (segments[0] as SolarInverterView)
     : "device-list";
 
-  const [selectedInverter, setSelectedInverter] = useState<SolarInverter | null>(null);
-  const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
+  const selectedInverter =
+    activeView === "device-list" && segments[0]
+      ? solarInverters.find((inv) => inv.id === segments[0]) ?? null
+      : null;
 
-  useEffect(() => {
-    setSelectedInverter(null);
-    setSelectedAlarm(null);
-  }, [activeView]);
+  const activeTab: DetailTab =
+    selectedInverter && validTabs.includes(segments[1] as DetailTab)
+      ? (segments[1] as DetailTab)
+      : "general";
+
+  const [selectedAlarm, setSelectedAlarm] = useState<Alarm | null>(null);
+  const deviceTree = useMemo(() => buildSolarDeviceTree(), []);
 
   const handleAlarmOpen = (alarmId: string) => {
     const alarm = getAlarmById(alarmId);
@@ -48,7 +63,8 @@ export default function SolarInvertersPage() {
         return selectedInverter ? (
           <InverterDetail
             inverter={selectedInverter}
-            onBack={() => setSelectedInverter(null)}
+            activeTab={activeTab}
+            onBack={() => router.push(basePath)}
             onAlarmOpen={handleAlarmOpen}
           />
         ) : (
@@ -58,7 +74,7 @@ export default function SolarInvertersPage() {
             </div>
             <InverterTable
               inverters={solarInverters}
-              onInverterSelect={setSelectedInverter}
+              onInverterSelect={(inv) => router.push(`${basePath}/${inv.id}`)}
             />
           </>
         );
@@ -70,7 +86,10 @@ export default function SolarInvertersPage() {
       <TopBar activeTab="monitoring" />
       <div className="flex flex-1 overflow-hidden">
         <MonitoringSidebar />
-        <SolarInvertersSidebar />
+        <SolarInvertersSidebar
+          tree={deviceTree}
+          selectedInverterId={selectedInverter?.id ?? null}
+        />
         <main className="flex-1 flex flex-col overflow-hidden">
           {renderContent()}
         </main>

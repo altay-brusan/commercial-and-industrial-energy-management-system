@@ -39,10 +39,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cocon.variable} antialiased`}
       >
         <ThemeProvider>
-          <AuthProvider>
-            <FacilityProvider>{children}</FacilityProvider>
-            <Toaster />
-          </AuthProvider>
+ <AuthProvider>
+              <FacilityProvider>{children}</FacilityProvider>                                  
+              <Toaster />
+            </AuthProvider> 
         </ThemeProvider>
       </body>
     </html>
