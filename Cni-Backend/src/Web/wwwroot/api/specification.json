@@ -4440,6 +4440,24 @@
             "type": "string",
             "nullable": true
           },
+          "rackId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "rackName": {
+            "type": "string",
+            "nullable": true
+          },
+          "packId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "packName": {
+            "type": "string",
+            "nullable": true
+          },
           "hierarchyNumber": {
             "type": "integer",
             "format": "int32",

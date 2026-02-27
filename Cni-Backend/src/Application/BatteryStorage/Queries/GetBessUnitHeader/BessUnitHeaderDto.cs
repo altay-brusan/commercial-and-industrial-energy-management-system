@@ -15,6 +15,10 @@ public record BessUnitHeaderDto
     // Ancestor references (populated for sub-unit levels: rack, pack, module, etc.)
     public Guid? UnitId { get; init; }
     public string? UnitName { get; init; }
+    public Guid? RackId { get; init; }
+    public string? RackName { get; init; }
+    public Guid? PackId { get; init; }
+    public string? PackName { get; init; }
     public int? HierarchyNumber { get; init; }
 
     public StatusBadgeDto Status { get; init; } = new();

@@ -51,9 +51,13 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             .Where(d => d.RtuId == device.RtuId)
             .ToListAsync(cancellationToken);
 
-        // Walk up parent chain to find root unit and resolve template
+        // Walk up parent chain to find ancestors and resolve template
         Guid? unitId = null;
         string? unitName = null;
+        Guid? rackId = null;
+        string? rackName = null;
+        Guid? packId = null;
+        string? packName = null;
         var hierarchyNumber = device.HierarchyIndex.HasValue ? device.HierarchyIndex.Value + 1 : (int?)null;
         var specTemplate = device.SpecificationTemplate;
 
@@ -64,12 +68,21 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             while (ancestor.ParentDeviceId.HasValue && deviceLookup.TryGetValue(ancestor.ParentDeviceId.Value, out var parent))
             {
                 var parentType = BessDisplayTypeMapper.MapToDisplayType(parent.DeviceType?.Name);
-                if (parentType == "unit")
+                switch (parentType)
                 {
-                    unitId = parent.Id;
-                    unitName = parent.Name;
-                    specTemplate ??= parent.SpecificationTemplate;
-                    break;
+                    case "unit":
+                        unitId = parent.Id;
+                        unitName = parent.Name;
+                        specTemplate ??= parent.SpecificationTemplate;
+                        break;
+                    case "rack":
+                        rackId = parent.Id;
+                        rackName = parent.Name;
+                        break;
+                    case "pack":
+                        packId = parent.Id;
+                        packName = parent.Name;
+                        break;
                 }
                 ancestor = parent;
             }
@@ -166,6 +179,10 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             FacilityName = device.Rtu?.Facility?.Name,
             UnitId = unitId,
             UnitName = unitName,
+            RackId = rackId,
+            RackName = rackName,
+            PackId = packId,
+            PackName = packName,
             HierarchyNumber = hierarchyNumber,
             Status = StatusBadgeDto.FromStatus(status),
             OperatingMode = operatingMode,
