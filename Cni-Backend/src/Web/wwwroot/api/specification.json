@@ -4431,6 +4431,20 @@
             "type": "string",
             "nullable": true
           },
+          "unitId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "unitName": {
+            "type": "string",
+            "nullable": true
+          },
+          "hierarchyNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "status": {
             "$ref": "#/components/schemas/StatusBadgeDto"
           },
@@ -4448,6 +4462,16 @@
             "nullable": true
           },
           "soh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "voltage": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "current": {
             "type": "number",
             "format": "double",
             "nullable": true

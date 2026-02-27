@@ -40,11 +40,40 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
 
         Guard.Against.NotFound(request.UnitId, device);
 
-        // Load all devices under the same RTU for alarm counts and connected devices
+        // Detect hierarchy level
+        var displayType = BessDisplayTypeMapper.MapToDisplayType(device.DeviceType?.Name);
+        var isRootUnit = displayType == "unit";
+
+        // Load all devices under the same RTU (with templates for ancestor lookup)
         var allDevices = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.SpecificationTemplate)
             .Where(d => d.RtuId == device.RtuId)
             .ToListAsync(cancellationToken);
+
+        // Walk up parent chain to find root unit and resolve template
+        Guid? unitId = null;
+        string? unitName = null;
+        var hierarchyNumber = device.HierarchyIndex.HasValue ? device.HierarchyIndex.Value + 1 : (int?)null;
+        var specTemplate = device.SpecificationTemplate;
+
+        if (!isRootUnit)
+        {
+            var deviceLookup = allDevices.ToDictionary(d => d.Id);
+            var ancestor = device;
+            while (ancestor.ParentDeviceId.HasValue && deviceLookup.TryGetValue(ancestor.ParentDeviceId.Value, out var parent))
+            {
+                var parentType = BessDisplayTypeMapper.MapToDisplayType(parent.DeviceType?.Name);
+                if (parentType == "unit")
+                {
+                    unitId = parent.Id;
+                    unitName = parent.Name;
+                    specTemplate ??= parent.SpecificationTemplate;
+                    break;
+                }
+                ancestor = parent;
+            }
+        }
 
         // Alarm count: this device + all descendants
         var descendantIds = GetDescendantIds(device.Id, allDevices);
@@ -58,8 +87,10 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
         // Status from alarms
         var status = await _statusService.GetStatusAsync(device.Id, cancellationToken);
 
-        // Tabs from specification template
-        var tabs = GetAvailableTabs(device.SpecificationTemplate?.SpecificationsTemplate);
+        // Tabs: root uses template/defaults, sub-units get summary + alarms
+        var tabs = isRootUnit
+            ? GetAvailableTabs(specTemplate?.SpecificationsTemplate)
+            : GetSubUnitTabs();
 
         // Load telemetry for parameter resolution
         var batteryEntries = await _context.DeviceBatteryData
@@ -86,8 +117,8 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
                 payloadsByKind[entry.Kind] = PayloadDeserializer.GetElement(entry.Payload);
         }
 
-        // Build resolver
-        var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);
+        // Build resolver using resolved template (own or inherited from root)
+        var parameterMap = ParameterMapParser.ParseCached(specTemplate?.ParameterMapTemplate, _cache);
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
         var resolver = parameterMap.Count > 0 && payloadsByKind.Count > 0
             ? new ParameterResolver(parameterMap, payloadsByKind, metadata)
@@ -95,52 +126,70 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
 
         var battPayload = payloadsByKind.GetValueOrDefault("ContainerBatteryState");
 
-        var stateStr = resolver?.ResolveString(ParameterKeys.OperatingMode)
-            ?? (battPayload.HasValue ? PayloadDeserializer.ExtractValue(battPayload.Value, "state") as string : null);
-
-        // Connected devices: direct children grouped by display type (esc, hvac, pcs)
-        var connectedDevices = new Dictionary<string, List<ConnectedDeviceDto>>();
-        var children = allDevices.Where(d => d.ParentDeviceId == device.Id).ToList();
-        foreach (var child in children)
+        // Operating mode (root only)
+        StatusBadgeDto? operatingMode = null;
+        if (isRootUnit)
         {
-            var displayType = BessDisplayTypeMapper.MapToDisplayType(child.DeviceType?.Name);
-            if (displayType is null or "battery" or "rack" or "pack" or "module")
-                continue; // skip hierarchy devices, only include siblings like esc, hvac, pcs
+            var stateStr = resolver?.ResolveString(ParameterKeys.OperatingMode)
+                ?? (battPayload.HasValue ? PayloadDeserializer.ExtractValue(battPayload.Value, "state") as string : null);
+            operatingMode = stateStr != null ? StatusBadgeDto.FromOperatingMode(stateStr) : null;
+        }
 
-            if (!connectedDevices.TryGetValue(displayType, out var list))
+        // Connected devices: root only, direct children grouped by display type (esc, hvac, pcs)
+        var connectedDevices = new Dictionary<string, List<ConnectedDeviceDto>>();
+        if (isRootUnit)
+        {
+            var children = allDevices.Where(d => d.ParentDeviceId == device.Id).ToList();
+            foreach (var child in children)
             {
-                list = new List<ConnectedDeviceDto>();
-                connectedDevices[displayType] = list;
+                var childDisplayType = BessDisplayTypeMapper.MapToDisplayType(child.DeviceType?.Name);
+                if (childDisplayType is null or "battery" or "rack" or "pack" or "module")
+                    continue; // skip hierarchy devices, only include siblings like esc, hvac, pcs
+
+                if (!connectedDevices.TryGetValue(childDisplayType, out var list))
+                {
+                    list = new List<ConnectedDeviceDto>();
+                    connectedDevices[childDisplayType] = list;
+                }
+                list.Add(new ConnectedDeviceDto { Id = child.Id, Name = child.Name });
             }
-            list.Add(new ConnectedDeviceDto { Id = child.Id, Name = child.Name });
         }
 
         return new BessUnitHeaderDto
         {
             Id = device.Id,
             Name = device.Name,
-            SerialNumber = device.SerialNumber,
-            ModelName = device.Model,
-            Manufacturer = device.Manufacturer,
+            SerialNumber = isRootUnit ? device.SerialNumber : null,
+            ModelName = isRootUnit ? device.Model : null,
+            Manufacturer = isRootUnit ? device.Manufacturer : null,
             FacilityId = device.Rtu!.FacilityId,
             FacilityName = device.Rtu?.Facility?.Name,
+            UnitId = unitId,
+            UnitName = unitName,
+            HierarchyNumber = hierarchyNumber,
             Status = StatusBadgeDto.FromStatus(status),
-            OperatingMode = stateStr != null ? StatusBadgeDto.FromOperatingMode(stateStr) : null,
+            OperatingMode = operatingMode,
             Soc = resolver?.ResolveNumber(ParameterKeys.Soc)
                 ?? ExtractDouble(battPayload, "socPercent"),
             Soh = resolver?.ResolveNumber(ParameterKeys.Soh)
                 ?? ExtractDouble(battPayload, "sohPercent"),
+            Voltage = resolver?.ResolveNumber(ParameterKeys.Voltage)
+                ?? ExtractDouble(battPayload, "totalVoltageV"),
+            Current = resolver?.ResolveNumber(ParameterKeys.Current)
+                ?? ExtractDouble(battPayload, "instantCurrentA"),
             Power = resolver?.ResolveNumber(ParameterKeys.Power)
                 ?? (ExtractDouble(battPayload, "instantCurrentA") is double current
                         && ExtractDouble(battPayload, "totalVoltageV") is double voltage
                     ? Math.Round(voltage * current / 1000.0, 1)
                     : null),
-            CapacityKwh = resolver?.ResolveNumber(ParameterKeys.AvailableEnergy)
-                ?? ExtractDouble(battPayload, "availableEnergyKwh"),
+            CapacityKwh = isRootUnit
+                ? resolver?.ResolveNumber(ParameterKeys.AvailableEnergy)
+                    ?? ExtractDouble(battPayload, "availableEnergyKwh")
+                : null,
             ActiveAlarmCount = alarmCount,
             AvailableTabs = tabs,
             ConnectedDevices = connectedDevices,
-            LastSeenUtc = device.LastSeenUtc
+            LastSeenUtc = isRootUnit ? device.LastSeenUtc : null
         };
     }
 
@@ -170,6 +219,15 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             if (result.HasValue) return result;
         }
         return null;
+    }
+
+    private static List<TabInfoDto> GetSubUnitTabs()
+    {
+        return new List<TabInfoDto>
+        {
+            new() { Key = "summary", Label = "Summary", Order = 1 },
+            new() { Key = "alarms", Label = "Alarms", Order = 2 }
+        };
     }
 
     private static List<TabInfoDto> GetAvailableTabs(string? specifications)
