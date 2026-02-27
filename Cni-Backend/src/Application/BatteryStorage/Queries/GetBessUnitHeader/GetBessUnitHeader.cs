@@ -107,8 +107,8 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             ? GetAvailableTabs(specTemplate?.SpecificationsTemplate)
             : GetSubUnitTabs(displayType);
 
-        // For HVAC/ESC, telemetry is stored under the root container — load from there
-        var telemetryDeviceId = (isHvac || isEsc) && unitId.HasValue
+        // For all sub-devices, telemetry is stored under the root container
+        var telemetryDeviceId = !isRootUnit && unitId.HasValue
             ? unitId.Value
             : device.Id;
 
