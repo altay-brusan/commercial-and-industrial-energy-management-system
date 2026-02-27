@@ -4504,6 +4504,29 @@
             "format": "double",
             "nullable": true
           },
+          "outletCoolantTemp": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "inletCoolantTemp": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "ambientTemp": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "compressorRunning": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "tmsOperatingMode": {
+            "type": "string",
+            "nullable": true
+          },
           "activeAlarmCount": {
             "type": "integer",
             "format": "int32"

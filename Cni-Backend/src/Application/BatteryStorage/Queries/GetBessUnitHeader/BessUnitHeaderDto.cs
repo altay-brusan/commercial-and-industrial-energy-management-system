@@ -29,6 +29,14 @@ public record BessUnitHeaderDto
     public double? Current { get; init; }
     public double? Power { get; init; }
     public double? CapacityKwh { get; init; }
+
+    // HVAC/TMS-specific (populated when device type is hvac)
+    public double? OutletCoolantTemp { get; init; }
+    public double? InletCoolantTemp { get; init; }
+    public double? AmbientTemp { get; init; }
+    public bool? CompressorRunning { get; init; }
+    public string? TmsOperatingMode { get; init; }
+
     public int ActiveAlarmCount { get; init; }
     public List<TabInfoDto> AvailableTabs { get; init; } = new();
     public Dictionary<string, List<ConnectedDeviceDto>> ConnectedDevices { get; init; } = new();

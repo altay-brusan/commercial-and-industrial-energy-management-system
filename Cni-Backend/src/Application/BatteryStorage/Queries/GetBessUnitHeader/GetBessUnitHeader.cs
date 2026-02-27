@@ -43,6 +43,8 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
         // Detect hierarchy level
         var displayType = BessDisplayTypeMapper.MapToDisplayType(device.DeviceType?.Name);
         var isRootUnit = displayType == "unit";
+        var isHvac = displayType == "hvac";
+        var isEsc = displayType == "esc";
 
         // Load all devices under the same RTU (with templates for ancestor lookup)
         var allDevices = await _context.Devices
@@ -105,15 +107,20 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             ? GetAvailableTabs(specTemplate?.SpecificationsTemplate)
             : GetSubUnitTabs(displayType);
 
+        // For HVAC/ESC, telemetry is stored under the root container — load from there
+        var telemetryDeviceId = (isHvac || isEsc) && unitId.HasValue
+            ? unitId.Value
+            : device.Id;
+
         // Load telemetry for parameter resolution
         var batteryEntries = await _context.DeviceBatteryData
-            .Where(dd => dd.DeviceId == device.Id)
+            .Where(dd => dd.DeviceId == telemetryDeviceId)
             .GroupBy(dd => dd.Kind)
             .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
             .ToListAsync(cancellationToken);
 
         var pcsEntries = await _context.DevicePcsData
-            .Where(dd => dd.DeviceId == device.Id)
+            .Where(dd => dd.DeviceId == telemetryDeviceId)
             .GroupBy(dd => dd.Kind)
             .Select(g => g.OrderByDescending(dd => dd.DeviceLocalTime).First())
             .ToListAsync(cancellationToken);
@@ -168,6 +175,26 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             }
         }
 
+        // HVAC-specific: extract chiller data
+        double? outletCoolantTemp = null;
+        double? inletCoolantTemp = null;
+        double? ambientTemp = null;
+        bool? compressorRunning = null;
+        string? tmsOperatingMode = null;
+
+        if (isHvac)
+        {
+            outletCoolantTemp = resolver?.ResolveNumber(ParameterKeys.ChillerCoolantOut)
+                ?? ExtractDouble(payloadsByKind.GetValueOrDefault("ChillerState"), "outletCoolantTempC");
+            inletCoolantTemp = resolver?.ResolveNumber(ParameterKeys.ChillerCoolantIn)
+                ?? ExtractDouble(payloadsByKind.GetValueOrDefault("ChillerState"), "inletCoolantTempC");
+            ambientTemp = resolver?.ResolveNumber(ParameterKeys.AmbientTemp)
+                ?? ExtractDouble(payloadsByKind.GetValueOrDefault("ChillerState"), "ambientTempC");
+            compressorRunning = resolver?.ResolveBool(ParameterKeys.CompressorRunning)
+                ?? ExtractBool(payloadsByKind.GetValueOrDefault("ChillerState"), "compressorStatus");
+            tmsOperatingMode = ExtractString(payloadsByKind.GetValueOrDefault("ChillerState"), "operatingModeStr");
+        }
+
         return new BessUnitHeaderDto
         {
             Id = device.Id,
@@ -186,23 +213,33 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             HierarchyNumber = hierarchyNumber,
             Status = StatusBadgeDto.FromStatus(status),
             OperatingMode = operatingMode,
-            Soc = resolver?.ResolveNumber(ParameterKeys.Soc)
-                ?? ExtractDouble(battPayload, "socPercent"),
-            Soh = resolver?.ResolveNumber(ParameterKeys.Soh)
-                ?? ExtractDouble(battPayload, "sohPercent"),
-            Voltage = resolver?.ResolveNumber(ParameterKeys.Voltage)
-                ?? ExtractDouble(battPayload, "totalVoltageV"),
-            Current = resolver?.ResolveNumber(ParameterKeys.Current)
-                ?? ExtractDouble(battPayload, "instantCurrentA"),
-            Power = resolver?.ResolveNumber(ParameterKeys.Power)
-                ?? (ExtractDouble(battPayload, "instantCurrentA") is double current
-                        && ExtractDouble(battPayload, "totalVoltageV") is double voltage
-                    ? Math.Round(voltage * current / 1000.0, 1)
-                    : null),
+            Soc = isHvac ? null
+                : resolver?.ResolveNumber(ParameterKeys.Soc)
+                    ?? ExtractDouble(battPayload, "socPercent"),
+            Soh = isHvac ? null
+                : resolver?.ResolveNumber(ParameterKeys.Soh)
+                    ?? ExtractDouble(battPayload, "sohPercent"),
+            Voltage = isHvac ? null
+                : resolver?.ResolveNumber(ParameterKeys.Voltage)
+                    ?? ExtractDouble(battPayload, "totalVoltageV"),
+            Current = isHvac ? null
+                : resolver?.ResolveNumber(ParameterKeys.Current)
+                    ?? ExtractDouble(battPayload, "instantCurrentA"),
+            Power = isHvac ? null
+                : resolver?.ResolveNumber(ParameterKeys.Power)
+                    ?? (ExtractDouble(battPayload, "instantCurrentA") is double current
+                            && ExtractDouble(battPayload, "totalVoltageV") is double voltage
+                        ? Math.Round(voltage * current / 1000.0, 1)
+                        : null),
             CapacityKwh = isRootUnit
                 ? resolver?.ResolveNumber(ParameterKeys.AvailableEnergy)
                     ?? ExtractDouble(battPayload, "availableEnergyKwh")
                 : null,
+            OutletCoolantTemp = outletCoolantTemp,
+            InletCoolantTemp = inletCoolantTemp,
+            AmbientTemp = ambientTemp,
+            CompressorRunning = compressorRunning,
+            TmsOperatingMode = tmsOperatingMode,
             ActiveAlarmCount = alarmCount,
             AvailableTabs = tabs,
             ConnectedDevices = connectedDevices,
@@ -236,6 +273,23 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             if (result.HasValue) return result;
         }
         return null;
+    }
+
+    private static bool? ExtractBool(JsonElement? element, string path)
+    {
+        if (!element.HasValue) return null;
+        var value = PayloadDeserializer.ExtractValue(element.Value, path);
+        return value switch
+        {
+            bool b => b,
+            _ => null
+        };
+    }
+
+    private static string? ExtractString(JsonElement? element, string path)
+    {
+        if (!element.HasValue) return null;
+        return PayloadDeserializer.ExtractValue(element.Value, path) as string;
     }
 
     private static List<TabInfoDto> GetSubUnitTabs(string? displayType)
