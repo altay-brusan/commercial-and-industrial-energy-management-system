@@ -14,19 +14,21 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import type {
-  BessDeviceTreeNode,
-  BessSelectedDevice,
-  BessDeviceType,
-} from "@/lib/bess/types";
+import type { BessTreeNodeDto } from "@/lib/bess/api-types";
 
-interface BessDeviceTreeProps {
-  tree: BessDeviceTreeNode[];
-  selectedDevice: BessSelectedDevice | null;
-  onSelectDevice: (device: BessSelectedDevice) => void;
+interface SelectedDevice {
+  id: string;
+  type: string;
+  unitId: string;
 }
 
-const deviceIcon: Record<BessDeviceType, React.ElementType> = {
+interface BessDeviceTreeProps {
+  tree: BessTreeNodeDto[];
+  selectedDevice: SelectedDevice | null;
+  onSelectDevice: (device: SelectedDevice) => void;
+}
+
+const deviceIcon: Record<string, React.ElementType> = {
   unit: Battery,
   battery: BatteryCharging,
   rack: Server,
@@ -34,25 +36,18 @@ const deviceIcon: Record<BessDeviceType, React.ElementType> = {
   module: CircuitBoard,
   esc: Cpu,
   hvac: Thermometer,
-};
-
-const typeLabel: Record<BessDeviceType, string> = {
-  unit: "Unit",
-  battery: "Bat",
-  rack: "Rack",
-  pack: "Pack",
-  module: "Mod",
-  esc: "Ctrl",
-  hvac: "TMS",
+  pcs: Cpu,
 };
 
 function statusDotClass(status: string): string {
   switch (status) {
     case "normal":
+    case "online":
       return "bg-status-operational";
     case "warning":
       return "bg-status-warning";
     case "fault":
+    case "critical":
       return "bg-status-critical";
     case "offline":
       return "bg-muted-foreground";
@@ -61,21 +56,33 @@ function statusDotClass(status: string): string {
   }
 }
 
+function findUnitId(node: BessTreeNodeDto, tree: BessTreeNodeDto[]): string {
+  // If the node itself is a unit, its own id is the unitId
+  if (node.type === "unit") return node.id;
+  // Otherwise, walk up the tree or find the root unit
+  // For simplicity, we pass unitId through the recursive tree traversal
+  return node.id;
+}
+
 function TreeNode({
   node,
+  unitId,
   selectedDevice,
   onSelectDevice,
   depth = 0,
 }: {
-  node: BessDeviceTreeNode;
-  selectedDevice: BessSelectedDevice | null;
-  onSelectDevice: (device: BessSelectedDevice) => void;
+  node: BessTreeNodeDto;
+  unitId: string;
+  selectedDevice: SelectedDevice | null;
+  onSelectDevice: (device: SelectedDevice) => void;
   depth?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = node.children && node.children.length > 0;
   const isSelected = selectedDevice?.id === node.id;
-  const Icon = deviceIcon[node.type];
+  const Icon = deviceIcon[node.type] ?? Battery;
+
+  const currentUnitId = node.type === "unit" ? node.id : unitId;
 
   const handleChevronClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -86,9 +93,7 @@ function TreeNode({
     onSelectDevice({
       id: node.id,
       type: node.type,
-      unitId: node.parentUnitId,
-      rackId: node.parentRackId,
-      packId: node.parentPackId,
+      unitId: currentUnitId,
     });
   };
 
@@ -104,7 +109,6 @@ function TreeNode({
         style={{ paddingLeft: `${8 + depth * 12}px` }}
         onClick={handleSelect}
       >
-        {/* Expand/collapse chevron */}
         {hasChildren ? (
           <button
             onClick={handleChevronClick}
@@ -120,28 +124,17 @@ function TreeNode({
           <span className="w-[18px] shrink-0" />
         )}
 
-        {/* Status dot */}
         <span
           className={cn(
             "h-2 w-2 rounded-full shrink-0",
-            statusDotClass(node.status as string)
+            statusDotClass(node.status)
           )}
         />
 
-        {/* Icon */}
         <Icon className="h-3.5 w-3.5 shrink-0" />
 
-        {/* Name */}
         <span className="truncate flex-1 text-xs">{node.name}</span>
 
-        {/* Type badge for non-unit types */}
-        {node.type !== "unit" && node.type !== "battery" && node.type !== "rack" && node.type !== "pack" && node.type !== "module" && (
-          <span className="text-[10px] text-muted-foreground/70 shrink-0">
-            {typeLabel[node.type]}
-          </span>
-        )}
-
-        {/* Alarm count badge */}
         {node.alarmCount > 0 && (
           <Badge
             className="h-4 min-w-4 px-1 text-[10px] bg-severity-critical/15 text-severity-critical border-severity-critical/30 shrink-0"
@@ -151,13 +144,13 @@ function TreeNode({
         )}
       </div>
 
-      {/* Children */}
       {hasChildren && expanded && (
         <div>
-          {node.children!.map((child) => (
+          {node.children.map((child) => (
             <TreeNode
               key={child.id}
               node={child}
+              unitId={currentUnitId}
               selectedDevice={selectedDevice}
               onSelectDevice={onSelectDevice}
               depth={depth + 1}
@@ -185,6 +178,7 @@ export function BessDeviceTree({
             <TreeNode
               key={node.id}
               node={node}
+              unitId={node.id}
               selectedDevice={selectedDevice}
               onSelectDevice={onSelectDevice}
             />
