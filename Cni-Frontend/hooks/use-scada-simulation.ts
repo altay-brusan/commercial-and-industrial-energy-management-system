@@ -55,13 +55,14 @@ export function useScadaSimulation(intervalMs = 5000): ScadaState {
         const conn = { ...c };
         if (c.from === "solar" && c.to === "load") {
           conn.power = +(solarNode.realPower * 0.89).toFixed(2);
-        } else if (c.from === "solar" && c.to === "battery") {
-          conn.power = +(solarNode.realPower * 0.06).toFixed(2);
-        } else if (c.from === "grid" && c.to === "load") {
-          conn.power = gridNode.realPower;
-        } else if (c.from === "battery" && c.to === "load") {
-          conn.power = +(loadNode.realPower - solarNode.realPower * 0.89 - gridNode.realPower).toFixed(2);
-          if (conn.power < 0) conn.power = 0;
+        } else if (c.from === "load" && c.to === "battery") {
+          conn.power = +(loadNode.realPower * 0.14).toFixed(2);
+        } else if (c.from === "solar" && c.to === "grid") {
+          conn.power = +(solarNode.realPower * 0.05).toFixed(2);
+        } else if (c.from === "load" && c.to === "grid") {
+          conn.power = +(loadNode.realPower * 0.93).toFixed(2);
+        } else if (c.from === "grid" && c.to === "battery") {
+          conn.power = +(gridNode.realPower * 0.55).toFixed(2);
         }
         conn.direction = conn.power > 0.01 ? "forward" : "idle";
         return conn;

@@ -1,0 +1,36 @@
+<canvas id="c"></canvas>
+<div id="ui">
+  <!-- Node images -->
+  <img id="img-load" class="node-img" src="https://n2nenergy.com/wp-content/uploads/2026/03/flow-load-normal.png" alt="Load">
+  <img id="img-battery" class="node-img" src="https://n2nenergy.com/wp-content/uploads/2026/03/flow-load-normal.png" alt="Battery">
+  <img id="img-solar" class="node-img" src="https://n2nenergy.com/wp-content/uploads/2026/03/flow-string-normal.png" alt="Solar">
+  <img id="img-grid" class="node-img" src="https://n2nenergy.com/wp-content/uploads/2026/03/flow-grid-normal.png" alt="Grid">
+  
+  <!-- Stats cards -->
+  <div class="card" id="s-load">
+    <div class="row"><span class="v green">9.28</span><span class="u">MW</span><span class="d">Real Power</span></div>
+    <div class="row"><span class="vs">68.5 MWh</span><span class="d">Energy Today</span></div>
+  </div>
+  <div class="card" id="s-bat">
+    <div class="row"><span class="v green">0.49</span><span class="u">MW</span><span class="d">Real Power</span></div>
+    <div class="row"><span class="vs">8.14 MWh</span><span class="d">Stored</span></div>
+    <div class="row"><span class="vs">77.2%</span><span class="d">SoE</span></div>
+  </div>
+  <div class="card" id="s-sol">
+    <div class="row"><span class="v blue">8.47</span><span class="u">MW</span><span class="d">Real Power</span></div>
+  </div>
+  <div class="card" id="s-grid">
+    <div class="row"><span class="v blue">0.41</span><span class="u">MW</span><span class="d">Real Power</span></div>
+  </div>
+  <!-- Node labels -->
+  <div class="lbl lbl-green" id="l-load">Load</div>
+  <div class="lbl lbl-green" id="l-bat">Battery</div>
+  <div class="lbl lbl-orange" id="l-sol">Solar</div>
+  <div class="lbl lbl-blue" id="l-grid">Grid</div>
+  <!-- Flow values -->
+  <div class="ftag" id="f-lb">1.33 MW</div>
+  <div class="ftag" id="f-sl">7.54 MW</div>
+  <div class="ftag" id="f-sg">0.41 MW</div>
+  <div class="ftag" id="f-lg">8.61 MW</div>
+  <div class="ftag" id="f-gb">0.22 MW</div>
+</div>

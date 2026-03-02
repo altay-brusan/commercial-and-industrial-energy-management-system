@@ -6,7 +6,7 @@ export function TotalEnergyUsage() {
   const data = totalEnergyUsage;
 
   return (
-    <div className="rounded-lg bg-muted/30 p-6 space-y-4">
+    <div className="bg-muted/30 px-6 py-5 space-y-4 h-full">
       <div>
         <h2 className="text-lg font-semibold">Total Energy Usage</h2>
         <p className="text-sm text-muted-foreground">

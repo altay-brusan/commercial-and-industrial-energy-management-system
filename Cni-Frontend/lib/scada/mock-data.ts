@@ -38,10 +38,11 @@ export const initialScadaState: ScadaState = {
     },
   ],
   connections: [
-    { from: "solar", to: "load", power: 7.5, direction: "forward" },
-    { from: "solar", to: "battery", power: 0.5, direction: "forward" },
-    { from: "grid", to: "load", power: 0.4, direction: "forward" },
-    { from: "battery", to: "load", power: 0.9, direction: "forward" },
+    { from: "solar", to: "load", power: 7.54, direction: "forward" },
+    { from: "load", to: "battery", power: 1.33, direction: "forward" },
+    { from: "solar", to: "grid", power: 0.41, direction: "forward" },
+    { from: "load", to: "grid", power: 8.61, direction: "forward" },
+    { from: "grid", to: "battery", power: 0.22, direction: "forward" },
   ],
   metricsSections: [
     {

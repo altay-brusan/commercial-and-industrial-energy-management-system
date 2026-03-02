@@ -4,7 +4,6 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Badge } from "@/components/ui/badge";
 import { TotalEnergyUsage } from "@/components/dashboard-2/total-energy-usage";
 import { CurrentEnergySource } from "@/components/dashboard-2/current-energy-source";
-import { DailyEnergyCost } from "@/components/dashboard-2/daily-energy-cost";
 import { BESSStateOfCharge } from "@/components/dashboard-2/bess-state-of-charge";
 import { PCSState } from "@/components/dashboard-2/pcs-state";
 import { SolarEnergyCapacity } from "@/components/dashboard-2/solar-energy-capacity";
@@ -12,6 +11,7 @@ import { EnergyConsumptionChart } from "@/components/dashboard-2/energy-consumpt
 import { CO2Summary } from "@/components/dashboard-2/co2-summary";
 import { SourceDistributionChart } from "@/components/dashboard-2/source-distribution-chart";
 import { CostSavingsChart } from "@/components/dashboard-2/cost-savings-chart";
+import { EnergyFlowCard } from "@/components/dashboard-2/energy-flow-card";
 import {
   totalEnergyUsage,
   energySourceData,
@@ -74,11 +74,15 @@ export default function Dashboard() {
         </div>
 
         {/* Energy Overview Section */}
-        <div className="px-6 py-6 border-b border-border">
-          <div className="grid lg:grid-cols-3 gap-4">
+        <div className="grid lg:grid-cols-3 border-b border-border">
+          <div className="border-r border-border">
+            <EnergyFlowCard />
+          </div>
+          <div className="border-r border-border">
             <TotalEnergyUsage />
+          </div>
+          <div>
             <CurrentEnergySource />
-            <DailyEnergyCost />
           </div>
         </div>
 
