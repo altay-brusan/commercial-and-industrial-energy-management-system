@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Settings, ToggleLeft, Gauge, type LucideIcon } from "lucide-react";
+import { Settings, ToggleLeft, Gauge, Shield, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MenuItem {
@@ -10,12 +10,19 @@ interface MenuItem {
   href: string;
   icon: LucideIcon;
   exact?: boolean;
+  matchPrefixes?: string[];
 }
 
 const menuItems: MenuItem[] = [
   { label: "Basic", href: "/configuration", icon: Settings, exact: true },
   { label: "Modes", href: "/configuration/modes", icon: ToggleLeft },
   { label: "Capacity", href: "/configuration/capacity-limits", icon: Gauge },
+  {
+    label: "Access",
+    href: "/configuration/users",
+    icon: Shield,
+    matchPrefixes: ["/configuration/users", "/configuration/roles", "/configuration/permissions"],
+  },
 ];
 
 export function ConfigurationSidebar() {
@@ -24,9 +31,13 @@ export function ConfigurationSidebar() {
   return (
     <aside className="w-[72px] shrink-0 border-r border-border bg-muted/30 flex flex-col items-center px-2 py-3 gap-1 overflow-y-auto">
       {menuItems.map((item) => {
-        const isActive = item.exact
-          ? pathname === item.href
-          : pathname === item.href || pathname.startsWith(item.href + "/");
+        const isActive = item.matchPrefixes
+          ? item.matchPrefixes.some(
+              (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+            )
+          : item.exact
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + "/");
         const Icon = item.icon;
         return (
           <Link
