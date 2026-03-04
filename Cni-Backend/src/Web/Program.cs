@@ -54,6 +54,7 @@ else
 
 app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 
 app.UseStaticFiles();
 app.UseSwaggerUi(settings =>
