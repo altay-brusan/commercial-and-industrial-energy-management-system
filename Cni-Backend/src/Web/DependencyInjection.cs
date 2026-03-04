@@ -88,6 +88,20 @@ public static class DependencyInjection
             };
         });
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy.WithOrigins(
+                        "https://cni-app-dev.n2nenergy.com",
+                        "https://cni-app-stg.n2nenergy.com",
+                        "https://cni.n2nenergy.com")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
+        });
+
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSingleton<IRealTimeNotifier, SignalRRealTimeNotifier>();
 
