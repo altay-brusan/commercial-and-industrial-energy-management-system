@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getActiveAlarmCount, getUnreadNotificationCount, alarms, notifications } from "@/lib/alarms/mock-data";
 import { useFacility } from "@/lib/facilities/facility-context";
+import { useAuth } from "@/lib/auth/auth-context";
 import { format } from "date-fns";
 import type { NotificationType } from "@/lib/alarms/types";
 
@@ -32,6 +33,7 @@ interface TopBarProps {
 export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
   const { theme, setTheme } = useTheme();
   const { selectedFacilityId, setSelectedFacilityId, selectedFacility, facilities } = useFacility();
+  const { user, logout } = useAuth();
   const [facilityOpen, setFacilityOpen] = useState(false);
   const activeAlarmCount = getActiveAlarmCount();
   const unreadNotificationCount = getUnreadNotificationCount();
@@ -107,7 +109,7 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
           <Popover open={facilityOpen} onOpenChange={setFacilityOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" role="combobox" aria-expanded={facilityOpen} className="w-[260px] h-9 justify-between font-normal">
-                <span className="truncate">{selectedFacility.name}</span>
+                <span className="truncate">{selectedFacility?.name ?? "Tesis seçin..."}</span>
                 <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -128,7 +130,7 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
                       >
                         <div className="flex flex-col items-start">
                           <span>{facility.name}</span>
-                          <span className="text-xs text-muted-foreground">{facility.location}, {facility.country}</span>
+                          <span className="text-xs text-muted-foreground">{[facility.location, facility.country].filter(Boolean).join(", ")}</span>
                         </div>
                         {selectedFacilityId === facility.id && (
                           <Check className="ml-auto h-4 w-4 shrink-0" />
@@ -270,20 +272,26 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-3 outline-none">
                 <Avatar className="h-8 w-8">
-                <AvatarImage src="" alt="User" />
-                <AvatarFallback className="text-xs">JD</AvatarFallback>
+                <AvatarImage src={user?.avatarUrl ?? ""} alt={user ? `${user.firstName} ${user.lastName}` : "User"} />
+                <AvatarFallback className="text-xs">
+                  {user ? `${user.firstName[0]}${user.lastName[0]}` : "?"}
+                </AvatarFallback>
               </Avatar>
               <div className="hidden sm:flex flex-col items-start">
-                <span className="text-sm font-medium">John Doe</span>
-                <span className="text-xs text-muted-foreground">john@energy.com</span>
+                <span className="text-sm font-medium">
+                  {user ? `${user.firstName} ${user.lastName}` : ""}
+                </span>
+                <span className="text-xs text-muted-foreground">{user?.email ?? ""}</span>
               </div>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">John Doe</p>
-                <p className="text-xs text-muted-foreground">john@energy.com</p>
+                <p className="text-sm font-medium">
+                  {user ? `${user.firstName} ${user.lastName}` : ""}
+                </p>
+                <p className="text-xs text-muted-foreground">{user?.email ?? ""}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -291,7 +299,7 @@ export function TopBar({ activeTab = "dashboard" }: TopBarProps) {
             <DropdownMenuItem>Billing</DropdownMenuItem>
             <DropdownMenuItem>Notifications</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => logout()}>Sign out</DropdownMenuItem>
           </DropdownMenuContent>
           </DropdownMenu>
         </div>

@@ -1,47 +1,43 @@
-export type FeatureCategory = "Core" | "Energy" | "Intelligence" | "Management";
-
-export interface Feature {
+export interface AuthUser {
   id: string;
-  key: string;
-  name: string;
-  description: string;
-  category: FeatureCategory;
-  isActive: boolean;
-}
-
-export interface Permission {
-  id: string;
-  key: string; // Feature.Action format e.g. "Dashboard.View"
-  name: string;
-  description: string;
-  featureId: string;
-}
-
-export interface PermissionGroup {
-  feature: Feature;
-  permissions: Permission[];
-}
-
-export interface TenantRole {
-  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  avatarUrl: string | null;
+  permissions: string[];
   tenantId: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  isSystem: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  permissionIds: string[];
-  userIds: string[];
+  tenantName: string;
 }
 
-export interface RoleFilters {
-  status: ("active" | "inactive")[];
-  search: string;
+// API request types
+export interface LoginRequest {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
 }
 
-export interface RoleFormData {
-  name: string;
-  description: string;
-  isActive: boolean;
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+// API response types
+export interface LoginResponse {
+  accessToken: string;
+  user: AuthUser;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+}
+
+export interface ApiErrorResponse {
+  message: string;
+  errors?: Record<string, string[]>;
 }

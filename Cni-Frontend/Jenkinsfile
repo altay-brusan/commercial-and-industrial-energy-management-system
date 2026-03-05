@@ -42,7 +42,7 @@ spec:
         BUILD_TAG = "${ENV_NAME}-${env.BUILD_NUMBER}-${GIT_COMMIT_SHORT}"
         IMAGE_LATEST = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${ENV_NAME}-latest"
         DEPLOY_URL = "${ENV_NAME == 'prod' ? 'cni.n2nenergy.com' : (ENV_NAME == 'stg' ? 'cni-app-stg.n2nenergy.com' : 'cni-app-dev.n2nenergy.com')}"
-        API_URL = "${ENV_NAME == 'dev' ? 'https://cni-api-dev.oklidis.com.tr/api' : 'https://cni-api-stg.oklidis.com.tr/api'}"
+        API_URL = "${ENV_NAME == 'dev' ? 'https://cni-api-dev.oklidis.com.tr/api/v1' : 'https://cni-api-stg.oklidis.com.tr/api/v1'}"
     }
 
     stages {
@@ -90,7 +90,7 @@ spec:
                 container('docker') {
                     sh """
                         docker build \
-                            --build-arg NEXT_PUBLIC_API_URL=${API_URL} \
+                            --build-arg NEXT_PUBLIC_API_BASE_URL=${API_URL} \
                             -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG} \
                             -f ./Dockerfile .
                         docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:${BUILD_TAG} \

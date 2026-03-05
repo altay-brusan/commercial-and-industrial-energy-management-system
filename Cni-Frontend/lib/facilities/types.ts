@@ -1,10 +1,17 @@
-export type FacilityType = "solar" | "wind" | "bess" | "hybrid";
-
-export interface Facility {
+export interface FacilityBriefDto {
   id: string;
   name: string;
-  type: FacilityType;
-  location: string;
-  country: string;
-  capacity: number; // MW
+  location: string | null;
+  country: string | null;
+  type: string | null;
+  capacity: number | null;
+}
+
+export interface PaginatedFacilitiesDto {
+  items: FacilityBriefDto[];
+  pageNumber: number;
+  totalPages: number;
+  totalCount: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
 }

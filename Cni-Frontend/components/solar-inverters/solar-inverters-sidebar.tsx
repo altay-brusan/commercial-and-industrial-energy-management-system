@@ -190,7 +190,7 @@ export function SolarInvertersSidebar({
         <div className="px-3 pb-4">
           <div className="border-t border-border pt-3">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-2">
-              Device Tree
+              Devices
             </p>
             <nav className="space-y-0.5">
               {tree.map((node) => (

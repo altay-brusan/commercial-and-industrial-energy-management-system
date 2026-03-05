@@ -1,16 +1,56 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { useAuth } from "@/lib/auth/auth-context"
+import { loginSchema, type LoginFormValues } from "@/lib/auth/schemas"
+import { ApiError } from "@/lib/auth/api-client"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState("")
+  const { login } = useAuth()
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
+  })
+
+  const emailValue = form.watch("email")
+
+  async function onSubmit(data: LoginFormValues) {
+    try {
+      await login(data)
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 401) {
+          toast.error("Invalid email or password")
+        } else {
+          toast.error(error.message)
+        }
+      } else {
+        toast.error("Unable to connect to the server")
+      }
+    }
+  }
 
   return (
     <div className="flex min-h-svh">
@@ -61,63 +101,99 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@company.com"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+          <Form {...form}>
+            <form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="name@company.com"
+                        autoComplete="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter your password"
+                          autoComplete="current-password"
+                          className="pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex items-center justify-between">
+                <FormField
+                  control={form.control}
+                  name="rememberMe"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Remember me
+                      </FormLabel>
+                    </FormItem>
                   )}
-                </button>
+                />
+                <Link
+                  href={emailValue ? `/forgot-password?email=${encodeURIComponent(emailValue)}` : "/forgot-password"}
+                  className="text-sm text-primary hover:underline underline-offset-4"
+                >
+                  Forgot password?
+                </Link>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox id="remember" />
-                <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                  Remember me
-                </Label>
-              </div>
-              <Link
-                href={email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"}
-                className="text-sm text-primary hover:underline underline-offset-4"
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={form.formState.isSubmitting}
               >
-                Forgot password?
-              </Link>
-            </div>
-
-            <Button type="submit" className="w-full">
-              Sign in
-            </Button>
-          </form>
+                {form.formState.isSubmitting && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                Sign in
+              </Button>
+            </form>
+          </Form>
 
           <p className="text-center text-xs text-muted-foreground">
             Don&apos;t have an account?{" "}
