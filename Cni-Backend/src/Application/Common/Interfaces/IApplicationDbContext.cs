@@ -38,6 +38,11 @@ public interface IApplicationDbContext
     // Device specification templates
     DbSet<DeviceSpecificationTemplate> DeviceSpecificationTemplates { get; }
 
+    // Logical device catalog (global — no tenant filter)
+    DbSet<LogicalNode> LogicalNodes { get; }
+    DbSet<LogicalDevice> LogicalDevices { get; }
+    DbSet<LogicalDeviceNode> LogicalDeviceNodes { get; }
+
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }
     DbSet<FirmMarketOperator> FirmMarketOperators { get; }

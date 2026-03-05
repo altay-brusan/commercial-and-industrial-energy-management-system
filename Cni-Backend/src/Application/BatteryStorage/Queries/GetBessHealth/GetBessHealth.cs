@@ -29,6 +29,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
@@ -47,10 +48,12 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
             return new SummaryResponseDto { Sections = BuildFromSchema(sectionsElement, payload) };
         }
 
-        // Default: build based on device type
-        var sections = device.DeviceType?.Name switch
+        // Default: build based on device type (or LogicalDevice category)
+        var deviceTypeName = device.DeviceType?.Name;
+        var sections = deviceTypeName switch
         {
             DeviceTypeNames.EnergyStorage => await BuildBatteryHealthSections(device, cancellationToken),
+            _ when device.LogicalDevice?.Category == "BESS" => await BuildBatteryHealthSections(device, cancellationToken),
             _ => await BuildGenericHealthSections(device, cancellationToken)
         };
 

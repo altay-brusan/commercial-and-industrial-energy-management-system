@@ -61,6 +61,14 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
             .HasForeignKey(d => d.DeviceSpecificationTemplateId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        // Relationship to LogicalDevice (catalog)
+        builder.HasOne(d => d.LogicalDevice)
+            .WithMany(ld => ld.Devices)
+            .HasForeignKey(d => d.LogicalDeviceId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(d => d.LogicalDeviceId);
+
         // Self-referencing relationship for composite devices
         builder.HasOne(d => d.ParentDevice)
             .WithMany(d => d.ChildDevices)

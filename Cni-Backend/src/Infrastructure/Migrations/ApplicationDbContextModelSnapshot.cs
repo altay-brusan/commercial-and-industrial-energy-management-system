@@ -182,6 +182,9 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("LastSeenUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("LogicalDeviceId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Manufacturer")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -226,6 +229,8 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("DeviceSpecificationTemplateId");
 
                     b.HasIndex("DeviceTypeId");
+
+                    b.HasIndex("LogicalDeviceId");
 
                     b.HasIndex("ParentDeviceId", "HierarchyIndex");
 
@@ -1030,6 +1035,130 @@ namespace Backend.Infrastructure.Migrations
                     b.ToTable("FirmMarketOperators", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("HierarchyTemplate")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Ports")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("UiTemplate")
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("LogicalDevices", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalDeviceNode", b =>
+                {
+                    b.Property<Guid>("LogicalDeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LogicalNodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("InstanceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NodeAlias")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("LogicalDeviceId", "LogicalNodeId");
+
+                    b.HasIndex("LogicalNodeId");
+
+                    b.ToTable("LogicalDeviceNodes", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalNode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Parameters")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("LogicalNodes", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.MarketOperator", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1727,6 +1856,11 @@ namespace Backend.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Backend.Domain.Entities.LogicalDevice", "LogicalDevice")
+                        .WithMany("Devices")
+                        .HasForeignKey("LogicalDeviceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Backend.Domain.Entities.Device", "ParentDevice")
                         .WithMany("ChildDevices")
                         .HasForeignKey("ParentDeviceId")
@@ -1739,6 +1873,8 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("DeviceType");
+
+                    b.Navigation("LogicalDevice");
 
                     b.Navigation("ParentDevice");
 
@@ -1901,6 +2037,25 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("Firm");
 
                     b.Navigation("MarketOperator");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalDeviceNode", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.LogicalDevice", "LogicalDevice")
+                        .WithMany("LogicalDeviceNodes")
+                        .HasForeignKey("LogicalDeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.LogicalNode", "LogicalNode")
+                        .WithMany("LogicalDeviceNodes")
+                        .HasForeignKey("LogicalNodeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LogicalDevice");
+
+                    b.Navigation("LogicalNode");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>
@@ -2129,6 +2284,18 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("Facilities");
 
                     b.Navigation("UserCompanyFacilities");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalDevice", b =>
+                {
+                    b.Navigation("Devices");
+
+                    b.Navigation("LogicalDeviceNodes");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalNode", b =>
+                {
+                    b.Navigation("LogicalDeviceNodes");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.MarketOperator", b =>

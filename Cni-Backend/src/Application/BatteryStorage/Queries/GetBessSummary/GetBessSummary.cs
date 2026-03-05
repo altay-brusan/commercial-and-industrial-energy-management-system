@@ -33,6 +33,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
@@ -56,14 +57,18 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
             return new SummaryResponseDto { Sections = BuildFromSchema(sectionsElement, payload) };
         }
 
-        // Default: build based on device type
-        var sections = device.DeviceType?.Name switch
+        // Default: build based on device type (or LogicalDevice category as fallback)
+        var deviceTypeName = device.DeviceType?.Name;
+        var logicalCategory = device.LogicalDevice?.Category;
+
+        var sections = deviceTypeName switch
         {
             DeviceTypeNames.EnergyStorage => await BuildBatteryContainerSummary(device, cancellationToken),
             DeviceTypeNames.EnergyStorageRack or DeviceTypeNames.EnergyStoragePack or DeviceTypeNames.EnergyStorageModule =>
                 await BuildSubDeviceSummary(device, cancellationToken),
             DeviceTypeNames.EnergyStorageController => await BuildSubDeviceSummary(device, cancellationToken),
             DeviceTypeNames.EnergyStorageTMS => await BuildTmsSummary(device, cancellationToken),
+            _ when logicalCategory == "BESS" => await BuildBatteryContainerSummary(device, cancellationToken),
             _ => await BuildGenericSummary(device, cancellationToken)
         };
 

@@ -40,7 +40,10 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
     public async Task<ChartResponseDto> Handle(GetPcsCurvesQuery request, CancellationToken cancellationToken)
     {
         _ = await _context.Devices
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs)
+            .Include(d => d.LogicalDevice)
+            .Where(d => d.Id == request.UnitId &&
+                ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs) ||
+                 (d.LogicalDevice != null && d.LogicalDevice.Category == "PCS")))
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException(request.UnitId.ToString(), "Device");
 

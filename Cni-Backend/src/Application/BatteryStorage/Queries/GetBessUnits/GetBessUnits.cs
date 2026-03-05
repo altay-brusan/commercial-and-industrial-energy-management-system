@@ -36,9 +36,12 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
     {
         var query = _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage);
+            .Where(d =>
+                (d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage) ||
+                (d.LogicalDevice != null && d.LogicalDevice.Category == "BESS"));
 
         if (request.FacilityId.HasValue)
             query = query.Where(d => d.Rtu!.FacilityId == request.FacilityId.Value);

@@ -33,9 +33,12 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs)
+            .Where(d => d.Id == request.UnitId &&
+                ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs) ||
+                 (d.LogicalDevice != null && d.LogicalDevice.Category == "PCS")))
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
@@ -105,15 +108,17 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
                 .Include(d => d.DeviceType)
                 .FirstOrDefaultAsync(d => d.Id == device.ParentDeviceId.Value, ct);
 
-            if (parent?.DeviceType?.Name == DeviceTypeNames.EnergyStorage)
+            if (parent?.DeviceType?.Name == DeviceTypeNames.EnergyStorage ||
+                parent?.LogicalDevice?.Category == "BESS")
                 return new PcsGeneralLinkedBessDto { Id = parent.Id, Name = parent.Name };
         }
 
         return await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Where(d => d.Rtu!.FacilityId == device.Rtu!.FacilityId
-                && d.DeviceType != null
-                && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
+                && ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage) ||
+                    (d.LogicalDevice != null && d.LogicalDevice.Category == "BESS")))
             .Select(d => new PcsGeneralLinkedBessDto { Id = d.Id, Name = d.Name })
             .FirstOrDefaultAsync(ct);
     }

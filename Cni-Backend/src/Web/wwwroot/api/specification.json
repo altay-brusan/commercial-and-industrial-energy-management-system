@@ -919,6 +919,44 @@
         ]
       }
     },
+    "/api/Devices/RegisterFromLogicalDevice": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "RegisterFromLogicalDevice",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceFromLogicalDeviceCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/DeviceSpecificationTemplates": {
       "get": {
         "tags": [
@@ -2512,6 +2550,310 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/LogicalDevices": {
+      "get": {
+        "tags": [
+          "LogicalDevices"
+        ],
+        "operationId": "GetApiV1LogicalDevicesAll",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LogicalDeviceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "LogicalDevices"
+        ],
+        "operationId": "PostApiV1LogicalDevices",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLogicalDeviceCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/LogicalDevices/{id}": {
+      "get": {
+        "tags": [
+          "LogicalDevices"
+        ],
+        "operationId": "GetApiV1LogicalDevices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogicalDeviceDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "LogicalDevices"
+        ],
+        "operationId": "PutApiV1LogicalDevices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLogicalDeviceCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/LogicalNodes": {
+      "get": {
+        "tags": [
+          "LogicalNodes"
+        ],
+        "operationId": "GetApiV1LogicalNodesAll",
+        "parameters": [
+          {
+            "name": "namePrefix",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LogicalNodeDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "LogicalNodes"
+        ],
+        "operationId": "PostApiV1LogicalNodes",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLogicalNodeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/LogicalNodes/{id}": {
+      "get": {
+        "tags": [
+          "LogicalNodes"
+        ],
+        "operationId": "GetApiV1LogicalNodes",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogicalNodeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "LogicalNodes"
+        ],
+        "operationId": "PutApiV1LogicalNodes",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLogicalNodeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
           }
         },
         "security": [
@@ -5040,6 +5382,11 @@
             "type": "string",
             "format": "guid",
             "nullable": true
+          },
+          "logicalDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           }
         }
       },
@@ -5060,6 +5407,43 @@
           },
           "serialNumber": {
             "type": "string"
+          },
+          "parentDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "RegisterDeviceFromLogicalDeviceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rtuId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "logicalDeviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
           },
           "parentDeviceId": {
             "type": "string",
@@ -6518,6 +6902,240 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          }
+        }
+      },
+      "LogicalDeviceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string"
+          },
+          "ports": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "uiTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LogicalDeviceNodeDto"
+            }
+          }
+        }
+      },
+      "LogicalDeviceNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "logicalNodeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "logicalNodeName": {
+            "type": "string"
+          },
+          "nodeAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "instanceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreateLogicalDeviceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string"
+          },
+          "ports": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "uiTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NodeAssignment"
+            }
+          }
+        }
+      },
+      "NodeAssignment": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "logicalNodeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "nodeAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "instanceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UpdateLogicalDeviceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string"
+          },
+          "ports": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "uiTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NodeAssignment"
+            }
+          }
+        }
+      },
+      "LogicalNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateLogicalNodeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateLogicalNodeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "string"
           }
         }
       },

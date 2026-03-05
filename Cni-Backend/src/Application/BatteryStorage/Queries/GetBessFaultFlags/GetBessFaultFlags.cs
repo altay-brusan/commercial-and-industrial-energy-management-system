@@ -52,8 +52,11 @@ public class GetBessFaultFlagsQueryHandler : IRequestHandler<GetBessFaultFlagsQu
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
+            .Where(d => d.Id == request.UnitId &&
+                ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage) ||
+                 (d.LogicalDevice != null && d.LogicalDevice.Category == "BESS")))
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);

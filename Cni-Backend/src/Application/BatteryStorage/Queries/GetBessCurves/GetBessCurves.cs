@@ -47,6 +47,7 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
@@ -71,7 +72,10 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         // Also load PCS data from child PCS devices
         var pcsChildIds = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.ParentDeviceId == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs)
+            .Include(d => d.LogicalDevice)
+            .Where(d => d.ParentDeviceId == request.UnitId &&
+                ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs) ||
+                 (d.LogicalDevice != null && d.LogicalDevice.Category == "PCS")))
             .Select(d => d.Id)
             .ToListAsync(cancellationToken);
 

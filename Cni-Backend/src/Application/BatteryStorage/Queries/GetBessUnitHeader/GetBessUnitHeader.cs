@@ -36,6 +36,7 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
@@ -44,13 +45,14 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
 
         // Detect hierarchy level
         var displayType = BessDisplayTypeMapper.MapToDisplayType(device.DeviceType?.Name);
-        var isRootUnit = displayType == "unit";
+        var isRootUnit = displayType == "unit" || (displayType == "unknown" && device.LogicalDevice?.Category == "BESS");
         var isHvac = displayType == "hvac";
         var isEsc = displayType == "esc";
 
         // Load all devices under the same RTU (with templates for ancestor lookup)
         var allDevices = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Where(d => d.RtuId == device.RtuId)
             .ToListAsync(cancellationToken);

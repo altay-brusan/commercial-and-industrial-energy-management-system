@@ -892,6 +892,42 @@ public class ApplicationDbContextInitializer
 
         #endregion
 
+        #region LogicalNodes and LogicalDevices
+
+        if (!_context.LogicalNodes.Any())
+        {
+            var (logicalNodes, logicalDevices) = BuildLogicalDeviceCatalog();
+            _context.LogicalNodes.AddRange(logicalNodes);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} LogicalNodes", logicalNodes.Count);
+
+            // Build lookup for node assignment
+            var nodeLookup = logicalNodes.ToDictionary(n => n.Name, n => n.Id);
+
+            foreach (var (ld, nodeSpecs) in logicalDevices)
+            {
+                foreach (var spec in nodeSpecs)
+                {
+                    if (nodeLookup.TryGetValue(spec.NodeName, out var nodeId))
+                    {
+                        ld.LogicalDeviceNodes.Add(new LogicalDeviceNode
+                        {
+                            LogicalNodeId = nodeId,
+                            NodeAlias = spec.Alias,
+                            InstanceCount = spec.InstanceCount,
+                            SortOrder = spec.SortOrder
+                        });
+                    }
+                }
+            }
+
+            _context.LogicalDevices.AddRange(logicalDevices.Select(x => x.Device));
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} LogicalDevices", logicalDevices.Count);
+        }
+
+        #endregion
+
         #region Tariffs
 
         // Seed default tariffs
@@ -1225,5 +1261,434 @@ public class ApplicationDbContextInitializer
             T("PCS_TO_HB", "timeoutHeartbeat", "Heartbeat Timeout", "timeout", "Major"),
             T("PCS_TO_FW", "timeoutFirmwareUpdate", "Firmware Update Timeout", "timeout", "Warning"),
         };
+    }
+
+    private record NodeSpec(string NodeName, int SortOrder, int InstanceCount = 1, string? Alias = null);
+
+    private static (List<LogicalNode> Nodes, List<(LogicalDevice Device, NodeSpec[] Nodes)> Devices) BuildLogicalDeviceCatalog()
+    {
+        var now = DateTime.UtcNow;
+
+        // Helper to build parameter JSON
+        static string P(params (string key, string label, string unit, string dataType, string sourceType)[] parameters)
+        {
+            var items = parameters.Select(p => $@"{{""key"":""{p.key}"",""label"":""{p.label}"",""unit"":""{p.unit}"",""dataType"":""{p.dataType}"",""sourceType"":""{p.sourceType}""}}");
+            return "[" + string.Join(",", items) + "]";
+        }
+
+        // ── LogicalNodes ──
+        var nodes = new List<LogicalNode>
+        {
+            // BESS Nodes
+            new()
+            {
+                Name = LogicalNodeNames.BatteryNameplateData,
+                DisplayName = "Battery Nameplate Data",
+                Description = "Static registration data for a battery container",
+                Parameters = P(
+                    ("ratedCapacityAh", "Rated Capacity", "Ah", "float", "Registration"),
+                    ("ratedCapacityKwh", "Rated Energy Capacity", "kWh", "float", "Registration"),
+                    ("ratedVoltage", "Rated Voltage", "V", "float", "Registration"),
+                    ("maxChargeCurrent", "Max Charge Current", "A", "float", "Registration"),
+                    ("maxDischargeCurrent", "Max Discharge Current", "A", "float", "Registration"),
+                    ("nominalVoltage", "Nominal Voltage", "V", "float", "Registration"),
+                    ("chemistry", "Chemistry Type", "", "string", "Registration"),
+                    ("cycleLifeRating", "Cycle Life Rating", "cycles", "int", "Registration"),
+                    ("calendarLifeYears", "Calendar Life", "years", "int", "Registration"),
+                    ("maxChargeVoltage", "Max Charge Voltage", "V", "float", "Registration")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryStatusData,
+                DisplayName = "Battery Status Data",
+                Description = "Real-time operational status of a battery container",
+                Parameters = P(
+                    ("operatingState", "Operating State", "", "string", "Realtime"),
+                    ("contactorState", "Contactor State", "", "string", "Realtime"),
+                    ("alarmState", "Alarm State", "", "string", "Realtime"),
+                    ("warningState", "Warning State", "", "string", "Realtime"),
+                    ("protectionState", "Protection State", "", "string", "Realtime"),
+                    ("communicationState", "Communication State", "", "string", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryEnergyData,
+                DisplayName = "Battery Energy Data",
+                Description = "Real-time energy measurements for a battery container",
+                Parameters = P(
+                    ("soc", "State of Charge", "%", "float", "Realtime"),
+                    ("soh", "State of Health", "%", "float", "Realtime"),
+                    ("voltage", "Voltage", "V", "float", "Realtime"),
+                    ("current", "Current", "A", "float", "Realtime"),
+                    ("power", "Power", "kW", "float", "Realtime"),
+                    ("powerDirection", "Power Direction", "", "string", "Realtime"),
+                    ("temperature", "Temperature", "°C", "float", "Realtime"),
+                    ("maxCellVoltage", "Max Cell Voltage", "V", "float", "Realtime"),
+                    ("minCellVoltage", "Min Cell Voltage", "V", "float", "Realtime"),
+                    ("maxCellTemp", "Max Cell Temperature", "°C", "float", "Realtime"),
+                    ("minCellTemp", "Min Cell Temperature", "°C", "float", "Realtime"),
+                    ("chargedEnergy", "Charged Energy", "kWh", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryHealthData,
+                DisplayName = "Battery Health Data",
+                Description = "Health and degradation metrics for a battery container",
+                Parameters = P(
+                    ("soh", "State of Health", "%", "float", "Realtime"),
+                    ("cycleCount", "Cycle Count", "", "int", "Realtime"),
+                    ("capacityFade", "Capacity Fade", "%", "float", "Calculated"),
+                    ("resistanceIncrease", "Resistance Increase", "%", "float", "Calculated"),
+                    ("avgCellVoltageDeviation", "Avg Cell Voltage Deviation", "mV", "float", "Calculated"),
+                    ("avgCellTempDeviation", "Avg Cell Temp Deviation", "°C", "float", "Calculated"),
+                    ("energyThroughput", "Energy Throughput", "MWh", "float", "Calculated"),
+                    ("estimatedRemainingLife", "Estimated Remaining Life", "%", "float", "Calculated"),
+                    ("lastMaintenanceDate", "Last Maintenance Date", "", "datetime", "Installation"),
+                    ("nextMaintenanceDate", "Next Maintenance Date", "", "datetime", "Calculated")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryPackEnergyData,
+                DisplayName = "Battery Pack Energy Data",
+                Description = "Real-time measurements for individual battery racks",
+                Parameters = P(
+                    ("soc", "State of Charge", "%", "float", "Realtime"),
+                    ("voltage", "Voltage", "V", "float", "Realtime"),
+                    ("current", "Current", "A", "float", "Realtime"),
+                    ("power", "Power", "kW", "float", "Realtime"),
+                    ("maxCellVoltage", "Max Cell Voltage", "V", "float", "Realtime"),
+                    ("minCellVoltage", "Min Cell Voltage", "V", "float", "Realtime"),
+                    ("maxCellTemp", "Max Cell Temperature", "°C", "float", "Realtime"),
+                    ("minCellTemp", "Min Cell Temperature", "°C", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryModuleEnergyData,
+                DisplayName = "Battery Module Energy Data",
+                Description = "Real-time measurements for individual battery packs/modules",
+                Parameters = P(
+                    ("voltage", "Voltage", "V", "float", "Realtime"),
+                    ("current", "Current", "A", "float", "Realtime"),
+                    ("temperature", "Temperature", "°C", "float", "Realtime"),
+                    ("maxCellVoltage", "Max Cell Voltage", "V", "float", "Realtime"),
+                    ("minCellVoltage", "Min Cell Voltage", "V", "float", "Realtime"),
+                    ("cellVoltageSpread", "Cell Voltage Spread", "mV", "float", "Calculated")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.HvacStatusData,
+                DisplayName = "HVAC Status Data",
+                Description = "Real-time HVAC/TMS status for container thermal management",
+                Parameters = P(
+                    ("operatingMode", "Operating Mode", "", "string", "Realtime"),
+                    ("supplyAirTemp", "Supply Air Temperature", "°C", "float", "Realtime"),
+                    ("returnAirTemp", "Return Air Temperature", "°C", "float", "Realtime"),
+                    ("setpointTemp", "Setpoint Temperature", "°C", "float", "Realtime"),
+                    ("compressorState", "Compressor State", "", "string", "Realtime"),
+                    ("fanSpeed", "Fan Speed", "RPM", "int", "Realtime"),
+                    ("powerConsumption", "Power Consumption", "kW", "float", "Realtime"),
+                    ("alarmState", "Alarm State", "", "string", "Realtime")
+                ),
+                Created = now
+            },
+
+            // PCS Nodes
+            new()
+            {
+                Name = LogicalNodeNames.PcsStatusData,
+                DisplayName = "PCS Status Data",
+                Description = "Real-time status of a power conversion system",
+                Parameters = P(
+                    ("operatingState", "Operating State", "", "string", "Realtime"),
+                    ("operatingMode", "Operating Mode", "", "string", "Realtime"),
+                    ("alarmState", "Alarm State", "", "string", "Realtime"),
+                    ("warningState", "Warning State", "", "string", "Realtime"),
+                    ("gridContactorState", "Grid Contactor State", "", "string", "Realtime"),
+                    ("dcContactorState", "DC Contactor State", "", "string", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.PcsAcMeasurementData,
+                DisplayName = "PCS AC Measurement Data",
+                Description = "AC-side electrical measurements of a PCS",
+                Parameters = P(
+                    ("acVoltageA", "AC Voltage Phase A", "V", "float", "Realtime"),
+                    ("acVoltageB", "AC Voltage Phase B", "V", "float", "Realtime"),
+                    ("acVoltageC", "AC Voltage Phase C", "V", "float", "Realtime"),
+                    ("acCurrentA", "AC Current Phase A", "A", "float", "Realtime"),
+                    ("acCurrentB", "AC Current Phase B", "A", "float", "Realtime"),
+                    ("acCurrentC", "AC Current Phase C", "A", "float", "Realtime"),
+                    ("acActivePower", "AC Active Power", "kW", "float", "Realtime"),
+                    ("acFrequency", "AC Frequency", "Hz", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.PcsDcMeasurementData,
+                DisplayName = "PCS DC Measurement Data",
+                Description = "DC-side electrical measurements of a PCS",
+                Parameters = P(
+                    ("dcVoltage", "DC Voltage", "V", "float", "Realtime"),
+                    ("dcCurrent", "DC Current", "A", "float", "Realtime"),
+                    ("dcPower", "DC Power", "kW", "float", "Realtime"),
+                    ("dcBusVoltage", "DC Bus Voltage", "V", "float", "Realtime"),
+                    ("insulationResistance", "Insulation Resistance", "MΩ", "float", "Realtime"),
+                    ("igbtTemperature", "IGBT Temperature", "°C", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.PcsChargeAlgorithmData,
+                DisplayName = "PCS Charge Algorithm Data",
+                Description = "Charge/discharge algorithm parameters of a PCS",
+                Parameters = P(
+                    ("chargeMode", "Charge Mode", "", "string", "Realtime"),
+                    ("targetPower", "Target Power", "kW", "float", "Realtime"),
+                    ("currentLimit", "Current Limit", "A", "float", "Realtime"),
+                    ("voltageLimit", "Voltage Limit", "V", "float", "Realtime"),
+                    ("powerFactor", "Power Factor", "", "float", "Realtime"),
+                    ("reactivePower", "Reactive Power", "kVAR", "float", "Realtime")
+                ),
+                Created = now
+            },
+
+            // Solar Nodes
+            new()
+            {
+                Name = LogicalNodeNames.SolarStatusData,
+                DisplayName = "Solar Status Data",
+                Description = "Real-time status and output of a solar inverter/string",
+                Parameters = P(
+                    ("operatingState", "Operating State", "", "string", "Realtime"),
+                    ("totalActivePower", "Total Active Power", "kW", "float", "Realtime"),
+                    ("totalEnergy", "Total Energy", "kWh", "float", "Realtime"),
+                    ("dailyEnergy", "Daily Energy", "kWh", "float", "Realtime"),
+                    ("efficiency", "Efficiency", "%", "float", "Realtime"),
+                    ("irradiance", "Irradiance", "W/m²", "float", "Realtime"),
+                    ("panelTemperature", "Panel Temperature", "°C", "float", "Realtime"),
+                    ("ambientTemperature", "Ambient Temperature", "°C", "float", "Realtime"),
+                    ("alarmState", "Alarm State", "", "string", "Realtime"),
+                    ("peakPower", "Peak Power Today", "kW", "float", "Calculated")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.SolarInverterData,
+                DisplayName = "Solar Inverter Data",
+                Description = "Electrical measurements from a solar inverter",
+                Parameters = P(
+                    ("dcVoltage", "DC Voltage", "V", "float", "Realtime"),
+                    ("dcCurrent", "DC Current", "A", "float", "Realtime"),
+                    ("acVoltage", "AC Voltage", "V", "float", "Realtime"),
+                    ("acCurrent", "AC Current", "A", "float", "Realtime"),
+                    ("acFrequency", "AC Frequency", "Hz", "float", "Realtime"),
+                    ("acPower", "AC Power", "kW", "float", "Realtime")
+                ),
+                Created = now
+            },
+
+            // Grid Nodes
+            new()
+            {
+                Name = LogicalNodeNames.GridMeterPowerData,
+                DisplayName = "Grid Meter Power Data",
+                Description = "Real-time power measurements from a grid meter",
+                Parameters = P(
+                    ("voltageA", "Voltage Phase A", "V", "float", "Realtime"),
+                    ("voltageB", "Voltage Phase B", "V", "float", "Realtime"),
+                    ("voltageC", "Voltage Phase C", "V", "float", "Realtime"),
+                    ("currentA", "Current Phase A", "A", "float", "Realtime"),
+                    ("currentB", "Current Phase B", "A", "float", "Realtime"),
+                    ("currentC", "Current Phase C", "A", "float", "Realtime"),
+                    ("activePower", "Active Power", "kW", "float", "Realtime"),
+                    ("reactivePower", "Reactive Power", "kVAR", "float", "Realtime"),
+                    ("apparentPower", "Apparent Power", "kVA", "float", "Realtime"),
+                    ("powerFactor", "Power Factor", "", "float", "Realtime"),
+                    ("frequency", "Frequency", "Hz", "float", "Realtime"),
+                    ("totalEnergy", "Total Energy", "kWh", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.GridBreakerLifecycleData,
+                DisplayName = "Grid Breaker Lifecycle Data",
+                Description = "Calculated lifecycle metrics for grid breakers",
+                Parameters = P(
+                    ("operationCount", "Operation Count", "", "int", "Calculated"),
+                    ("lastTripDate", "Last Trip Date", "", "datetime", "Calculated"),
+                    ("avgTripCurrent", "Avg Trip Current", "A", "float", "Calculated"),
+                    ("estimatedRemainingOps", "Estimated Remaining Operations", "", "int", "Calculated"),
+                    ("maintenanceRequired", "Maintenance Required", "", "bool", "Calculated"),
+                    ("healthScore", "Health Score", "%", "float", "Calculated")
+                ),
+                Created = now
+            },
+
+            // Wind Nodes
+            new()
+            {
+                Name = LogicalNodeNames.WindPowerData,
+                DisplayName = "Wind Power Data",
+                Description = "Real-time power output from a wind turbine",
+                Parameters = P(
+                    ("activePower", "Active Power", "kW", "float", "Realtime"),
+                    ("reactivePower", "Reactive Power", "kVAR", "float", "Realtime"),
+                    ("dailyEnergy", "Daily Energy", "kWh", "float", "Realtime"),
+                    ("totalEnergy", "Total Energy", "MWh", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.WindConditionData,
+                DisplayName = "Wind Condition Data",
+                Description = "Environmental conditions at a wind turbine site",
+                Parameters = P(
+                    ("windSpeed", "Wind Speed", "m/s", "float", "Realtime"),
+                    ("windDirection", "Wind Direction", "°", "float", "Realtime"),
+                    ("ambientTemp", "Ambient Temperature", "°C", "float", "Realtime"),
+                    ("humidity", "Humidity", "%", "float", "Realtime"),
+                    ("airPressure", "Air Pressure", "hPa", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.WindElectricalData,
+                DisplayName = "Wind Electrical Data",
+                Description = "Electrical measurements from a wind turbine generator",
+                Parameters = P(
+                    ("generatorSpeed", "Generator Speed", "RPM", "float", "Realtime"),
+                    ("rotorSpeed", "Rotor Speed", "RPM", "float", "Realtime"),
+                    ("pitchAngle", "Pitch Angle", "°", "float", "Realtime"),
+                    ("yawAngle", "Yaw Angle", "°", "float", "Realtime"),
+                    ("voltageA", "Voltage Phase A", "V", "float", "Realtime"),
+                    ("voltageB", "Voltage Phase B", "V", "float", "Realtime"),
+                    ("voltageC", "Voltage Phase C", "V", "float", "Realtime"),
+                    ("currentA", "Current Phase A", "A", "float", "Realtime"),
+                    ("currentB", "Current Phase B", "A", "float", "Realtime"),
+                    ("frequency", "Frequency", "Hz", "float", "Realtime")
+                ),
+                Created = now
+            },
+
+            // Common Nodes
+            new()
+            {
+                Name = LogicalNodeNames.DeviceMaintenanceData,
+                DisplayName = "Device Maintenance Data",
+                Description = "Calculated maintenance metrics applicable to any device",
+                Parameters = P(
+                    ("lastMaintenanceDate", "Last Maintenance Date", "", "datetime", "Calculated"),
+                    ("nextMaintenanceDate", "Next Maintenance Date", "", "datetime", "Calculated"),
+                    ("maintenanceScore", "Maintenance Score", "%", "float", "Calculated")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.DeviceNameplateData,
+                DisplayName = "Device Nameplate Data",
+                Description = "Common registration data for any device",
+                Parameters = P(
+                    ("serialNumber", "Serial Number", "", "string", "Registration"),
+                    ("manufacturer", "Manufacturer", "", "string", "Registration"),
+                    ("model", "Model", "", "string", "Registration"),
+                    ("firmwareVersion", "Firmware Version", "", "string", "Registration"),
+                    ("installationDate", "Installation Date", "", "datetime", "Installation"),
+                    ("warrantyExpiry", "Warranty Expiry Date", "", "datetime", "Registration")
+                ),
+                Created = now
+            }
+        };
+
+        // ── LogicalDevices ──
+        var devices = new List<(LogicalDevice Device, NodeSpec[] Nodes)>
+        {
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.BatteryContainer,
+                DisplayName = "Battery Container",
+                Description = "A BESS container with racks, packs, PCS and HVAC",
+                Category = "BESS",
+                HierarchyTemplate = @"{""children"":[{""logicalDeviceName"":""BatteryRack"",""count"":4,""namePattern"":""Rack {index}"",""deviceTypeName"":""EnergyStorage.Rack""}]}",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.BatteryNameplateData, 0), new NodeSpec(LogicalNodeNames.BatteryStatusData, 1), new NodeSpec(LogicalNodeNames.BatteryEnergyData, 2), new NodeSpec(LogicalNodeNames.BatteryHealthData, 3), new NodeSpec(LogicalNodeNames.HvacStatusData, 4) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.BatteryRack,
+                DisplayName = "Battery Rack",
+                Description = "A rack within a battery container, containing packs",
+                Category = "BESS",
+                HierarchyTemplate = @"{""children"":[{""logicalDeviceName"":""BatteryPack"",""count"":8,""namePattern"":""Pack {index}"",""deviceTypeName"":""EnergyStorage.Pack""}]}",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.BatteryPackEnergyData, 0) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.BatteryPack,
+                DisplayName = "Battery Pack",
+                Description = "A pack/module within a battery rack",
+                Category = "BESS",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.BatteryModuleEnergyData, 0) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.PcsUnit,
+                DisplayName = "PCS Unit",
+                Description = "A power conversion system (bidirectional inverter)",
+                Category = "PCS",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.PcsStatusData, 0), new NodeSpec(LogicalNodeNames.PcsAcMeasurementData, 1), new NodeSpec(LogicalNodeNames.PcsDcMeasurementData, 2), new NodeSpec(LogicalNodeNames.PcsChargeAlgorithmData, 3) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.SolarInverter,
+                DisplayName = "Solar Inverter",
+                Description = "A solar inverter with MPPT strings",
+                Category = "Solar",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.SolarStatusData, 0), new NodeSpec(LogicalNodeNames.SolarInverterData, 1, InstanceCount: 2, Alias: "mppt") }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.GridMeter,
+                DisplayName = "Grid Meter",
+                Description = "A grid-connection smart meter with breaker monitoring",
+                Category = "Grid",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.GridMeterPowerData, 0), new NodeSpec(LogicalNodeNames.GridBreakerLifecycleData, 1) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.WindTurbine,
+                DisplayName = "Wind Turbine",
+                Description = "A wind turbine generator",
+                Category = "Wind",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.WindPowerData, 0), new NodeSpec(LogicalNodeNames.WindConditionData, 1), new NodeSpec(LogicalNodeNames.WindElectricalData, 2) })
+        };
+
+        return (nodes, devices);
     }
 }

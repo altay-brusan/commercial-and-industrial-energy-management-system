@@ -33,9 +33,12 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
     {
         var pcsQuery = _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs);
+            .Where(d =>
+                (d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs) ||
+                (d.LogicalDevice != null && d.LogicalDevice.Category == "PCS"));
 
         if (request.FacilityId.HasValue)
             pcsQuery = pcsQuery.Where(d => d.Rtu!.FacilityId == request.FacilityId.Value);
@@ -81,9 +84,10 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
         var facilityIds = pcsDevices.Select(d => d.Rtu!.FacilityId).Distinct().ToList();
         var bessDevicesByFacility = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Where(d => facilityIds.Contains(d.Rtu!.FacilityId)
-                && d.DeviceType != null
-                && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
+                && ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage) ||
+                    (d.LogicalDevice != null && d.LogicalDevice.Category == "BESS")))
             .Select(d => new { d.Id, d.Name, FacilityId = d.Rtu!.FacilityId })
             .ToListAsync(cancellationToken);
 
@@ -125,7 +129,8 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
             if (device.ParentDeviceId.HasValue &&
                 parentDevices.TryGetValue(device.ParentDeviceId.Value, out var parent))
             {
-                if (parent.DeviceType?.Name == DeviceTypeNames.EnergyStorage)
+                if (parent.DeviceType?.Name == DeviceTypeNames.EnergyStorage ||
+                    parent.LogicalDevice?.Category == "BESS")
                 {
                     linkedBess = new PcsLinkedBessUnitDto { Id = parent.Id, Name = parent.Name };
                 }

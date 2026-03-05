@@ -36,6 +36,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<DeviceAlarmType> DeviceAlarmTypes => Set<DeviceAlarmType>();
     public DbSet<DeviceSpecificationTemplate> DeviceSpecificationTemplates => Set<DeviceSpecificationTemplate>();
 
+    // Logical device catalog (global — no tenant filter)
+    public DbSet<LogicalNode> LogicalNodes => Set<LogicalNode>();
+    public DbSet<LogicalDevice> LogicalDevices => Set<LogicalDevice>();
+    public DbSet<LogicalDeviceNode> LogicalDeviceNodes => Set<LogicalDeviceNode>();
+
     // Device telemetry data (time-series with JSON payload)
     public DbSet<DeviceBatteryData> DeviceBatteryData => Set<DeviceBatteryData>();
     public DbSet<DeviceSolarData> DeviceSolarData => Set<DeviceSolarData>();
