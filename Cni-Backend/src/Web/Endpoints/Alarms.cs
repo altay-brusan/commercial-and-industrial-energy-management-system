@@ -1,8 +1,11 @@
 using Backend.Application.Alarms.Commands.AcknowledgeAlarm;
+using Backend.Application.Alarms.Commands.AssignAlarmToMaintenance;
 using Backend.Application.Alarms.Commands.ResolveAlarm;
 using Backend.Application.Alarms.Queries;
 using Backend.Application.Alarms.Queries.GetAlarm;
 using Backend.Application.Alarms.Queries.GetAlarms;
+using Backend.Application.Alarms.Queries.GetAlarmHistory;
+using Backend.Application.Alarms.Queries.GetAlarmStatistics;
 using Backend.Application.Alarms.Queries.GetAlarmSummary;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -19,9 +22,12 @@ public class Alarms : EndpointGroupBase
 
         group.MapGet("/", GetAlarms);
         group.MapGet("/Summary", GetAlarmSummary);
+        group.MapGet("/Statistics", GetAlarmStatistics);
+        group.MapGet("/History/{deviceName}", GetAlarmHistory);
         group.MapGet("/{id}", GetAlarm);
         group.MapPatch("/{id}/Acknowledge", AcknowledgeAlarm);
         group.MapPatch("/{id}/Resolve", ResolveAlarm);
+        group.MapPost("/{id}/AssignToMaintenance", AssignToMaintenance);
     }
 
     public static async Task<Ok<AlarmListResponseDto>> GetAlarms(
@@ -53,6 +59,20 @@ public class Alarms : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
+    public static async Task<Ok<AlarmStatisticsDto>> GetAlarmStatistics(
+        ISender sender, Guid? facilityId)
+    {
+        var result = await sender.Send(new GetAlarmStatisticsQuery { FacilityId = facilityId });
+        return TypedResults.Ok(result);
+    }
+
+    public static async Task<Ok<AlarmHistoryResponseDto>> GetAlarmHistory(
+        ISender sender, string deviceName)
+    {
+        var result = await sender.Send(new GetAlarmHistoryQuery { DeviceName = deviceName });
+        return TypedResults.Ok(result);
+    }
+
     public static async Task<Ok<AlarmDto>> GetAlarm(ISender sender, Guid id)
     {
         var result = await sender.Send(new GetAlarmQuery { Id = id });
@@ -70,4 +90,26 @@ public class Alarms : EndpointGroupBase
         var result = await sender.Send(new ResolveAlarmCommand { Id = id });
         return TypedResults.Ok(result);
     }
+
+    public static async Task<Ok<AssignAlarmToMaintenanceResponseDto>> AssignToMaintenance(
+        ISender sender, Guid id, AssignAlarmToMaintenanceRequest body)
+    {
+        var result = await sender.Send(new AssignAlarmToMaintenanceCommand
+        {
+            AlarmId = id,
+            Title = body.Title,
+            Description = body.Description,
+            Priority = body.Priority,
+            AssignedToId = body.AssignedToId,
+            DueDate = body.DueDate
+        });
+        return TypedResults.Ok(result);
+    }
 }
+
+public record AssignAlarmToMaintenanceRequest(
+    string Title,
+    string? Description,
+    string Priority,
+    string AssignedToId,
+    DateTimeOffset DueDate);

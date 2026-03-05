@@ -92,3 +92,21 @@ public record AlarmSummaryDto
     public int High { get; init; }
     public int Acknowledged { get; init; }
 }
+
+public record AlarmHistoryResponseDto
+{
+    public List<AlarmDto> Alarms { get; init; } = new();
+}
+
+public record AlarmStatisticsDto
+{
+    public int TotalAlarms { get; init; }
+    public int ActiveAlarms { get; init; }
+    public int CriticalAlarms { get; init; }
+    public int HighAlarms { get; init; }
+    public int MediumAlarms { get; init; }
+    public int LowAlarms { get; init; }
+    public int AcknowledgedCount { get; init; }
+    public int ResolvedCount { get; init; }
+    public Dictionary<string, int> BySourceType { get; init; } = new();
+}

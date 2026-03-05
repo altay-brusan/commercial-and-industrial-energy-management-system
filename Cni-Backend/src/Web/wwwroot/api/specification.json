@@ -219,6 +219,79 @@
         ]
       }
     },
+    "/api/v1/Alarms/Statistics": {
+      "get": {
+        "tags": [
+          "Alarms"
+        ],
+        "operationId": "GetApiV1AlarmsStatistics",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "guid",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmStatisticsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Alarms/History/{deviceName}": {
+      "get": {
+        "tags": [
+          "Alarms"
+        ],
+        "operationId": "GetApiV1AlarmsHistory",
+        "parameters": [
+          {
+            "name": "deviceName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmHistoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/Alarms/{id}": {
       "get": {
         "tags": [
@@ -318,6 +391,55 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AlarmDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Alarms/{id}/AssignToMaintenance": {
+      "post": {
+        "tags": [
+          "Alarms"
+        ],
+        "operationId": "PostApiV1AlarmsAssignToMaintenance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignAlarmToMaintenanceRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignAlarmToMaintenanceResponseDto"
                 }
               }
             }
@@ -5188,6 +5310,237 @@
           "acknowledged": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "AlarmStatisticsDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalAlarms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeAlarms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "criticalAlarms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "highAlarms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mediumAlarms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lowAlarms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "acknowledgedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "resolvedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bySourceType": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
+      "AlarmHistoryResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "alarms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlarmDto"
+            }
+          }
+        }
+      },
+      "AssignAlarmToMaintenanceResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "task": {
+            "$ref": "#/components/schemas/AssignedMaintenanceTaskDto"
+          },
+          "alarm": {
+            "$ref": "#/components/schemas/AlarmDto"
+          }
+        }
+      },
+      "AssignedMaintenanceTaskDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "assignedTo": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlarmUserDto"
+              }
+            ]
+          },
+          "assignedBy": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlarmUserDto"
+              }
+            ]
+          },
+          "assignedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "relatedAsset": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlarmRelatedAssetDto"
+              }
+            ]
+          },
+          "relatedAlarm": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TaskRelatedAlarmDto"
+              }
+            ]
+          },
+          "checklist": {
+            "type": "array",
+            "items": {}
+          },
+          "workSessions": {
+            "type": "array",
+            "items": {}
+          },
+          "completionDetails": {
+            "nullable": true
+          },
+          "closeDetails": {
+            "nullable": true
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TaskRelatedAlarmDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "severity": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "triggeredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "string",
+            "nullable": true
+          },
+          "threshold": {
+            "type": "string",
+            "nullable": true
+          },
+          "acknowledgedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "acknowledgedBy": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlarmUserDto"
+              }
+            ]
+          }
+        }
+      },
+      "AssignAlarmToMaintenanceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "priority": {
+            "type": "string"
+          },
+          "assignedToId": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

@@ -14,6 +14,9 @@
 | GET | `/{id}` | `Alarm.View` | Single alarm detail |
 | PATCH | `/{id}/Acknowledge` | `Alarm.Manage` | Acknowledge an active alarm |
 | PATCH | `/{id}/Resolve` | `Alarm.Manage` | Manually resolve an active alarm |
+| GET | `/Statistics` | `Alarm.View` | Total alarm counts by severity and source type |
+| GET | `/History/{deviceName}` | `Alarm.View` | Alarm history for a specific device by name |
+| POST | `/{id}/AssignToMaintenance` | `Alarm.Manage` | Create maintenance task from alarm |
 
 ---
 
@@ -173,6 +176,84 @@ Paginated, filterable alarm list.
 
 ---
 
+## GET `/Statistics`
+
+Total alarm counts across all statuses, broken down by severity and source type.
+
+### Query Parameters
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `facilityId` | `Guid?` | Scope to a specific facility |
+
+### Response
+
+```json
+{
+    "totalAlarms": 7,
+    "activeAlarms": 3,
+    "criticalAlarms": 1,
+    "highAlarms": 3,
+    "mediumAlarms": 0,
+    "lowAlarms": 0,
+    "acknowledgedCount": 1,
+    "resolvedCount": 3,
+    "bySourceType": {
+        "inverter": 5,
+        "bess": 1,
+        "solar": 1
+    }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `totalAlarms` | Count of all alarms (active + acknowledged + resolved) |
+| `activeAlarms` | Count of active, unacknowledged alarms |
+| `criticalAlarms` | Count of alarms with severity `critical` |
+| `highAlarms` | Count of alarms with severity `high` |
+| `mediumAlarms` | Count of alarms with severity `warning` or `medium` |
+| `lowAlarms` | Count of alarms with severity `low` |
+| `acknowledgedCount` | Count of active, acknowledged alarms |
+| `resolvedCount` | Count of resolved alarms |
+| `bySourceType` | Alarm counts grouped by source type (lowercase category) |
+
+---
+
+## GET `/History/{deviceName}`
+
+Returns all alarms for a specific device, identified by device name (not ID). Ordered by `triggeredAt` descending.
+
+### Path Parameters
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `deviceName` | `string` | Device name (e.g., `YEDEK4ESKi`) |
+
+### Response
+
+```json
+{
+    "alarms": [
+        {
+            "id": "...",
+            "code": "INV-DCBUS-ABN",
+            "message": "DC bus voltage abnormal - inverter shut down",
+            "severity": "critical",
+            "status": "active",
+            "source": "YEDEK4ESKi",
+            "sourceType": "inverter",
+            "triggeredAt": "2026-02-09T06:12:00Z",
+            ...
+        }
+    ]
+}
+```
+
+Same `AlarmDto` shape as the list endpoint items, wrapped in `{ alarms: [...] }`.
+
+---
+
 ## GET `/Summary`
 
 Counts of active alarms by severity.
@@ -230,6 +311,97 @@ Manually resolves an active alarm.
 - Alarm must be active → `400`
 
 **Response:** `200 OK` with the updated `AlarmDto` (same shape as list/detail items, with `resolvedAt` and `resolvedBy` populated, status changed to `resolved`)
+
+---
+
+## POST `/{id}/AssignToMaintenance`
+
+Creates a maintenance task from an active alarm and links them.
+
+**Request body:**
+
+```json
+{
+    "title": "Fix DC bus voltage abnormality",
+    "description": "Investigate and resolve DC bus voltage issue on YEDEK4ESKi inverter.",
+    "priority": "critical",
+    "assignedToId": "user-2",
+    "dueDate": "2026-03-08T17:00:00Z"
+}
+```
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `title` | `string` | Yes | Max 200 chars |
+| `description` | `string?` | No | Max 2000 chars |
+| `priority` | `string` | Yes | `critical`, `high`, `medium`, `low` |
+| `assignedToId` | `string` | Yes | User ID to assign the task to |
+| `dueDate` | `DateTimeOffset` | Yes | Task due date |
+
+**Note:** `facilityId` is **not** in the request — it is derived from the alarm's device → RTU → facility chain.
+
+**Validation:**
+- Alarm must exist → `404`
+- Alarm must be active → `400`
+- Alarm must not already have a linked maintenance task → `400`
+- Alarm's device must have a resolvable facility → `400`
+
+**Response:** `200 OK`
+
+```json
+{
+    "task": {
+        "id": "task-guid",
+        "title": "Fix DC bus voltage abnormality",
+        "description": "Investigate and resolve...",
+        "status": "pending",
+        "priority": "critical",
+        "assignedTo": { "id": "...", "name": "...", "email": "...", "initials": "...", "role": "...", "department": "...", "phone": "..." },
+        "assignedBy": { "id": "...", "name": "...", "email": "...", "initials": "...", "role": "...", "department": "...", "phone": "..." },
+        "assignedDate": "2026-03-05T13:51:38Z",
+        "dueDate": "2026-03-08T17:00:00Z",
+        "relatedAsset": null,
+        "relatedAlarm": {
+            "id": "alarm-guid",
+            "code": "INV-DCBUS-ABN",
+            "message": "DC bus voltage abnormal - inverter shut down",
+            "severity": "critical",
+            "source": "YEDEK4ESKi",
+            "triggeredAt": "2026-02-09T06:12:00Z",
+            "value": null,
+            "threshold": null,
+            "acknowledgedAt": null,
+            "acknowledgedBy": null
+        },
+        "checklist": [],
+        "workSessions": [],
+        "completionDetails": null,
+        "closeDetails": null,
+        "deletedAt": null,
+        "createdAt": "2026-03-05T13:51:38Z",
+        "updatedAt": "2026-03-05T13:51:38Z"
+    },
+    "alarm": {
+        "id": "alarm-guid",
+        "code": "INV-DCBUS-ABN",
+        "message": "DC bus voltage abnormal - inverter shut down",
+        "severity": "critical",
+        "status": "active",
+        "source": "YEDEK4ESKi",
+        "sourceType": "inverter",
+        "triggeredAt": "2026-02-09T06:12:00Z",
+        "value": null,
+        "threshold": null,
+        "acknowledgedAt": null,
+        "acknowledgedBy": null,
+        "resolvedAt": null,
+        "resolvedBy": null,
+        "relatedAsset": null,
+        "relatedMaintenanceTaskId": "task-guid",
+        "location": "TEST FIELD"
+    }
+}
+```
 
 ---
 
