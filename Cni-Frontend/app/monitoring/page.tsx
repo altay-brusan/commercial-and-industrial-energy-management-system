@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { TopBar } from "@/components/layout/top-bar";
 import { MonitoringSidebar } from "@/components/monitoring/monitoring-sidebar";
-import { ScadaDiagram } from "@/components/scada/scada-diagram";
+import { EnergyFlowCanvas } from "@/components/scada/energy-flow-canvas";
 import { ScadaMetricsPanel } from "@/components/scada/scada-metrics-panel";
 import { useScadaSimulation } from "@/hooks/use-scada-simulation";
 import type { ScadaNodeId } from "@/lib/scada/types";
@@ -19,8 +19,8 @@ export default function Monitoring() {
         <MonitoringSidebar />
 
         {/* Main Diagram Area */}
-        <main className="flex-1 flex items-center justify-center overflow-hidden p-6">
-          <ScadaDiagram
+        <main className="flex-1 flex items-center justify-center overflow-hidden bg-background">
+          <EnergyFlowCanvas
             nodes={scadaData.nodes}
             connections={scadaData.connections}
             selectedNode={selectedNode}

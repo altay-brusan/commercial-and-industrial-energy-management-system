@@ -26,7 +26,7 @@ export function CurrentEnergySource() {
   }));
 
   return (
-    <div className="rounded-lg bg-muted/30 p-6">
+    <div className="bg-muted/30 px-6 py-5 h-full">
       <div className="mb-4">
         <h2 className="text-lg font-semibold">Energy Sources</h2>
         <p className="text-sm text-muted-foreground">
