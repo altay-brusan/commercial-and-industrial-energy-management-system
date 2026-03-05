@@ -472,6 +472,70 @@ export function EnergyFlowCanvas({
           {(Object.keys(NODE_GRID) as ScadaNodeId[]).map((id) => {
             const [px, py] = nodePositions[id];
             const off = BASE_IMG_OFFSETS[id];
+
+            if (id === "battery") {
+              const svgW = Math.round(imgSize * 1.2);
+              const svgH = Math.round(imgSize * 1.0);
+              // Position so ground-projection center of box aligns with ellipse center
+              // Ground center is at 50% x, 67.5% y of the SVG (viewBox 280x200)
+              return (
+                <div
+                  key={`img-${id}`}
+                  className="absolute pointer-events-auto cursor-pointer"
+                  style={{
+                    left: px - svgW * 0.48,
+                    top: py + ellipseOffsetY - svgH * 0.74,
+                    width: svgW,
+                    height: svgH,
+                    zIndex: 3,
+                  }}
+                  onClick={() => onNodeClick(id)}
+                >
+                  <svg width={svgW} height={svgH} viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* 3D Isometric BESS — Width=45(right) Depth=120(left) Height=50
+                         Ground center at (140,135) */}
+                    {/* Top face */}
+                    <polygon
+                      points="173,44 212,66 108,126 69,104"
+                      fill="#58595d"
+                      stroke="#303134"
+                      strokeWidth="1.5"
+                      strokeLinejoin="round"
+                    />
+                    {/* Left face (short side) */}
+                    <polygon
+                      points="69,104 108,126 108,176 69,154"
+                      fill="#4F5054"
+                      stroke="#303134"
+                      strokeWidth="1.5"
+                      strokeLinejoin="round"
+                    />
+                    {/* Right face (long side) */}
+                    <polygon
+                      points="212,66 108,126 108,176 212,116"
+                      fill="#3a3b3e"
+                      stroke="#303134"
+                      strokeWidth="1.5"
+                      strokeLinejoin="round"
+                    />
+                    {/* BESS text on right face, centered */}
+                    <text
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontFamily="system-ui, sans-serif"
+                      fontWeight="700"
+                      fontSize="14"
+                      fill="#a0a1a4"
+                      letterSpacing="2"
+                      transform="matrix(0.866,-0.5,0,1,160,121)"
+                    >
+                      BESS
+                    </text>
+                  </svg>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={`img-${id}`}
