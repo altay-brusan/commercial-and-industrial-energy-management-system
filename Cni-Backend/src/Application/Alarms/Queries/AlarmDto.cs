@@ -10,6 +10,8 @@ public record AlarmUserDto
     public string? Email { get; init; }
     public string? Initials { get; init; }
     public string? Role { get; init; }
+    public string? Department { get; init; }
+    public string? Phone { get; init; }
 }
 
 /// <summary>

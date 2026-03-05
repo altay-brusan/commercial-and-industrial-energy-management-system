@@ -12,8 +12,8 @@
 | GET | `/` | `Alarm.View` | Paginated alarm list with filters |
 | GET | `/Summary` | `Alarm.View` | Active alarm counts by severity |
 | GET | `/{id}` | `Alarm.View` | Single alarm detail |
-| POST | `/{id}/Acknowledge` | `Alarm.Manage` | Acknowledge an active alarm |
-| POST | `/{id}/Resolve` | `Alarm.Manage` | Manually resolve an active alarm |
+| PATCH | `/{id}/Acknowledge` | `Alarm.Manage` | Acknowledge an active alarm |
+| PATCH | `/{id}/Resolve` | `Alarm.Manage` | Manually resolve an active alarm |
 
 ---
 
@@ -146,12 +146,16 @@ Paginated, filterable alarm list.
   "name": "John Doe",
   "email": "john.doe@example.com",
   "initials": "JD",
-  "role": "Operations Manager"
+  "role": "Operations Manager",
+  "department": "Management",
+  "phone": "+1 555-0105"
 }
 ```
 
 - `initials` is derived from `Name[0] + Surname[0]`
 - `role` maps from `ApplicationUser.Title`
+- `department` maps from `ApplicationUser.Department`
+- `phone` maps from `IdentityUser.PhoneNumber`
 
 ### Related Asset Object Shape
 
@@ -200,7 +204,7 @@ Returns `404` if alarm not found.
 
 ---
 
-## POST `/{id}/Acknowledge`
+## PATCH `/{id}/Acknowledge`
 
 Marks an active alarm as acknowledged by the current user.
 
@@ -211,11 +215,11 @@ Marks an active alarm as acknowledged by the current user.
 - Alarm must be active → `400`
 - Alarm must not already be acknowledged → `400`
 
-**Response:** `204 No Content`
+**Response:** `200 OK` with the updated `AlarmDto` (same shape as list/detail items, with `acknowledgedAt` and `acknowledgedBy` populated, status changed to `acknowledged`)
 
 ---
 
-## POST `/{id}/Resolve`
+## PATCH `/{id}/Resolve`
 
 Manually resolves an active alarm.
 
@@ -225,7 +229,7 @@ Manually resolves an active alarm.
 - Alarm must exist → `404`
 - Alarm must be active → `400`
 
-**Response:** `204 No Content`
+**Response:** `200 OK` with the updated `AlarmDto` (same shape as list/detail items, with `resolvedAt` and `resolvedBy` populated, status changed to `resolved`)
 
 ---
 

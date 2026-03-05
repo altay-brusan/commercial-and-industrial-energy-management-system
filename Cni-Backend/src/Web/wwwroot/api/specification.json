@@ -257,11 +257,11 @@
       }
     },
     "/api/v1/Alarms/{id}/Acknowledge": {
-      "post": {
+      "patch": {
         "tags": [
           "Alarms"
         ],
-        "operationId": "PostApiV1AlarmsAcknowledge",
+        "operationId": "PatchApiV1AlarmsAcknowledge",
         "parameters": [
           {
             "name": "id",
@@ -275,8 +275,15 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": ""
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -287,11 +294,11 @@
       }
     },
     "/api/v1/Alarms/{id}/Resolve": {
-      "post": {
+      "patch": {
         "tags": [
           "Alarms"
         ],
-        "operationId": "PostApiV1AlarmsResolve",
+        "operationId": "PatchApiV1AlarmsResolve",
         "parameters": [
           {
             "name": "id",
@@ -305,8 +312,15 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": ""
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5087,6 +5101,14 @@
             "nullable": true
           },
           "role": {
+            "type": "string",
+            "nullable": true
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
             "type": "string",
             "nullable": true
           }

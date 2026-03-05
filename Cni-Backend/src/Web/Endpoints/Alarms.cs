@@ -20,8 +20,8 @@ public class Alarms : EndpointGroupBase
         group.MapGet("/", GetAlarms);
         group.MapGet("/Summary", GetAlarmSummary);
         group.MapGet("/{id}", GetAlarm);
-        group.MapPost("/{id}/Acknowledge", AcknowledgeAlarm);
-        group.MapPost("/{id}/Resolve", ResolveAlarm);
+        group.MapPatch("/{id}/Acknowledge", AcknowledgeAlarm);
+        group.MapPatch("/{id}/Resolve", ResolveAlarm);
     }
 
     public static async Task<Ok<AlarmListResponseDto>> GetAlarms(
@@ -59,15 +59,15 @@ public class Alarms : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<NoContent> AcknowledgeAlarm(ISender sender, Guid id)
+    public static async Task<Ok<AlarmDto>> AcknowledgeAlarm(ISender sender, Guid id)
     {
-        await sender.Send(new AcknowledgeAlarmCommand { Id = id });
-        return TypedResults.NoContent();
+        var result = await sender.Send(new AcknowledgeAlarmCommand { Id = id });
+        return TypedResults.Ok(result);
     }
 
-    public static async Task<NoContent> ResolveAlarm(ISender sender, Guid id)
+    public static async Task<Ok<AlarmDto>> ResolveAlarm(ISender sender, Guid id)
     {
-        await sender.Send(new ResolveAlarmCommand { Id = id });
-        return TypedResults.NoContent();
+        var result = await sender.Send(new ResolveAlarmCommand { Id = id });
+        return TypedResults.Ok(result);
     }
 }

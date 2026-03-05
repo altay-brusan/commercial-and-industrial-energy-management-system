@@ -1,4 +1,4 @@
-using Backend.Application.Common.Exceptions;
+using Backend.Application.Alarms.Queries;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
 using Backend.Domain.Entities;
@@ -8,12 +8,12 @@ namespace Backend.Application.Alarms.Commands.ResolveAlarm;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.AlarmManage)]
-public record ResolveAlarmCommand : IRequest
+public record ResolveAlarmCommand : IRequest<AlarmDto>
 {
     public Guid Id { get; init; }
 }
 
-public class ResolveAlarmCommandHandler : IRequestHandler<ResolveAlarmCommand>
+public class ResolveAlarmCommandHandler : IRequestHandler<ResolveAlarmCommand, AlarmDto>
 {
     private readonly IApplicationDbContext _context;
     private readonly IUser _user;
@@ -24,7 +24,7 @@ public class ResolveAlarmCommandHandler : IRequestHandler<ResolveAlarmCommand>
         _user = user;
     }
 
-    public async Task Handle(ResolveAlarmCommand request, CancellationToken cancellationToken)
+    public async Task<AlarmDto> Handle(ResolveAlarmCommand request, CancellationToken cancellationToken)
     {
         var alarm = await _context.DeviceAlarms
             .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
@@ -40,5 +40,17 @@ public class ResolveAlarmCommandHandler : IRequestHandler<ResolveAlarmCommand>
         alarm.ResolvedById = _user.Id;
 
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Re-query with full includes to build the response DTO
+        var updated = await _context.DeviceAlarms
+            .Include(a => a.AlarmType)
+            .Include(a => a.Device)
+                .ThenInclude(d => d!.Rtu)
+                    .ThenInclude(r => r!.Facility)
+            .Include(a => a.AcknowledgedBy)
+            .Include(a => a.ResolvedBy)
+            .FirstAsync(a => a.Id == request.Id, cancellationToken);
+
+        return AlarmDtoMapper.ToDto(updated);
     }
 }
