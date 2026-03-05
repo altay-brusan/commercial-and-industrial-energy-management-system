@@ -4,7 +4,6 @@ using Backend.Application.Alarms.Queries;
 using Backend.Application.Alarms.Queries.GetAlarm;
 using Backend.Application.Alarms.Queries.GetAlarms;
 using Backend.Application.Alarms.Queries.GetAlarmSummary;
-using Backend.Application.Common.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Web.Endpoints;
@@ -25,11 +24,11 @@ public class Alarms : EndpointGroupBase
         group.MapPost("/{id}/Resolve", ResolveAlarm);
     }
 
-    public static async Task<Ok<PaginatedList<AlarmDto>>> GetAlarms(
+    public static async Task<Ok<AlarmListResponseDto>> GetAlarms(
         ISender sender,
         Guid? facilityId, string? severity, string? status, Guid? deviceId,
         bool? isActive, DateTimeOffset? dateFrom, DateTimeOffset? dateTo,
-        string? searchTerm, int? pageNumber, int? pageSize)
+        string? searchTerm, int? page, int? pageSize)
     {
         var result = await sender.Send(new GetAlarmsQuery
         {
@@ -41,7 +40,7 @@ public class Alarms : EndpointGroupBase
             DateFrom = dateFrom,
             DateTo = dateTo,
             SearchTerm = searchTerm,
-            PageNumber = pageNumber ?? 1,
+            Page = page ?? 1,
             PageSize = pageSize ?? 20
         });
         return TypedResults.Ok(result);
@@ -54,7 +53,7 @@ public class Alarms : EndpointGroupBase
         return TypedResults.Ok(result);
     }
 
-    public static async Task<Ok<AlarmDetailDto>> GetAlarm(ISender sender, Guid id)
+    public static async Task<Ok<AlarmDto>> GetAlarm(ISender sender, Guid id)
     {
         var result = await sender.Send(new GetAlarmQuery { Id = id });
         return TypedResults.Ok(result);

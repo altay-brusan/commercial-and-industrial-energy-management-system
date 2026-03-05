@@ -143,7 +143,7 @@
             "x-position": 8
           },
           {
-            "name": "pageNumber",
+            "name": "page",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -169,7 +169,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedListOfAlarmDto"
+                  "$ref": "#/components/schemas/AlarmListResponseDto"
                 }
               }
             }
@@ -243,7 +243,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AlarmDetailDto"
+                  "$ref": "#/components/schemas/AlarmDto"
                 }
               }
             }
@@ -4966,33 +4966,18 @@
           }
         }
       },
-      "PaginatedListOfAlarmDto": {
+      "AlarmListResponseDto": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "items": {
+          "alarms": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AlarmDto"
             }
           },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "hasPreviousPage": {
-            "type": "boolean"
-          },
-          "hasNextPage": {
-            "type": "boolean"
+          "pagination": {
+            "$ref": "#/components/schemas/AlarmPaginationDto"
           }
         }
       },
@@ -5004,18 +4989,7 @@
             "type": "string",
             "format": "guid"
           },
-          "deviceId": {
-            "type": "string",
-            "format": "guid"
-          },
-          "deviceAlarmTypeId": {
-            "type": "string",
-            "format": "guid"
-          },
           "code": {
-            "type": "string"
-          },
-          "name": {
             "type": "string"
           },
           "message": {
@@ -5032,34 +5006,20 @@
             "type": "string",
             "nullable": true
           },
-          "category": {
+          "sourceType": {
             "type": "string",
             "nullable": true
           },
-          "deviceName": {
-            "type": "string",
-            "nullable": true
-          },
-          "deviceModel": {
-            "type": "string",
-            "nullable": true
-          },
-          "facilityName": {
-            "type": "string",
-            "nullable": true
-          },
-          "facilityId": {
-            "type": "string",
-            "format": "guid",
-            "nullable": true
-          },
-          "occurredAt": {
+          "triggeredAt": {
             "type": "string",
             "format": "date-time"
           },
-          "recoveredAt": {
+          "value": {
             "type": "string",
-            "format": "date-time",
+            "nullable": true
+          },
+          "threshold": {
+            "type": "string",
             "nullable": true
           },
           "acknowledgedAt": {
@@ -5067,26 +5027,123 @@
             "format": "date-time",
             "nullable": true
           },
+          "acknowledgedBy": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlarmUserDto"
+              }
+            ]
+          },
           "resolvedAt": {
             "type": "string",
             "format": "date-time",
             "nullable": true
           },
-          "acknowledgedByName": {
-            "type": "string",
-            "nullable": true
+          "resolvedBy": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlarmUserDto"
+              }
+            ]
           },
-          "resolvedByName": {
-            "type": "string",
-            "nullable": true
+          "relatedAsset": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlarmRelatedAssetDto"
+              }
+            ]
           },
-          "maintenanceTaskId": {
+          "relatedMaintenanceTaskId": {
             "type": "string",
             "format": "guid",
             "nullable": true
           },
-          "hasMaintenanceTask": {
-            "type": "boolean"
+          "location": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AlarmUserDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "initials": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AlarmRelatedAssetDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AlarmPaginationDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -5111,41 +5168,6 @@
             "format": "int32"
           }
         }
-      },
-      "AlarmDetailDto": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/AlarmDto"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "details": {
-                "type": "string",
-                "nullable": true
-              },
-              "isActive": {
-                "type": "boolean"
-              },
-              "isRead": {
-                "type": "boolean"
-              },
-              "acknowledgedById": {
-                "type": "string",
-                "nullable": true
-              },
-              "resolvedById": {
-                "type": "string",
-                "nullable": true
-              },
-              "created": {
-                "type": "string",
-                "format": "date-time"
-              }
-            }
-          }
-        ]
       },
       "PaginatedListOfAppRoleBriefDto": {
         "type": "object",

@@ -19,74 +19,151 @@
 
 ## Alarm Status Model
 
-Alarm status is **derived** from stored fields, not stored directly:
+Alarm status is **derived** from stored fields (lowercase strings):
 
 | Status | Condition |
 |--------|-----------|
-| `Active` | `IsActive == true` AND `AcknowledgedAt == null` |
-| `Acknowledged` | `IsActive == true` AND `AcknowledgedAt != null` |
-| `Resolved` | `IsActive == false` (either telemetry recovery or human resolution) |
+| `active` | `IsActive == true` AND `AcknowledgedAt == null` |
+| `acknowledged` | `IsActive == true` AND `AcknowledgedAt != null` |
+| `resolved` | `IsActive == false` (either telemetry recovery or human resolution) |
 
-Two separate resolution paths exist:
-- **RecoveredAt** — set automatically by `AlarmProcessingService` when a telemetry payload clears the fault flag
-- **ResolvedAt / ResolvedById** — set manually via the Resolve endpoint, or automatically when a linked MaintenanceTask is completed/closed
+Two separate resolution paths:
+- **RecoveredAt** — set automatically by `AlarmProcessingService` when telemetry clears the fault
+- **ResolvedAt / ResolvedBy** — set manually via Resolve endpoint, or auto when a linked MaintenanceTask completes/closes
 
 ---
 
 ## GET `/`
 
-Paginated, filterable alarm list. All parameters are optional.
+Paginated, filterable alarm list.
 
 ### Query Parameters
 
 | Param | Type | Description |
 |-------|------|-------------|
 | `facilityId` | `Guid?` | Filter by facility |
-| `severity` | `string?` | Filter by alarm type severity (`Critical`, `High`, `Warning`, `Info`) |
-| `status` | `string?` | Filter by derived status (`Active`, `Acknowledged`, `Resolved`) |
+| `severity` | `string?` | Filter by severity (case-insensitive: `critical`, `high`, `warning`, `low`, `info`) |
+| `status` | `string?` | Filter by status (case-insensitive: `active`, `acknowledged`, `resolved`) |
 | `deviceId` | `Guid?` | Filter by device |
 | `isActive` | `bool?` | Filter by IsActive flag directly |
-| `dateFrom` | `DateTimeOffset?` | Alarms occurred at or after this time |
-| `dateTo` | `DateTimeOffset?` | Alarms occurred at or before this time |
+| `dateFrom` | `DateTimeOffset?` | Alarms triggered at or after this time |
+| `dateTo` | `DateTimeOffset?` | Alarms triggered at or before this time |
 | `searchTerm` | `string?` | Search in alarm type name, code, and device name |
-| `pageNumber` | `int` | Page number (default: 1) |
+| `page` | `int` | Page number (default: 1) |
 | `pageSize` | `int` | Page size (default: 20) |
 
-### Response: `PaginatedList<AlarmDto>`
+### Response
 
 ```json
 {
-  "items": [
+  "alarms": [
     {
-      "id": "guid",
-      "deviceId": "guid",
-      "deviceAlarmTypeId": "guid",
-      "code": "BAT_CELL_OV_WARN",
-      "name": "Cell Over Voltage Warning",
-      "message": "Battery cell voltage exceeded warning threshold",
-      "severity": "Warning",
-      "status": "Active",
-      "source": "BMS",
-      "category": "Battery",
-      "deviceName": "BMU-01",
-      "deviceModel": "DEMO-BG",
-      "facilityName": "Demo Facility",
-      "facilityId": "guid",
-      "occurredAt": "2026-03-05T10:30:00Z",
-      "recoveredAt": null,
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "code": "INV-DCBUS-ABN",
+      "message": "DC bus voltage abnormal - inverter shut down",
+      "severity": "critical",
+      "status": "active",
+      "source": "YEDEK4ESKi",
+      "sourceType": "inverter",
+      "triggeredAt": "2026-02-09T06:12:00Z",
+      "value": null,
+      "threshold": null,
       "acknowledgedAt": null,
+      "acknowledgedBy": null,
       "resolvedAt": null,
-      "acknowledgedByName": null,
-      "resolvedByName": null,
-      "maintenanceTaskId": null,
-      "hasMaintenanceTask": false
+      "resolvedBy": null,
+      "relatedAsset": null,
+      "relatedMaintenanceTaskId": null,
+      "location": "TEST FIELD"
+    },
+    {
+      "id": "...",
+      "code": "BESS-TEMP-DRIFT",
+      "message": "Temperature sensor showing inconsistent readings",
+      "severity": "high",
+      "status": "acknowledged",
+      "source": "BMU-01",
+      "sourceType": "bess",
+      "triggeredAt": "2026-02-08T07:23:00Z",
+      "value": null,
+      "threshold": null,
+      "acknowledgedAt": "2026-02-08T08:15:00Z",
+      "acknowledgedBy": {
+        "id": "user-id",
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "initials": "JD",
+        "role": "Operations Manager"
+      },
+      "resolvedAt": null,
+      "resolvedBy": null,
+      "relatedAsset": {
+        "id": "device-guid",
+        "name": "BMU-01",
+        "type": "bess",
+        "location": "Demo Facility",
+        "status": "online",
+        "serialNumber": "BESS-2024-001",
+        "model": "DEMO-BG"
+      },
+      "relatedMaintenanceTaskId": "task-guid",
+      "location": "Demo Facility"
     }
   ],
-  "pageNumber": 1,
-  "totalPages": 5,
-  "totalCount": 95,
-  "hasPreviousPage": false,
-  "hasNextPage": true
+  "pagination": {
+    "page": 1,
+    "pageSize": 50,
+    "totalItems": 7,
+    "totalPages": 1
+  }
+}
+```
+
+### Field Descriptions
+
+| Field | Source | Notes |
+|-------|--------|-------|
+| `code` | `DeviceAlarmType.Code` | Alarm type code (e.g. `INV-DCBUS-ABN`) |
+| `message` | `DeviceAlarmType.Description` | Human-readable alarm description |
+| `severity` | `DeviceAlarmType.Severity` | Lowercased: `critical`, `high`, `warning`, `low`, `info` |
+| `status` | Derived | `active`, `acknowledged`, `resolved` |
+| `source` | `Device.Name` (fallback: `AlarmType.Source`) | Name of the device that triggered the alarm |
+| `sourceType` | `DeviceAlarmType.Category` | Lowercased: `bess`, `inverter`, `solar`, etc. |
+| `triggeredAt` | `DeviceAlarm.OccurredAt` | When the alarm was triggered |
+| `value` | From `Details` JSON (future) | Current measured value; `null` if not available |
+| `threshold` | From `Details` JSON (future) | Threshold that was exceeded; `null` if not available |
+| `acknowledgedBy` | `ApplicationUser` | User object or `null` |
+| `resolvedBy` | `ApplicationUser` | User object or `null` |
+| `relatedAsset` | `Device` entity | Device info object or `null` |
+| `relatedMaintenanceTaskId` | `DeviceAlarm.MaintenanceTaskId` | Linked task GUID or `null` |
+| `location` | `Facility.Name` | Facility where the alarm occurred |
+
+### User Object Shape
+
+```json
+{
+  "id": "string",
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "initials": "JD",
+  "role": "Operations Manager"
+}
+```
+
+- `initials` is derived from `Name[0] + Surname[0]`
+- `role` maps from `ApplicationUser.Title`
+
+### Related Asset Object Shape
+
+```json
+{
+  "id": "device-guid",
+  "name": "BMU-01",
+  "type": "bess",
+  "location": "Facility Name",
+  "status": "online",
+  "serialNumber": "BESS-2024-001",
+  "model": "DEMO-BG"
 }
 ```
 
@@ -102,7 +179,7 @@ Counts of active alarms by severity.
 |-------|------|-------------|
 | `facilityId` | `Guid?` | Scope to a specific facility |
 
-### Response: `AlarmSummaryDto`
+### Response
 
 ```json
 {
@@ -117,23 +194,7 @@ Counts of active alarms by severity.
 
 ## GET `/{id}`
 
-Full alarm detail including metadata.
-
-### Response: `AlarmDetailDto`
-
-Extends `AlarmDto` with:
-
-```json
-{
-  "...all AlarmDto fields...",
-  "details": "{\"raw\": \"json payload\"}",
-  "isActive": true,
-  "isRead": false,
-  "acknowledgedById": null,
-  "resolvedById": null,
-  "created": "2026-03-05T10:30:00Z"
-}
-```
+Single alarm detail. Same shape as list items.
 
 Returns `404` if alarm not found.
 
@@ -150,9 +211,6 @@ Marks an active alarm as acknowledged by the current user.
 - Alarm must be active → `400`
 - Alarm must not already be acknowledged → `400`
 
-**Side effects:**
-- Sets `AcknowledgedAt = now`, `AcknowledgedById = current user`
-
 **Response:** `204 No Content`
 
 ---
@@ -167,24 +225,21 @@ Manually resolves an active alarm.
 - Alarm must exist → `404`
 - Alarm must be active → `400`
 
-**Side effects:**
-- Sets `IsActive = false`, `ResolvedAt = now`, `ResolvedById = current user`
-
 **Response:** `204 No Content`
 
 ---
 
 ## Alarm ↔ Maintenance Task Link
 
-When a `MaintenanceTask` is created with a `DeviceAlarmId`:
-- The alarm's `MaintenanceTaskId` is set, linking the two entities
-- The alarm DTO returns `hasMaintenanceTask: true` and the `maintenanceTaskId`
+When a `MaintenanceTask` is created with a `deviceAlarmId`:
+- The alarm's `MaintenanceTaskId` is set
+- The alarm returns `relatedMaintenanceTaskId` with the task GUID
 
 When a linked task is **completed** or **closed**:
-- The alarm is automatically resolved (`IsActive = false`, `ResolvedAt/By` set)
+- The alarm is automatically resolved (`IsActive = false`)
 
 ---
 
 ## Tenant Scoping
 
-Alarms are tenant-scoped through the chain: `DeviceAlarm → Device → Rtu → Facility → Firm → Tenant`. The global query filter automatically restricts results to the current user's tenant. Administrators without a selected tenant see all alarms.
+Alarms are tenant-scoped through: `DeviceAlarm → Device → Rtu → Facility → Firm → Tenant`. Global query filters auto-scope results. Administrators without a selected tenant see all alarms.

@@ -1,19 +1,17 @@
-using Backend.Application.Common.Exceptions;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Security;
-using Backend.Domain.Constants;
 using Backend.Domain.Entities;
 
 namespace Backend.Application.Alarms.Queries.GetAlarm;
 
 [Authorize(Roles = "Administrator,Tenant.Admin")]
 [RequirePermission(Backend.Domain.Constants.Permissions.AlarmView)]
-public record GetAlarmQuery : IRequest<AlarmDetailDto>
+public record GetAlarmQuery : IRequest<AlarmDto>
 {
     public Guid Id { get; init; }
 }
 
-public class GetAlarmQueryHandler : IRequestHandler<GetAlarmQuery, AlarmDetailDto>
+public class GetAlarmQueryHandler : IRequestHandler<GetAlarmQuery, AlarmDto>
 {
     private readonly IApplicationDbContext _context;
 
@@ -22,7 +20,7 @@ public class GetAlarmQueryHandler : IRequestHandler<GetAlarmQuery, AlarmDetailDt
         _context = context;
     }
 
-    public async Task<AlarmDetailDto> Handle(GetAlarmQuery request, CancellationToken cancellationToken)
+    public async Task<AlarmDto> Handle(GetAlarmQuery request, CancellationToken cancellationToken)
     {
         var alarm = await _context.DeviceAlarms
             .Include(a => a.AlarmType)
@@ -32,38 +30,54 @@ public class GetAlarmQueryHandler : IRequestHandler<GetAlarmQuery, AlarmDetailDt
             .Include(a => a.AcknowledgedBy)
             .Include(a => a.ResolvedBy)
             .Where(a => a.Id == request.Id)
-            .Select(a => new AlarmDetailDto
+            .Select(a => new AlarmDto
             {
                 Id = a.Id,
-                DeviceId = a.DeviceId,
-                DeviceAlarmTypeId = a.DeviceAlarmTypeId,
                 Code = a.AlarmType!.Code,
-                Name = a.AlarmType.Name,
                 Message = a.AlarmType.Description,
-                Severity = a.AlarmType.Severity,
-                Status = !a.IsActive ? "Resolved" : (a.AcknowledgedAt != null ? "Acknowledged" : "Active"),
-                Source = a.AlarmType.Source,
-                Category = a.AlarmType.Category,
-                DeviceName = a.Device != null ? a.Device.Name : null,
-                DeviceModel = a.Device != null ? a.Device.Model : null,
-                FacilityName = a.Device != null && a.Device.Rtu != null && a.Device.Rtu.Facility != null
-                    ? a.Device.Rtu.Facility.Name : null,
-                FacilityId = a.Device != null && a.Device.Rtu != null
-                    ? a.Device.Rtu.FacilityId : null,
-                OccurredAt = a.OccurredAt,
-                RecoveredAt = a.RecoveredAt,
+                Severity = a.AlarmType.Severity.ToLower(),
+                Status = !a.IsActive ? "resolved" : (a.AcknowledgedAt != null ? "acknowledged" : "active"),
+                Source = a.Device != null ? a.Device.Name : a.AlarmType.Source,
+                SourceType = a.AlarmType.Category != null ? a.AlarmType.Category.ToLower() : null,
+                TriggeredAt = a.OccurredAt,
+                Value = null,
+                Threshold = null,
                 AcknowledgedAt = a.AcknowledgedAt,
+                AcknowledgedBy = a.AcknowledgedBy != null ? new AlarmUserDto
+                {
+                    Id = a.AcknowledgedBy.Id,
+                    Name = a.AcknowledgedBy.Name,
+                    Email = a.AcknowledgedBy.Email,
+                    Initials = a.AcknowledgedBy.Name != null && a.AcknowledgedBy.Surname != null
+                        ? (a.AcknowledgedBy.Name.Substring(0, 1) + a.AcknowledgedBy.Surname.Substring(0, 1)).ToUpper()
+                        : null,
+                    Role = a.AcknowledgedBy.Title
+                } : null,
                 ResolvedAt = a.ResolvedAt,
-                AcknowledgedByName = a.AcknowledgedBy != null ? a.AcknowledgedBy.Name : null,
-                ResolvedByName = a.ResolvedBy != null ? a.ResolvedBy.Name : null,
-                MaintenanceTaskId = a.MaintenanceTaskId,
-                HasMaintenanceTask = a.MaintenanceTaskId != null,
-                Details = a.Details,
-                IsActive = a.IsActive,
-                IsRead = a.IsRead,
-                AcknowledgedById = a.AcknowledgedById,
-                ResolvedById = a.ResolvedById,
-                Created = a.Created
+                ResolvedBy = a.ResolvedBy != null ? new AlarmUserDto
+                {
+                    Id = a.ResolvedBy.Id,
+                    Name = a.ResolvedBy.Name,
+                    Email = a.ResolvedBy.Email,
+                    Initials = a.ResolvedBy.Name != null && a.ResolvedBy.Surname != null
+                        ? (a.ResolvedBy.Name.Substring(0, 1) + a.ResolvedBy.Surname.Substring(0, 1)).ToUpper()
+                        : null,
+                    Role = a.ResolvedBy.Title
+                } : null,
+                RelatedAsset = a.Device != null ? new AlarmRelatedAssetDto
+                {
+                    Id = a.DeviceId,
+                    Name = a.Device.Name,
+                    Type = a.AlarmType.Category != null ? a.AlarmType.Category.ToLower() : null,
+                    Location = a.Device.Rtu != null && a.Device.Rtu.Facility != null
+                        ? a.Device.Rtu.Facility.Name : null,
+                    Status = a.Device.Status,
+                    SerialNumber = a.Device.SerialNumber,
+                    Model = a.Device.Model
+                } : null,
+                RelatedMaintenanceTaskId = a.MaintenanceTaskId,
+                Location = a.Device != null && a.Device.Rtu != null && a.Device.Rtu.Facility != null
+                    ? a.Device.Rtu.Facility.Name : null
             })
             .FirstOrDefaultAsync(cancellationToken);
 
