@@ -53,6 +53,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     // Auth entities
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    // Maintenance tasks
+    public DbSet<MaintenanceTask> MaintenanceTasks => Set<MaintenanceTask>();
+    public DbSet<TaskNote> TaskNotes => Set<TaskNote>();
+    public DbSet<TaskChecklistItem> TaskChecklistItems => Set<TaskChecklistItem>();
+    public DbSet<TaskStatusChange> TaskStatusChanges => Set<TaskStatusChange>();
+    public DbSet<TaskWorkSession> TaskWorkSessions => Set<TaskWorkSession>();
+
     // Market and tariff entities
     public DbSet<MarketOperator> MarketOperators => Set<MarketOperator>();
     public DbSet<FirmMarketOperator> FirmMarketOperators => Set<FirmMarketOperator>();
@@ -86,6 +93,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<TenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
         builder.Entity<TenantRolePermission>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
         builder.Entity<UserTenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
+        // MaintenanceTask scoped through Facility → Firm → Tenant
+        builder.Entity<MaintenanceTask>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
         // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories, DeviceAlarmTypes are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());

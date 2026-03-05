@@ -38,6 +38,13 @@ public interface IApplicationDbContext
     // Device specification templates
     DbSet<DeviceSpecificationTemplate> DeviceSpecificationTemplates { get; }
 
+    // Maintenance tasks
+    DbSet<MaintenanceTask> MaintenanceTasks { get; }
+    DbSet<TaskNote> TaskNotes { get; }
+    DbSet<TaskChecklistItem> TaskChecklistItems { get; }
+    DbSet<TaskStatusChange> TaskStatusChanges { get; }
+    DbSet<TaskWorkSession> TaskWorkSessions { get; }
+
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }
     DbSet<FirmMarketOperator> FirmMarketOperators { get; }

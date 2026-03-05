@@ -18,4 +18,6 @@ public abstract class Features
     public const string Audit = nameof(Audit);
     public const string FacilityMap = nameof(FacilityMap);
     public const string Pcs = nameof(Pcs);
+    public const string Alarm = nameof(Alarm);
+    public const string Maintenance = nameof(Maintenance);
 }

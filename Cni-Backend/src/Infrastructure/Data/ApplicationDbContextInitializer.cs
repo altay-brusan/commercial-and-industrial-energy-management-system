@@ -317,6 +317,8 @@ public class ApplicationDbContextInitializer
                 [Features.Audit] = new Feature { Key = Features.Audit, Name = "Audit", Category = "Management", Created = DateTime.UtcNow },
                 [Features.FacilityMap] = new Feature { Key = Features.FacilityMap, Name = "Facility Map", Category = "Core", Created = DateTime.UtcNow },
                 [Features.Pcs] = new Feature { Key = Features.Pcs, Name = "PCS Monitoring", Category = "Energy", Created = DateTime.UtcNow },
+                [Features.Alarm] = new Feature { Key = Features.Alarm, Name = "Alarms", Category = "Management", Created = DateTime.UtcNow },
+                [Features.Maintenance] = new Feature { Key = Features.Maintenance, Name = "Maintenance", Category = "Management", Created = DateTime.UtcNow },
             };
 
             _context.Set<Feature>().AddRange(features.Values);
@@ -356,6 +358,11 @@ public class ApplicationDbContextInitializer
                 new() { Key = Permissions.AuditView, Name = "View Audit Logs", FeatureId = features[Features.Audit].Id, Created = DateTime.UtcNow },
                 new() { Key = Permissions.FacilityMapView, Name = "View Facility Map", FeatureId = features[Features.FacilityMap].Id, Created = DateTime.UtcNow },
                 new() { Key = Permissions.PcsView, Name = "View PCS Data", FeatureId = features[Features.Pcs].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.AlarmView, Name = "View Alarms", FeatureId = features[Features.Alarm].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.AlarmManage, Name = "Manage Alarms", FeatureId = features[Features.Alarm].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.MaintenanceView, Name = "View Maintenance Tasks", FeatureId = features[Features.Maintenance].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.MaintenanceCreate, Name = "Create Maintenance Tasks", FeatureId = features[Features.Maintenance].Id, Created = DateTime.UtcNow },
+                new() { Key = Permissions.MaintenanceManage, Name = "Manage Maintenance Tasks", FeatureId = features[Features.Maintenance].Id, Created = DateTime.UtcNow },
             };
 
             _context.Set<Permission>().AddRange(permissions);

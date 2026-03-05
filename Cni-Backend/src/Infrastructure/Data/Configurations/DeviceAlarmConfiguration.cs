@@ -40,5 +40,18 @@ public class DeviceAlarmConfiguration : IEntityTypeConfiguration<DeviceAlarm>
 
         // Index for dedup during alarm processing (one active alarm per type per device)
         builder.HasIndex(da => new { da.DeviceId, da.DeviceAlarmTypeId, da.IsActive });
+
+        // Acknowledgement / Resolution user FKs
+        builder.HasOne(da => da.AcknowledgedBy)
+            .WithMany()
+            .HasForeignKey(da => da.AcknowledgedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(da => da.ResolvedBy)
+            .WithMany()
+            .HasForeignKey(da => da.ResolvedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // MaintenanceTask FK (configured from MaintenanceTaskConfiguration as principal)
     }
 }
