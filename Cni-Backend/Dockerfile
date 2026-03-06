@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy solution and build config files
-COPY Derms-Backend.sln .
+COPY Cni-Backend.sln .
 COPY Directory.Build.props .
 COPY Directory.Packages.props .
 
