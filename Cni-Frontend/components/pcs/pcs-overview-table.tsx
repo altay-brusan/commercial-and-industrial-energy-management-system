@@ -3,25 +3,27 @@
 import { useState, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { PcsUnit } from "@/lib/pcs/types";
-import { getPcsFaultFlagsForUnit } from "@/lib/pcs/mock-data";
+import type { PcsUnitListItemDto, PcsAggregatesDto } from "@/lib/pcs/api-types";
 
 interface PcsOverviewTableProps {
-  units: PcsUnit[];
-  onUnitSelect: (unit: PcsUnit) => void;
+  units: PcsUnitListItemDto[];
+  aggregates: PcsAggregatesDto;
+  onUnitSelect: (unit: PcsUnitListItemDto) => void;
 }
 
 type SortField = "name" | "status" | "linkedBess" | "gridMode" | "activePower" | "gridFreq" | "igbtTemp" | "faultCount";
 type SortDir = "asc" | "desc";
 
-function statusBadge(status: PcsUnit["status"]) {
-  const styles: Record<PcsUnit["status"], string> = {
-    online: "bg-status-operational/15 text-status-operational border-status-operational/30",
-    offline: "bg-muted text-muted-foreground",
-    fault: "bg-status-critical/15 text-status-critical border-status-critical/30",
-    standby: "bg-status-standby/15 text-status-standby border-status-standby/30",
+function badgeColorToClass(color: string): string {
+  const map: Record<string, string> = {
+    green: "bg-status-operational/15 text-status-operational border-status-operational/30",
+    red: "bg-status-critical/15 text-status-critical border-status-critical/30",
+    orange: "bg-severity-high/15 text-severity-high border-severity-high/30",
+    yellow: "bg-status-standby/15 text-status-standby border-status-standby/30",
+    grey: "bg-muted text-muted-foreground",
+    gray: "bg-muted text-muted-foreground",
   };
-  return <Badge className={styles[status]} >{status}</Badge>;
+  return map[color] ?? "bg-muted text-muted-foreground";
 }
 
 function SortableHeader({
@@ -49,7 +51,7 @@ function SortableHeader({
   );
 }
 
-export function PcsOverviewTable({ units, onUnitSelect }: PcsOverviewTableProps) {
+export function PcsOverviewTable({ units, aggregates, onUnitSelect }: PcsOverviewTableProps) {
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
@@ -62,31 +64,22 @@ export function PcsOverviewTable({ units, onUnitSelect }: PcsOverviewTableProps)
     }
   };
 
-  const faultCounts = useMemo(() => {
-    const map = new Map<string, number>();
-    units.forEach((u) => {
-      const flags = getPcsFaultFlagsForUnit(u.id);
-      map.set(u.id, flags.filter((f) => f.active).length);
-    });
-    return map;
-  }, [units]);
-
   const sorted = useMemo(() => {
     return [...units].sort((a, b) => {
       const dir = sortDir === "asc" ? 1 : -1;
       switch (sortField) {
         case "name": return a.name.localeCompare(b.name) * dir;
-        case "status": return a.status.localeCompare(b.status) * dir;
-        case "linkedBess": return a.linkedBessUnitName.localeCompare(b.linkedBessUnitName) * dir;
-        case "gridMode": return a.pcsStatus.gridMode.localeCompare(b.pcsStatus.gridMode) * dir;
-        case "activePower": return (a.power.totalActiveKw - b.power.totalActiveKw) * dir;
-        case "gridFreq": return (a.pcsStatus.gridFreqHz - b.pcsStatus.gridFreqHz) * dir;
-        case "igbtTemp": return (a.temperatures.igbtTempC - b.temperatures.igbtTempC) * dir;
-        case "faultCount": return ((faultCounts.get(a.id) ?? 0) - (faultCounts.get(b.id) ?? 0)) * dir;
+        case "status": return a.status.value.localeCompare(b.status.value) * dir;
+        case "linkedBess": return (a.linkedBessUnit?.name ?? "").localeCompare(b.linkedBessUnit?.name ?? "") * dir;
+        case "gridMode": return a.gridMode.localeCompare(b.gridMode) * dir;
+        case "activePower": return (a.activePowerKw - b.activePowerKw) * dir;
+        case "gridFreq": return (a.gridFreqHz - b.gridFreqHz) * dir;
+        case "igbtTemp": return (a.igbtTempC - b.igbtTempC) * dir;
+        case "faultCount": return (a.activeFaultCount - b.activeFaultCount) * dir;
         default: return 0;
       }
     });
-  }, [units, sortField, sortDir, faultCounts]);
+  }, [units, sortField, sortDir]);
 
   return (
     <div className="flex-1 overflow-auto">
@@ -104,37 +97,36 @@ export function PcsOverviewTable({ units, onUnitSelect }: PcsOverviewTableProps)
           </tr>
         </thead>
         <tbody>
-          {sorted.map((unit) => {
-            const fc = faultCounts.get(unit.id) ?? 0;
-            return (
-              <tr
-                key={unit.id}
-                className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
-                onClick={() => onUnitSelect(unit)}
-              >
-                <td className="px-6 py-3 font-medium">{unit.name}</td>
-                <td className="px-4 py-3 text-muted-foreground">{unit.linkedBessUnitName}</td>
-                <td className="px-4 py-3">{statusBadge(unit.status)}</td>
-                <td className="px-4 py-3 text-muted-foreground">{unit.pcsStatus.gridMode}</td>
-                <td className="px-4 py-3 text-right font-mono">{unit.power.totalActiveKw} kW</td>
-                <td className="px-4 py-3 text-right font-mono">{unit.pcsStatus.gridFreqHz} Hz</td>
-                <td className="px-4 py-3 text-right font-mono">{unit.temperatures.igbtTempC} °C</td>
-                <td className="px-4 py-3 text-right">
-                  {fc > 0 ? (
-                    <Badge className="bg-severity-critical/15 text-severity-critical border-severity-critical/30 text-xs">{fc}</Badge>
-                  ) : (
-                    <span className="text-muted-foreground">0</span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
+          {sorted.map((unit) => (
+            <tr
+              key={unit.id}
+              className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+              onClick={() => onUnitSelect(unit)}
+            >
+              <td className="px-6 py-3 font-medium">{unit.name}</td>
+              <td className="px-4 py-3 text-muted-foreground">{unit.linkedBessUnit?.name ?? "—"}</td>
+              <td className="px-4 py-3">
+                <Badge className={badgeColorToClass(unit.status.color)}>{unit.status.label}</Badge>
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">{unit.gridMode}</td>
+              <td className="px-4 py-3 text-right font-mono">{unit.activePowerKw} kW</td>
+              <td className="px-4 py-3 text-right font-mono">{unit.gridFreqHz} Hz</td>
+              <td className="px-4 py-3 text-right font-mono">{unit.igbtTempC} °C</td>
+              <td className="px-4 py-3 text-right">
+                {unit.activeFaultCount > 0 ? (
+                  <Badge className="bg-severity-critical/15 text-severity-critical border-severity-critical/30 text-xs">{unit.activeFaultCount}</Badge>
+                ) : (
+                  <span className="text-muted-foreground">0</span>
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
       {/* Footer */}
       <div className="sticky bottom-0 border-t bg-muted/30 px-6 py-2.5 text-xs text-muted-foreground">
-        {units.length} PCS units
+        {aggregates.totalUnits} PCS units — {aggregates.onlineCount} online, {aggregates.faultCount} faulted — Total: {aggregates.totalActivePowerKw} kW
       </div>
     </div>
   );
