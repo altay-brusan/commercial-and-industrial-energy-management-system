@@ -46,16 +46,21 @@ All teams must use this document as the single source of truth for:
 ### 1.3 Message Flow
 
 ```
+RTU First Boot:
+  RTU --[bus scan]--> discovers devices with serial numbers
+  RTU --[MQTT]--> Rtu.Handshake --> Backend binds serials + actual counts to topology
+
 RTU Telemetry:
   RTU --[MQTT]--> EMQX --[Webhook POST]--> /api/v1/DeviceData/Ingest --> IngestDeviceDataHandler
-                                                                            |-> DeviceDataCategorizer
-                                                                            |-> Store typed entity
+                                                                            |-> Resolve (rtuSerialNumber, deviceName) → Device
+                                                                            |-> DeviceDataCategorizer (kind → category)
+                                                                            |-> Store typed entity (with path if sub-device)
                                                                             |-> AlarmProcessingService
                                                                             |-> Update LastSeenUtc
 
 Third-Party API:
   Adapter Service --[HTTP poll]--> FusionSolar API
-                   --[translate]--> Standard message format
+                   --[translate]--> Standard envelope (deviceName, kind, payload)
                    --[POST]-------> /api/v1/DeviceData/Ingest --> (same pipeline)
 ```
 
@@ -65,22 +70,24 @@ The backend and RTU have distinct responsibilities for data:
 
 | Data Category | Owner | How It Gets to Backend |
 |---|---|---|
-| **Device topology** (which device connects to which, device type, manufacturer, model) | Database | Engineering tool exports a topology JSON at commissioning |
-| **Device serial numbers** | RTU | RTU reports actual serial numbers during handshake (see below) |
+| **Device topology** (device names, types, manufacturers, connections) | Database | Engineering tool exports a topology JSON at commissioning |
+| **Internal structure schema** (max racks, packs, modules per device) | Database | `DeviceSpecificationTemplate.HierarchyTemplate` |
+| **Device serial numbers** | RTU | RTU reports actual serial numbers during handshake |
+| **Actual sub-device counts** (e.g., 10 racks out of 14 max) | RTU | Reported in handshake `actualCounts` |
 | **Device specifications** (rated capacity, chemistry, etc.) | Database | `DeviceSpecificationTemplate` populated at commissioning |
 | **Telemetry** (SoC, voltage, power, temperatures) | RTU | EMQX messages → Ingest endpoint |
 | **Runtime info** (firmware version, boot time) | RTU | `Device.RuntimeInfo` / `Battery.Nameplate` packages |
 | **Computed metrics** (RUL, efficiency trends, maintenance) | Backend | Calculated from stored telemetry on-demand |
 
-**Key principle:** The RTU sends only what it **measures or knows at runtime**. The backend knows about device topology, types, and manufacturers from the engineering tool — but does **not** know serial numbers until the RTU reports them. If a parameter is missing from a telemetry message, the backend simply does not display it — there is no fallback or guessing.
+**Key principle:** The backend is **vendor-agnostic and model-agnostic** at runtime — it works with device types (Battery, PCS, Solar, Grid), not brands or models. The RTU team handles all vendor-specific protocol mapping (Modbus registers, CAN frames, etc.) and delivers data in our standardized parameter format. The backend does not know serial numbers or actual sub-device counts until the RTU reports them via handshake. If a parameter is missing from a telemetry message, the backend simply does not display it.
 
-#### RTU Handshake: Bridging Topology and Physical Devices
+#### RTU Handshake: Binding Serial Numbers to the Topology
 
-The engineering tool defines **what** is in the field (device types, manufacturers, hierarchy) but not the actual serial numbers of the physical devices. The RTU is the only entity that can discover the real serial numbers by scanning the devices on its bus (Modbus, CAN, etc.).
+The engineering tool defines **what** is in the field (device names, types, manufacturers, connections) but not the actual serial numbers of the physical devices. The RTU is the only entity that can discover real serial numbers by scanning devices on its bus (Modbus, CAN, etc.).
 
-**The problem:** The backend has a topology entry like "Inverter 1 — Tesla, connected to MPPT 1 — Sunway" but no serial numbers. The RTU knows the serial numbers but not the backend's device GUIDs.
+**The problem:** The backend has a topology entry like "Battery1 — Tesla, PCS1 — Sungrow" but no serial numbers. The RTU knows the serial numbers but not the backend's device names.
 
-**The solution:** An RTU handshake process at first boot (or reconnection) that binds physical serial numbers to the topology:
+**The solution:** An RTU handshake at first boot (or reconnection) that binds serial numbers and runtime details to the known topology:
 
 ```
 RTU boots
@@ -88,18 +95,18 @@ RTU boots
   ├─ 1. RTU scans its bus → discovers all connected devices with serial numbers
   │
   ├─ 2. RTU sends Rtu.Handshake message to backend via EMQX
-  │     (contains: RTU serial, list of discovered devices with serial + position)
+  │     (contains: RTU serial, list of discovered devices with name + serial + actual counts)
   │
-  ├─ 3. Backend matches discovered devices against the expected topology
-  │     (by position/address on the bus, device type, or manual mapping)
+  ├─ 3. Backend matches devices by name against the expected topology
   │
   ├─ 4. Backend stores serial numbers on the Device records
+  │     Backend updates actual sub-device counts (e.g., rack count) if different from template max
   │
-  └─ 5. Backend responds with acknowledgement (device GUIDs, config, etc.)
-        All subsequent telemetry uses serial numbers for device identification.
+  └─ 5. Backend responds with acknowledgement
+        All subsequent telemetry uses deviceName for identification.
 ```
 
-**Example:** An RTU managing a BESS container reports during handshake:
+**Example:** An RTU managing a BESS facility reports during handshake:
 
 ```json
 {
@@ -108,25 +115,72 @@ RTU boots
   "timestamp": "2026-03-06T08:00:00Z",
   "payload": {
     "devices": [
-      { "busAddress": 1, "serialNumber": "INV-TES-20250101", "deviceType": "Inverter", "manufacturer": "Tesla" },
-      { "busAddress": 2, "serialNumber": "MPPT-SUN-30042",   "deviceType": "MPPT",     "manufacturer": "Sunway" },
-      { "busAddress": 3, "serialNumber": "BAT-CATL-88712",   "deviceType": "Battery",  "manufacturer": "CATL" }
+      {
+        "deviceName": "Battery1",
+        "serialNumber": "BAT-CATL-88712",
+        "firmwareVersion": "2.1.0",
+        "actualCounts": { "rack": 10, "packPerRack": 4, "modulePerPack": 8 }
+      },
+      {
+        "deviceName": "PCS1",
+        "serialNumber": "PCS-SUN-44201",
+        "firmwareVersion": "3.0.1"
+      },
+      {
+        "deviceName": "Inverter1",
+        "serialNumber": "INV-TES-20250101",
+        "firmwareVersion": "1.5.2"
+      },
+      {
+        "deviceName": "MPPT1",
+        "serialNumber": "MPPT-SUN-30042",
+        "firmwareVersion": "1.0.0"
+      }
     ]
   }
 }
 ```
 
-The backend then matches `busAddress` (or other positional identifiers) against the topology to bind each serial number to the correct `Device` record. If a device is unexpected or missing, the backend raises an alarm.
+The backend matches each `deviceName` against the topology. Key behaviors:
 
-> **Note:** The exact handshake protocol (request/response vs fire-and-forget, MQTT topics, retry logic) is outside the scope of this document and will be defined in a separate RTU communication protocol spec. This section establishes that the handshake **must** happen and what data it carries.
+- **Serial number binding** — stored on the `Device` record for reference, but `deviceName` (not serial) is the routing key for all subsequent telemetry.
+- **Actual counts vs template max** — for battery, the template may say "up to 14 racks" but the handshake reports `"rack": 10`. The backend stores the actual count and uses it for telemetry validation.
+- **Unexpected device** — if the RTU reports a `deviceName` not in the topology, the backend raises an alarm.
+- **Missing device** — if an expected device is not reported, the backend marks it as offline/missing.
 
-#### Device Hierarchy Discovery
+> **Note:** The exact handshake protocol (request/response vs fire-and-forget, MQTT topics, retry logic) is outside the scope of this document and will be defined in a separate RTU communication protocol spec.
 
-Device hierarchy (e.g., Battery Container → Rack → Pack → Module) is determined by two complementary mechanisms:
+#### RTU Replacement and Relocation
 
-1. **Engineering tool topology** — At commissioning, the topology JSON defines the device tree (e.g., a battery container has N racks, each rack has M packs). This is the **primary source**.
-2. **RTU handshake** — The handshake confirms which devices are physically present and binds serial numbers. This validates the topology.
-3. **Telemetry-based validation** — At runtime, the backend can count distinct `serialNumber` values per package type (e.g., count `Battery.RackEnergy` messages to verify rack count). A mismatch between expected and observed counts can trigger an alarm.
+The RTU is a communication gateway — devices belong to the **facility**, not to the RTU. When an RTU is replaced or relocated:
+
+**RTU replacement (same facility, same devices):**
+1. Backend admin updates the `Rtu` record with the new RTU's serial number
+2. New RTU boots and sends handshake with its serial → backend recognizes it
+3. All device names and associations remain unchanged
+4. Telemetry resumes normally
+
+**RTU relocation (moved to a different facility):**
+1. Backend admin reassigns the `Rtu` record to the new facility
+2. Devices at the old facility are reassigned to a replacement RTU (or marked as unassigned)
+3. The relocated RTU performs handshake at the new facility with whatever devices are there
+
+In both cases, `deviceName` stability is preserved because names come from the engineering tool topology, not from the RTU hardware.
+
+#### Device Hierarchy: Physical vs Internal
+
+Not all levels in a device tree are physical devices. The backend distinguishes:
+
+| Level | Example | Has Device Record | Has Serial Number | Identified By |
+|---|---|---|---|---|
+| **Physical device** | Battery container, PCS, Inverter, MPPT | Yes | Yes (from handshake) | `deviceName` |
+| **Internal structure** | Rack, Pack, Module, Cell | No | No | `path` in envelope (e.g., `Rack/2/Pack/1`) |
+
+**Physical devices** are defined by the engineering tool topology and registered as `Device` rows. Parent-child relationships between physical devices (e.g., Cabinet → Battery, Cabinet → PCS) use `Device.ParentDeviceId`.
+
+**Internal structure** (racks, packs, modules) is defined by the `DeviceSpecificationTemplate.HierarchyTemplate` as a maximum capacity schema. The actual counts are reported by the RTU during handshake. Internal structure is addressed via the `path` field in telemetry messages — no `Device` rows are created for these levels.
+
+**Telemetry-based validation:** At runtime, the backend can count distinct `path` values per package type (e.g., count unique `Rack/*` paths in `Battery.RackEnergy` messages). A mismatch between the handshake-reported count and observed telemetry paths triggers an alarm.
 
 #### Vendor-Specific Extensions
 
@@ -231,8 +285,9 @@ Every EMQX message uses this standard JSON envelope:
 ```json
 {
   "rtuSerialNumber": "RTU-001",
-  "serialNumber": "BAT-001",
+  "deviceName": "Battery1",
   "kind": "Battery.Energy",
+  "path": null,
   "timestamp": "2026-03-06T12:00:00Z",
   "payload": {
     "soc": 85.2,
@@ -245,19 +300,54 @@ Every EMQX message uses this standard JSON envelope:
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `rtuSerialNumber` | string | Yes | Serial number of the RTU reporting this data |
-| `serialNumber` | string | Yes | Serial number of the specific device |
+| `rtuSerialNumber` | string | Yes | Serial number of the RTU sending this data |
+| `deviceName` | string | Yes | Name of the physical device (unique per RTU), as defined by the engineering tool topology |
 | `kind` | string | Yes | Package name (e.g., `Battery.Energy`) — used by `DeviceDataCategorizer` |
+| `path` | string | No | Sub-device address within the device for internal structure (e.g., `Rack/2`, `Rack/2/Pack/1/Module/3`). `null` for device-level data. |
 | `timestamp` | string (ISO 8601) | Yes | UTC timestamp when the measurement was taken |
 | `payload` | object | Yes | Key-value pairs defined by the package specification |
+
+**Device resolution:** The backend resolves `(rtuSerialNumber, deviceName)` → `Device` record. The `path` field is used only to identify sub-device structure (racks, packs, modules) that do not have their own `Device` records.
+
+**Path format:** Alternating `Level/Index`, slash-separated. Examples:
+
+| Path | Meaning |
+|---|---|
+| `null` | Device-level (container, inverter, PCS, etc.) |
+| `Rack/2` | Rack index 2 within the device |
+| `Rack/2/Pack/1` | Pack index 1 within Rack 2 |
+| `Rack/2/Pack/1/Module/3` | Module index 3 within Pack 1 of Rack 2 |
+
+**Examples by device type:**
+
+Container-level battery data:
+```json
+{ "rtuSerialNumber": "RTU-001", "deviceName": "Battery1", "kind": "Battery.Energy", "path": null, "timestamp": "...", "payload": { "soc": 85.2 } }
+```
+
+Rack-level data (internal structure, no separate Device record):
+```json
+{ "rtuSerialNumber": "RTU-001", "deviceName": "Battery1", "kind": "Battery.RackEnergy", "path": "Rack/2", "timestamp": "...", "payload": { "soc": 87.1 } }
+```
+
+PCS data (physical device, no path):
+```json
+{ "rtuSerialNumber": "RTU-001", "deviceName": "PCS1", "kind": "Pcs.Status", "path": null, "timestamp": "...", "payload": { "pcsWorkingCondition": "Running" } }
+```
+
+Solar MPPT data (physical sub-device with its own name):
+```json
+{ "rtuSerialNumber": "RTU-001", "deviceName": "MPPT1", "kind": "Solar.Mppt", "path": null, "timestamp": "...", "payload": { "mpptVoltages": [380.2] } }
+```
 
 **Batch endpoint** (`POST /api/v1/DeviceData/Ingest/Batch`) accepts an array of envelopes:
 
 ```json
 {
   "messages": [
-    { "rtuSerialNumber": "RTU-001", "serialNumber": "BAT-001", "kind": "Battery.Energy", "timestamp": "...", "payload": { ... } },
-    { "rtuSerialNumber": "RTU-001", "serialNumber": "PCS-001", "kind": "Pcs.Status", "timestamp": "...", "payload": { ... } }
+    { "rtuSerialNumber": "RTU-001", "deviceName": "Battery1", "kind": "Battery.Energy", "path": null, "timestamp": "...", "payload": { ... } },
+    { "rtuSerialNumber": "RTU-001", "deviceName": "Battery1", "kind": "Battery.RackEnergy", "path": "Rack/1", "timestamp": "...", "payload": { ... } },
+    { "rtuSerialNumber": "RTU-001", "deviceName": "PCS1", "kind": "Pcs.Status", "path": null, "timestamp": "...", "payload": { ... } }
   ]
 }
 ```
@@ -345,7 +435,7 @@ State of Health, sampled infrequently.
 
 > **Frequency:** Realtime-Medium (30s-5min) | **Source:** RTU
 
-Full cell-level diagnostic array for detailed monitoring.
+Full cell-level diagnostic array for detailed monitoring. Sent with the battery's `deviceName` and a `path` to identify the scope (e.g., `path: "Rack/2"` for all cells in rack 2, or `path: null` for the entire container).
 
 | Parameter | Type | Unit | Description |
 |---|---|---|---|
@@ -397,7 +487,7 @@ Computed lifecycle metrics derived from raw telemetry. Not sent by RTU.
 
 > **Frequency:** Realtime-Fast (1-5s) | **Source:** RTU
 
-Per-rack level measurements. Published once per rack (each rack has its own `serialNumber`).
+Per-rack level measurements. Published once per rack using the parent battery's `deviceName` with a `path` to identify the rack (e.g., `path: "Rack/2"`). Racks are internal structure — they do not have their own `Device` records or serial numbers.
 
 | Parameter | Type | Unit | Description |
 |---|---|---|---|
@@ -417,7 +507,7 @@ Per-rack level measurements. Published once per rack (each rack has its own `ser
 
 > **Frequency:** Realtime-Fast (1-5s) | **Source:** RTU
 
-Per-module level measurements. Published once per module.
+Per-module level measurements. Published once per module using the parent battery's `deviceName` with a full `path` (e.g., `path: "Rack/2/Pack/1/Module/3"`). Modules are internal structure — they do not have their own `Device` records.
 
 | Parameter | Type | Unit | Description |
 |---|---|---|---|
@@ -777,9 +867,9 @@ Computed breaker lifecycle metrics.
 
 > **Frequency:** Registration (once, on boot/firmware update) | **Source:** RTU
 
-Runtime information reported by the RTU on device boot or firmware update. Can be sent by any device type.
+Runtime information reported by the RTU on device boot or firmware update. Can be sent by any device type. Uses `deviceName` in the envelope to identify the device.
 
-Static identity fields (serial number, manufacturer, model, install date, location) are **not** sent by the RTU — they are stored in the database at commissioning time via the engineering tool and the `DeviceSpecificationTemplate`.
+Static identity fields (serial number, manufacturer, model, install date, location) are **not** part of telemetry — serial numbers are bound during the RTU handshake, and all other identity data is stored in the database at commissioning time via the engineering tool.
 
 | Parameter | Type | Unit | Description |
 |---|---|---|---|
@@ -1207,5 +1297,6 @@ Each adapter will follow the same pattern: poll API -> translate to standard pac
 | 29 | Grid.BreakerLifecycle | Calculated | Backend | 5 | SmartMeter |
 | 30 | Device.RuntimeInfo | Registration | RTU | 4 | (varies) |
 | 31 | Device.Maintenance | Calculated | Backend | 5 | (varies) |
+| 32 | Rtu.Handshake | Registration | RTU | 1 (array) | RTU |
 
-**Total: 31 packages, ~210 unique parameters**
+**Total: 32 packages, ~210 unique parameters**
