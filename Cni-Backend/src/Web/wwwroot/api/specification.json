@@ -5148,11 +5148,15 @@
           "rtuSn": {
             "type": "string"
           },
-          "deviceSn": {
+          "deviceName": {
             "type": "string"
           },
           "kind": {
             "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
           },
           "payload": {
             "type": "string"
@@ -5198,7 +5202,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "deviceSn": {
+          "deviceName": {
             "type": "string"
           },
           "rtuSn": {
@@ -5206,6 +5210,10 @@
           },
           "kind": {
             "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
           },
           "payload": {},
           "deviceLocalTime": {

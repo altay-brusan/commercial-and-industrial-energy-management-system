@@ -28,6 +28,10 @@ public abstract class DeviceDataBaseConfiguration<T> : IEntityTypeConfiguration<
         builder.Property(e => e.Kind)
             .HasMaxLength(100);
 
+        // Sub-device path within the physical device (e.g., "Rack/2", "Rack/2/Pack/1")
+        builder.Property(e => e.Path)
+            .HasMaxLength(200);
+
         // JSON payload - use PostgreSQL JSONB type for efficient querying
         builder.Property(e => e.Payload)
             .HasColumnType("jsonb")

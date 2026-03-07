@@ -6,23 +6,27 @@ public static class DeviceDataCategorizer
 {
     private static readonly (string Prefix, DeviceDataCategory Category)[] PrefixMappings =
     {
+        // Legacy Kind prefixes (pre-standardization)
         ("ContainerBattery", DeviceDataCategory.Bess),
         ("Chiller", DeviceDataCategory.Bess),
         ("HVCU", DeviceDataCategory.Bess),
-        ("Battery", DeviceDataCategory.Bess),
         ("Bess", DeviceDataCategory.Bess),
         ("Rack", DeviceDataCategory.Bess),
         ("Pack", DeviceDataCategory.Bess),
         ("Module", DeviceDataCategory.Bess),
-        ("Pcs", DeviceDataCategory.Pcs),
         ("PCS", DeviceDataCategory.Pcs),
+        ("SmartMeter", DeviceDataCategory.SmartMeter),
+        ("Irradiance", DeviceDataCategory.Solar),
+
+        // Standard package name prefixes (Battery.Energy, Pcs.Status, etc.)
+        ("Battery", DeviceDataCategory.Bess),
+        ("Pcs", DeviceDataCategory.Pcs),
         ("Solar", DeviceDataCategory.Solar),
         ("Pv", DeviceDataCategory.Solar),
         ("PV", DeviceDataCategory.Solar),
-        ("Irradiance", DeviceDataCategory.Solar),
-        ("Meter", DeviceDataCategory.SmartMeter),
+        ("Wind", DeviceDataCategory.Wind),
         ("Grid", DeviceDataCategory.SmartMeter),
-        ("SmartMeter", DeviceDataCategory.SmartMeter),
+        ("Meter", DeviceDataCategory.SmartMeter),
     };
 
     public static DeviceDataCategory Categorize(string? kind)

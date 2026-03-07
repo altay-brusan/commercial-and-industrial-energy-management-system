@@ -47,8 +47,9 @@ public class DeviceData : EndpointGroupBase
         var command = new IngestDeviceDataCommand
         {
             RtuSn = message.RtuSn,
-            DeviceSn = message.DeviceSn,
+            DeviceName = message.DeviceName,
             Kind = message.Kind,
+            Path = message.Path,
             Payload = message.Payload.GetRawText(),
             DeviceLocalTime = message.DeviceLocalTime
         };
@@ -70,9 +71,10 @@ public record IngestResultDto
 /// </summary>
 public record ThingsBoardTelemetryDto
 {
-    public string DeviceSn { get; init; } = string.Empty;
+    public string DeviceName { get; init; } = string.Empty;
     public string RtuSn { get; init; } = string.Empty;
     public string Kind { get; init; } = string.Empty;
+    public string? Path { get; init; }
     public JsonElement Payload { get; init; }
     public DateTimeOffset? DeviceLocalTime { get; init; }
     public int? Version { get; init; }

@@ -40,6 +40,7 @@ public class AlarmProcessingService
         string? manufacturer,
         string? model,
         string kind,
+        string? path,
         string payload,
         DateTimeOffset timestamp,
         CancellationToken ct)
@@ -57,50 +58,42 @@ public class AlarmProcessingService
         if (!payloadElement.HasValue)
             return;
 
-        // 3. Resolve target device for rack-level addressing (bmuLoc)
-        var targetDeviceId = deviceId;
-        var bmuLoc = ExtractBmuLoc(payloadElement.Value);
-        if (bmuLoc.HasValue)
-        {
-            var resolver = new DeviceAddressResolver(context, _cache);
-            var childId = await resolver.ResolveChildByHierarchyIndex(deviceId, bmuLoc.Value, ct);
-            if (childId.HasValue)
-                targetDeviceId = childId.Value;
-        }
-
-        // 4. Load existing active alarms for this device, keyed by AlarmTypeId
+        // 3. Load existing active alarms for this device + path, keyed by AlarmTypeId
         var activeAlarms = await context.DeviceAlarms
             .IgnoreQueryFilters()
-            .Where(a => a.DeviceId == targetDeviceId && a.IsActive)
+            .Where(a => a.DeviceId == deviceId && a.Path == path && a.IsActive)
             .ToListAsync(ct);
 
         var activeAlarmsByTypeId = activeAlarms
             .ToDictionary(a => a.DeviceAlarmTypeId);
 
-        // 5. Process each alarm type using its detection strategy
+        // 4. Process each alarm type using its detection strategy
         foreach (var alarmType in alarmTypes)
         {
             var isFaulted = DetectFault(alarmType, payloadElement.Value);
 
             if (isFaulted && !activeAlarmsByTypeId.ContainsKey(alarmType.Id))
             {
-                // New fault — create alarm record
+                // New fault — create alarm record on the physical device with path
                 var alarm = new DeviceAlarm
                 {
-                    DeviceId = targetDeviceId,
+                    DeviceId = deviceId,
                     DeviceAlarmTypeId = alarmType.Id,
+                    Path = path,
                     OccurredAt = timestamp,
                     IsActive = true
                 };
                 context.DeviceAlarms.Add(alarm);
-                _logger.LogInformation("Alarm created: {Code} on device {DeviceId}", alarmType.Code, targetDeviceId);
+                _logger.LogInformation("Alarm created: {Code} on device {DeviceId} path {Path}",
+                    alarmType.Code, deviceId, path ?? "(device-level)");
             }
             else if (!isFaulted && activeAlarmsByTypeId.TryGetValue(alarmType.Id, out var existingAlarm))
             {
                 // Fault cleared — recover alarm
                 existingAlarm.RecoveredAt = timestamp;
                 existingAlarm.IsActive = false;
-                _logger.LogInformation("Alarm recovered: {Code} on device {DeviceId}", alarmType.Code, targetDeviceId);
+                _logger.LogInformation("Alarm recovered: {Code} on device {DeviceId} path {Path}",
+                    alarmType.Code, deviceId, path ?? "(device-level)");
             }
         }
     }
@@ -175,18 +168,4 @@ public class AlarmProcessingService
         return types;
     }
 
-    /// <summary>
-    /// Extracts bmuLoc (rack address) from the payload if present.
-    /// Edge devices send this as an integer field to identify which rack the data belongs to.
-    /// </summary>
-    private static int? ExtractBmuLoc(JsonElement payload)
-    {
-        if (payload.TryGetProperty("bmuLoc", out var bmuLocElement))
-        {
-            if (bmuLocElement.ValueKind == JsonValueKind.Number && bmuLocElement.TryGetInt32(out var loc))
-                return loc;
-        }
-
-        return null;
-    }
 }

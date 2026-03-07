@@ -25,10 +25,10 @@ public class DeviceSpecificationTemplateConfiguration : IEntityTypeConfiguration
             .HasColumnType("jsonb")
             .HasDefaultValue("{}");
 
-        builder.Property(t => t.ParameterMapTemplate)
+        builder.Property(t => t.HierarchyTemplate)
             .HasColumnType("jsonb");
 
-        builder.Property(t => t.HierarchyTemplate)
+        builder.Property(t => t.ParameterMapTemplate)
             .HasColumnType("jsonb");
 
         builder.HasOne(t => t.DeviceType)

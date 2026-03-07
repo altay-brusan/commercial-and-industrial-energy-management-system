@@ -11,8 +11,9 @@ namespace Backend.Application.DeviceData.Commands.IngestDeviceData;
 public record IngestDeviceDataCommand : IRequest<bool>
 {
     public string RtuSn { get; init; } = string.Empty;
-    public string DeviceSn { get; init; } = string.Empty;
+    public string DeviceName { get; init; } = string.Empty;
     public string Kind { get; init; } = string.Empty;
+    public string? Path { get; init; }
     public string Payload { get; init; } = "{}";
     public DateTimeOffset? DeviceLocalTime { get; init; }
 }
@@ -50,10 +51,10 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
             return false;
         }
 
-        var deviceId = await ResolveDeviceId(request.DeviceSn, rtuId.Value, cancellationToken);
+        var deviceId = await ResolveDeviceId(request.DeviceName, rtuId.Value, cancellationToken);
         if (deviceId == null)
         {
-            _logger.LogWarning("Device not found for serial number {DeviceSn} under RTU {RtuSn}", request.DeviceSn, request.RtuSn);
+            _logger.LogWarning("Device not found for name {DeviceName} under RTU {RtuSn}", request.DeviceName, request.RtuSn);
             return false;
         }
 
@@ -68,6 +69,7 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
                 {
                     DeviceId = deviceId.Value,
                     Kind = request.Kind,
+                    Path = request.Path,
                     Payload = request.Payload,
                     DeviceLocalTime = deviceLocalTime,
                     Created = now,
@@ -80,6 +82,7 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
                 {
                     DeviceId = deviceId.Value,
                     Kind = request.Kind,
+                    Path = request.Path,
                     Payload = request.Payload,
                     DeviceLocalTime = deviceLocalTime,
                     Created = now,
@@ -92,6 +95,7 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
                 {
                     DeviceId = deviceId.Value,
                     Kind = request.Kind,
+                    Path = request.Path,
                     Payload = request.Payload,
                     DeviceLocalTime = deviceLocalTime,
                     Created = now,
@@ -100,10 +104,12 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
                 break;
 
             case DeviceDataCategory.SmartMeter:
+            case DeviceDataCategory.Wind: // Wind shares SmartMeter table until a dedicated table is added
                 _context.DeviceSmartMeterData.Add(new DeviceSmartMeterData
                 {
                     DeviceId = deviceId.Value,
                     Kind = request.Kind,
+                    Path = request.Path,
                     Payload = request.Payload,
                     DeviceLocalTime = deviceLocalTime,
                     Created = now,
@@ -117,6 +123,7 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
                 {
                     DeviceId = deviceId.Value,
                     Kind = request.Kind,
+                    Path = request.Path,
                     Payload = request.Payload,
                     DeviceLocalTime = deviceLocalTime,
                     Created = now,
@@ -143,6 +150,7 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
             device.Manufacturer,
             device.Model,
             request.Kind,
+            request.Path,
             request.Payload,
             deviceLocalTime,
             cancellationToken);
@@ -171,16 +179,16 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
         return rtuId;
     }
 
-    private async Task<Guid?> ResolveDeviceId(string deviceSn, Guid rtuId, CancellationToken cancellationToken)
+    private async Task<Guid?> ResolveDeviceId(string deviceName, Guid rtuId, CancellationToken cancellationToken)
     {
-        var cacheKey = $"device:sn:{deviceSn}:rtu:{rtuId}";
+        var cacheKey = $"device:name:{deviceName}:rtu:{rtuId}";
 
         if (_cache.TryGetValue(cacheKey, out Guid cachedId))
             return cachedId;
 
         var deviceId = await _context.Devices
             .IgnoreQueryFilters()
-            .Where(d => d.SerialNumber == deviceSn && d.RtuId == rtuId)
+            .Where(d => d.Name == deviceName && d.RtuId == rtuId)
             .Select(d => (Guid?)d.Id)
             .FirstOrDefaultAsync(cancellationToken);
 

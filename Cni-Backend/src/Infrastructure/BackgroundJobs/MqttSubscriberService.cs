@@ -122,9 +122,15 @@ public class MqttSubscriberService : BackgroundService
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            var deviceSerialNumber = root.GetProperty("deviceSerialNumber").GetString() ?? string.Empty;
+            var deviceName = root.GetProperty("deviceName").GetString() ?? string.Empty;
             var kind = root.GetProperty("kind").GetString() ?? string.Empty;
             var payload = root.GetProperty("payload").GetRawText();
+
+            string? path = null;
+            if (root.TryGetProperty("path", out var pathElement) && pathElement.ValueKind == JsonValueKind.String)
+            {
+                path = pathElement.GetString();
+            }
 
             DateTimeOffset? deviceLocalTime = null;
             if (root.TryGetProperty("deviceLocalTime", out var timeElement))
@@ -138,8 +144,9 @@ public class MqttSubscriberService : BackgroundService
             var command = new IngestDeviceDataCommand
             {
                 RtuSn = rtuSerialNumber,
-                DeviceSn = deviceSerialNumber,
+                DeviceName = deviceName,
                 Kind = kind,
+                Path = path,
                 Payload = payload,
                 DeviceLocalTime = deviceLocalTime
             };

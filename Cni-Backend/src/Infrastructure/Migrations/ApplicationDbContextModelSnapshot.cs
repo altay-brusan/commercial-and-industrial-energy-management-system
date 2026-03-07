@@ -282,6 +282,9 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Path")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("RecoveredAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -424,6 +427,10 @@ namespace Backend.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<string>("Path")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Payload")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -474,6 +481,10 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
+
+                    b.Property<string>("Path")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Payload")
                         .IsRequired()
@@ -526,6 +537,10 @@ namespace Backend.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<string>("Path")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Payload")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -576,6 +591,10 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
+
+                    b.Property<string>("Path")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Payload")
                         .IsRequired()
