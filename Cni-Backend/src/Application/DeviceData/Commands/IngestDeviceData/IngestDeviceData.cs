@@ -30,6 +30,8 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
         SlidingExpiration = TimeSpan.FromMinutes(5)
     };
 
+    private static readonly TimeSpan LastSeenThrottle = TimeSpan.FromSeconds(30);
+
     public IngestDeviceDataCommandHandler(
         IApplicationDbContext context,
         IMemoryCache cache,
@@ -58,106 +60,98 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
             return false;
         }
 
-        var category = DeviceDataCategorizer.Categorize(request.Kind);
         var now = DateTimeOffset.UtcNow;
         var deviceLocalTime = request.DeviceLocalTime ?? now;
 
-        switch (category)
+        // Handle alarm packages separately — they don't produce telemetry records
+        if (DeviceDataCategorizer.IsAlarmPackage(request.Kind))
         {
-            case DeviceDataCategory.Bess:
-                _context.DeviceBatteryData.Add(new DeviceBatteryData
-                {
-                    DeviceId = deviceId.Value,
-                    Kind = request.Kind,
-                    Path = request.Path,
-                    Payload = request.Payload,
-                    DeviceLocalTime = deviceLocalTime,
-                    Created = now,
-                    LastModified = now
-                });
-                break;
-
-            case DeviceDataCategory.Pcs:
-                _context.DevicePcsData.Add(new DevicePcsData
-                {
-                    DeviceId = deviceId.Value,
-                    Kind = request.Kind,
-                    Path = request.Path,
-                    Payload = request.Payload,
-                    DeviceLocalTime = deviceLocalTime,
-                    Created = now,
-                    LastModified = now
-                });
-                break;
-
-            case DeviceDataCategory.Solar:
-                _context.DeviceSolarData.Add(new DeviceSolarData
-                {
-                    DeviceId = deviceId.Value,
-                    Kind = request.Kind,
-                    Path = request.Path,
-                    Payload = request.Payload,
-                    DeviceLocalTime = deviceLocalTime,
-                    Created = now,
-                    LastModified = now
-                });
-                break;
-
-            case DeviceDataCategory.SmartMeter:
-            case DeviceDataCategory.Wind: // Wind shares SmartMeter table until a dedicated table is added
-                _context.DeviceSmartMeterData.Add(new DeviceSmartMeterData
-                {
-                    DeviceId = deviceId.Value,
-                    Kind = request.Kind,
-                    Path = request.Path,
-                    Payload = request.Payload,
-                    DeviceLocalTime = deviceLocalTime,
-                    Created = now,
-                    LastModified = now
-                });
-                break;
-
-            default:
-                _logger.LogWarning("Unknown device data category for kind {Kind}, storing as battery data", request.Kind);
-                _context.DeviceBatteryData.Add(new DeviceBatteryData
-                {
-                    DeviceId = deviceId.Value,
-                    Kind = request.Kind,
-                    Path = request.Path,
-                    Payload = request.Payload,
-                    DeviceLocalTime = deviceLocalTime,
-                    Created = now,
-                    LastModified = now
-                });
-                break;
+            await ProcessAlarmPackage(deviceId.Value, request.Path, request.Payload, deviceLocalTime, cancellationToken);
+            await UpdateLastSeenThrottled(rtuId.Value, deviceId.Value, now, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+            return true;
         }
 
-        // Update LastSeenUtc on both RTU and Device via tracked entities
-        var rtu = await _context.Rtus.IgnoreQueryFilters()
-            .FirstAsync(r => r.Id == rtuId.Value, cancellationToken);
-        rtu.LastSeenUtc = now;
+        var category = DeviceDataCategorizer.Categorize(request.Kind);
 
-        var device = await _context.Devices.IgnoreQueryFilters()
-            .Include(d => d.DeviceType)
-            .FirstAsync(d => d.Id == deviceId.Value, cancellationToken);
-        device.LastSeenUtc = now;
+        if (category == DeviceDataCategory.Unknown)
+        {
+            _logger.LogWarning("Unrecognized kind {Kind} for device {DeviceName} — message rejected", request.Kind, request.DeviceName);
+            return false;
+        }
 
-        // Process alarm flags from the payload (creates/recovers DeviceAlarm records)
-        await _alarmProcessor.ProcessAsync(
-            _context,
-            deviceId.Value,
-            device.DeviceTypeId,
-            device.Manufacturer,
-            device.Model,
-            request.Kind,
-            request.Path,
-            request.Payload,
-            deviceLocalTime,
-            cancellationToken);
-
+        StoreTelemetry(category, deviceId.Value, request.Kind, request.Path, request.Payload, deviceLocalTime, now);
+        await UpdateLastSeenThrottled(rtuId.Value, deviceId.Value, now, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+
+    private void StoreTelemetry(
+        DeviceDataCategory category, Guid deviceId,
+        string kind, string? path, string payload,
+        DateTimeOffset deviceLocalTime, DateTimeOffset now)
+    {
+        DeviceDataBase entity = category switch
+        {
+            DeviceDataCategory.Bess => new DeviceBatteryData(),
+            DeviceDataCategory.Pcs => new DevicePcsData(),
+            DeviceDataCategory.Solar => new DeviceSolarData(),
+            DeviceDataCategory.SmartMeter or DeviceDataCategory.Wind => new DeviceSmartMeterData(),
+            _ => throw new InvalidOperationException($"Unexpected category {category}")
+        };
+
+        entity.DeviceId = deviceId;
+        entity.Kind = kind;
+        entity.Path = path;
+        entity.Payload = payload;
+        entity.DeviceLocalTime = deviceLocalTime;
+        entity.Created = now;
+        entity.LastModified = now;
+
+        switch (entity)
+        {
+            case DeviceBatteryData e: _context.DeviceBatteryData.Add(e); break;
+            case DevicePcsData e: _context.DevicePcsData.Add(e); break;
+            case DeviceSolarData e: _context.DeviceSolarData.Add(e); break;
+            case DeviceSmartMeterData e: _context.DeviceSmartMeterData.Add(e); break;
+        }
+    }
+
+    /// <summary>
+    /// Processes an alarm package (e.g., Battery.Alarm) directly into DeviceAlarm records.
+    /// The RTU decides when alarms are active/recovered — backend just records them.
+    /// </summary>
+    private async Task ProcessAlarmPackage(
+        Guid deviceId, string? path, string payload,
+        DateTimeOffset timestamp, CancellationToken ct)
+    {
+        await _alarmProcessor.ProcessAlarmPackageAsync(_context, deviceId, path, payload, timestamp, ct);
+    }
+
+    /// <summary>
+    /// Throttles LastSeenUtc updates to avoid excessive DB writes.
+    /// Only updates if the last write was more than 30 seconds ago.
+    /// </summary>
+    private async Task UpdateLastSeenThrottled(Guid rtuId, Guid deviceId, DateTimeOffset now, CancellationToken ct)
+    {
+        var rtuCacheKey = $"lastseen:rtu:{rtuId}";
+        if (!_cache.TryGetValue(rtuCacheKey, out DateTimeOffset _))
+        {
+            var rtu = await _context.Rtus.IgnoreQueryFilters()
+                .FirstAsync(r => r.Id == rtuId, ct);
+            rtu.LastSeenUtc = now;
+            _cache.Set(rtuCacheKey, now, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = LastSeenThrottle });
+        }
+
+        var deviceCacheKey = $"lastseen:device:{deviceId}";
+        if (!_cache.TryGetValue(deviceCacheKey, out DateTimeOffset _))
+        {
+            var device = await _context.Devices.IgnoreQueryFilters()
+                .FirstAsync(d => d.Id == deviceId, ct);
+            device.LastSeenUtc = now;
+            _cache.Set(deviceCacheKey, now, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = LastSeenThrottle });
+        }
     }
 
     private async Task<Guid?> ResolveRtuId(string rtuSn, CancellationToken cancellationToken)
