@@ -3,7 +3,9 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Backend.Domain.Constants;
 using Backend.Domain.Entities;
+using Backend.Domain.Entities.Huawei;
 using Backend.Domain.Enums;
+using Backend.Infrastructure.Huawei;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -985,6 +987,306 @@ public class ApplicationDbContextInitializer
             _context.FacilityTariffs.Add(facilityTariff);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Demo facility tariff assignment created");
+        }
+
+        #endregion
+
+        #region HuaweiPemVilla
+
+        // Seed Huawei Pem Villa EMMA facility with virtual RTU + devices
+        var existingHuaweiAccount = await _context.HuaweiAccounts.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.UserName == "Pemapi");
+
+        if (existingHuaweiAccount == null)
+        {
+            _logger.LogInformation("Seeding Huawei Pem Villa EMMA integration...");
+
+            // Use the existing demo tenant for Pem Villa
+            // Create Pem Villa firm
+            var pemFirm = new Firm
+            {
+                TenantId = tenantId,
+                Name = "Pem Villa Energy",
+                Type = "Residential Energy",
+                Country = "Turkey",
+                City = "Antalya",
+                ContactEmail = "info@pemvilla.com",
+                Created = DateTime.UtcNow
+            };
+            _context.Firms.Add(pemFirm);
+            await _context.SaveChangesAsync();
+
+            // Create Pem Villa EMMA facility
+            var pemFacility = new Facility
+            {
+                FirmId = pemFirm.Id,
+                Name = "Pem Villa EMMA",
+                Address = "Pem Villa, Antalya, Turkey",
+                EnergyCapacity = 20,
+                EnergyUnit = EnergyUnit.KWh,
+                Longitude = 30.7133,
+                Latitude = 36.8969,
+                DataSource = FacilityDataSource.Huawei,
+                Created = DateTime.UtcNow
+            };
+            _context.Facilities.Add(pemFacility);
+            await _context.SaveChangesAsync();
+
+            // Create virtual RTU for Huawei station
+            var pemRtu = new Rtu
+            {
+                FacilityId = pemFacility.Id,
+                RtuSerialNumber = "HUAWEI-NE55911180",
+                RtuModel = "Huawei FusionSolar Virtual RTU",
+                Protocol = "HTTPS",
+                Status = "online",
+                Created = DateTime.UtcNow
+            };
+            _context.Rtus.Add(pemRtu);
+            await _context.SaveChangesAsync();
+
+            // Create battery devices (3x LUNA2000)
+            var battery12 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                Name = "Battery-12",
+                Model = "LUNA2000-10KW-C1",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            var battery13 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                Name = "Battery-13",
+                Model = "LUNA2000-5KW-C0",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            var battery14 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                Name = "Battery-14",
+                Model = "LUNA2000-5KW-C0",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            _context.Devices.AddRange(battery12, battery13, battery14);
+            await _context.SaveChangesAsync();
+
+            // Create PCS devices (inverters as PCS, children of batteries)
+            var pcs12 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                ParentDeviceId = battery12.Id,
+                Name = "Inverter-12-PCS",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2460093355",
+                Manufacturer = "Huawei",
+                HierarchyIndex = 0,
+                Created = DateTime.UtcNow
+            };
+            var pcs13 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                ParentDeviceId = battery13.Id,
+                Name = "Inverter-13-PCS",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2511002783",
+                Manufacturer = "Huawei",
+                HierarchyIndex = 0,
+                Created = DateTime.UtcNow
+            };
+            var pcs14 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                ParentDeviceId = battery14.Id,
+                Name = "Inverter-14-PCS",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2511002884",
+                Manufacturer = "Huawei",
+                HierarchyIndex = 0,
+                Created = DateTime.UtcNow
+            };
+
+            // Create Solar devices (inverters as solar producers)
+            var solar12 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                Name = "Inverter-12-Solar",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2460093355-SOL",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            var solar13 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                Name = "Inverter-13-Solar",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2511002783-SOL",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            var solar14 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                Name = "Inverter-14-Solar",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2511002884-SOL",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+
+            _context.Devices.AddRange(pcs12, pcs13, pcs14, solar12, solar13, solar14);
+            await _context.SaveChangesAsync();
+
+            // Create HuaweiAccount with encrypted credentials
+            var encryptor = new HuaweiCredentialEncryptor("change-me-in-production-32-bytes!");
+            var huaweiAccount = new HuaweiAccount
+            {
+                TenantId = tenantId,
+                UserName = "Pemapi",
+                EncryptedSystemCode = encryptor.Encrypt("Pem12345"),
+                BaseUrl = "https://eu5.fusionsolar.huawei.com/thirdData",
+                IsActive = true,
+                Created = DateTime.UtcNow
+            };
+            _context.HuaweiAccounts.Add(huaweiAccount);
+            await _context.SaveChangesAsync();
+
+            // Create station mapping
+            var stationMapping = new HuaweiStationMapping
+            {
+                HuaweiAccountId = huaweiAccount.Id,
+                StationCode = "NE=55911180",
+                StationName = "Pem Villa EMMA",
+                FacilityId = pemFacility.Id,
+                SyncEnabled = true,
+                Created = DateTime.UtcNow
+            };
+            _context.HuaweiStationMappings.Add(stationMapping);
+            await _context.SaveChangesAsync();
+
+            // Create device mappings
+            // Each Huawei inverter (devTypeId=1) maps to TWO CNI devices (PCS + Solar)
+            // Each Huawei battery (devTypeId=39) maps to ONE CNI device (EnergyStorage)
+            var deviceMappings = new List<HuaweiDeviceMapping>
+            {
+                // Battery mappings (devTypeId=39)
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000055833018,
+                    HuaweiDevTypeId = 39,
+                    DeviceId = battery12.Id,
+                    DeviceName = "Battery-1 (Inverter-12)",
+                    Model = "LUNA2000-10KW-C1",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185748,
+                    HuaweiDevTypeId = 39,
+                    DeviceId = battery13.Id,
+                    DeviceName = "Battery-1 (Inverter-13)",
+                    Model = "LUNA2000-5KW-C0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185750,
+                    HuaweiDevTypeId = 39,
+                    DeviceId = battery14.Id,
+                    DeviceName = "Battery-1 (Inverter-14)",
+                    Model = "LUNA2000-5KW-C0",
+                    Created = DateTime.UtcNow
+                },
+                // Inverter → PCS mappings (devTypeId=1)
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000055833015,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = pcs12.Id,
+                    DeviceName = "Inverter-12 (PCS)",
+                    SerialNumber = "BT2460093355",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185746,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = pcs13.Id,
+                    DeviceName = "Inverter-13 (PCS)",
+                    SerialNumber = "BT2511002783",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185749,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = pcs14.Id,
+                    DeviceName = "Inverter-14 (PCS)",
+                    SerialNumber = "BT2511002884",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                // Inverter → Solar mappings (devTypeId=1, same Huawei device, different CNI device)
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000055833015,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = solar12.Id,
+                    DeviceName = "Inverter-12 (Solar)",
+                    SerialNumber = "BT2460093355",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185746,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = solar13.Id,
+                    DeviceName = "Inverter-13 (Solar)",
+                    SerialNumber = "BT2511002783",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185749,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = solar14.Id,
+                    DeviceName = "Inverter-14 (Solar)",
+                    SerialNumber = "BT2511002884",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                }
+            };
+
+            _context.HuaweiDeviceMappings.AddRange(deviceMappings);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Huawei Pem Villa EMMA seeded: Account={AccountId}, Station={StationCode}, Facility={FacilityId}, {DeviceCount} device mappings",
+                huaweiAccount.Id, stationMapping.StationCode, pemFacility.Id, deviceMappings.Count);
         }
 
         #endregion

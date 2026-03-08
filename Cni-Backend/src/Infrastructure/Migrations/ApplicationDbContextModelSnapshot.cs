@@ -1152,7 +1152,7 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("DeviceId")
                         .IsUnique();
 
-                    b.HasIndex("StationMappingId", "HuaweiDeviceId")
+                    b.HasIndex("StationMappingId", "HuaweiDeviceId", "DeviceId")
                         .IsUnique();
 
                     b.ToTable("DeviceMappings", "huawei");

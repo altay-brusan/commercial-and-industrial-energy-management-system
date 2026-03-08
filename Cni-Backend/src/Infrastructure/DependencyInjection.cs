@@ -168,7 +168,7 @@ public static class DependencyInjection
         {
             builder.Services.AddSingleton(new HuaweiCredentialEncryptor(huaweiSettings.EncryptionKey));
             builder.Services.AddHttpClient<IHuaweiApiClient, HuaweiApiClient>();
-            builder.Services.AddSingleton<HuaweiTokenManager>();
+            builder.Services.AddScoped<HuaweiTokenManager>();
             builder.Services.AddSingleton<HuaweiDataTranslator>();
             builder.Services.AddScoped<HuaweiFusionSolarSyncWorker>();
         }

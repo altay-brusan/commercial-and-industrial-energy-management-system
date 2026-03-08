@@ -30,7 +30,7 @@ public class HuaweiDeviceMappingConfiguration : IEntityTypeConfiguration<HuaweiD
             .HasForeignKey(d => d.DeviceId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(d => new { d.StationMappingId, d.HuaweiDeviceId })
+        builder.HasIndex(d => new { d.StationMappingId, d.HuaweiDeviceId, d.DeviceId })
             .IsUnique();
 
         builder.HasIndex(d => d.DeviceId)
