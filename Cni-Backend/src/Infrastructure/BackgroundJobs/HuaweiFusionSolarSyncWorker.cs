@@ -176,10 +176,7 @@ public class HuaweiFusionSolarSyncWorker
 
             foreach (var kpi in kpiData)
             {
-                if (!long.TryParse(kpi.DevId, out var huaweiDevId))
-                    continue;
-
-                var mappings = deviceMappings.Where(d => d.HuaweiDeviceId == huaweiDevId).ToList();
+                var mappings = deviceMappings.Where(d => d.HuaweiDeviceId == kpi.DevId).ToList();
 
                 foreach (var mapping in mappings)
                 {

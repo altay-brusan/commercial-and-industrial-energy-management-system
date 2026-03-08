@@ -7202,7 +7202,8 @@
         "additionalProperties": false,
         "properties": {
           "devId": {
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           },
           "dataItemMap": {}
         }

@@ -107,7 +107,7 @@ public class Huawei : EndpointGroupBase
 
 public record HuaweiTestConnectionRequest
 {
-    public string BaseUrl { get; init; } = "https://eu5.fusionsolar.huawei.com/thirdData";
+    public string BaseUrl { get; init; } = "https://intl.fusionsolar.huawei.com/thirdData";
     public string UserName { get; init; } = string.Empty;
     public string SystemCode { get; init; } = string.Empty;
 }

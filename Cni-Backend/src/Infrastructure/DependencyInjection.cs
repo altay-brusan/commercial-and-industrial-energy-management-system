@@ -167,7 +167,11 @@ public static class DependencyInjection
         if (huaweiSettings?.Enabled == true)
         {
             builder.Services.AddSingleton(new HuaweiCredentialEncryptor(huaweiSettings.EncryptionKey));
-            builder.Services.AddHttpClient<IHuaweiApiClient, HuaweiApiClient>();
+            builder.Services.AddHttpClient<IHuaweiApiClient, HuaweiApiClient>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = false // So Set-Cookie headers are accessible in response
+                });
             builder.Services.AddScoped<HuaweiTokenManager>();
             builder.Services.AddSingleton<HuaweiDataTranslator>();
             builder.Services.AddScoped<HuaweiFusionSolarSyncWorker>();

@@ -1009,8 +1009,15 @@ public class ApplicationDbContextInitializer
                 Name = "Pem Villa Energy",
                 Type = "Residential Energy",
                 Country = "Turkey",
+                State = "Antalya",
                 City = "Antalya",
+                District = "Konyaalti",
+                PostalCode = "07070",
+                Address = "Pem Villa, Antalya",
                 ContactEmail = "info@pemvilla.com",
+                ContactPhone = "+90 242 000 0000",
+                TaxNumber = "N/A",
+                TaxOffice = "N/A",
                 Created = DateTime.UtcNow
             };
             _context.Firms.Add(pemFirm);
@@ -1156,7 +1163,7 @@ public class ApplicationDbContextInitializer
                 TenantId = tenantId,
                 UserName = "Pemapi",
                 EncryptedSystemCode = encryptor.Encrypt("Pem12345"),
-                BaseUrl = "https://eu5.fusionsolar.huawei.com/thirdData",
+                BaseUrl = "https://intl.fusionsolar.huawei.com/thirdData",
                 IsActive = true,
                 Created = DateTime.UtcNow
             };

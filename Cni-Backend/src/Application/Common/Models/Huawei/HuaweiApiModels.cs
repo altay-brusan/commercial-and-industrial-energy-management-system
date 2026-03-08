@@ -87,7 +87,7 @@ public class HuaweiDeviceInfo
 public class HuaweiDevRealKpiData
 {
     [JsonPropertyName("devId")]
-    public string DevId { get; set; } = string.Empty;
+    public long DevId { get; set; }
 
     [JsonPropertyName("dataItemMap")]
     public JsonElement DataItemMap { get; set; }

@@ -6,6 +6,16 @@ using Microsoft.Extensions.Logging;
 
 namespace Backend.Infrastructure.Huawei;
 
+/// <summary>
+/// Session token containing XSRF-TOKEN and all session cookies from login.
+/// Huawei requires both the XSRF-TOKEN header AND all session cookies on every request.
+/// </summary>
+public class HuaweiSession
+{
+    public required string XsrfToken { get; init; }
+    public required string CookieHeader { get; init; }
+}
+
 public class HuaweiApiClient : IHuaweiApiClient
 {
     private readonly HttpClient _httpClient;
@@ -24,24 +34,72 @@ public class HuaweiApiClient : IHuaweiApiClient
 
     public async Task<string> LoginAsync(string baseUrl, string userName, string systemCode, CancellationToken ct = default)
     {
+        var session = await LoginForSessionAsync(baseUrl, userName, systemCode, ct);
+        // Serialize session as "xsrfToken|||cookieHeader" so we can pass it as a single string
+        // through the existing interface without breaking the contract
+        return $"{session.XsrfToken}|||{session.CookieHeader}";
+    }
+
+    private async Task<HuaweiSession> LoginForSessionAsync(string baseUrl, string userName, string systemCode, CancellationToken ct)
+    {
         var url = $"{baseUrl}/login";
         var payload = new { userName, systemCode };
 
         var response = await _httpClient.PostAsJsonAsync(url, payload, ct);
         response.EnsureSuccessStatusCode();
 
-        // XSRF-TOKEN comes in the Set-Cookie header
-        var token = ExtractXsrfToken(response);
-        if (string.IsNullOrEmpty(token))
+        // Collect all Set-Cookie headers
+        string? xsrfToken = null;
+        var cookieParts = new List<string>();
+
+        if (response.Headers.TryGetValues("Set-Cookie", out var setCookies))
         {
-            // Fallback: try reading from response body
-            var body = await response.Content.ReadFromJsonAsync<HuaweiApiResponse<object>>(JsonOptions, ct);
-            throw new InvalidOperationException(
-                $"Login failed: no XSRF-TOKEN in response. FailCode={body?.FailCode}, Message={body?.Message}");
+            foreach (var setCookie in setCookies)
+            {
+                // Extract cookie name=value (before the first ';')
+                var semiIdx = setCookie.IndexOf(';');
+                var nameValue = semiIdx > 0 ? setCookie[..semiIdx] : setCookie;
+                cookieParts.Add(nameValue);
+
+                if (nameValue.StartsWith("XSRF-TOKEN=", StringComparison.OrdinalIgnoreCase))
+                {
+                    xsrfToken = nameValue["XSRF-TOKEN=".Length..];
+                }
+            }
         }
 
-        _logger.LogDebug("Huawei login successful for user {UserName}", userName);
-        return token;
+        // Fallback: check response body
+        if (string.IsNullOrEmpty(xsrfToken))
+        {
+            var body = await response.Content.ReadFromJsonAsync<HuaweiApiResponse<JsonElement?>>(JsonOptions, ct);
+
+            if (body is { Success: false })
+            {
+                throw new InvalidOperationException(
+                    $"Huawei login failed: FailCode={body.FailCode}, Message={body.Message}");
+            }
+
+            if (body?.Params is { ValueKind: JsonValueKind.Object } paramsEl)
+            {
+                if (paramsEl.TryGetProperty("csrfToken", out var csrfProp))
+                {
+                    xsrfToken = csrfProp.GetString();
+                    cookieParts.Add($"XSRF-TOKEN={xsrfToken}");
+                }
+            }
+        }
+
+        if (string.IsNullOrEmpty(xsrfToken))
+        {
+            throw new InvalidOperationException(
+                "Login succeeded but no XSRF-TOKEN found in response cookies or body");
+        }
+
+        var cookieHeader = string.Join("; ", cookieParts);
+        _logger.LogDebug("Huawei login successful for user {UserName}, {CookieCount} cookies captured",
+            userName, cookieParts.Count);
+
+        return new HuaweiSession { XsrfToken = xsrfToken, CookieHeader = cookieHeader };
     }
 
     public async Task<HuaweiStationListResponse> GetStationsAsync(string baseUrl, string token, int pageNo = 1, CancellationToken ct = default)
@@ -81,10 +139,14 @@ public class HuaweiApiClient : IHuaweiApiClient
         return result ?? [];
     }
 
-    private async Task<T?> PostAsync<T>(string url, string token, object payload, CancellationToken ct)
+    private async Task<T?> PostAsync<T>(string url, string sessionToken, object payload, CancellationToken ct)
     {
+        // Parse the combined session token: "xsrfToken|||cookieHeader"
+        var (xsrfToken, cookieHeader) = ParseSessionToken(sessionToken);
+
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Headers.Add("XSRF-TOKEN", token);
+        request.Headers.Add("XSRF-TOKEN", xsrfToken);
+        request.Headers.Add("Cookie", cookieHeader);
         request.Content = JsonContent.Create(payload);
 
         var response = await _httpClient.SendAsync(request, ct);
@@ -100,7 +162,6 @@ public class HuaweiApiClient : IHuaweiApiClient
 
         if (!apiResponse.Success)
         {
-            // 305 = token expired, 407 = rate limit
             if (apiResponse.FailCode == 305)
             {
                 throw new HuaweiTokenExpiredException($"Token expired (305) calling {url}");
@@ -121,23 +182,16 @@ public class HuaweiApiClient : IHuaweiApiClient
         return apiResponse.Data;
     }
 
-    private static string? ExtractXsrfToken(HttpResponseMessage response)
+    private static (string xsrfToken, string cookieHeader) ParseSessionToken(string sessionToken)
     {
-        if (!response.Headers.TryGetValues("Set-Cookie", out var cookies))
-            return null;
-
-        foreach (var cookie in cookies)
+        var separatorIdx = sessionToken.IndexOf("|||", StringComparison.Ordinal);
+        if (separatorIdx > 0)
         {
-            if (cookie.StartsWith("XSRF-TOKEN=", StringComparison.OrdinalIgnoreCase))
-            {
-                var endIndex = cookie.IndexOf(';');
-                return endIndex > 0
-                    ? cookie[12..endIndex]
-                    : cookie[12..];
-            }
+            return (sessionToken[..separatorIdx], sessionToken[(separatorIdx + 3)..]);
         }
 
-        return null;
+        // Fallback: treat entire string as XSRF-TOKEN (backwards compatibility)
+        return (sessionToken, $"XSRF-TOKEN={sessionToken}");
     }
 }
 
