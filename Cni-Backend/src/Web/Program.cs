@@ -1,5 +1,6 @@
 ﻿using Backend.Application.Common.Interfaces;
 using Backend.Infrastructure.BackgroundJobs;
+using Backend.Infrastructure.Configurations;
 using Backend.Infrastructure.Data;
 using Backend.Infrastructure.Logging;
 using Backend.Web.Hubs;
@@ -96,6 +97,16 @@ if (app.Environment.EnvironmentName != "Test")
         "energy-price-afternoon",
         worker => worker.FetchDailyPrices(),
         "1 13 * * *");
+
+    // Huawei FusionSolar sync — every 5 minutes (matches API rate limits)
+    var huaweiSettings = app.Configuration.GetSection("HuaweiSettings").Get<HuaweiSettings>();
+    if (huaweiSettings?.Enabled == true)
+    {
+        RecurringJob.AddOrUpdate<HuaweiFusionSolarSyncWorker>(
+            "huawei-fusionsolar-sync",
+            worker => worker.SyncAllAccounts(),
+            $"*/{huaweiSettings.PollIntervalSeconds / 60} * * * *");
+    }
 }
 app.Run();
 

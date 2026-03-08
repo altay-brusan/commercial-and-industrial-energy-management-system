@@ -2559,6 +2559,160 @@
         ]
       }
     },
+    "/api/v1/Huawei/TestConnection": {
+      "post": {
+        "tags": [
+          "Huawei"
+        ],
+        "operationId": "PostApiV1HuaweiTestConnection",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HuaweiTestConnectionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HuaweiTestConnectionResult"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Huawei/TestConnection/Stations": {
+      "post": {
+        "tags": [
+          "Huawei"
+        ],
+        "operationId": "PostApiV1HuaweiTestConnectionStations",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HuaweiTestConnectionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HuaweiStationListResult"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Huawei/TestConnection/Devices": {
+      "post": {
+        "tags": [
+          "Huawei"
+        ],
+        "operationId": "PostApiV1HuaweiTestConnectionDevices",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HuaweiTestGetDevicesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HuaweiDeviceInfo"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Huawei/TestConnection/RealTimeKpi": {
+      "post": {
+        "tags": [
+          "Huawei"
+        ],
+        "operationId": "PostApiV1HuaweiTestConnectionRealTimeKpi",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HuaweiTestGetRealTimeKpiRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HuaweiDevRealKpiData"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/LogicalDevices": {
       "get": {
         "tags": [
@@ -6912,6 +7066,170 @@
             "nullable": true
           }
         }
+      },
+      "HuaweiTestConnectionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "nullable": true
+          },
+          "stationCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HuaweiTestConnectionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "baseUrl": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "systemCode": {
+            "type": "string"
+          }
+        }
+      },
+      "HuaweiStationListResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HuaweiStationInfo"
+            }
+          }
+        }
+      },
+      "HuaweiStationInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "plantCode": {
+            "type": "string"
+          },
+          "plantName": {
+            "type": "string"
+          },
+          "plantAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "capacity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "HuaweiDeviceInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "devName": {
+            "type": "string"
+          },
+          "devTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "esnCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "invType": {
+            "type": "string",
+            "nullable": true
+          },
+          "softwareVersion": {
+            "type": "string",
+            "nullable": true
+          },
+          "stationCode": {
+            "type": "string"
+          }
+        }
+      },
+      "HuaweiTestGetDevicesRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/HuaweiTestConnectionRequest"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stationCode": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "HuaweiDevRealKpiData": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "devId": {
+            "type": "string"
+          },
+          "dataItemMap": {}
+        }
+      },
+      "HuaweiTestGetRealTimeKpiRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/HuaweiTestConnectionRequest"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "devIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              },
+              "devTypeId": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
       },
       "LogicalDeviceDto": {
         "type": "object",

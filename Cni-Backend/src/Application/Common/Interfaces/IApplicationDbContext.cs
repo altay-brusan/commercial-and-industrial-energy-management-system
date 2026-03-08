@@ -1,5 +1,6 @@
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.DeviceData;
+using Backend.Domain.Entities.Huawei;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Backend.Application.Common.Interfaces;
@@ -42,6 +43,13 @@ public interface IApplicationDbContext
     DbSet<LogicalNode> LogicalNodes { get; }
     DbSet<LogicalDevice> LogicalDevices { get; }
     DbSet<LogicalDeviceNode> LogicalDeviceNodes { get; }
+
+    // Huawei FusionSolar integration
+    DbSet<HuaweiAccount> HuaweiAccounts { get; }
+    DbSet<HuaweiStationMapping> HuaweiStationMappings { get; }
+    DbSet<HuaweiDeviceMapping> HuaweiDeviceMappings { get; }
+    DbSet<HuaweiRawDataLog> HuaweiRawDataLogs { get; }
+    DbSet<HuaweiSyncLog> HuaweiSyncLogs { get; }
 
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }

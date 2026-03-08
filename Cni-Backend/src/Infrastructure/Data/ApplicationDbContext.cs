@@ -2,6 +2,7 @@ using System.Reflection;
 using Backend.Application.Common.Interfaces;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.DeviceData;
+using Backend.Domain.Entities.Huawei;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -58,6 +59,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     // Auth entities
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    // Huawei FusionSolar integration (huawei schema)
+    public DbSet<HuaweiAccount> HuaweiAccounts => Set<HuaweiAccount>();
+    public DbSet<HuaweiStationMapping> HuaweiStationMappings => Set<HuaweiStationMapping>();
+    public DbSet<HuaweiDeviceMapping> HuaweiDeviceMappings => Set<HuaweiDeviceMapping>();
+    public DbSet<HuaweiRawDataLog> HuaweiRawDataLogs => Set<HuaweiRawDataLog>();
+    public DbSet<HuaweiSyncLog> HuaweiSyncLogs => Set<HuaweiSyncLog>();
+
     // Market and tariff entities
     public DbSet<MarketOperator> MarketOperators => Set<MarketOperator>();
     public DbSet<FirmMarketOperator> FirmMarketOperators => Set<FirmMarketOperator>();
@@ -91,6 +99,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<TenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
         builder.Entity<TenantRolePermission>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
         builder.Entity<UserTenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
+        // Huawei integration - scoped through TenantId
+        builder.Entity<HuaweiAccount>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
+        builder.Entity<HuaweiStationMapping>().HasQueryFilter(x => !_isTenantScoped || x.HuaweiAccount!.TenantId == _effectiveTenantId);
+        builder.Entity<HuaweiDeviceMapping>().HasQueryFilter(x => !_isTenantScoped || x.StationMapping!.HuaweiAccount!.TenantId == _effectiveTenantId);
+        builder.Entity<HuaweiRawDataLog>().HasQueryFilter(x => !_isTenantScoped || x.HuaweiAccount!.TenantId == _effectiveTenantId);
+        builder.Entity<HuaweiSyncLog>().HasQueryFilter(x => !_isTenantScoped || x.HuaweiAccount!.TenantId == _effectiveTenantId);
         // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories, DeviceAlarmTypes are global - no tenant query filter
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
