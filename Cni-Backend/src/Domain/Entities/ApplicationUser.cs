@@ -8,6 +8,7 @@ public class ApplicationUser : IdentityUser
     public string? Name { get; set; }
     public string? Surname { get; set; }
     public string? Title { get; set; }
+    public string? Department { get; set; }
     public string? Description { get; set; }
 
     // Kullanıcının bağlı olduğu firma & tesis bilgileri

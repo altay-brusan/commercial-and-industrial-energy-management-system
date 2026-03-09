@@ -34,6 +34,9 @@ namespace Backend.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
+                    b.Property<string>("Department")
+                        .HasColumnType("text");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -240,6 +243,12 @@ namespace Backend.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("AcknowledgedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AcknowledgedById")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -254,6 +263,9 @@ namespace Backend.Infrastructure.Migrations
 
                     b.Property<Guid>("DeviceId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -274,15 +286,31 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("MaintenanceTaskId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("RecoveredAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolvedById")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RtuSerialNumber")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("AcknowledgedById");
+
                     b.HasIndex("DeviceAlarmTypeId");
+
+                    b.HasIndex("ResolvedById");
 
                     b.HasIndex("DeviceId", "IsActive");
 
@@ -1030,6 +1058,128 @@ namespace Backend.Infrastructure.Migrations
                     b.ToTable("FirmMarketOperators", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.MaintenanceTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssignedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AssignedToId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CloseExplanation")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("CloseReason")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClosedById")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CompletedById")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("DeviceAlarmId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("LaborHours")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PartsUsed")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Recommendations")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Resolution")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("RootCause")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedById");
+
+                    b.HasIndex("ClosedById");
+
+                    b.HasIndex("CompletedById");
+
+                    b.HasIndex("DeviceAlarmId")
+                        .IsUnique()
+                        .HasFilter("\"DeviceAlarmId\" IS NOT NULL");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("DueDate");
+
+                    b.HasIndex("FacilityId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("AssignedToId", "Status");
+
+                    b.ToTable("MaintenanceTasks", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.MarketOperator", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1084,6 +1234,68 @@ namespace Backend.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("MarketOperators", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("RelatedAlarmId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RelatedTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RelatedAlarmId");
+
+                    b.HasIndex("RelatedTaskId");
+
+                    b.HasIndex("UserId", "IsRead", "Timestamp")
+                        .IsDescending(false, false, true);
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>
@@ -1380,6 +1592,183 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("IsActive");
 
                     b.ToTable("Tariffs", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TaskChecklistItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CompletedById")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsCompleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("MaintenanceTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompletedById");
+
+                    b.HasIndex("MaintenanceTaskId", "SortOrder");
+
+                    b.ToTable("TaskChecklistItems", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TaskNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("MaintenanceTaskId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("MaintenanceTaskId", "Created")
+                        .IsDescending(false, true);
+
+                    b.ToTable("TaskNotes", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TaskStatusChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChangedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FromStatus")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("MaintenanceTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedById");
+
+                    b.HasIndex("MaintenanceTaskId", "ChangedAt")
+                        .IsDescending(false, true);
+
+                    b.ToTable("TaskStatusChanges", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TaskWorkSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("MaintenanceTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("MaintenanceTaskId", "StartedAt")
+                        .IsDescending(false, true);
+
+                    b.ToTable("TaskWorkSessions", (string)null);
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Tenant", b =>
@@ -1749,6 +2138,11 @@ namespace Backend.Infrastructure.Migrations
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarm", b =>
                 {
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "AcknowledgedBy")
+                        .WithMany()
+                        .HasForeignKey("AcknowledgedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Backend.Domain.Entities.DeviceAlarmType", "AlarmType")
                         .WithMany()
                         .HasForeignKey("DeviceAlarmTypeId")
@@ -1761,9 +2155,18 @@ namespace Backend.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "ResolvedBy")
+                        .WithMany()
+                        .HasForeignKey("ResolvedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AcknowledgedBy");
+
                     b.Navigation("AlarmType");
 
                     b.Navigation("Device");
+
+                    b.Navigation("ResolvedBy");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarmType", b =>
@@ -1903,6 +2306,86 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("MarketOperator");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.MaintenanceTask", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "AssignedBy")
+                        .WithMany()
+                        .HasForeignKey("AssignedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "AssignedTo")
+                        .WithMany()
+                        .HasForeignKey("AssignedToId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "ClosedBy")
+                        .WithMany()
+                        .HasForeignKey("ClosedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "CompletedBy")
+                        .WithMany()
+                        .HasForeignKey("CompletedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.DeviceAlarm", "DeviceAlarm")
+                        .WithOne("MaintenanceTask")
+                        .HasForeignKey("Backend.Domain.Entities.MaintenanceTask", "DeviceAlarmId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
+                        .WithMany()
+                        .HasForeignKey("FacilityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedBy");
+
+                    b.Navigation("AssignedTo");
+
+                    b.Navigation("ClosedBy");
+
+                    b.Navigation("CompletedBy");
+
+                    b.Navigation("Device");
+
+                    b.Navigation("DeviceAlarm");
+
+                    b.Navigation("Facility");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.DeviceAlarm", "RelatedAlarm")
+                        .WithMany()
+                        .HasForeignKey("RelatedAlarmId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.MaintenanceTask", "RelatedTask")
+                        .WithMany()
+                        .HasForeignKey("RelatedTaskId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RelatedAlarm");
+
+                    b.Navigation("RelatedTask");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.Feature", "Feature")
@@ -1953,6 +2436,81 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Facility");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TaskChecklistItem", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "CompletedBy")
+                        .WithMany()
+                        .HasForeignKey("CompletedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.MaintenanceTask", "MaintenanceTask")
+                        .WithMany("ChecklistItems")
+                        .HasForeignKey("MaintenanceTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CompletedBy");
+
+                    b.Navigation("MaintenanceTask");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TaskNote", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.MaintenanceTask", "MaintenanceTask")
+                        .WithMany("Notes")
+                        .HasForeignKey("MaintenanceTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("MaintenanceTask");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TaskStatusChange", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("ChangedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.MaintenanceTask", "MaintenanceTask")
+                        .WithMany("StatusChanges")
+                        .HasForeignKey("MaintenanceTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChangedBy");
+
+                    b.Navigation("MaintenanceTask");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.TaskWorkSession", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.MaintenanceTask", "MaintenanceTask")
+                        .WithMany("WorkSessions")
+                        .HasForeignKey("MaintenanceTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("MaintenanceTask");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Tenant", b =>
@@ -2101,6 +2659,11 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("ChildDevices");
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.DeviceAlarm", b =>
+                {
+                    b.Navigation("MaintenanceTask");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.DeviceSpecificationTemplate", b =>
                 {
                     b.Navigation("Devices");
@@ -2129,6 +2692,17 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("Facilities");
 
                     b.Navigation("UserCompanyFacilities");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.MaintenanceTask", b =>
+                {
+                    b.Navigation("ChecklistItems");
+
+                    b.Navigation("Notes");
+
+                    b.Navigation("StatusChanges");
+
+                    b.Navigation("WorkSessions");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.MarketOperator", b =>

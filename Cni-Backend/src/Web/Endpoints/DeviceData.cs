@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Backend.Application.DeviceData.Commands.IngestDeviceAlarm;
 using Backend.Application.DeviceData.Commands.IngestDeviceData;
 using Backend.Web.Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -16,6 +17,7 @@ public class DeviceData : EndpointGroupBase
 
         group.MapPost("/Ingest", Ingest);
         group.MapPost("/Ingest/Batch", IngestBatch);
+        group.MapPost("/Ingest/Alarm", IngestAlarm);
 
         // TODO: TEMPORARY — ThingsBoard demo integration endpoint. Remove once MQTT-based ingestion
         // from ThingsBoard is fully operational and this HTTP bridge is no longer needed.
@@ -36,6 +38,12 @@ public class DeviceData : EndpointGroupBase
     }
 
     public static async Task<Ok<IngestBatchResultDto>> IngestBatch(ISender sender, IngestDeviceDataBatchCommand command)
+    {
+        var result = await sender.Send(command);
+        return TypedResults.Ok(result);
+    }
+
+    public static async Task<Ok<IngestDeviceAlarmResultDto>> IngestAlarm(ISender sender, IngestDeviceAlarmCommand command)
     {
         var result = await sender.Send(command);
         return TypedResults.Ok(result);

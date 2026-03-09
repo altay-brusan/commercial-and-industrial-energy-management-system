@@ -64,4 +64,13 @@ public abstract class Permissions
 
     // Pcs
     public const string PcsView = "Pcs.View";
+
+    // Alarm
+    public const string AlarmView = "Alarm.View";
+    public const string AlarmManage = "Alarm.Manage";
+
+    // Maintenance
+    public const string MaintenanceView = "Maintenance.View";
+    public const string MaintenanceCreate = "Maintenance.Create";
+    public const string MaintenanceManage = "Maintenance.Manage";
 }
