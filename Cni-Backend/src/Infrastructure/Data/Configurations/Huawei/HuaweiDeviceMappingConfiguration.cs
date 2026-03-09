@@ -33,7 +33,9 @@ public class HuaweiDeviceMappingConfiguration : IEntityTypeConfiguration<HuaweiD
         builder.HasIndex(d => new { d.StationMappingId, d.HuaweiDeviceId, d.DeviceId })
             .IsUnique();
 
-        builder.HasIndex(d => d.DeviceId)
-            .IsUnique();
+        // Non-unique: a Device may appear only once, but we don't enforce it
+        // because inverter→PCS and inverter→Solar share the same HuaweiDeviceId
+        // with different DeviceIds, and this index is just for lookup performance.
+        builder.HasIndex(d => d.DeviceId);
     }
 }

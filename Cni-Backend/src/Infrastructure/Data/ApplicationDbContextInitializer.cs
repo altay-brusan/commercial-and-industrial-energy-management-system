@@ -1052,11 +1052,192 @@ public class ApplicationDbContextInitializer
             _context.Rtus.Add(pemRtu);
             await _context.SaveChangesAsync();
 
+            // Create Huawei specification templates with ParameterMapTemplate
+            var huaweiBatteryTemplate = new DeviceSpecificationTemplate
+            {
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                Model = "LUNA2000",
+                Manufacturer = "Huawei",
+                IsDefault = false,
+                SpecificationsTemplate = "{}",
+                MetadataTemplate = """{"cellChemistry": "LFP"}""",
+                ParameterMapTemplate = """
+                {
+                  "version": 1,
+                  "parameters": {
+                    "soc": {
+                      "type": "number", "unit": "%",
+                      "source": { "kind": "Battery.Energy", "paths": ["soc"] }
+                    },
+                    "soh": {
+                      "type": "number", "unit": "%",
+                      "source": { "kind": "Battery.Energy", "paths": ["soh"] }
+                    },
+                    "power": {
+                      "type": "number", "unit": "W",
+                      "source": { "kind": "Battery.Energy", "paths": ["chDischargePower"] }
+                    },
+                    "powerDirection": {
+                      "type": "string",
+                      "formula": {
+                        "expression": "cond(gt(p, 0), 'charging', cond(lt(p, 0), 'discharging', 'idle'))",
+                        "inputs": { "p": {"$ref":"power"} }
+                      }
+                    },
+                    "voltage": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Battery.Energy", "paths": ["busbarVoltage"] }
+                    },
+                    "availableEnergy": {
+                      "type": "number", "unit": "kWh",
+                      "source": { "kind": "Battery.Energy", "paths": ["ratedCapacity"] }
+                    },
+                    "operatingMode": {
+                      "type": "string",
+                      "formula": {
+                        "expression": "cond(eq(s, 0), 'offline', cond(eq(s, 1), 'standby', cond(eq(s, 2), 'running', cond(eq(s, 3), 'fault', 'unknown'))))",
+                        "inputs": { "s": {"source": {"kind": "Battery.Energy", "paths": ["batteryStatus"]}} }
+                      }
+                    },
+                    "ambientTemp": {
+                      "type": "number", "unit": "°C",
+                      "source": { "kind": "Battery.Energy", "paths": ["batteryTemperature"] }
+                    }
+                  }
+                }
+                """,
+                Created = DateTime.UtcNow
+            };
+
+            var huaweiPcsTemplate = new DeviceSpecificationTemplate
+            {
+                DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                Model = "SUN2000-Inverter",
+                Manufacturer = "Huawei",
+                IsDefault = false,
+                SpecificationsTemplate = "{}",
+                MetadataTemplate = "{}",
+                ParameterMapTemplate = """
+                {
+                  "version": 1,
+                  "parameters": {
+                    "pcsActivePower": {
+                      "type": "number", "unit": "kW",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["activePower"] }
+                    },
+                    "pcsReactivePower": {
+                      "type": "number", "unit": "kVar",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["reactivePower"] }
+                    },
+                    "pcsPowerFactor": {
+                      "type": "number",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["powerFactor"] }
+                    },
+                    "pcsGridFreq": {
+                      "type": "number", "unit": "Hz",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["gridFrequency"] }
+                    },
+                    "pcsIgbtTemp": {
+                      "type": "number", "unit": "°C",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["temperature"] }
+                    },
+                    "pcsEfficiency": {
+                      "type": "number", "unit": "%",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["efficiency"] }
+                    },
+                    "pcsPhaseVoltageA": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseAVoltage"] }
+                    },
+                    "pcsPhaseVoltageB": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseBVoltage"] }
+                    },
+                    "pcsPhaseVoltageC": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseCVoltage"] }
+                    },
+                    "pcsPhaseCurrentA": {
+                      "type": "number", "unit": "A",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseACurrent"] }
+                    },
+                    "pcsPhaseCurrentB": {
+                      "type": "number", "unit": "A",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseBCurrent"] }
+                    },
+                    "pcsPhaseCurrentC": {
+                      "type": "number", "unit": "A",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseCCurrent"] }
+                    },
+                    "pcsLineVoltageAB": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["lineABVoltage"] }
+                    },
+                    "pcsLineVoltageBC": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["lineBCVoltage"] }
+                    },
+                    "pcsLineVoltageCA": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["lineCAVoltage"] }
+                    },
+                    "pcsAmbientTemp": {
+                      "type": "number", "unit": "°C",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["temperature"] }
+                    },
+                    "pcsGridMode": {
+                      "type": "string",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["inverterState"], "default": "N/A" }
+                    }
+                  }
+                }
+                """,
+                Created = DateTime.UtcNow
+            };
+
+            var huaweiSolarTemplate = new DeviceSpecificationTemplate
+            {
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                Model = "SUN2000-Solar",
+                Manufacturer = "Huawei",
+                IsDefault = false,
+                SpecificationsTemplate = "{}",
+                MetadataTemplate = "{}",
+                ParameterMapTemplate = """
+                {
+                  "version": 1,
+                  "parameters": {
+                    "activePower": {
+                      "type": "number", "unit": "kW",
+                      "source": { "kind": "Solar.Power", "paths": ["activePower"] }
+                    },
+                    "dailyYield": {
+                      "type": "number", "unit": "kWh",
+                      "source": { "kind": "Solar.Power", "paths": ["dailyYield"] }
+                    },
+                    "totalYield": {
+                      "type": "number", "unit": "kWh",
+                      "source": { "kind": "Solar.Power", "paths": ["totalYield"] }
+                    },
+                    "mpptPower": {
+                      "type": "number", "unit": "kW",
+                      "source": { "kind": "Solar.Power", "paths": ["mpptPower"] }
+                    }
+                  }
+                }
+                """,
+                Created = DateTime.UtcNow
+            };
+
+            _context.DeviceSpecificationTemplates.AddRange(huaweiBatteryTemplate, huaweiPcsTemplate, huaweiSolarTemplate);
+            await _context.SaveChangesAsync();
+
             // Create battery devices (3x LUNA2000)
             var battery12 = new Device
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                DeviceSpecificationTemplateId = huaweiBatteryTemplate.Id,
                 Name = "Battery-12",
                 Model = "LUNA2000-10KW-C1",
                 Manufacturer = "Huawei",
@@ -1066,6 +1247,7 @@ public class ApplicationDbContextInitializer
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                DeviceSpecificationTemplateId = huaweiBatteryTemplate.Id,
                 Name = "Battery-13",
                 Model = "LUNA2000-5KW-C0",
                 Manufacturer = "Huawei",
@@ -1075,6 +1257,7 @@ public class ApplicationDbContextInitializer
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                DeviceSpecificationTemplateId = huaweiBatteryTemplate.Id,
                 Name = "Battery-14",
                 Model = "LUNA2000-5KW-C0",
                 Manufacturer = "Huawei",
@@ -1088,6 +1271,7 @@ public class ApplicationDbContextInitializer
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                DeviceSpecificationTemplateId = huaweiPcsTemplate.Id,
                 ParentDeviceId = battery12.Id,
                 Name = "Inverter-12-PCS",
                 Model = "SUN2000-10K-MAP0",
@@ -1100,6 +1284,7 @@ public class ApplicationDbContextInitializer
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                DeviceSpecificationTemplateId = huaweiPcsTemplate.Id,
                 ParentDeviceId = battery13.Id,
                 Name = "Inverter-13-PCS",
                 Model = "SUN2000-10K-MAP0",
@@ -1112,6 +1297,7 @@ public class ApplicationDbContextInitializer
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                DeviceSpecificationTemplateId = huaweiPcsTemplate.Id,
                 ParentDeviceId = battery14.Id,
                 Name = "Inverter-14-PCS",
                 Model = "SUN2000-10K-MAP0",
@@ -1126,6 +1312,7 @@ public class ApplicationDbContextInitializer
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                DeviceSpecificationTemplateId = huaweiSolarTemplate.Id,
                 Name = "Inverter-12-Solar",
                 Model = "SUN2000-10K-MAP0",
                 SerialNumber = "BT2460093355-SOL",
@@ -1136,6 +1323,7 @@ public class ApplicationDbContextInitializer
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                DeviceSpecificationTemplateId = huaweiSolarTemplate.Id,
                 Name = "Inverter-13-Solar",
                 Model = "SUN2000-10K-MAP0",
                 SerialNumber = "BT2511002783-SOL",
@@ -1146,6 +1334,7 @@ public class ApplicationDbContextInitializer
             {
                 RtuId = pemRtu.Id,
                 DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                DeviceSpecificationTemplateId = huaweiSolarTemplate.Id,
                 Name = "Inverter-14-Solar",
                 Model = "SUN2000-10K-MAP0",
                 SerialNumber = "BT2511002884-SOL",

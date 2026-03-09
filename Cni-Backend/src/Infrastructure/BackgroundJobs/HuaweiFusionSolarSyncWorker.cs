@@ -33,14 +33,14 @@ public class HuaweiFusionSolarSyncWorker
         _translator = translator;
     }
 
-    public async Task SyncAllAccounts()
+    public async Task SyncAllAccounts(CancellationToken ct = default)
     {
         var accounts = await _context.HuaweiAccounts
-            .Include(a => a.StationMappings)
+            .Include(a => a.StationMappings.Where(s => s.SyncEnabled))
                 .ThenInclude(s => s.DeviceMappings)
             .Where(a => a.IsActive)
             .IgnoreQueryFilters()
-            .ToListAsync();
+            .ToListAsync(ct);
 
         if (accounts.Count == 0)
         {
@@ -53,10 +53,12 @@ public class HuaweiFusionSolarSyncWorker
 
         foreach (var account in accounts)
         {
+            ct.ThrowIfCancellationRequested();
             try
             {
-                await SyncAccountAsync(account);
+                await SyncAccountAsync(account, ct);
             }
+            catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to sync Huawei account {AccountId} ({UserName})",
@@ -73,7 +75,7 @@ public class HuaweiFusionSolarSyncWorker
         }
     }
 
-    private async Task SyncAccountAsync(HuaweiAccount account)
+    private async Task SyncAccountAsync(HuaweiAccount account, CancellationToken ct)
     {
         var enabledStations = account.StationMappings
             .Where(s => s.SyncEnabled)
@@ -85,15 +87,29 @@ public class HuaweiFusionSolarSyncWorker
             return;
         }
 
+        // Pre-load all devices referenced by mappings to avoid N+1 queries
+        var allDeviceIds = enabledStations
+            .SelectMany(s => s.DeviceMappings)
+            .Select(d => d.DeviceId)
+            .Distinct()
+            .ToList();
+
+        var deviceLookup = await _context.Devices
+            .Include(d => d.DeviceType)
+            .Where(d => allDeviceIds.Contains(d.Id))
+            .IgnoreQueryFilters()
+            .ToDictionaryAsync(d => d.Id, ct);
+
         string token;
         try
         {
-            token = await _tokenManager.GetTokenAsync(account);
+            token = await _tokenManager.GetTokenAsync(account, ct);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get token for account {AccountId}", account.Id);
-            await LogSyncResult(account.Id, "RealTimeKpi", "Failed", 0, 0, $"Login failed: {ex.Message}");
+            LogSyncResult(account.Id, "RealTimeKpi", "Failed", 0, 0, $"Login failed: {ex.Message}");
+            await _context.SaveChangesAsync(ct);
             throw;
         }
 
@@ -103,9 +119,10 @@ public class HuaweiFusionSolarSyncWorker
 
         foreach (var station in enabledStations)
         {
+            ct.ThrowIfCancellationRequested();
             try
             {
-                var (devices, records) = await SyncStationAsync(account, station, token);
+                var (devices, records) = await SyncStationAsync(account, station, token, deviceLookup, ct);
                 totalDevices += devices;
                 totalRecords += records;
                 station.LastSyncUtc = DateTimeOffset.UtcNow;
@@ -114,17 +131,22 @@ public class HuaweiFusionSolarSyncWorker
             {
                 _logger.LogWarning("Token expired during sync, refreshing for account {AccountId}", account.Id);
                 _tokenManager.InvalidateToken(account.Id);
-                token = await _tokenManager.RefreshTokenAsync(account);
+                token = await _tokenManager.RefreshTokenAsync(account, ct);
 
-                var (devices, records) = await SyncStationAsync(account, station, token);
+                var (devices, records) = await SyncStationAsync(account, station, token, deviceLookup, ct);
                 totalDevices += devices;
                 totalRecords += records;
                 station.LastSyncUtc = DateTimeOffset.UtcNow;
             }
+            catch (HuaweiRateLimitException ex)
+            {
+                _logger.LogWarning(ex, "Rate limited by Huawei API for account {AccountId}, skipping remaining stations", account.Id);
+                break;
+            }
         }
 
-        await _context.SaveChangesAsync(CancellationToken.None);
-        await LogSyncResult(account.Id, "RealTimeKpi", "Success", totalDevices, totalRecords, null);
+        LogSyncResult(account.Id, "RealTimeKpi", "Success", totalDevices, totalRecords, null);
+        await _context.SaveChangesAsync(ct);
 
         _logger.LogInformation(
             "Huawei sync completed for account {AccountId}: {Devices} devices, {Records} records in {Elapsed:F1}s",
@@ -133,7 +155,9 @@ public class HuaweiFusionSolarSyncWorker
     }
 
     private async Task<(int devices, int records)> SyncStationAsync(
-        HuaweiAccount account, HuaweiStationMapping station, string token)
+        HuaweiAccount account, HuaweiStationMapping station, string token,
+        Dictionary<Guid, Domain.Entities.Device> deviceLookup,
+        CancellationToken ct)
     {
         var deviceMappings = station.DeviceMappings.ToList();
         if (deviceMappings.Count == 0)
@@ -148,20 +172,21 @@ public class HuaweiFusionSolarSyncWorker
         foreach (var group in byDevType)
         {
             var devTypeId = group.Key;
-            var devIds = group.Select(d => d.HuaweiDeviceId).ToList();
+            var devIds = group.Select(d => d.HuaweiDeviceId).Distinct().ToList();
 
             List<Application.Common.Models.Huawei.HuaweiDevRealKpiData> kpiData;
             try
             {
-                kpiData = await _apiClient.GetDevRealKpiAsync(account.BaseUrl, token, devIds, devTypeId);
+                kpiData = await _apiClient.GetDevRealKpiAsync(account.BaseUrl, token, devIds, devTypeId, ct);
             }
+            catch (HuaweiTokenExpiredException) { throw; }
+            catch (HuaweiRateLimitException) { throw; }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Failed to get real-time KPI for devTypeId={DevTypeId}, station={StationCode}",
                     devTypeId, station.StationCode);
 
-                // Log raw request/error
-                await LogRawData(account.Id, "getDevRealKpi",
+                LogRawData(account.Id, "getDevRealKpi",
                     JsonSerializer.Serialize(new { devIds = string.Join(",", devIds), devTypeId }),
                     JsonSerializer.Serialize(new { error = ex.Message }),
                     0);
@@ -169,7 +194,7 @@ public class HuaweiFusionSolarSyncWorker
             }
 
             // Log raw response for audit
-            await LogRawData(account.Id, "getDevRealKpi",
+            LogRawData(account.Id, "getDevRealKpi",
                 JsonSerializer.Serialize(new { devIds = string.Join(",", devIds), devTypeId }),
                 JsonSerializer.Serialize(kpiData),
                 200);
@@ -180,7 +205,7 @@ public class HuaweiFusionSolarSyncWorker
 
                 foreach (var mapping in mappings)
                 {
-                    records += await TranslateAndStore(mapping, kpi, devTypeId, timestamp);
+                    records += TranslateAndStore(mapping, kpi, devTypeId, timestamp, deviceLookup);
                 }
             }
         }
@@ -188,11 +213,12 @@ public class HuaweiFusionSolarSyncWorker
         return (deviceMappings.Count, records);
     }
 
-    private async Task<int> TranslateAndStore(
+    private int TranslateAndStore(
         HuaweiDeviceMapping mapping,
         Application.Common.Models.Huawei.HuaweiDevRealKpiData kpi,
         int devTypeId,
-        DateTimeOffset timestamp)
+        DateTimeOffset timestamp,
+        Dictionary<Guid, Domain.Entities.Device> deviceLookup)
     {
         var records = 0;
 
@@ -208,18 +234,16 @@ public class HuaweiFusionSolarSyncWorker
             case DevTypeInverter:
             {
                 // Inverter maps to either PCS or Solar device based on mapping
-                // Check what type of CNI device this mapping points to
-                var device = await _context.Devices
-                    .Include(d => d.DeviceType)
-                    .FirstOrDefaultAsync(d => d.Id == mapping.DeviceId);
+                deviceLookup.TryGetValue(mapping.DeviceId, out var device);
+                var deviceTypeName = device?.DeviceType?.Name;
 
-                if (device?.DeviceType?.Name == "PCS" || device?.DeviceType?.Name == "Inverter")
+                if (deviceTypeName is "PCS" or "Inverter")
                 {
                     var pcsData = _translator.TranslatePcs(kpi, mapping.DeviceId, timestamp);
                     _context.DevicePcsData.Add(pcsData);
                     records++;
                 }
-                else if (device?.DeviceType?.Name == "Solar")
+                else if (deviceTypeName == "Solar")
                 {
                     var solarData = _translator.TranslateSolar(kpi, mapping.DeviceId, timestamp);
                     _context.DeviceSolarData.Add(solarData);
@@ -227,8 +251,8 @@ public class HuaweiFusionSolarSyncWorker
                 }
                 else
                 {
-                    _logger.LogWarning("Unknown device type for mapping {MappingId}, device {DeviceId}",
-                        mapping.Id, mapping.DeviceId);
+                    _logger.LogWarning("Unknown device type '{DeviceType}' for mapping {MappingId}, device {DeviceId}",
+                        deviceTypeName, mapping.Id, mapping.DeviceId);
                 }
                 break;
             }
@@ -239,21 +263,15 @@ public class HuaweiFusionSolarSyncWorker
         }
 
         // Update LastSeenUtc on the device
-        await UpdateLastSeen(mapping.DeviceId, timestamp);
+        if (deviceLookup.TryGetValue(mapping.DeviceId, out var dev))
+        {
+            dev.LastSeenUtc = timestamp;
+        }
 
         return records;
     }
 
-    private async Task UpdateLastSeen(Guid deviceId, DateTimeOffset timestamp)
-    {
-        var device = await _context.Devices.FindAsync(deviceId);
-        if (device != null)
-        {
-            device.LastSeenUtc = timestamp;
-        }
-    }
-
-    private async Task LogRawData(Guid accountId, string endpoint, string? request, string? response, int statusCode)
+    private void LogRawData(Guid accountId, string endpoint, string? request, string? response, int statusCode)
     {
         var log = new HuaweiRawDataLog
         {
@@ -265,12 +283,9 @@ public class HuaweiFusionSolarSyncWorker
             CollectedAtUtc = DateTimeOffset.UtcNow
         };
         _context.HuaweiRawDataLogs.Add(log);
-
-        // Don't await SaveChanges here — it's batched with telemetry inserts
-        await Task.CompletedTask;
     }
 
-    private async Task LogSyncResult(Guid accountId, string syncType, string status, int deviceCount, int recordsInserted, string? errorMessage)
+    private void LogSyncResult(Guid accountId, string syncType, string status, int deviceCount, int recordsInserted, string? errorMessage)
     {
         var log = new HuaweiSyncLog
         {
@@ -284,6 +299,5 @@ public class HuaweiFusionSolarSyncWorker
             CompletedAtUtc = DateTimeOffset.UtcNow
         };
         _context.HuaweiSyncLogs.Add(log);
-        await _context.SaveChangesAsync(CancellationToken.None);
     }
 }

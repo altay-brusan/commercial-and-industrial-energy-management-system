@@ -1,11 +1,8 @@
-using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Huawei;
-using Backend.Infrastructure.BackgroundJobs;
 using Backend.Infrastructure.Huawei;
 using Backend.Web.Infrastructure;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Web.Endpoints;
 
@@ -98,7 +95,9 @@ public class Huawei : EndpointGroupBase
 
     private static HuaweiApiClient CreateApiClient(IHttpClientFactory httpClientFactory)
     {
-        var httpClient = httpClientFactory.CreateClient("HuaweiTest");
+        // Create a raw HttpClient with cookies disabled so Set-Cookie headers are accessible
+        var handler = new HttpClientHandler { UseCookies = false };
+        var httpClient = new HttpClient(handler);
         return new HuaweiApiClient(httpClient, Microsoft.Extensions.Logging.Abstractions.NullLogger<HuaweiApiClient>.Instance);
     }
 }

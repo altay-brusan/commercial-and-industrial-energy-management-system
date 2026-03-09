@@ -102,10 +102,11 @@ if (app.Environment.EnvironmentName != "Test")
     var huaweiSettings = app.Configuration.GetSection("HuaweiSettings").Get<HuaweiSettings>();
     if (huaweiSettings?.Enabled == true)
     {
+        var intervalMinutes = Math.Max(1, huaweiSettings.PollIntervalSeconds / 60);
         RecurringJob.AddOrUpdate<HuaweiFusionSolarSyncWorker>(
             "huawei-fusionsolar-sync",
-            worker => worker.SyncAllAccounts(),
-            $"*/{huaweiSettings.PollIntervalSeconds / 60} * * * *");
+            worker => worker.SyncAllAccounts(CancellationToken.None),
+            $"*/{intervalMinutes} * * * *");
     }
 }
 app.Run();
