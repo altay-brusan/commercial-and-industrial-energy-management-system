@@ -8,7 +8,7 @@ namespace Backend.Application.Alarms.Queries.GetAlarmSummary;
 [RequirePermission(Backend.Domain.Constants.Permissions.AlarmView)]
 public record GetAlarmSummaryQuery : IRequest<AlarmSummaryDto>
 {
-    public Guid? FacilityId { get; init; }
+    public Guid FacilityId { get; init; }
 }
 
 public class GetAlarmSummaryQueryHandler : IRequestHandler<GetAlarmSummaryQuery, AlarmSummaryDto>
@@ -26,8 +26,7 @@ public class GetAlarmSummaryQueryHandler : IRequestHandler<GetAlarmSummaryQuery,
             .Include(a => a.AlarmType)
             .Where(a => a.IsActive);
 
-        if (request.FacilityId.HasValue)
-            query = query.Where(a => a.Device!.Rtu!.FacilityId == request.FacilityId.Value);
+        query = query.Where(a => a.Device!.Rtu!.FacilityId == request.FacilityId);
 
         var totalActive = await query.CountAsync(cancellationToken);
         var critical = await query.Where(a => a.AlarmType!.Severity == "Critical").CountAsync(cancellationToken);

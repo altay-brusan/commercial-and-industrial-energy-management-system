@@ -7,7 +7,7 @@ namespace Backend.Application.Alarms.Queries.GetAlarmStatistics;
 [RequirePermission(Backend.Domain.Constants.Permissions.AlarmView)]
 public record GetAlarmStatisticsQuery : IRequest<AlarmStatisticsDto>
 {
-    public Guid? FacilityId { get; init; }
+    public Guid FacilityId { get; init; }
 }
 
 public class GetAlarmStatisticsQueryHandler : IRequestHandler<GetAlarmStatisticsQuery, AlarmStatisticsDto>
@@ -25,8 +25,7 @@ public class GetAlarmStatisticsQueryHandler : IRequestHandler<GetAlarmStatistics
             .Include(a => a.AlarmType)
             .AsQueryable();
 
-        if (request.FacilityId.HasValue)
-            query = query.Where(a => a.Device!.Rtu!.FacilityId == request.FacilityId.Value);
+        query = query.Where(a => a.Device!.Rtu!.FacilityId == request.FacilityId);
 
         var alarms = await query.Select(a => new
         {

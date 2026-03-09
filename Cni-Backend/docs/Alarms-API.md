@@ -71,11 +71,11 @@
 |--------|-------|------|------------|-------------|
 | POST | `/api/v1/DeviceData/Ingest/Alarm` | API Key | — | Ingest alarm data from RTU/adapter |
 | GET | `/` | JWT | `Alarm.View` | Paginated alarm list with filters |
-| GET | `/Summary` | JWT | `Alarm.View` | Active alarm counts by severity |
+| GET | `/{facilityId}/Summary` | JWT | `Alarm.View` | Active alarm counts by severity |
 | GET | `/{id}` | JWT | `Alarm.View` | Single alarm detail |
 | PATCH | `/{id}/Acknowledge` | JWT | `Alarm.Manage` | Acknowledge an active alarm |
 | PATCH | `/{id}/Resolve` | JWT | `Alarm.Manage` | Manually resolve an active alarm |
-| GET | `/Statistics` | JWT | `Alarm.View` | Total alarm counts by severity and source type |
+| GET | `/{facilityId}/Statistics` | JWT | `Alarm.View` | Total alarm counts by severity and source type |
 | GET | `/History/{deviceName}` | JWT | `Alarm.View` | Alarm history for a specific device by name |
 | POST | `/{id}/AssignToMaintenance` | JWT | `Alarm.Manage` | Create maintenance task from alarm |
 
@@ -311,15 +311,15 @@ Paginated, filterable alarm list.
 
 ---
 
-## GET `/Statistics`
+## GET `/{facilityId}/Statistics`
 
-Total alarm counts across all statuses, broken down by severity and source type.
+Total alarm counts for a specific facility, broken down by severity and source type.
 
-### Query Parameters
+### Path Parameters
 
 | Param | Type | Description |
 |-------|------|-------------|
-| `facilityId` | `Guid?` | Scope to a specific facility |
+| `facilityId` | `Guid` | Facility ID (required) |
 
 ### Response
 
@@ -389,15 +389,15 @@ Same `AlarmDto` shape as the list endpoint items, wrapped in `{ alarms: [...] }`
 
 ---
 
-## GET `/Summary`
+## GET `/{facilityId}/Summary`
 
-Counts of active alarms by severity.
+Counts of active alarms by severity for a specific facility.
 
-### Query Parameters
+### Path Parameters
 
 | Param | Type | Description |
 |-------|------|-------------|
-| `facilityId` | `Guid?` | Scope to a specific facility |
+| `facilityId` | `Guid` | Facility ID (required) |
 
 ### Response
 

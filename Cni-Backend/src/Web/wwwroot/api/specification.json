@@ -182,7 +182,7 @@
         ]
       }
     },
-    "/api/v1/Alarms/Summary": {
+    "/api/v1/Alarms/{facilityId}/Summary": {
       "get": {
         "tags": [
           "Alarms"
@@ -191,11 +191,11 @@
         "parameters": [
           {
             "name": "facilityId",
-            "in": "query",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           }
@@ -219,7 +219,7 @@
         ]
       }
     },
-    "/api/v1/Alarms/Statistics": {
+    "/api/v1/Alarms/{facilityId}/Statistics": {
       "get": {
         "tags": [
           "Alarms"
@@ -228,11 +228,11 @@
         "parameters": [
           {
             "name": "facilityId",
-            "in": "query",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string",
-              "format": "guid",
-              "nullable": true
+              "format": "guid"
             },
             "x-position": 1
           }

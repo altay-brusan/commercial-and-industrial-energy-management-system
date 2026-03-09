@@ -21,8 +21,8 @@ public class Alarms : EndpointGroupBase
             .RequireAuthorization();
 
         group.MapGet("/", GetAlarms);
-        group.MapGet("/Summary", GetAlarmSummary);
-        group.MapGet("/Statistics", GetAlarmStatistics);
+        group.MapGet("/{facilityId}/Summary", GetAlarmSummary);
+        group.MapGet("/{facilityId}/Statistics", GetAlarmStatistics);
         group.MapGet("/History/{deviceName}", GetAlarmHistory);
         group.MapGet("/{id}", GetAlarm);
         group.MapPatch("/{id}/Acknowledge", AcknowledgeAlarm);
@@ -53,14 +53,14 @@ public class Alarms : EndpointGroupBase
     }
 
     public static async Task<Ok<AlarmSummaryDto>> GetAlarmSummary(
-        ISender sender, Guid? facilityId)
+        ISender sender, Guid facilityId)
     {
         var result = await sender.Send(new GetAlarmSummaryQuery { FacilityId = facilityId });
         return TypedResults.Ok(result);
     }
 
     public static async Task<Ok<AlarmStatisticsDto>> GetAlarmStatistics(
-        ISender sender, Guid? facilityId)
+        ISender sender, Guid facilityId)
     {
         var result = await sender.Send(new GetAlarmStatisticsQuery { FacilityId = facilityId });
         return TypedResults.Ok(result);
