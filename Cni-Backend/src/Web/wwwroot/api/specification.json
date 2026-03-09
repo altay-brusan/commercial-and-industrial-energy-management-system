@@ -2914,10 +2914,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks": {
+    "/api/v1/Maintenance/Tasks": {
       "get": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "GetApiV1MaintenanceTasks",
         "parameters": [
@@ -3028,7 +3028,7 @@
       },
       "post": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PostApiV1MaintenanceTasks",
         "requestBody": {
@@ -3063,10 +3063,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/Calendar": {
+    "/api/v1/Maintenance/Tasks/Calendar": {
       "get": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "GetApiV1MaintenanceTasksCalendar",
         "parameters": [
@@ -3123,10 +3123,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}": {
+    "/api/v1/Maintenance/Tasks/{id}": {
       "get": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "GetApiV1MaintenanceTasks2",
         "parameters": [
@@ -3160,10 +3160,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}/Status": {
+    "/api/v1/Maintenance/Tasks/{id}/Status": {
       "post": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PostApiV1MaintenanceTasksStatus",
         "parameters": [
@@ -3202,10 +3202,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}/Complete": {
+    "/api/v1/Maintenance/Tasks/{id}/Complete": {
       "post": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PostApiV1MaintenanceTasksComplete",
         "parameters": [
@@ -3244,10 +3244,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}/Close": {
+    "/api/v1/Maintenance/Tasks/{id}/Close": {
       "post": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PostApiV1MaintenanceTasksClose",
         "parameters": [
@@ -3286,10 +3286,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}/Notes": {
+    "/api/v1/Maintenance/Tasks/{id}/Notes": {
       "post": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PostApiV1MaintenanceTasksNotes",
         "parameters": [
@@ -3336,10 +3336,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}/Checklist": {
+    "/api/v1/Maintenance/Tasks/{id}/Checklist": {
       "post": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PostApiV1MaintenanceTasksChecklist",
         "parameters": [
@@ -3386,10 +3386,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}/Checklist/{itemId}": {
+    "/api/v1/Maintenance/Tasks/{id}/Checklist/{itemId}": {
       "put": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PutApiV1MaintenanceTasksChecklist",
         "parameters": [
@@ -3438,10 +3438,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}/WorkSessions/Start": {
+    "/api/v1/Maintenance/Tasks/{id}/WorkSessions/Start": {
       "post": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PostApiV1MaintenanceTasksWorkSessionsStart",
         "parameters": [
@@ -3476,10 +3476,10 @@
         ]
       }
     },
-    "/api/v1/MaintenanceTasks/{id}/WorkSessions/Stop": {
+    "/api/v1/Maintenance/Tasks/{id}/WorkSessions/Stop": {
       "post": {
         "tags": [
-          "MaintenanceTasks"
+          "Maintenance"
         ],
         "operationId": "PostApiV1MaintenanceTasksWorkSessionsStop",
         "parameters": [
