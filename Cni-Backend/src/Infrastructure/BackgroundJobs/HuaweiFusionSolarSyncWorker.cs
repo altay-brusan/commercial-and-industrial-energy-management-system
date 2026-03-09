@@ -74,7 +74,7 @@ public class HuaweiFusionSolarSyncWorker
                 errors.Select(e => new InvalidOperationException(e)));
         }
     }
-
+    
     private async Task SyncAccountAsync(HuaweiAccount account, CancellationToken ct)
     {
         var enabledStations = account.StationMappings
