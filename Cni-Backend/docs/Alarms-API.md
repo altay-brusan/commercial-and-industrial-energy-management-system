@@ -1,22 +1,152 @@
 # Alarms API Documentation
 
 **Base URL:** `/api/v1/Alarms`
-**Auth:** All endpoints require JWT Bearer token + role `Administrator` or `Tenant.Admin`
+**Ingestion:** `POST /api/v1/DeviceData/Ingest/Alarm`
+**Auth:** Query/mutation endpoints require JWT Bearer token + role `Administrator` or `Tenant.Admin`. Ingestion endpoint requires `X-API-Key` header.
+
+---
+
+## Alarm Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          ALARM INGESTION                                │
+│                                                                         │
+│  RTU / Edge Device                    Third-Party API Adapter           │
+│       │                                      │                          │
+│       │  MQTT → EMQX webhook                 │  HTTP poll               │
+│       ▼                                      ▼                          │
+│  POST /api/v1/DeviceData/Ingest/Alarm  (same endpoint)                 │
+│       │                                                                 │
+│       ├─ Resolve (rtuSn, deviceName) → Device                          │
+│       ├─ For each alarm in payload:                                    │
+│       │    ├─ Match code → DeviceAlarmType (auto-create if not found)  │
+│       │    ├─ active=true  → Create DeviceAlarm if not exists          │
+│       │    └─ active=false → Recover existing DeviceAlarm              │
+│       ├─ Snapshot comparison: auto-recover DB alarms not in payload    │
+│       └─ Store RtuSerialNumber + DeviceName on each DeviceAlarm        │
+└─────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        ALARM LIFECYCLE                                  │
+│                                                                         │
+│  ┌──────────┐    Acknowledge     ┌──────────────┐                      │
+│  │  Active   │ ─────────────────▶│ Acknowledged  │                      │
+│  └────┬─────┘   (user action)    └──────┬───────┘                      │
+│       │                                  │                              │
+│       ▼                                  ▼                              │
+│  ┌──────────┐                    ┌────────────┐                        │
+│  │Recovered │                    │  Resolved  │                        │
+│  │(auto)    │                    │(user/maint)│                        │
+│  └──────────┘                    └────────────┘                        │
+│                                                                         │
+│  Recovered: Ingest/Alarm reports active=false or snapshot auto-recover │
+│  Resolved:  User calls PATCH /Resolve, or MaintenanceTask completes   │
+└─────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        FRONTEND QUERY                                   │
+│                                                                         │
+│  GET /api/v1/Alarms ──▶ AlarmDtoMapper.ToDto() ──▶ AlarmDto            │
+│       │                                                                 │
+│       ├─ code         ← DeviceAlarmType.Code                           │
+│       ├─ message      ← Details.message → AlarmType.Description        │
+│       ├─ severity     ← AlarmType.Severity (Critical→critical, etc.)  │
+│       ├─ status       ← Derived (IsActive + AcknowledgedAt)            │
+│       ├─ source       ← Device.Name → DeviceAlarm.DeviceName          │
+│       ├─ sourceType   ← Device.DeviceType.Name                        │
+│       ├─ value        ← Details.value                                  │
+│       ├─ threshold    ← Details.threshold                              │
+│       └─ location     ← Device.Rtu.Facility.Name                      │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Endpoints
 
-| Method | Route | Permission | Description |
-|--------|-------|------------|-------------|
-| GET | `/` | `Alarm.View` | Paginated alarm list with filters |
-| GET | `/Summary` | `Alarm.View` | Active alarm counts by severity |
-| GET | `/{id}` | `Alarm.View` | Single alarm detail |
-| PATCH | `/{id}/Acknowledge` | `Alarm.Manage` | Acknowledge an active alarm |
-| PATCH | `/{id}/Resolve` | `Alarm.Manage` | Manually resolve an active alarm |
-| GET | `/Statistics` | `Alarm.View` | Total alarm counts by severity and source type |
-| GET | `/History/{deviceName}` | `Alarm.View` | Alarm history for a specific device by name |
-| POST | `/{id}/AssignToMaintenance` | `Alarm.Manage` | Create maintenance task from alarm |
+| Method | Route | Auth | Permission | Description |
+|--------|-------|------|------------|-------------|
+| POST | `/api/v1/DeviceData/Ingest/Alarm` | API Key | — | Ingest alarm data from RTU/adapter |
+| GET | `/` | JWT | `Alarm.View` | Paginated alarm list with filters |
+| GET | `/Summary` | JWT | `Alarm.View` | Active alarm counts by severity |
+| GET | `/{id}` | JWT | `Alarm.View` | Single alarm detail |
+| PATCH | `/{id}/Acknowledge` | JWT | `Alarm.Manage` | Acknowledge an active alarm |
+| PATCH | `/{id}/Resolve` | JWT | `Alarm.Manage` | Manually resolve an active alarm |
+| GET | `/Statistics` | JWT | `Alarm.View` | Total alarm counts by severity and source type |
+| GET | `/History/{deviceName}` | JWT | `Alarm.View` | Alarm history for a specific device by name |
+| POST | `/{id}/AssignToMaintenance` | JWT | `Alarm.Manage` | Create maintenance task from alarm |
+
+---
+
+## Alarm Ingestion
+
+### POST `/api/v1/DeviceData/Ingest/Alarm`
+
+Receives alarm data from RTUs (via EMQX webhook) or third-party API adapters. Uses snapshot comparison — any active alarm in the DB for this device that is NOT in the incoming payload is auto-recovered.
+
+**Auth:** `X-API-Key` header (same key as telemetry ingestion)
+
+**Request:**
+
+```json
+{
+  "rtuSn": "RTU-BESS-001",
+  "deviceName": "Battery1",
+  "alarms": [
+    {
+      "code": "CellOverVoltage",
+      "severity": "warning",
+      "active": true,
+      "message": "Cell voltage exceeded threshold on rack 2",
+      "value": 3.72,
+      "threshold": 3.65,
+      "raisedAt": "2026-03-09T10:00:00Z"
+    },
+    {
+      "code": "PcsOverTemp",
+      "severity": "high",
+      "active": false
+    }
+  ],
+  "deviceLocalTime": "2026-03-09T10:05:00Z"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `rtuSn` | string | Yes | RTU serial number that reported the alarm |
+| `deviceName` | string | Yes | Device name (matched under the RTU) |
+| `alarms` | array | Yes | List of alarm items |
+| `deviceLocalTime` | ISO 8601 | No | Defaults to UTC now |
+
+**Alarm item fields:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `code` | string | Yes | Alarm type code (e.g., `CellOverVoltage`). Maps to `DeviceAlarmType.Code`. Auto-created if not found. |
+| `severity` | string | No | `critical`, `high`, `medium`, `low`. Used when auto-creating alarm type. |
+| `active` | boolean | Yes | `true` = fault active, `false` = fault cleared |
+| `message` | string | No | Human-readable description. Stored in `Details` JSON, used as alarm message in API responses. |
+| `value` | number | No | Measured value that triggered the alarm |
+| `threshold` | number | No | Threshold that was exceeded |
+| `raisedAt` | ISO 8601 | No | When originally raised. Defaults to `deviceLocalTime` or UTC now. |
+
+**Response:**
+
+```json
+{ "success": true, "created": 1, "recovered": 1 }
+```
+
+**Processing:**
+1. Resolve `(rtuSn, deviceName)` → `Device` record (cached, 5-min TTL)
+2. For each alarm, resolve `code` → `DeviceAlarmType` (cached, 30-min TTL). Auto-create if not found.
+3. `active: true` — create `DeviceAlarm` if no active alarm exists for this `(DeviceId, DeviceAlarmTypeId)`
+4. `active: false` — recover matching active alarm (`IsActive = false`, `RecoveredAt = now`)
+5. **Snapshot comparison** — auto-recover any active DB alarm whose code is NOT in the payload
+6. Store `RtuSerialNumber` and `DeviceName` on each `DeviceAlarm` for traceability
 
 ---
 
@@ -28,10 +158,10 @@ Alarm status is **derived** from stored fields (lowercase strings):
 |--------|-----------|
 | `active` | `IsActive == true` AND `AcknowledgedAt == null` |
 | `acknowledged` | `IsActive == true` AND `AcknowledgedAt != null` |
-| `resolved` | `IsActive == false` (either telemetry recovery or human resolution) |
+| `resolved` | `IsActive == false` (either auto-recovery or human resolution) |
 
 Two separate resolution paths:
-- **RecoveredAt** — set automatically by `AlarmProcessingService` when telemetry clears the fault
+- **RecoveredAt** — set automatically by the alarm ingestion endpoint when the fault clears (RTU sends `active: false`, or snapshot comparison auto-recovery)
 - **ResolvedAt / ResolvedBy** — set manually via Resolve endpoint, or auto when a linked MaintenanceTask completes/closes
 
 ---
@@ -127,19 +257,19 @@ Paginated, filterable alarm list.
 | Field | Source | Notes |
 |-------|--------|-------|
 | `code` | `DeviceAlarmType.Code` | Alarm type code (e.g. `INV-DCBUS-ABN`) |
-| `message` | `DeviceAlarmType.Description` | Human-readable alarm description |
-| `severity` | `DeviceAlarmType.Severity` | Lowercased: `critical`, `high`, `warning`, `low`, `info` |
-| `status` | Derived | `active`, `acknowledged`, `resolved` |
-| `source` | `Device.Name` (fallback: `AlarmType.Source`) | Name of the device that triggered the alarm |
-| `sourceType` | `DeviceAlarmType.Category` | Lowercased: `bess`, `inverter`, `solar`, etc. |
-| `triggeredAt` | `DeviceAlarm.OccurredAt` | When the alarm was triggered |
-| `value` | From `Details` JSON (future) | Current measured value; `null` if not available |
-| `threshold` | From `Details` JSON (future) | Threshold that was exceeded; `null` if not available |
+| `message` | `Details.message` → `DeviceAlarmType.Description` | Instance message from ingestion preferred, falls back to alarm type description |
+| `severity` | `DeviceAlarmType.Severity` | Mapped: `Critical`→`critical`, `Major`→`high`, `Minor`→`medium`, `Warning`→`low` |
+| `status` | Derived | `active`, `acknowledged`, `resolved` (see Status Model) |
+| `source` | `Device.Name` → `DeviceAlarm.DeviceName` | Device name, falls back to denormalized column if device deleted |
+| `sourceType` | `Device.DeviceType.Name` | Lowercased: `inverter`, `energystorage`, `solar`, etc. Falls back to `AlarmType.Category` |
+| `triggeredAt` | `DeviceAlarm.OccurredAt` | When the alarm was first raised |
+| `value` | `Details.value` | Measured value from ingestion payload; `null` if not provided |
+| `threshold` | `Details.threshold` | Threshold from ingestion payload; `null` if not provided |
 | `acknowledgedBy` | `ApplicationUser` | User object or `null` |
 | `resolvedBy` | `ApplicationUser` | User object or `null` |
-| `relatedAsset` | `Device` entity | Device info object or `null` |
+| `relatedAsset` | `Device` entity + `Device.Metadata` | Device info object with `capacity`, `lastMaintenance` from metadata JSON; `null` if device not found |
 | `relatedMaintenanceTaskId` | `DeviceAlarm.MaintenanceTaskId` | Linked task GUID or `null` |
-| `location` | `Facility.Name` | Facility where the alarm occurred |
+| `location` | `Device.Rtu.Facility.Name` | Facility name where the alarm occurred |
 
 ### User Object Shape
 
@@ -166,13 +296,18 @@ Paginated, filterable alarm list.
 {
   "id": "device-guid",
   "name": "BMU-01",
-  "type": "bess",
+  "type": "energystorage",
   "location": "Facility Name",
+  "capacity": "2.5 MWh",
   "status": "online",
+  "lastMaintenance": "2026-01-15T10:00:00Z",
   "serialNumber": "BESS-2024-001",
   "model": "DEMO-BG"
 }
 ```
+
+- `type` maps from `Device.DeviceType.Name` (lowercased), falls back to `AlarmType.Category`
+- `capacity` and `lastMaintenance` are extracted from `Device.Metadata` JSON (optional fields)
 
 ---
 

@@ -11,17 +11,17 @@ public static class AlarmDtoMapper
 {
     public static AlarmDto ToDto(DeviceAlarm alarm)
     {
-        var (value, threshold) = ExtractValueAndThreshold(alarm.Details);
+        var (value, threshold, message) = ExtractDetails(alarm.Details);
 
         return new AlarmDto
         {
             Id = alarm.Id,
             Code = alarm.AlarmType?.Code ?? string.Empty,
-            Message = alarm.AlarmType?.Description,
+            Message = message ?? alarm.AlarmType?.Description,
             Severity = MapSeverity(alarm.AlarmType?.Severity),
             Status = !alarm.IsActive ? "resolved" : (alarm.AcknowledgedAt != null ? "acknowledged" : "active"),
-            Source = alarm.Device?.Name ?? alarm.AlarmType?.Source,
-            SourceType = alarm.AlarmType?.Category?.ToLower(),
+            Source = alarm.Device?.Name ?? alarm.DeviceName ?? alarm.AlarmType?.Source,
+            SourceType = alarm.Device?.DeviceType?.Name?.ToLower() ?? alarm.AlarmType?.Category?.ToLower(),
             TriggeredAt = alarm.OccurredAt,
             Value = value,
             Threshold = threshold,
@@ -100,7 +100,7 @@ public static class AlarmDtoMapper
         {
             Id = alarm.DeviceId,
             Name = alarm.Device.Name,
-            Type = alarm.AlarmType?.Category?.ToLower(),
+            Type = alarm.Device.DeviceType?.Name?.ToLower() ?? alarm.AlarmType?.Category?.ToLower(),
             Location = alarm.Device.Rtu?.Facility?.Name,
             Capacity = capacity,
             Status = alarm.Device.Status,
@@ -111,19 +111,20 @@ public static class AlarmDtoMapper
     }
 
     /// <summary>
-    /// Extracts "value" and "threshold" from the alarm's Details JSON.
-    /// Details is a JSON string like: {"value":"812V","threshold":"Normal range","cause":"..."}
+    /// Extracts "value", "threshold", and "message" from the alarm's Details JSON.
+    /// Details is a JSON string like: {"value":"812V","threshold":"Normal range","message":"..."}
     /// </summary>
-    private static (string? Value, string? Threshold) ExtractValueAndThreshold(string? details)
+    private static (string? Value, string? Threshold, string? Message) ExtractDetails(string? details)
     {
         if (string.IsNullOrEmpty(details))
-            return (null, null);
+            return (null, null, null);
 
         try
         {
             using var doc = JsonDocument.Parse(details);
             string? value = null;
             string? threshold = null;
+            string? message = null;
 
             if (doc.RootElement.TryGetProperty("value", out var v))
                 value = v.ValueKind == JsonValueKind.String ? v.GetString() : v.ToString();
@@ -131,11 +132,14 @@ public static class AlarmDtoMapper
             if (doc.RootElement.TryGetProperty("threshold", out var t))
                 threshold = t.ValueKind == JsonValueKind.String ? t.GetString() : t.ToString();
 
-            return (value, threshold);
+            if (doc.RootElement.TryGetProperty("message", out var m))
+                message = m.GetString();
+
+            return (value, threshold, message);
         }
         catch
         {
-            return (null, null);
+            return (null, null, null);
         }
     }
 }

@@ -45,6 +45,8 @@ public class ResolveAlarmCommandHandler : IRequestHandler<ResolveAlarmCommand, A
         var updated = await _context.DeviceAlarms
             .Include(a => a.AlarmType)
             .Include(a => a.Device)
+                .ThenInclude(d => d!.DeviceType)
+            .Include(a => a.Device)
                 .ThenInclude(d => d!.Rtu)
                     .ThenInclude(r => r!.Facility)
             .Include(a => a.AcknowledgedBy)

@@ -91,6 +91,8 @@ public class AssignAlarmToMaintenanceCommandHandler
         var alarm = await _context.DeviceAlarms
             .Include(a => a.AlarmType)
             .Include(a => a.Device)
+                .ThenInclude(d => d!.DeviceType)
+            .Include(a => a.Device)
                 .ThenInclude(d => d!.Rtu)
                     .ThenInclude(r => r!.Facility)
             .Include(a => a.AcknowledgedBy)
@@ -154,6 +156,8 @@ public class AssignAlarmToMaintenanceCommandHandler
             .Include(t => t.AssignedTo)
             .Include(t => t.AssignedBy)
             .Include(t => t.Device)
+                .ThenInclude(d => d!.DeviceType)
+            .Include(t => t.Device)
                 .ThenInclude(d => d!.Rtu)
                     .ThenInclude(r => r!.Facility)
             .FirstAsync(t => t.Id == task.Id, cancellationToken);
@@ -161,6 +165,8 @@ public class AssignAlarmToMaintenanceCommandHandler
         // Re-query alarm with full includes for response
         var updatedAlarm = await _context.DeviceAlarms
             .Include(a => a.AlarmType)
+            .Include(a => a.Device)
+                .ThenInclude(d => d!.DeviceType)
             .Include(a => a.Device)
                 .ThenInclude(d => d!.Rtu)
                     .ThenInclude(r => r!.Facility)
@@ -194,7 +200,7 @@ public class AssignAlarmToMaintenanceCommandHandler
             {
                 Id = task.Device.Id,
                 Name = task.Device.Name,
-                Type = alarm.AlarmType?.Category?.ToLower(),
+                Type = task.Device.DeviceType?.Name?.ToLower() ?? alarm.AlarmType?.Category?.ToLower(),
                 Location = task.Device.Rtu?.Facility?.Name,
                 Status = task.Device.Status,
                 SerialNumber = task.Device.SerialNumber,
