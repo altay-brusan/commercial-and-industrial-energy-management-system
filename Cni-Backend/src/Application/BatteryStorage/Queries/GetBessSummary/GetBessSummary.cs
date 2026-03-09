@@ -84,9 +84,9 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         var telemetry = await _telemetryLoader.LoadLatest(device.Id, ct);
         var payloads = telemetry.GetPayloadsByKind();
 
-        var batt = payloads.GetValueOrDefault("ContainerBatteryState");
-        var chiller = payloads.GetValueOrDefault("ChillerState");
-        var hvcu = payloads.GetValueOrDefault("HVCUControlState");
+        var batt = payloads.GetValueOrDefault("Battery.Energy");
+        var chiller = payloads.GetValueOrDefault("Battery.Thermal");
+        var hvcu = payloads.GetValueOrDefault("Battery.Thermal");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
         // Build parameter resolver from template's ParameterMapTemplate (if present)
@@ -550,7 +550,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
         // Load telemetry from root container (all data is stored there)
         var telemetry = await _telemetryLoader.LoadLatest(rootId, ct);
         var payloads = telemetry.GetPayloadsByKind();
-        var batt = payloads.GetValueOrDefault("ContainerBatteryState");
+        var batt = payloads.GetValueOrDefault("Battery.Energy");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
         // Build parameter resolver from inherited template
@@ -863,7 +863,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
     private async Task<List<DynamicSectionDto>> BuildTmsSummary(
         Domain.Entities.Device device, CancellationToken ct)
     {
-        // Walk up to find root container (ChillerState data is stored there)
+        // Walk up to find root container (Battery.Thermal data is stored there)
         var rootId = device.Id;
         var currentId = device.ParentDeviceId;
 
@@ -879,7 +879,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 
         var telemetry = await _telemetryLoader.LoadLatest(rootId, ct);
         var payloads = telemetry.GetPayloadsByKind();
-        var chiller = payloads.GetValueOrDefault("ChillerState");
+        var chiller = payloads.GetValueOrDefault("Battery.Thermal");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
         var sections = new List<DynamicSectionDto>

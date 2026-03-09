@@ -105,6 +105,15 @@ public class HuaweiDataTranslator
         };
     }
 
+    public static string MapHuaweiSeverity(int severity) => severity switch
+    {
+        1 => "Critical",
+        2 => "Major",
+        3 => "Minor",
+        4 => "Warning",
+        _ => "Warning"
+    };
+
     private static void TryAdd(Dictionary<string, object?> payload, string targetKey, JsonElement map, string sourceKey)
     {
         if (!map.TryGetProperty(sourceKey, out var value))

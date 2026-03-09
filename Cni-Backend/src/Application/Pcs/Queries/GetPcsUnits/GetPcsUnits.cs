@@ -119,10 +119,10 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
                 : null;
 
             // Fallback payloads for hardcoded extraction
-            var powerPayload = payloadsByKind.GetValueOrDefault("PcsPowerState");
-            var statusPayload = payloadsByKind.GetValueOrDefault("PcsStatusState");
-            var tempsPayload = payloadsByKind.GetValueOrDefault("PcsTempsState");
-            var dcPayload = payloadsByKind.GetValueOrDefault("PcsDcMeasState");
+            var powerPayload = payloadsByKind.GetValueOrDefault("Pcs.PowerDistribution");
+            var statusPayload = payloadsByKind.GetValueOrDefault("Pcs.Status");
+            var tempsPayload = payloadsByKind.GetValueOrDefault("Pcs.Status");
+            var dcPayload = payloadsByKind.GetValueOrDefault("Pcs.DcMeasurement");
 
             // Resolve linked BESS: prefer parent device if it's EnergyStorage, else fallback to facility
             PcsLinkedBessUnitDto? linkedBess = null;

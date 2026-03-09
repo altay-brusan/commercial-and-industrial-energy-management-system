@@ -167,12 +167,12 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
         Dictionary<string, JsonElement?> payloadsByKind,
         ParameterResolver? resolver)
     {
-        var statusPayload = payloadsByKind.GetValueOrDefault("PcsStatusState");
-        var powerPayload = payloadsByKind.GetValueOrDefault("PcsPowerState");
-        var tempsPayload = payloadsByKind.GetValueOrDefault("PcsTempsState");
-        var dcPayload = payloadsByKind.GetValueOrDefault("PcsDcMeasState");
-        var acPayload = payloadsByKind.GetValueOrDefault("PcsAcMeasState");
-        var chargePayload = payloadsByKind.GetValueOrDefault("PcsChargeAlgState");
+        var statusPayload = payloadsByKind.GetValueOrDefault("Pcs.Status");
+        var powerPayload = payloadsByKind.GetValueOrDefault("Pcs.PowerDistribution");
+        var tempsPayload = payloadsByKind.GetValueOrDefault("Pcs.Status");
+        var dcPayload = payloadsByKind.GetValueOrDefault("Pcs.DcMeasurement");
+        var acPayload = payloadsByKind.GetValueOrDefault("Pcs.AcMeasurement");
+        var chargePayload = payloadsByKind.GetValueOrDefault("Pcs.ChargeAlgorithm");
 
         return new List<DynamicSectionDto>
         {

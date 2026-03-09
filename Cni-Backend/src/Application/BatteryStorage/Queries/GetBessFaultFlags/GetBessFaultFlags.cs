@@ -15,7 +15,7 @@ namespace Backend.Application.BatteryStorage.Queries.GetBessFaultFlags;
 //
 // 2. TELEMETRY SOURCE: Uses ContainerTelemetryLoader then picks the first payload it finds
 //    (line 41: mergedPayloads.Values.FirstOrDefault). This is fragile — fault flags may
-//    come from multiple Kinds (e.g. ChillerState, HVCUState, PcsStatusState), not just
+//    come from multiple Kinds (e.g. Battery.Thermal, Battery.Status, Pcs.Status), not just
 //    the first one in the dictionary. Each Kind should be checked against its own flag
 //    definitions from the schema.
 //

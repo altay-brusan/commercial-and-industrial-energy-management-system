@@ -1,8 +1,11 @@
 using System.Text.Json;
 using Backend.Application.Common.Interfaces;
+using Backend.Application.Common.Models.Huawei;
+using Backend.Domain.Entities;
 using Backend.Domain.Entities.Huawei;
 using Backend.Infrastructure.Huawei;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Backend.Infrastructure.BackgroundJobs;
@@ -14,6 +17,7 @@ public class HuaweiFusionSolarSyncWorker
     private readonly HuaweiTokenManager _tokenManager;
     private readonly IHuaweiApiClient _apiClient;
     private readonly HuaweiDataTranslator _translator;
+    private readonly IMemoryCache _cache;
 
     // Huawei device type IDs
     private const int DevTypeInverter = 1;
@@ -24,13 +28,15 @@ public class HuaweiFusionSolarSyncWorker
         IApplicationDbContext context,
         HuaweiTokenManager tokenManager,
         IHuaweiApiClient apiClient,
-        HuaweiDataTranslator translator)
+        HuaweiDataTranslator translator,
+        IMemoryCache cache)
     {
         _logger = logger;
         _context = context;
         _tokenManager = tokenManager;
         _apiClient = apiClient;
         _translator = translator;
+        _cache = cache;
     }
 
     public async Task SyncAllAccounts(CancellationToken ct = default)
@@ -147,6 +153,20 @@ public class HuaweiFusionSolarSyncWorker
 
         LogSyncResult(account.Id, "RealTimeKpi", "Success", totalDevices, totalRecords, null);
         await _context.SaveChangesAsync(ct);
+
+        // Sync alarms from Huawei API
+        try
+        {
+            await SyncAlarmsAsync(account, enabledStations, token, ct);
+        }
+        catch (HuaweiRateLimitException ex)
+        {
+            _logger.LogWarning(ex, "Rate limited during alarm sync for account {AccountId}", account.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Alarm sync failed for account {AccountId}, KPI sync was successful", account.Id);
+        }
 
         _logger.LogInformation(
             "Huawei sync completed for account {AccountId}: {Devices} devices, {Records} records in {Elapsed:F1}s",
@@ -269,6 +289,161 @@ public class HuaweiFusionSolarSyncWorker
         }
 
         return records;
+    }
+
+    private async Task SyncAlarmsAsync(
+        HuaweiAccount account,
+        List<HuaweiStationMapping> enabledStations,
+        string token,
+        CancellationToken ct)
+    {
+        var stationCodes = string.Join(",", enabledStations.Select(s => s.StationCode));
+        if (string.IsNullOrEmpty(stationCodes))
+            return;
+
+        // Query last 24h of alarms
+        var endTime = DateTimeOffset.UtcNow;
+        var beginTime = endTime.AddHours(-24);
+
+        var huaweiAlarms = await _apiClient.GetAlarmListAsync(
+            account.BaseUrl, token, stationCodes,
+            beginTime.ToUnixTimeMilliseconds(), endTime.ToUnixTimeMilliseconds(), ct);
+
+        if (huaweiAlarms.Count == 0)
+        {
+            _logger.LogDebug("No Huawei alarms returned for account {AccountId}", account.Id);
+            return;
+        }
+
+        // Build device mapping lookup: Huawei devId → local DeviceId
+        var deviceMappingLookup = enabledStations
+            .SelectMany(s => s.DeviceMappings)
+            .GroupBy(m => m.HuaweiDeviceId)
+            .ToDictionary(g => g.Key, g => g.First().DeviceId);
+
+        // Collect all resolved device IDs for recovery check
+        var syncedDeviceIds = new HashSet<Guid>();
+        var activeHuaweiAlarmCodes = new HashSet<string>();
+
+        foreach (var alarm in huaweiAlarms)
+        {
+            if (!deviceMappingLookup.TryGetValue(alarm.DevId, out var deviceId))
+                continue;
+
+            syncedDeviceIds.Add(deviceId);
+            var alarmCode = $"HW-{alarm.AlarmId}";
+
+            if (alarm.Status == 1) // active
+            {
+                activeHuaweiAlarmCodes.Add(alarmCode);
+
+                // Find or create DeviceAlarmType
+                var alarmType = await GetOrCreateHuaweiAlarmType(alarm, alarmCode, ct);
+
+                // Check if active alarm already exists
+                var existingAlarm = await _context.DeviceAlarms
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(a => a.DeviceId == deviceId
+                        && a.DeviceAlarmTypeId == alarmType.Id
+                        && a.IsActive, ct);
+
+                if (existingAlarm == null)
+                {
+                    var details = new Dictionary<string, string?>();
+                    if (!string.IsNullOrEmpty(alarm.AlarmCause))
+                        details["cause"] = alarm.AlarmCause;
+                    if (!string.IsNullOrEmpty(alarm.RepairSuggestion))
+                        details["repairSuggestion"] = alarm.RepairSuggestion;
+
+                    _context.DeviceAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = deviceId,
+                        DeviceAlarmTypeId = alarmType.Id,
+                        OccurredAt = DateTimeOffset.FromUnixTimeMilliseconds(alarm.RaiseTime),
+                        IsActive = true,
+                        Details = details.Count > 0 ? JsonSerializer.Serialize(details) : null
+                    });
+                }
+            }
+        }
+
+        // Recovery: close alarms that are no longer in the active set
+        if (syncedDeviceIds.Count > 0)
+        {
+            var activeDbAlarms = await _context.DeviceAlarms
+                .Include(a => a.AlarmType)
+                .IgnoreQueryFilters()
+                .Where(a => syncedDeviceIds.Contains(a.DeviceId)
+                    && a.IsActive
+                    && a.AlarmType != null
+                    && a.AlarmType.Code.StartsWith("HW-"))
+                .ToListAsync(ct);
+
+            foreach (var dbAlarm in activeDbAlarms)
+            {
+                if (!activeHuaweiAlarmCodes.Contains(dbAlarm.AlarmType!.Code))
+                {
+                    dbAlarm.IsActive = false;
+                    dbAlarm.RecoveredAt = DateTimeOffset.UtcNow;
+                }
+            }
+        }
+
+        LogSyncResult(account.Id, "Alarms", "Success", syncedDeviceIds.Count, huaweiAlarms.Count, null);
+        await _context.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "Huawei alarm sync for account {AccountId}: {AlarmCount} alarms, {DeviceCount} devices",
+            account.Id, huaweiAlarms.Count, syncedDeviceIds.Count);
+    }
+
+    private async Task<DeviceAlarmType> GetOrCreateHuaweiAlarmType(HuaweiAlarmData alarm, string alarmCode, CancellationToken ct)
+    {
+        var cacheKey = $"hw-alarm-type:{alarmCode}";
+        if (_cache.TryGetValue<DeviceAlarmType>(cacheKey, out var cached) && cached != null)
+            return cached;
+
+        var alarmType = await _context.DeviceAlarmTypes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Code == alarmCode, ct);
+
+        if (alarmType == null)
+        {
+            // Resolve DeviceTypeId from the Huawei device type
+            var deviceTypeId = alarm.DevTypeId == DevTypeBattery
+                ? await _context.DeviceTypes.Where(dt => dt.Name == "EnergyStorage").Select(dt => dt.Id).FirstOrDefaultAsync(ct)
+                : await _context.DeviceTypes.Where(dt => dt.Name == "PCS" || dt.Name == "Inverter").Select(dt => dt.Id).FirstOrDefaultAsync(ct);
+
+            if (deviceTypeId == Guid.Empty)
+            {
+                deviceTypeId = await _context.DeviceTypes.Select(dt => dt.Id).FirstAsync(ct);
+            }
+
+            alarmType = new DeviceAlarmType
+            {
+                DeviceTypeId = deviceTypeId,
+                Model = "Huawei",
+                Manufacturer = "Huawei",
+                Code = alarmCode,
+                FaultKey = alarmCode,
+                Kind = "Huawei.Alarm",
+                Name = alarm.AlarmName,
+                Description = alarm.AlarmCause,
+                Category = "Huawei",
+                Severity = HuaweiDataTranslator.MapHuaweiSeverity(alarm.Severity),
+                DetectionStrategy = "ApiPolled",
+                IsEnabled = true
+            };
+            _context.DeviceAlarmTypes.Add(alarmType);
+            await _context.SaveChangesAsync(ct);
+        }
+
+        _cache.Set(cacheKey, alarmType, new MemoryCacheEntryOptions
+        {
+            SlidingExpiration = TimeSpan.FromMinutes(30)
+        });
+
+        return alarmType;
     }
 
     private void LogRawData(Guid accountId, string endpoint, string? request, string? response, int statusCode)

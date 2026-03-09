@@ -139,6 +139,16 @@ public class HuaweiApiClient : IHuaweiApiClient
         return result ?? [];
     }
 
+    public async Task<List<HuaweiAlarmData>> GetAlarmListAsync(
+        string baseUrl, string token, string stationCodes,
+        long beginTimeMs, long endTimeMs, CancellationToken ct = default)
+    {
+        var url = $"{baseUrl}/getAlarmList";
+        var payload = new { stationCodes, beginTime = beginTimeMs, endTime = endTimeMs, language = "en_US" };
+        var result = await PostAsync<List<HuaweiAlarmData>>(url, token, payload, ct);
+        return result ?? [];
+    }
+
     private async Task<T?> PostAsync<T>(string url, string sessionToken, object payload, CancellationToken ct)
     {
         // Parse the combined session token: "xsrfToken|||cookieHeader"

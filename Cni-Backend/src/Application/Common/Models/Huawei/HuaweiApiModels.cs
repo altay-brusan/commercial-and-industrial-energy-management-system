@@ -101,3 +101,42 @@ public class HuaweiStationRealKpiData
     [JsonPropertyName("dataItemMap")]
     public JsonElement DataItemMap { get; set; }
 }
+
+public class HuaweiAlarmData
+{
+    [JsonPropertyName("alarmId")]
+    public long AlarmId { get; set; }
+
+    [JsonPropertyName("alarmName")]
+    public string AlarmName { get; set; } = string.Empty;
+
+    [JsonPropertyName("devId")]
+    public long DevId { get; set; }
+
+    [JsonPropertyName("devName")]
+    public string DevName { get; set; } = string.Empty;
+
+    [JsonPropertyName("devTypeId")]
+    public int DevTypeId { get; set; }
+
+    [JsonPropertyName("stationCode")]
+    public string StationCode { get; set; } = string.Empty;
+
+    [JsonPropertyName("alarmCause")]
+    public string? AlarmCause { get; set; }
+
+    [JsonPropertyName("repairSuggestion")]
+    public string? RepairSuggestion { get; set; }
+
+    /// <summary>1=Critical, 2=Major, 3=Minor, 4=Warning</summary>
+    [JsonPropertyName("severity")]
+    public int Severity { get; set; }
+
+    /// <summary>Epoch milliseconds when the alarm was raised.</summary>
+    [JsonPropertyName("raiseTime")]
+    public long RaiseTime { get; set; }
+
+    /// <summary>1=active, 2=cleared</summary>
+    [JsonPropertyName("status")]
+    public int Status { get; set; }
+}

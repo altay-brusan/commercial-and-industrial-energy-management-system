@@ -9,4 +9,5 @@ public interface IHuaweiApiClient
     Task<List<HuaweiDeviceInfo>> GetDeviceListAsync(string baseUrl, string token, string stationCode, CancellationToken ct = default);
     Task<List<HuaweiDevRealKpiData>> GetDevRealKpiAsync(string baseUrl, string token, IReadOnlyList<long> devIds, int devTypeId, CancellationToken ct = default);
     Task<List<HuaweiStationRealKpiData>> GetStationRealKpiAsync(string baseUrl, string token, IReadOnlyList<string> stationCodes, CancellationToken ct = default);
+    Task<List<HuaweiAlarmData>> GetAlarmListAsync(string baseUrl, string token, string stationCodes, long beginTimeMs, long endTimeMs, CancellationToken ct = default);
 }

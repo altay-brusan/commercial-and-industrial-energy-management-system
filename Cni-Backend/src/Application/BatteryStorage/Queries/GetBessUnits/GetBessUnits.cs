@@ -125,8 +125,8 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
             var payloadsByKind = telemetryByDevice.GetValueOrDefault(device.Id)
                 ?? new Dictionary<string, JsonElement?>();
 
-            // Fallback payload for legacy extraction (ContainerBatteryState)
-            var payload = payloadsByKind.GetValueOrDefault("ContainerBatteryState");
+            // Fallback payload for direct extraction (Battery.Energy)
+            var payload = payloadsByKind.GetValueOrDefault("Battery.Energy");
 
             // Build resolver from template's ParameterMapTemplate (if present)
             var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);

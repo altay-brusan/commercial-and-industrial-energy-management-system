@@ -173,7 +173,7 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             ? new ParameterResolver(parameterMap, payloadsByKind, metadata)
             : null;
 
-        var battPayload = payloadsByKind.GetValueOrDefault("ContainerBatteryState");
+        var battPayload = payloadsByKind.GetValueOrDefault("Battery.Energy");
 
         // Operating mode (root only)
         StatusBadgeDto? operatingMode = null;
@@ -257,7 +257,7 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
         var rootId = FindRootDeviceId(device, allDevices);
         var telemetry = await _telemetryLoader.LoadLatest(rootId, ct);
         var payloads = telemetry.GetPayloadsByKind();
-        var chiller = payloads.GetValueOrDefault("ChillerState");
+        var chiller = payloads.GetValueOrDefault("Battery.Thermal");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
         var modeStr = chiller.HasValue
@@ -284,9 +284,9 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
         var payloads = telemetry.GetPayloadsByKind();
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
-        // ESC telemetry may come from PcsState or ControllerState kinds
-        var pcsState = payloads.GetValueOrDefault("PcsState");
-        var controllerState = payloads.GetValueOrDefault("ControllerState");
+        // ESC telemetry may come from Pcs.Status kinds
+        var pcsState = payloads.GetValueOrDefault("Pcs.Status");
+        var controllerState = payloads.GetValueOrDefault("Pcs.Status");
         var escPayload = controllerState ?? pcsState;
 
         return new List<DynamicSectionDto>

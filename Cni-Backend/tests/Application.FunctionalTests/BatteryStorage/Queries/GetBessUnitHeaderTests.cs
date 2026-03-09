@@ -66,8 +66,8 @@ public class GetBessUnitHeaderTests : BaseTestFixture
         result.Should().NotBeNull();
         result!.Id.Should().Be(device.Id);
         result.Name.Should().Be("BESS Header Unit");
-        result.ModelName.Should().Be("DEMO-BG");
-        result.Manufacturer.Should().Be("CATL");
+        result.Model.Should().Be("DEMO-BG");
+        result.Brand.Should().Be("CATL");
         result.FacilityName.Should().Be("Header Test Facility");
         result.AvailableTabs.Should().NotBeEmpty();
     }

@@ -4911,11 +4911,15 @@
             "type": "string",
             "nullable": true
           },
-          "modelName": {
+          "model": {
             "type": "string",
             "nullable": true
           },
-          "manufacturer": {
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "productType": {
             "type": "string",
             "nullable": true
           },
@@ -5047,7 +5051,7 @@
           "label": {
             "type": "string"
           },
-          "isEnabled": {
+          "enabled": {
             "type": "boolean"
           },
           "order": {
