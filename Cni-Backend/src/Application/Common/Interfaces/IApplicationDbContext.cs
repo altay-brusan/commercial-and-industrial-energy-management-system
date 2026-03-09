@@ -45,6 +45,9 @@ public interface IApplicationDbContext
     DbSet<TaskStatusChange> TaskStatusChanges { get; }
     DbSet<TaskWorkSession> TaskWorkSessions { get; }
 
+    // Notifications
+    DbSet<Notification> Notifications { get; }
+
     // Market and tariff entities
     DbSet<MarketOperator> MarketOperators { get; }
     DbSet<FirmMarketOperator> FirmMarketOperators { get; }

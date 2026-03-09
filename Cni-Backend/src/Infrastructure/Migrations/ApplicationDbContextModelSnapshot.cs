@@ -1230,6 +1230,68 @@ namespace Backend.Infrastructure.Migrations
                     b.ToTable("MarketOperators", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("RelatedAlarmId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RelatedTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RelatedAlarmId");
+
+                    b.HasIndex("RelatedTaskId");
+
+                    b.HasIndex("UserId", "IsRead", "Timestamp")
+                        .IsDescending(false, false, true);
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2291,6 +2353,31 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("DeviceAlarm");
 
                     b.Navigation("Facility");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.DeviceAlarm", "RelatedAlarm")
+                        .WithMany()
+                        .HasForeignKey("RelatedAlarmId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.MaintenanceTask", "RelatedTask")
+                        .WithMany()
+                        .HasForeignKey("RelatedTaskId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RelatedAlarm");
+
+                    b.Navigation("RelatedTask");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.Permission", b =>

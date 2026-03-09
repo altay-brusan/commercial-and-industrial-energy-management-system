@@ -60,6 +60,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<TaskStatusChange> TaskStatusChanges => Set<TaskStatusChange>();
     public DbSet<TaskWorkSession> TaskWorkSessions => Set<TaskWorkSession>();
 
+    // Notifications
+    public DbSet<Notification> Notifications => Set<Notification>();
+
     // Market and tariff entities
     public DbSet<MarketOperator> MarketOperators => Set<MarketOperator>();
     public DbSet<FirmMarketOperator> FirmMarketOperators => Set<FirmMarketOperator>();
