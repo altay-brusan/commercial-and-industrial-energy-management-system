@@ -31,7 +31,7 @@ public class GetAlarmSummaryQueryHandler : IRequestHandler<GetAlarmSummaryQuery,
 
         var totalActive = await query.CountAsync(cancellationToken);
         var critical = await query.Where(a => a.AlarmType!.Severity == "Critical").CountAsync(cancellationToken);
-        var high = await query.Where(a => a.AlarmType!.Severity == "High").CountAsync(cancellationToken);
+        var high = await query.Where(a => a.AlarmType!.Severity == "Major" || a.AlarmType!.Severity == "High").CountAsync(cancellationToken);
         var acknowledged = await query.Where(a => a.AcknowledgedAt != null).CountAsync(cancellationToken);
 
         return new AlarmSummaryDto

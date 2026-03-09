@@ -5255,8 +5255,17 @@
             "type": "string",
             "nullable": true
           },
+          "capacity": {
+            "type": "string",
+            "nullable": true
+          },
           "status": {
             "type": "string",
+            "nullable": true
+          },
+          "lastMaintenance": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "serialNumber": {

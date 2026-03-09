@@ -46,10 +46,12 @@ public class GetAlarmStatisticsQueryHandler : IRequestHandler<GetAlarmStatistics
             TotalAlarms = alarms.Count,
             ActiveAlarms = alarms.Count(a => a.IsActive && a.AcknowledgedAt == null),
             CriticalAlarms = alarms.Count(a => string.Equals(a.Severity, "Critical", StringComparison.OrdinalIgnoreCase)),
-            HighAlarms = alarms.Count(a => string.Equals(a.Severity, "High", StringComparison.OrdinalIgnoreCase)),
-            MediumAlarms = alarms.Count(a => string.Equals(a.Severity, "Warning", StringComparison.OrdinalIgnoreCase)
+            HighAlarms = alarms.Count(a => string.Equals(a.Severity, "Major", StringComparison.OrdinalIgnoreCase)
+                                         || string.Equals(a.Severity, "High", StringComparison.OrdinalIgnoreCase)),
+            MediumAlarms = alarms.Count(a => string.Equals(a.Severity, "Minor", StringComparison.OrdinalIgnoreCase)
                                            || string.Equals(a.Severity, "Medium", StringComparison.OrdinalIgnoreCase)),
-            LowAlarms = alarms.Count(a => string.Equals(a.Severity, "Low", StringComparison.OrdinalIgnoreCase)),
+            LowAlarms = alarms.Count(a => string.Equals(a.Severity, "Warning", StringComparison.OrdinalIgnoreCase)
+                                        || string.Equals(a.Severity, "Low", StringComparison.OrdinalIgnoreCase)),
             AcknowledgedCount = alarms.Count(a => a.IsActive && a.AcknowledgedAt != null),
             ResolvedCount = alarms.Count(a => !a.IsActive),
             BySourceType = bySourceType

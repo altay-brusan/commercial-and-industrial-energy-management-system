@@ -177,6 +177,8 @@ public class AssignAlarmToMaintenanceCommandHandler
 
     private static AssignedMaintenanceTaskDto MapTask(MaintenanceTask task, DeviceAlarm alarm)
     {
+        var alarmDto = AlarmDtoMapper.ToDto(alarm);
+
         return new AssignedMaintenanceTaskDto
         {
             Id = task.Id,
@@ -184,8 +186,8 @@ public class AssignAlarmToMaintenanceCommandHandler
             Description = task.Description,
             Status = task.Status.ToLower(),
             Priority = task.Priority.ToLower(),
-            AssignedTo = MapUser(task.AssignedTo),
-            AssignedBy = MapUser(task.AssignedBy),
+            AssignedTo = AlarmDtoMapper.MapUser(task.AssignedTo),
+            AssignedBy = AlarmDtoMapper.MapUser(task.AssignedBy),
             AssignedDate = task.Created,
             DueDate = task.DueDate,
             RelatedAsset = task.Device != null ? new AlarmRelatedAssetDto
@@ -201,15 +203,15 @@ public class AssignAlarmToMaintenanceCommandHandler
             RelatedAlarm = new TaskRelatedAlarmDto
             {
                 Id = alarm.Id,
-                Code = alarm.AlarmType?.Code ?? string.Empty,
-                Message = alarm.AlarmType?.Description,
-                Severity = alarm.AlarmType?.Severity.ToLower() ?? string.Empty,
-                Source = alarm.Device?.Name ?? alarm.AlarmType?.Source,
-                TriggeredAt = alarm.OccurredAt,
-                Value = null,
-                Threshold = null,
-                AcknowledgedAt = alarm.AcknowledgedAt,
-                AcknowledgedBy = MapUser(alarm.AcknowledgedBy)
+                Code = alarmDto.Code,
+                Message = alarmDto.Message,
+                Severity = alarmDto.Severity,
+                Source = alarmDto.Source,
+                TriggeredAt = alarmDto.TriggeredAt,
+                Value = alarmDto.Value,
+                Threshold = alarmDto.Threshold,
+                AcknowledgedAt = alarmDto.AcknowledgedAt,
+                AcknowledgedBy = alarmDto.AcknowledgedBy
             },
             Checklist = new List<object>(),
             WorkSessions = new List<object>(),
@@ -218,26 +220,6 @@ public class AssignAlarmToMaintenanceCommandHandler
             DeletedAt = null,
             CreatedAt = task.Created,
             UpdatedAt = task.LastModified
-        };
-    }
-
-    private static AlarmUserDto? MapUser(ApplicationUser? user)
-    {
-        if (user == null) return null;
-
-        string? initials = null;
-        if (!string.IsNullOrEmpty(user.Name) && !string.IsNullOrEmpty(user.Surname))
-            initials = $"{user.Name[0]}{user.Surname[0]}".ToUpper();
-
-        return new AlarmUserDto
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            Initials = initials,
-            Role = user.Title,
-            Department = user.Department,
-            Phone = user.PhoneNumber
         };
     }
 }

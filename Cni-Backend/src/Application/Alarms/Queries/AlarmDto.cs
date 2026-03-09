@@ -23,7 +23,9 @@ public record AlarmRelatedAssetDto
     public string Name { get; init; } = string.Empty;
     public string? Type { get; init; }
     public string? Location { get; init; }
+    public string? Capacity { get; init; }
     public string? Status { get; init; }
+    public DateTimeOffset? LastMaintenance { get; init; }
     public string? SerialNumber { get; init; }
     public string? Model { get; init; }
 }
