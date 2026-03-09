@@ -194,13 +194,6 @@ export default function LoginPage() {
               </Button>
             </form>
           </Form>
-
-          <p className="text-center text-xs text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <a href="#" className="text-primary hover:underline underline-offset-4">
-              Contact your administrator
-            </a>
-          </p>
         </div>
       </div>
     </div>
