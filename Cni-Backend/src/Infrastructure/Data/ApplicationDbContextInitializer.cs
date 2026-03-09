@@ -1059,7 +1059,16 @@ public class ApplicationDbContextInitializer
                 Model = "LUNA2000",
                 Manufacturer = "Huawei",
                 IsDefault = false,
-                SpecificationsTemplate = "{}",
+                SpecificationsTemplate = """
+                {
+                  "supportedTabs": [
+                    { "key": "summary", "label": "Summary", "isEnabled": true, "order": 0 },
+                    { "key": "health", "label": "Health", "isEnabled": true, "order": 1 },
+                    { "key": "curves", "label": "Curves", "isEnabled": true, "order": 2 },
+                    { "key": "faults", "label": "Faults", "isEnabled": true, "order": 3 }
+                  ]
+                }
+                """,
                 MetadataTemplate = """{"cellChemistry": "LFP"}""",
                 ParameterMapTemplate = """
                 {
@@ -1115,7 +1124,15 @@ public class ApplicationDbContextInitializer
                 Model = "SUN2000-Inverter",
                 Manufacturer = "Huawei",
                 IsDefault = false,
-                SpecificationsTemplate = "{}",
+                SpecificationsTemplate = """
+                {
+                  "supportedTabs": [
+                    { "key": "general", "label": "General", "isEnabled": true, "order": 0 },
+                    { "key": "curve", "label": "Curve", "isEnabled": true, "order": 1 },
+                    { "key": "fault", "label": "Fault", "isEnabled": true, "order": 2 }
+                  ]
+                }
+                """,
                 MetadataTemplate = "{}",
                 ParameterMapTemplate = """
                 {

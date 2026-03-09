@@ -153,7 +153,7 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
                 var key = tab.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
                 var label = tab.TryGetProperty("label", out var l) ? l.GetString() ?? key : key;
                 var enabled = !tab.TryGetProperty("enabled", out var e) || e.GetBoolean();
-                tabs.Add(new TabInfoDto { Key = key, Label = label, IsEnabled = enabled, Order = order });
+                tabs.Add(new TabInfoDto { Key = key, Label = label, Enabled = enabled, Order = order });
             }
             return tabs.Count > 0 ? tabs : defaultTabs;
         }

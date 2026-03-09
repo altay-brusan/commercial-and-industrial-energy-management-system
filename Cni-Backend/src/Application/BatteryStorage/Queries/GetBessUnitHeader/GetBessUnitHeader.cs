@@ -209,8 +209,9 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             Id = device.Id,
             Name = device.Name,
             SerialNumber = isRootUnit ? device.SerialNumber : null,
-            ModelName = isRootUnit ? device.Model : null,
-            Manufacturer = isRootUnit ? device.Manufacturer : null,
+            Model = isRootUnit ? device.Model : null,
+            Brand = isRootUnit ? device.Manufacturer : null,
+            ProductType = isRootUnit ? SlugifyModel(device.SpecificationTemplate?.Model) : null,
             FacilityId = device.Rtu!.FacilityId,
             FacilityName = device.Rtu?.Facility?.Name,
             UnitId = unitId,
@@ -572,11 +573,14 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
                 var key = tab.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
                 var label = tab.TryGetProperty("label", out var l) ? l.GetString() ?? key : key;
                 var enabled = !tab.TryGetProperty("isEnabled", out var e) || e.GetBoolean();
-                tabs.Add(new TabInfoDto { Key = key, Label = label, IsEnabled = enabled, Order = order });
+                tabs.Add(new TabInfoDto { Key = key, Label = label, Enabled = enabled, Order = order });
             }
             return tabs.Count > 0 ? tabs : defaultTabs;
         }
 
         return defaultTabs;
     }
+
+    private static string? SlugifyModel(string? model) =>
+        model?.ToLowerInvariant().Replace(" ", "-").Replace("_", "-");
 }

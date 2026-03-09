@@ -7,8 +7,9 @@ public record BessUnitHeaderDto
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public string? SerialNumber { get; init; }
-    public string? ModelName { get; init; }
-    public string? Manufacturer { get; init; }
+    public string? Model { get; init; }
+    public string? Brand { get; init; }
+    public string? ProductType { get; init; }
     public Guid FacilityId { get; init; }
     public string? FacilityName { get; init; }
 
