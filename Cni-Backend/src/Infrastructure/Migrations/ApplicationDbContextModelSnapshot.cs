@@ -264,6 +264,9 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<Guid>("DeviceId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("DeviceName")
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -296,6 +299,9 @@ namespace Backend.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ResolvedById")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RtuSerialNumber")
                         .HasColumnType("text");
 
                     b.HasKey("Id");

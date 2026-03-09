@@ -1030,6 +1030,38 @@
         }
       }
     },
+    "/api/v1/DeviceData/Ingest/Alarm": {
+      "post": {
+        "tags": [
+          "DeviceData"
+        ],
+        "operationId": "PostApiV1DeviceDataIngestAlarm",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestDeviceAlarmCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestDeviceAlarmResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/DeviceData/Ingest/ThingsBoard": {
       "post": {
         "tags": [
@@ -6392,6 +6424,81 @@
             "items": {
               "$ref": "#/components/schemas/IngestDeviceDataCommand"
             }
+          }
+        }
+      },
+      "IngestDeviceAlarmResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "created": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recovered": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "IngestDeviceAlarmCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rtuSn": {
+            "type": "string"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "alarms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlarmPayloadItem"
+            }
+          },
+          "deviceLocalTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "AlarmPayloadItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "threshold": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "raisedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         }
       },
