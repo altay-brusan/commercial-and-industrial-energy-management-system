@@ -2559,6 +2559,74 @@
         ]
       }
     },
+    "/api/Firms/Me": {
+      "get": {
+        "tags": [
+          "Firms"
+        ],
+        "operationId": "GetUserFirms",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserFirmDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/Firms/{firmId}/Facilities": {
+      "get": {
+        "tags": [
+          "Firms"
+        ],
+        "operationId": "GetUserFirmFacilities",
+        "parameters": [
+          {
+            "name": "firmId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserFirmFacilityDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/Firms/{id}": {
       "get": {
         "tags": [
@@ -8294,6 +8362,71 @@
           }
         }
       },
+      "UserFirmDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserFirmFacilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "firmId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "energyCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "energyUnit": {
+            "$ref": "#/components/schemas/EnergyUnit"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "FirmDto": {
         "type": "object",
         "additionalProperties": false,
@@ -11334,12 +11467,12 @@
             "type": "array",
             "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/UserFirmFacilityDto"
+              "$ref": "#/components/schemas/UserFirmFacilityDto2"
             }
           }
         }
       },
-      "UserFirmFacilityDto": {
+      "UserFirmFacilityDto2": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
