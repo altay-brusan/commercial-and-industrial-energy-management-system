@@ -1344,6 +1344,44 @@
         ]
       }
     },
+    "/api/Devices/RegisterFromLogicalDevice": {
+      "post": {
+        "tags": [
+          "Devices"
+        ],
+        "operationId": "RegisterFromLogicalDevice",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceFromLogicalDeviceCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/DeviceSpecificationTemplates": {
       "get": {
         "tags": [
@@ -2521,6 +2559,74 @@
         ]
       }
     },
+    "/api/Firms/Me": {
+      "get": {
+        "tags": [
+          "Firms"
+        ],
+        "operationId": "GetUserFirms",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserFirmDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/Firms/{firmId}/Facilities": {
+      "get": {
+        "tags": [
+          "Firms"
+        ],
+        "operationId": "GetUserFirmFacilities",
+        "parameters": [
+          {
+            "name": "firmId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserFirmFacilityDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/Firms/{id}": {
       "get": {
         "tags": [
@@ -2937,6 +3043,464 @@
                 }
               }
             }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Huawei/TestConnection": {
+      "post": {
+        "tags": [
+          "Huawei"
+        ],
+        "operationId": "PostApiV1HuaweiTestConnection",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HuaweiTestConnectionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HuaweiTestConnectionResult"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Huawei/TestConnection/Stations": {
+      "post": {
+        "tags": [
+          "Huawei"
+        ],
+        "operationId": "PostApiV1HuaweiTestConnectionStations",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HuaweiTestConnectionRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HuaweiStationListResult"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Huawei/TestConnection/Devices": {
+      "post": {
+        "tags": [
+          "Huawei"
+        ],
+        "operationId": "PostApiV1HuaweiTestConnectionDevices",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HuaweiTestGetDevicesRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HuaweiDeviceInfo"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Huawei/TestConnection/RealTimeKpi": {
+      "post": {
+        "tags": [
+          "Huawei"
+        ],
+        "operationId": "PostApiV1HuaweiTestConnectionRealTimeKpi",
+        "requestBody": {
+          "x-name": "request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HuaweiTestGetRealTimeKpiRequest"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HuaweiDevRealKpiData"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/LogicalDevices": {
+      "get": {
+        "tags": [
+          "LogicalDevices"
+        ],
+        "operationId": "GetApiV1LogicalDevicesAll",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LogicalDeviceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "LogicalDevices"
+        ],
+        "operationId": "PostApiV1LogicalDevices",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLogicalDeviceCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/LogicalDevices/{id}": {
+      "get": {
+        "tags": [
+          "LogicalDevices"
+        ],
+        "operationId": "GetApiV1LogicalDevices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogicalDeviceDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "LogicalDevices"
+        ],
+        "operationId": "PutApiV1LogicalDevices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLogicalDeviceCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/LogicalNodes": {
+      "get": {
+        "tags": [
+          "LogicalNodes"
+        ],
+        "operationId": "GetApiV1LogicalNodesAll",
+        "parameters": [
+          {
+            "name": "namePrefix",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LogicalNodeDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "LogicalNodes"
+        ],
+        "operationId": "PostApiV1LogicalNodes",
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLogicalNodeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "guid"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/LogicalNodes/{id}": {
+      "get": {
+        "tags": [
+          "LogicalNodes"
+        ],
+        "operationId": "GetApiV1LogicalNodes",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogicalNodeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "LogicalNodes"
+        ],
+        "operationId": "PutApiV1LogicalNodes",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLogicalNodeCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "204": {
+            "description": ""
           }
         },
         "security": [
@@ -5990,11 +6554,15 @@
             "type": "string",
             "nullable": true
           },
-          "modelName": {
+          "model": {
             "type": "string",
             "nullable": true
           },
-          "manufacturer": {
+          "brand": {
+            "type": "string",
+            "nullable": true
+          },
+          "productType": {
             "type": "string",
             "nullable": true
           },
@@ -6126,7 +6694,7 @@
           "label": {
             "type": "string"
           },
-          "isEnabled": {
+          "enabled": {
             "type": "boolean"
           },
           "order": {
@@ -6381,11 +6949,15 @@
           "rtuSn": {
             "type": "string"
           },
-          "deviceSn": {
+          "deviceName": {
             "type": "string"
           },
           "kind": {
             "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
           },
           "payload": {
             "type": "string"
@@ -6506,7 +7078,7 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "deviceSn": {
+          "deviceName": {
             "type": "string"
           },
           "rtuSn": {
@@ -6514,6 +7086,10 @@
           },
           "kind": {
             "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
           },
           "payload": {},
           "deviceLocalTime": {
@@ -6690,6 +7266,11 @@
             "type": "string",
             "format": "guid",
             "nullable": true
+          },
+          "logicalDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
           }
         }
       },
@@ -6710,6 +7291,43 @@
           },
           "serialNumber": {
             "type": "string"
+          },
+          "parentDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          }
+        }
+      },
+      "RegisterDeviceFromLogicalDeviceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rtuId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "logicalDeviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceTypeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
           },
           "parentDeviceId": {
             "type": "string",
@@ -7744,6 +8362,71 @@
           }
         }
       },
+      "UserFirmDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UserFirmFacilityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "firmId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "energyCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "energyUnit": {
+            "$ref": "#/components/schemas/EnergyUnit"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "FirmDto": {
         "type": "object",
         "additionalProperties": false,
@@ -8168,6 +8851,405 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          }
+        }
+      },
+      "HuaweiTestConnectionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "nullable": true
+          },
+          "stationCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "HuaweiTestConnectionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "baseUrl": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "systemCode": {
+            "type": "string"
+          }
+        }
+      },
+      "HuaweiStationListResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HuaweiStationInfo"
+            }
+          }
+        }
+      },
+      "HuaweiStationInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "plantCode": {
+            "type": "string"
+          },
+          "plantName": {
+            "type": "string"
+          },
+          "plantAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "capacity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "HuaweiDeviceInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "devName": {
+            "type": "string"
+          },
+          "devTypeId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "esnCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "invType": {
+            "type": "string",
+            "nullable": true
+          },
+          "softwareVersion": {
+            "type": "string",
+            "nullable": true
+          },
+          "stationCode": {
+            "type": "string"
+          }
+        }
+      },
+      "HuaweiTestGetDevicesRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/HuaweiTestConnectionRequest"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "stationCode": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "HuaweiDevRealKpiData": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "devId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dataItemMap": {}
+        }
+      },
+      "HuaweiTestGetRealTimeKpiRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/HuaweiTestConnectionRequest"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "devIds": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              },
+              "devTypeId": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "LogicalDeviceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string"
+          },
+          "ports": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "uiTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LogicalDeviceNodeDto"
+            }
+          }
+        }
+      },
+      "LogicalDeviceNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "logicalNodeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "logicalNodeName": {
+            "type": "string"
+          },
+          "nodeAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "instanceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CreateLogicalDeviceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string"
+          },
+          "ports": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "uiTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NodeAssignment"
+            }
+          }
+        }
+      },
+      "NodeAssignment": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "logicalNodeId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "nodeAlias": {
+            "type": "string",
+            "nullable": true
+          },
+          "instanceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UpdateLogicalDeviceCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "type": "string"
+          },
+          "ports": {
+            "type": "string"
+          },
+          "hierarchyTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "uiTemplate": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeAssignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NodeAssignment"
+            }
+          }
+        }
+      },
+      "LogicalNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateLogicalNodeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateLogicalNodeCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "string"
           }
         }
       },
@@ -10385,12 +11467,12 @@
             "type": "array",
             "nullable": true,
             "items": {
-              "$ref": "#/components/schemas/UserFirmFacilityDto"
+              "$ref": "#/components/schemas/UserFirmFacilityDto2"
             }
           }
         }
       },
-      "UserFirmFacilityDto": {
+      "UserFirmFacilityDto2": {
         "type": "object",
         "additionalProperties": false,
         "properties": {

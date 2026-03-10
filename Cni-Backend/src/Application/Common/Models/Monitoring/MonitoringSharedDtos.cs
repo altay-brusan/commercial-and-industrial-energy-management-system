@@ -4,7 +4,7 @@ public record TabInfoDto
 {
     public string Key { get; init; } = string.Empty;
     public string Label { get; init; } = string.Empty;
-    public bool IsEnabled { get; init; } = true;
+    public bool Enabled { get; init; } = true;
     public int Order { get; init; }
 }
 

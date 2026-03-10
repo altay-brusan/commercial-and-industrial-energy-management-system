@@ -54,7 +54,7 @@ public static class DependencyInjection
         {
             options.AddFixedWindowLimiter("auth-login", opt =>
             {
-                opt.PermitLimit = isTestEnv ? 10000 : 5;
+                opt.PermitLimit = isTestEnv ? 10000 : 15;
                 opt.Window = TimeSpan.FromMinutes(isTestEnv ? 1 : 15);
                 opt.QueueLimit = 0;
             });

@@ -22,9 +22,15 @@ public abstract class DeviceDataBase
     public DateTimeOffset DeviceLocalTime { get; set; }
 
     /// <summary>
-    /// Message type discriminator: "ContainerBatteryState", "PcsAcMeasState", etc.
+    /// Message type discriminator (package name): "Battery.Energy", "Pcs.Status", etc.
     /// </summary>
     public string? Kind { get; set; }
+
+    /// <summary>
+    /// Sub-device address within the physical device for internal structure.
+    /// Null for device-level data. Examples: "Rack/2", "Rack/2/Pack/1/Module/3".
+    /// </summary>
+    public string? Path { get; set; }
 
     /// <summary>
     /// All telemetry data as JSON payload

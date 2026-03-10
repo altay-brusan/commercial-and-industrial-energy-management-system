@@ -44,6 +44,12 @@ public class Facility : BaseAuditableEntity
     public double Latitude { get; set; }
 
     /// <summary>
+    /// Indicates how this facility's telemetry data is sourced.
+    /// Rtu = physical RTU ingestion, Huawei = FusionSolar API polling.
+    /// </summary>
+    public FacilityDataSource DataSource { get; set; } = FacilityDataSource.Rtu;
+
+    /// <summary>
     /// Full topology JSON containing devices and links architecture.
     /// Used for storing/exporting the complete facility topology.
     /// </summary>

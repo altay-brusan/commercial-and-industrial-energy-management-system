@@ -24,6 +24,12 @@ public class Device : BaseAuditableEntity
     public Guid? DeviceSpecificationTemplateId { get; set; }
 
     /// <summary>
+    /// Reference to the logical device catalog entry (IEC 61850-inspired abstract type).
+    /// Null for legacy devices not yet mapped to the new model.
+    /// </summary>
+    public Guid? LogicalDeviceId { get; set; }
+
+    /// <summary>
     /// Self-reference for composite devices (e.g., cabinet → child subsystems)
     /// </summary>
     public Guid? ParentDeviceId { get; set; }
@@ -84,6 +90,7 @@ public class Device : BaseAuditableEntity
     public Rtu? Rtu { get; set; }
     public DeviceType? DeviceType { get; set; }
     public DeviceSpecificationTemplate? SpecificationTemplate { get; set; }
+    public LogicalDevice? LogicalDevice { get; set; }
     public Device? ParentDevice { get; set; }
     public ICollection<Device> ChildDevices { get; set; } = new List<Device>();
     public ICollection<DeviceAlarm> Alarms { get; set; } = new List<DeviceAlarm>();

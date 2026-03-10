@@ -317,31 +317,21 @@ public class EnergyPriceService : IEnergyPriceService
                 return result;
             }
 
-            // Step 2: Fetch price data
-            var dateStr = date.ToString("yyyy-MM-dd");
-            var dataUrl = $"{baseUrl}/electricity-service/v1/markets/dam/data/mcp";
+            // Step 2: Fetch day-ahead market data from dashboard endpoint (returns today's prices)
+            var dataUrl = $"{baseUrl}/electricity-service/v1/dashboard/day-ahead-market";
 
-            var requestBody = new
-            {
-                startDate = $"{dateStr}T00:00:00+03:00",
-                endDate = $"{dateStr}T23:59:59+03:00"
-            };
-
-            var jsonContent = JsonSerializer.Serialize(requestBody);
-            var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-            var request = new HttpRequestMessage(HttpMethod.Post, dataUrl);
-            request.Content = httpContent;
+            var request = new HttpRequestMessage(HttpMethod.Get, dataUrl);
             request.Headers.Add("TGT", tgtToken);
             request.Headers.Add("Accept", "application/json");
 
-            _logger.LogInformation("Fetching EPIAS prices for {Date}", dateStr);
+            _logger.LogInformation("Fetching EPIAS day-ahead market prices");
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
+                _logger.LogError("EPIAS API request failed. Status: {StatusCode}, Body: {Body}", response.StatusCode, content);
                 result.Success = false;
                 result.ErrorMessage = $"EPIAS API request failed. Status: {response.StatusCode}";
                 return result;
@@ -349,7 +339,7 @@ public class EnergyPriceService : IEnergyPriceService
 
             // Parse JSON response
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var epiasResponse = JsonSerializer.Deserialize<EpiasResponse>(content, options);
+            var epiasResponse = JsonSerializer.Deserialize<EpiasDashboardResponse>(content, options);
 
             if (epiasResponse?.Items == null || epiasResponse.Items.Count == 0)
             {
@@ -358,16 +348,15 @@ public class EnergyPriceService : IEnergyPriceService
                 return result;
             }
 
-            var turkeyOffset = TimeSpan.FromHours(3);
             result.Prices = epiasResponse.Items
                 .Select(item =>
                 {
-                    var localTimestamp = new DateTimeOffset(item.Date, turkeyOffset);
+                    var localTimestamp = DateTimeOffset.Parse(item.Date);
                     return new EnergyPricePoint
                     {
                         Timestamp = localTimestamp.ToUniversalTime(),
                         LocalTimestamp = localTimestamp,
-                        PricePerMWh = item.Price
+                        PricePerMWh = item.McpTr ?? 0m
                     };
                 })
                 .OrderBy(p => p.LocalTimestamp)
@@ -389,13 +378,17 @@ public class EnergyPriceService : IEnergyPriceService
     {
         const string casUrl = "https://giris.epias.com.tr/cas/v1/tickets";
 
-        var content = new FormUrlEncodedContent(new[]
+        var formContent = new FormUrlEncodedContent(new[]
         {
             new KeyValuePair<string, string>("username", username),
             new KeyValuePair<string, string>("password", password)
         });
 
-        var response = await _httpClient.PostAsync(casUrl, content, cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Post, casUrl);
+        request.Content = formContent;
+        request.Headers.Add("Accept", "text/plain");
+
+        var response = await _httpClient.SendAsync(request, cancellationToken);
 
         if (response.IsSuccessStatusCode)
         {
@@ -406,7 +399,8 @@ public class EnergyPriceService : IEnergyPriceService
             }
         }
 
-        _logger.LogWarning("EPIAS CAS authentication failed. Status: {StatusCode}", response.StatusCode);
+        var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        _logger.LogWarning("EPIAS CAS authentication failed. Status: {StatusCode}, Body: {Body}", response.StatusCode, errorBody);
         return null;
     }
 
@@ -414,19 +408,31 @@ public class EnergyPriceService : IEnergyPriceService
 
     #region EPIAS DTOs
 
-    private class EpiasResponse
+    private class EpiasDashboardResponse
     {
         [JsonPropertyName("items")]
-        public List<EpiasPtfItem> Items { get; set; } = new();
+        public List<EpiasDayAheadMarketItem>? Items { get; set; }
+
+        [JsonPropertyName("latestUpdateTime")]
+        public string? LatestUpdateTime { get; set; }
     }
 
-    private class EpiasPtfItem
+    private class EpiasDayAheadMarketItem
     {
         [JsonPropertyName("date")]
-        public DateTime Date { get; set; }
+        public string Date { get; set; } = string.Empty;
 
-        [JsonPropertyName("price")]
-        public decimal Price { get; set; }
+        [JsonPropertyName("mcpTr")]
+        public decimal? McpTr { get; set; }
+
+        [JsonPropertyName("mcpEur")]
+        public decimal? McpEur { get; set; }
+
+        [JsonPropertyName("mcpUsd")]
+        public decimal? McpUsd { get; set; }
+
+        [JsonPropertyName("volume")]
+        public decimal? Volume { get; set; }
     }
 
     #endregion

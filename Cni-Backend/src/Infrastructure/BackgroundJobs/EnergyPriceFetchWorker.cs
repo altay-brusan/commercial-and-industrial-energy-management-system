@@ -9,6 +9,7 @@ namespace Backend.Infrastructure.BackgroundJobs;
 /// <summary>
 /// Background worker that fetches day-ahead energy prices for all active firm configurations.
 /// Fetches data for all unique (MarketOperator, AreaCode) combinations from FirmMarketOperators.
+/// After storing prices, publishes them via MQTT to all registered RTUs.
 /// Scheduled to run twice daily (early morning and afternoon) to ensure prices are captured.
 /// Deduplication ensures re-runs are safe — already stored prices are skipped.
 /// </summary>
@@ -17,15 +18,18 @@ public class EnergyPriceFetchWorker
     private readonly ILogger<EnergyPriceFetchWorker> _logger;
     private readonly IApplicationDbContext _context;
     private readonly IEnergyPriceService _energyPriceService;
+    private readonly IMqttPublisherService _mqttPublisher;
 
     public EnergyPriceFetchWorker(
         ILogger<EnergyPriceFetchWorker> logger,
         IApplicationDbContext context,
-        IEnergyPriceService energyPriceService)
+        IEnergyPriceService energyPriceService,
+        IMqttPublisherService mqttPublisher)
     {
         _logger = logger;
         _context = context;
         _energyPriceService = energyPriceService;
+        _mqttPublisher = mqttPublisher;
     }
 
     /// <summary>
@@ -38,7 +42,7 @@ public class EnergyPriceFetchWorker
         var targetDate = DateTimeOffset.UtcNow.Date;
         _logger.LogInformation("Starting daily price fetch for {Date}", targetDate.ToString("yyyy-MM-dd"));
 
-        // Get all unique (MarketOperatorId, AreaCode) combinations from active firm configurations
+        // Get all active firm configurations with their Market Operators
         var firmConfigs = await _context.FirmMarketOperators
             .Include(fmo => fmo.MarketOperator)
             .Where(fmo => fmo.IsActive && fmo.MarketOperator != null && fmo.MarketOperator.IsActive)
@@ -79,8 +83,7 @@ public class EnergyPriceFetchWorker
     }
 
     /// <summary>
-    /// Fetches prices for a specific area and stores them in the database.
-    /// Throws on failure so Hangfire can handle the retry.
+    /// Fetches prices for a specific area, stores them, and publishes to all registered RTUs.
     /// </summary>
     private async Task FetchPricesForAreaAsync(MarketOperator mo, string areaCode, DateTimeOffset targetDate)
     {
@@ -113,10 +116,10 @@ public class EnergyPriceFetchWorker
             return;
         }
 
+        // Store prices in database
         var insertedCount = 0;
         var skippedCount = 0;
 
-        // Batch-fetch existing timestamps to avoid N+1 queries
         var incomingTimestamps = result.Prices
             .Select(p => p.Timestamp.ToUniversalTime())
             .ToList();
@@ -157,5 +160,61 @@ public class EnergyPriceFetchWorker
 
         _logger.LogInformation("Fetched prices from {MoCode} for {Country}: {Inserted} inserted, {Skipped} skipped (duplicates)",
             mo.Code, countryName, insertedCount, skippedCount);
+
+        // Publish prices to all registered RTUs via MQTT
+        await PublishPricesToRtusAsync(mo, result, areaCode, targetDate);
+    }
+
+    /// <summary>
+    /// Publishes fetched prices to all RTUs linked through FirmMarketOperator → Firm → Facility → RTU chain.
+    /// Failures are logged but do not cause the Hangfire job to retry.
+    /// </summary>
+    private async Task PublishPricesToRtusAsync(
+        MarketOperator mo,
+        EnergyPriceResult priceResult,
+        string areaCode,
+        DateTimeOffset targetDate)
+    {
+        try
+        {
+            // Find all RTUs linked to this MarketOperator + AreaCode
+            var rtuTargets = await _context.FirmMarketOperators
+                .Where(fmo => fmo.MarketOperatorId == mo.Id
+                    && fmo.AreaCode == areaCode
+                    && fmo.IsActive)
+                .Where(fmo => fmo.Firm != null)
+                .SelectMany(fmo => fmo.Firm!.Facilities!
+                    .SelectMany(f => f.Rtus!.Select(r => new { FacilityId = f.Id, RtuId = r.Id })))
+                .ToListAsync();
+
+            if (rtuTargets.Count == 0)
+            {
+                _logger.LogDebug("No RTUs found for {MoCode}/{AreaCode}, skipping MQTT publish", mo.Code, areaCode);
+                return;
+            }
+
+            // Build the payload once, send to all RTUs
+            var payload = RtuPricePayloadBuilder.Build(
+                priceResult.Prices,
+                mo,
+                priceResult.Currency,
+                targetDate);
+
+            var messages = rtuTargets
+                .Select(t => ($"cni/{t.FacilityId}/{t.RtuId}/command", payload))
+                .ToList();
+
+            await _mqttPublisher.PublishToManyAsync(messages);
+
+            _logger.LogInformation(
+                "Published day-ahead prices to {Count} RTU(s) for {MoCode}/{AreaCode}",
+                rtuTargets.Count, mo.Code, areaCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish prices via MQTT for {MoCode}/{AreaCode} (prices were stored successfully)",
+                mo.Code, areaCode);
+            // Do NOT rethrow — MQTT failure should not cause Hangfire to retry the price fetch
+        }
     }
 }

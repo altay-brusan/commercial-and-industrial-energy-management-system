@@ -185,6 +185,9 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("LastSeenUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("LogicalDeviceId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Manufacturer")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -229,6 +232,8 @@ namespace Backend.Infrastructure.Migrations
                     b.HasIndex("DeviceSpecificationTemplateId");
 
                     b.HasIndex("DeviceTypeId");
+
+                    b.HasIndex("LogicalDeviceId");
 
                     b.HasIndex("ParentDeviceId", "HierarchyIndex");
 
@@ -291,6 +296,9 @@ namespace Backend.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Path")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("RecoveredAt")
                         .HasColumnType("timestamp with time zone");
@@ -447,6 +455,10 @@ namespace Backend.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<string>("Path")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Payload")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -497,6 +509,10 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
+
+                    b.Property<string>("Path")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Payload")
                         .IsRequired()
@@ -549,6 +565,10 @@ namespace Backend.Infrastructure.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<string>("Path")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Payload")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -599,6 +619,10 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
+
+                    b.Property<string>("Path")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Payload")
                         .IsRequired()
@@ -776,6 +800,9 @@ namespace Backend.Infrastructure.Migrations
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
+
+                    b.Property<int>("DataSource")
+                        .HasColumnType("integer");
 
                     b.Property<int>("EnergyCapacity")
                         .HasColumnType("integer");
@@ -1058,6 +1085,363 @@ namespace Backend.Infrastructure.Migrations
                     b.ToTable("FirmMarketOperators", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BaseUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EncryptedSystemCode")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "UserName")
+                        .IsUnique();
+
+                    b.ToTable("Accounts", "huawei");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiDeviceMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeviceName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("HuaweiDevTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("HuaweiDeviceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SerialNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("StationMappingId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId");
+
+                    b.HasIndex("StationMappingId", "HuaweiDeviceId", "DeviceId")
+                        .IsUnique();
+
+                    b.ToTable("DeviceMappings", "huawei");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiRawDataLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CollectedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("HttpStatusCode")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("HuaweiAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequestPayload")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ResponsePayload")
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CollectedAtUtc")
+                        .IsDescending();
+
+                    b.HasIndex("HuaweiAccountId");
+
+                    b.ToTable("RawDataLogs", "huawei");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiStationMapping", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("HuaweiAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastSyncUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StationCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("StationName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("SyncEnabled")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacilityId");
+
+                    b.HasIndex("HuaweiAccountId", "StationCode")
+                        .IsUnique();
+
+                    b.ToTable("StationMappings", "huawei");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiSyncLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeviceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("HuaweiAccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RecordsInserted")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SyncType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HuaweiAccountId", "StartedAtUtc")
+                        .IsDescending(false, true);
+
+                    b.ToTable("SyncLogs", "huawei");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("HierarchyTemplate")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Ports")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("UiTemplate")
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("LogicalDevices", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalDeviceNode", b =>
+                {
+                    b.Property<Guid>("LogicalDeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LogicalNodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("InstanceCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NodeAlias")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("LogicalDeviceId", "LogicalNodeId");
+
+                    b.HasIndex("LogicalNodeId");
+
+                    b.ToTable("LogicalDeviceNodes", (string)null);
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalNode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Parameters")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("LogicalNodes", (string)null);
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.MaintenanceTask", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1223,6 +1607,13 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PriceUnit")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("MWh");
 
                     b.Property<string>("SupportedResolutions")
                         .IsRequired()
@@ -2116,6 +2507,11 @@ namespace Backend.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Backend.Domain.Entities.LogicalDevice", "LogicalDevice")
+                        .WithMany("Devices")
+                        .HasForeignKey("LogicalDeviceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Backend.Domain.Entities.Device", "ParentDevice")
                         .WithMany("ChildDevices")
                         .HasForeignKey("ParentDeviceId")
@@ -2128,6 +2524,8 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("DeviceType");
+
+                    b.Navigation("LogicalDevice");
 
                     b.Navigation("ParentDevice");
 
@@ -2304,6 +2702,96 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("Firm");
 
                     b.Navigation("MarketOperator");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiAccount", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Tenant", "Tenant")
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiDeviceMapping", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Device", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.Huawei.HuaweiStationMapping", "StationMapping")
+                        .WithMany("DeviceMappings")
+                        .HasForeignKey("StationMappingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+
+                    b.Navigation("StationMapping");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiRawDataLog", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Huawei.HuaweiAccount", "HuaweiAccount")
+                        .WithMany()
+                        .HasForeignKey("HuaweiAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HuaweiAccount");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiStationMapping", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
+                        .WithMany()
+                        .HasForeignKey("FacilityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.Huawei.HuaweiAccount", "HuaweiAccount")
+                        .WithMany("StationMappings")
+                        .HasForeignKey("HuaweiAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Facility");
+
+                    b.Navigation("HuaweiAccount");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiSyncLog", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Huawei.HuaweiAccount", "HuaweiAccount")
+                        .WithMany()
+                        .HasForeignKey("HuaweiAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HuaweiAccount");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalDeviceNode", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.LogicalDevice", "LogicalDevice")
+                        .WithMany("LogicalDeviceNodes")
+                        .HasForeignKey("LogicalDeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Domain.Entities.LogicalNode", "LogicalNode")
+                        .WithMany("LogicalDeviceNodes")
+                        .HasForeignKey("LogicalNodeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LogicalDevice");
+
+                    b.Navigation("LogicalNode");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.MaintenanceTask", b =>
@@ -2692,6 +3180,28 @@ namespace Backend.Infrastructure.Migrations
                     b.Navigation("Facilities");
 
                     b.Navigation("UserCompanyFacilities");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiAccount", b =>
+                {
+                    b.Navigation("StationMappings");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Huawei.HuaweiStationMapping", b =>
+                {
+                    b.Navigation("DeviceMappings");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalDevice", b =>
+                {
+                    b.Navigation("Devices");
+
+                    b.Navigation("LogicalDeviceNodes");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.LogicalNode", b =>
+                {
+                    b.Navigation("LogicalDeviceNodes");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.MaintenanceTask", b =>

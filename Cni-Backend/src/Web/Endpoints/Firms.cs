@@ -4,6 +4,8 @@ using Backend.Application.Firms.Commands.DeleteFirm;
 using Backend.Application.Firms.Commands.UpdateFirm;
 using Backend.Application.Firms.Queries.GetFirm;
 using Backend.Application.Firms.Queries.GetFirmsWithPagination;
+using Backend.Application.Firms.Queries.GetUserFirmFacilities;
+using Backend.Application.Firms.Queries.GetUserFirms;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Backend.Web.Endpoints;
@@ -14,12 +16,28 @@ public class Firms : EndpointGroupBase
     {
         app.MapGroup(this)
             .RequireAuthorization()
+            .MapGet(GetUserFirms, "Me")
+            .MapGet(GetUserFirmFacilities, "{firmId}/Facilities")
             .MapGet(GetFirm,"{id}")
             .MapGet(GetFirmsWithPagination)
             .MapPost(CreateFirm)
             .MapPut(UpdateFirm, "{id}")
             .MapDelete(DeleteFirm, "{id}");
     }
+    public async Task<Ok<List<UserFirmDto>>> GetUserFirms(ISender sender)
+    {
+        var result = await sender.Send(new GetUserFirmsQuery());
+
+        return TypedResults.Ok(result);
+    }
+
+    public async Task<Ok<List<UserFirmFacilityDto>>> GetUserFirmFacilities(ISender sender, Guid firmId)
+    {
+        var result = await sender.Send(new GetUserFirmFacilitiesQuery { FirmId = firmId });
+
+        return TypedResults.Ok(result);
+    }
+
     public async Task<Ok<FirmDto>> GetFirm(ISender sender, [AsParameters] GetFirmQuery query)
     {
         var result = await sender.Send(query);

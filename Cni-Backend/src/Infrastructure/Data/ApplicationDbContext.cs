@@ -2,6 +2,7 @@ using System.Reflection;
 using Backend.Application.Common.Interfaces;
 using Backend.Domain.Entities;
 using Backend.Domain.Entities.DeviceData;
+using Backend.Domain.Entities.Huawei;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<DeviceAlarmType> DeviceAlarmTypes => Set<DeviceAlarmType>();
     public DbSet<DeviceSpecificationTemplate> DeviceSpecificationTemplates => Set<DeviceSpecificationTemplate>();
 
+    // Logical device catalog (global — no tenant filter)
+    public DbSet<LogicalNode> LogicalNodes => Set<LogicalNode>();
+    public DbSet<LogicalDevice> LogicalDevices => Set<LogicalDevice>();
+    public DbSet<LogicalDeviceNode> LogicalDeviceNodes => Set<LogicalDeviceNode>();
+
     // Device telemetry data (time-series with JSON payload)
     public DbSet<DeviceBatteryData> DeviceBatteryData => Set<DeviceBatteryData>();
     public DbSet<DeviceSolarData> DeviceSolarData => Set<DeviceSolarData>();
@@ -52,6 +58,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
     // Auth entities
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    // Huawei FusionSolar integration (huawei schema)
+    public DbSet<HuaweiAccount> HuaweiAccounts => Set<HuaweiAccount>();
+    public DbSet<HuaweiStationMapping> HuaweiStationMappings => Set<HuaweiStationMapping>();
+    public DbSet<HuaweiDeviceMapping> HuaweiDeviceMappings => Set<HuaweiDeviceMapping>();
+    public DbSet<HuaweiRawDataLog> HuaweiRawDataLogs => Set<HuaweiRawDataLog>();
+    public DbSet<HuaweiSyncLog> HuaweiSyncLogs => Set<HuaweiSyncLog>();
 
     // Maintenance tasks
     public DbSet<MaintenanceTask> MaintenanceTasks => Set<MaintenanceTask>();
@@ -96,6 +109,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<TenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
         builder.Entity<TenantRolePermission>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
         builder.Entity<UserTenantRole>().HasQueryFilter(x => !_isTenantScoped || x.TenantRole!.TenantId == _effectiveTenantId);
+        // Huawei integration - scoped through TenantId
+        builder.Entity<HuaweiAccount>().HasQueryFilter(x => !_isTenantScoped || x.TenantId == _effectiveTenantId);
+        builder.Entity<HuaweiStationMapping>().HasQueryFilter(x => !_isTenantScoped || x.HuaweiAccount!.TenantId == _effectiveTenantId);
+        builder.Entity<HuaweiDeviceMapping>().HasQueryFilter(x => !_isTenantScoped || x.StationMapping!.HuaweiAccount!.TenantId == _effectiveTenantId);
+        builder.Entity<HuaweiRawDataLog>().HasQueryFilter(x => !_isTenantScoped || x.HuaweiAccount!.TenantId == _effectiveTenantId);
+        builder.Entity<HuaweiSyncLog>().HasQueryFilter(x => !_isTenantScoped || x.HuaweiAccount!.TenantId == _effectiveTenantId);
         // MaintenanceTask scoped through Facility → Firm → Tenant
         builder.Entity<MaintenanceTask>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
         // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories, DeviceAlarmTypes are global - no tenant query filter

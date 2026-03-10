@@ -36,6 +36,7 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
@@ -44,13 +45,14 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
 
         // Detect hierarchy level
         var displayType = BessDisplayTypeMapper.MapToDisplayType(device.DeviceType?.Name);
-        var isRootUnit = displayType == "unit";
+        var isRootUnit = displayType == "unit" || (displayType == "unknown" && device.LogicalDevice?.Category == "BESS");
         var isHvac = displayType == "hvac";
         var isEsc = displayType == "esc";
 
         // Load all devices under the same RTU (with templates for ancestor lookup)
         var allDevices = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Where(d => d.RtuId == device.RtuId)
             .ToListAsync(cancellationToken);
@@ -171,7 +173,7 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             ? new ParameterResolver(parameterMap, payloadsByKind, metadata)
             : null;
 
-        var battPayload = payloadsByKind.GetValueOrDefault("ContainerBatteryState");
+        var battPayload = payloadsByKind.GetValueOrDefault("Battery.Energy");
 
         // Operating mode (root only)
         StatusBadgeDto? operatingMode = null;
@@ -207,8 +209,9 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             Id = device.Id,
             Name = device.Name,
             SerialNumber = isRootUnit ? device.SerialNumber : null,
-            ModelName = isRootUnit ? device.Model : null,
-            Manufacturer = isRootUnit ? device.Manufacturer : null,
+            Model = isRootUnit ? device.Model : null,
+            Brand = isRootUnit ? device.Manufacturer : null,
+            ProductType = isRootUnit ? SlugifyModel(device.SpecificationTemplate?.Model) : null,
             FacilityId = device.Rtu!.FacilityId,
             FacilityName = device.Rtu?.Facility?.Name,
             UnitId = unitId,
@@ -254,7 +257,7 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
         var rootId = FindRootDeviceId(device, allDevices);
         var telemetry = await _telemetryLoader.LoadLatest(rootId, ct);
         var payloads = telemetry.GetPayloadsByKind();
-        var chiller = payloads.GetValueOrDefault("ChillerState");
+        var chiller = payloads.GetValueOrDefault("Battery.Thermal");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
         var modeStr = chiller.HasValue
@@ -281,9 +284,9 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
         var payloads = telemetry.GetPayloadsByKind();
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
-        // ESC telemetry may come from PcsState or ControllerState kinds
-        var pcsState = payloads.GetValueOrDefault("PcsState");
-        var controllerState = payloads.GetValueOrDefault("ControllerState");
+        // ESC telemetry may come from Pcs.Status kinds
+        var pcsState = payloads.GetValueOrDefault("Pcs.Status");
+        var controllerState = payloads.GetValueOrDefault("Pcs.Status");
         var escPayload = controllerState ?? pcsState;
 
         return new List<DynamicSectionDto>
@@ -570,11 +573,14 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
                 var key = tab.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
                 var label = tab.TryGetProperty("label", out var l) ? l.GetString() ?? key : key;
                 var enabled = !tab.TryGetProperty("isEnabled", out var e) || e.GetBoolean();
-                tabs.Add(new TabInfoDto { Key = key, Label = label, IsEnabled = enabled, Order = order });
+                tabs.Add(new TabInfoDto { Key = key, Label = label, Enabled = enabled, Order = order });
             }
             return tabs.Count > 0 ? tabs : defaultTabs;
         }
 
         return defaultTabs;
     }
+
+    private static string? SlugifyModel(string? model) =>
+        model?.ToLowerInvariant().Replace(" ", "-").Replace("_", "-");
 }

@@ -11,7 +11,7 @@ public class DeviceSpecificationTemplates : EndpointGroupBase
         var group = app.MapGroup("/api/v1/DeviceSpecificationTemplates")
             .WithGroupName("DeviceSpecificationTemplates")
             .WithTags("DeviceSpecificationTemplates")
-            .RequireAuthorization();
+            .RequireAuthorization("Administrator");
 
         group.MapGet("/", GetTemplates);
         group.MapGet("/{id}", GetTemplate);

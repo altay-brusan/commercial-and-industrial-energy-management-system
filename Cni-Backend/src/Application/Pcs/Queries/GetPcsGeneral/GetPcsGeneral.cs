@@ -33,9 +33,12 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs)
+            .Where(d => d.Id == request.UnitId &&
+                ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs) ||
+                 (d.LogicalDevice != null && d.LogicalDevice.Category == "PCS")))
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);
@@ -105,15 +108,17 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
                 .Include(d => d.DeviceType)
                 .FirstOrDefaultAsync(d => d.Id == device.ParentDeviceId.Value, ct);
 
-            if (parent?.DeviceType?.Name == DeviceTypeNames.EnergyStorage)
+            if (parent?.DeviceType?.Name == DeviceTypeNames.EnergyStorage ||
+                parent?.LogicalDevice?.Category == "BESS")
                 return new PcsGeneralLinkedBessDto { Id = parent.Id, Name = parent.Name };
         }
 
         return await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Where(d => d.Rtu!.FacilityId == device.Rtu!.FacilityId
-                && d.DeviceType != null
-                && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
+                && ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage) ||
+                    (d.LogicalDevice != null && d.LogicalDevice.Category == "BESS")))
             .Select(d => new PcsGeneralLinkedBessDto { Id = d.Id, Name = d.Name })
             .FirstOrDefaultAsync(ct);
     }
@@ -148,7 +153,7 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
                 var key = tab.TryGetProperty("key", out var k) ? k.GetString() ?? "" : "";
                 var label = tab.TryGetProperty("label", out var l) ? l.GetString() ?? key : key;
                 var enabled = !tab.TryGetProperty("enabled", out var e) || e.GetBoolean();
-                tabs.Add(new TabInfoDto { Key = key, Label = label, IsEnabled = enabled, Order = order });
+                tabs.Add(new TabInfoDto { Key = key, Label = label, Enabled = enabled, Order = order });
             }
             return tabs.Count > 0 ? tabs : defaultTabs;
         }
@@ -162,12 +167,12 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
         Dictionary<string, JsonElement?> payloadsByKind,
         ParameterResolver? resolver)
     {
-        var statusPayload = payloadsByKind.GetValueOrDefault("PcsStatusState");
-        var powerPayload = payloadsByKind.GetValueOrDefault("PcsPowerState");
-        var tempsPayload = payloadsByKind.GetValueOrDefault("PcsTempsState");
-        var dcPayload = payloadsByKind.GetValueOrDefault("PcsDcMeasState");
-        var acPayload = payloadsByKind.GetValueOrDefault("PcsAcMeasState");
-        var chargePayload = payloadsByKind.GetValueOrDefault("PcsChargeAlgState");
+        var statusPayload = payloadsByKind.GetValueOrDefault("Pcs.Status");
+        var powerPayload = payloadsByKind.GetValueOrDefault("Pcs.PowerDistribution");
+        var tempsPayload = payloadsByKind.GetValueOrDefault("Pcs.Status");
+        var dcPayload = payloadsByKind.GetValueOrDefault("Pcs.DcMeasurement");
+        var acPayload = payloadsByKind.GetValueOrDefault("Pcs.AcMeasurement");
+        var chargePayload = payloadsByKind.GetValueOrDefault("Pcs.ChargeAlgorithm");
 
         return new List<DynamicSectionDto>
         {

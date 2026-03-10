@@ -25,7 +25,10 @@ public class GetPcsFaultFlagsQueryHandler : IRequestHandler<GetPcsFaultFlagsQuer
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs)
+            .Include(d => d.LogicalDevice)
+            .Where(d => d.Id == request.UnitId &&
+                ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs) ||
+                 (d.LogicalDevice != null && d.LogicalDevice.Category == "PCS")))
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);

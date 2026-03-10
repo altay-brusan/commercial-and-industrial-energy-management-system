@@ -47,6 +47,7 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
@@ -58,10 +59,19 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
             : GetDefaultIntervalMinutes(request.Period);
         var timeFormat = GetTimeFormat(request.Period);
 
-        // Load Battery table time-series for root device (ContainerBatteryState for chart data)
+        // Resolve battery data Kind from template (default: Battery.CellArray)
+        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
+        var batteryDataKind = "Battery.CellArray";
+        if (specs.HasValue && specs.Value.TryGetProperty("batteryDataKind", out var kindProp)
+            && kindProp.ValueKind == JsonValueKind.String)
+        {
+            batteryDataKind = kindProp.GetString() ?? batteryDataKind;
+        }
+
+        // Load Battery table time-series for root device
         var rawData = await _context.DeviceBatteryData
             .Where(dd => dd.DeviceId == request.UnitId
-                && dd.Kind == "ContainerBatteryCellMapState"
+                && dd.Kind == batteryDataKind
                 && dd.DeviceLocalTime >= start && dd.DeviceLocalTime <= end)
             .OrderBy(dd => dd.DeviceLocalTime)
             .ToListAsync(cancellationToken);
@@ -71,7 +81,10 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         // Also load PCS data from child PCS devices
         var pcsChildIds = await _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.ParentDeviceId == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs)
+            .Include(d => d.LogicalDevice)
+            .Where(d => d.ParentDeviceId == request.UnitId &&
+                ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.Pcs) ||
+                 (d.LogicalDevice != null && d.LogicalDevice.Category == "PCS")))
             .Select(d => d.Id)
             .ToListAsync(cancellationToken);
 
@@ -86,7 +99,6 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
             pcsSampled = SamplePcsData(pcsRawData, intervalMinutes);
         }
 
-        var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
         var charts = BuildCharts(specs, sampled, timeFormat, pcsSampled);
 
         return new ChartResponseDto { Charts = charts };
@@ -258,10 +270,10 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
     //
     // PROBLEM:
     // BuildDefaultCharts uses source paths and computed fields that are specific to the
-    // Tesla Megapack ContainerBatteryState payload shape. For example:
+    // Tesla Megapack Battery.Energy payload shape. For example:
     //   - "socPercent", "totalVoltageV", "instantCurrentA", "maxCellTempC" are Tesla field names
     //   - "@computed:power" hardcodes the formula: totalVoltageV * instantCurrentA / 1000
-    // A different manufacturer (e.g. BYD, Sungrow) will send ContainerBatteryState with
+    // A different manufacturer (e.g. BYD, Sungrow) will send Battery.Energy with
     // completely different field names (e.g. "batteryVoltage", "stateOfCharge", "dcPowerKw"),
     // causing all chart series to return null because the paths won't match.
     //
