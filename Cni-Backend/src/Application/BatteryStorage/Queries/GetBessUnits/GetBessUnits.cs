@@ -145,16 +145,16 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
                 Status = StatusBadgeDto.FromStatus(statuses.GetValueOrDefault(device.Id, "normal")),
                 OperatingMode = StatusBadgeDto.FromOperatingMode(stateStr),
                 Soc = resolver?.ResolveNumber(ParameterKeys.Soc)
-                    ?? ExtractDouble(payload, "socPercent", "stateOfCharge", "soc"),
+                    ?? ExtractDouble(payload, "soc"),
                 Soh = resolver?.ResolveNumber(ParameterKeys.Soh)
-                    ?? ExtractDouble(payload, "sohPercent", "stateOfHealth", "soh"),
+                    ?? ExtractDouble(payload, "soh"),
                 Power = resolver?.ResolveNumber(ParameterKeys.Power)
-                    ?? (ExtractDouble(payload, "instantCurrentA") is double current
-                            && ExtractDouble(payload, "totalVoltageV") is double voltage
+                    ?? (ExtractDouble(payload, "current") is double current
+                            && ExtractDouble(payload, "voltage") is double voltage
                         ? Math.Round(voltage * current / 1000.0, 1)
-                        : ExtractDouble(payload, "dcPower.power", "power")),
+                        : ExtractDouble(payload, "power")),
                 CapacityKwh = resolver?.ResolveNumber(ParameterKeys.AvailableEnergy)
-                    ?? ExtractDouble(payload, "availableEnergyKwh", "capacityKwh", "ratedEnergyKwh"),
+                    ?? ExtractDouble(payload, "availableEnergy"),
                 ActiveAlarmCount = rootAlarmCounts.GetValueOrDefault(device.Id, 0),
                 Brand = device.Manufacturer,
                 Model = device.Model,
@@ -162,7 +162,7 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
                 FacilityName = device.Rtu?.Facility?.Name,
                 FacilityId = device.Rtu!.FacilityId,
                 TemperatureC = resolver?.ResolveNumber(ParameterKeys.AmbientTemp)
-                    ?? ExtractDouble(payload, "ambientTempC", "batteryTemperature"),
+                    ?? ExtractDouble(payload, "ambientTemp"),
                 LastSeenUtc = device.LastSeenUtc
             };
         }).ToList();

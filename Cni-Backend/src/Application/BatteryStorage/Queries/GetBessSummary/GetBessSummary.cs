@@ -211,18 +211,18 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 
     private static DynamicSectionDto BuildLiveStatusSection(JsonElement? batt, ParameterResolver? resolver = null)
     {
-        var soc = resolver?.ResolveNumber(ParameterKeys.Soc) ?? ExtractNum(batt, "socPercent");
-        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "sohPercent");
-        var voltage = resolver?.ResolveNumber(ParameterKeys.Voltage) ?? ExtractNum(batt, "totalVoltageV");
-        var current = resolver?.ResolveNumber(ParameterKeys.Current) ?? ExtractNum(batt, "instantCurrentA");
+        var soc = resolver?.ResolveNumber(ParameterKeys.Soc) ?? ExtractNum(batt, "soc");
+        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "soh");
+        var voltage = resolver?.ResolveNumber(ParameterKeys.Voltage) ?? ExtractNum(batt, "voltage");
+        var current = resolver?.ResolveNumber(ParameterKeys.Current) ?? ExtractNum(batt, "current");
         var power = resolver?.ResolveNumber(ParameterKeys.Power)
             ?? ((voltage.HasValue && current.HasValue)
                 ? Math.Round(voltage.Value * current.Value / 1000.0, 1)
                 : (double?)null);
         var state = resolver?.ResolveString(ParameterKeys.OperatingMode)
             ?? (batt.HasValue ? PayloadDeserializer.ExtractValue(batt.Value, "state") as string : null);
-        var minTemp = resolver?.ResolveNumber(ParameterKeys.TempMin) ?? ExtractNum(batt, "minCellTempC");
-        var maxTemp = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "maxCellTempC");
+        var minTemp = resolver?.ResolveNumber(ParameterKeys.TempMin) ?? ExtractNum(batt, "tempMin");
+        var maxTemp = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "tempMax");
         var avgTemp = resolver?.ResolveNumber(ParameterKeys.TempAvg)
             ?? ((minTemp.HasValue && maxTemp.HasValue) ? Math.Round((minTemp.Value + maxTemp.Value) / 2.0, 1) : (double?)null);
         var freq = ExtractNum(batt, "frequency");
@@ -276,7 +276,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
             Fields = new List<SectionFieldDto>
             {
                 new() { Key = "remainingEnergy", Label = "Remaining Energy",
-                    Value = resolver?.ResolveNumber(ParameterKeys.RemainingEnergy) ?? ExtractNum(batt, "remainingEnergyKwh"),
+                    Value = resolver?.ResolveNumber(ParameterKeys.RemainingEnergy) ?? ExtractNum(batt, "remainingEnergy"),
                     Type = "number", Unit = "kWh", Format = "progress",
                     Meta = new Dictionary<string, object?> { ["thresholds"] = new[] {
                         new Dictionary<string, object?> { ["min"] = 60, ["color"] = "green" },
@@ -284,7 +284,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
                         new Dictionary<string, object?> { ["min"] = 0, ["color"] = "red" }
                     }}},
                 NumField("availableEnergy", "Available Energy",
-                    resolver?.ResolveNumber(ParameterKeys.AvailableEnergy) ?? ExtractNum(batt, "availableEnergyKwh"), "kWh"),
+                    resolver?.ResolveNumber(ParameterKeys.AvailableEnergy) ?? ExtractNum(batt, "availableEnergy"), "kWh"),
                 NumField("dmccA", "DMCC", ExtractNum(batt, "dmccA"), "A"),
                 NumField("dmdcA", "DMDC", ExtractNum(batt, "dmdcA"), "A"),
                 NumField("outVoltPosV", "Output V (+)", ExtractNum(batt, "outVoltPosV"), "V"),
@@ -296,11 +296,11 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 
     private static DynamicSectionDto BuildCellExtremesSection(JsonElement? batt, ParameterResolver? resolver = null)
     {
-        var maxV = resolver?.ResolveNumber(ParameterKeys.CellVoltageMax) ?? ExtractNum(batt, "maxCellVoltageMv");
-        var minV = resolver?.ResolveNumber(ParameterKeys.CellVoltageMin) ?? ExtractNum(batt, "minCellVoltageMv");
-        var avgV = resolver?.ResolveNumber(ParameterKeys.CellVoltageAvg) ?? ExtractNum(batt, "avgCellVoltageMv");
-        var maxT = ExtractNum(batt, "maxCellTempC");
-        var minT = ExtractNum(batt, "minCellTempC");
+        var maxV = resolver?.ResolveNumber(ParameterKeys.CellVoltageMax) ?? ExtractNum(batt, "cellVoltageMax");
+        var minV = resolver?.ResolveNumber(ParameterKeys.CellVoltageMin) ?? ExtractNum(batt, "cellVoltageMin");
+        var avgV = resolver?.ResolveNumber(ParameterKeys.CellVoltageAvg) ?? ExtractNum(batt, "cellVoltageAvg");
+        var maxT = ExtractNum(batt, "tempMax");
+        var minT = ExtractNum(batt, "tempMin");
         var spread = resolver?.ResolveNumber(ParameterKeys.VoltageSpread)
             ?? ((maxV.HasValue && minV.HasValue) ? maxV.Value - minV.Value : (double?)null);
 
@@ -451,7 +451,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
             Fields = new List<SectionFieldDto>
             {
                 NumField("cycleCount", "Cycle Count", ExtractNum(batt, "cycleCount"), ""),
-                NumField("roundTripEfficiency", "RTE", ExtractNum(batt, "roundTripEfficiency"), "%"),
+                NumField("roundTripEfficiency", "RTE", ExtractNum(batt, "rte"), "%"),
                 NumField("equivalentFullCycles", "Equiv. Full Cycles", ExtractNum(batt, "equivalentFullCycles"), ""),
             }
         };
@@ -593,7 +593,7 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 
     private static DynamicSectionDto BuildSocSection(ParameterResolver? resolver, JsonElement? batt)
     {
-        var soc = resolver?.ResolveNumber(ParameterKeys.Soc) ?? ExtractNum(batt, "socPercent");
+        var soc = resolver?.ResolveNumber(ParameterKeys.Soc) ?? ExtractNum(batt, "soc");
         return new DynamicSectionDto
         {
             Key = "soc",
@@ -615,9 +615,9 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 
     private static DynamicSectionDto BuildElectricalSection(ParameterResolver? resolver, JsonElement? batt)
     {
-        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "sohPercent");
-        var voltage = resolver?.ResolveNumber(ParameterKeys.Voltage) ?? ExtractNum(batt, "totalVoltageV");
-        var current = resolver?.ResolveNumber(ParameterKeys.Current) ?? ExtractNum(batt, "instantCurrentA");
+        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "soh");
+        var voltage = resolver?.ResolveNumber(ParameterKeys.Voltage) ?? ExtractNum(batt, "voltage");
+        var current = resolver?.ResolveNumber(ParameterKeys.Current) ?? ExtractNum(batt, "current");
 
         return new DynamicSectionDto
         {
@@ -637,8 +637,8 @@ public class GetBessSummaryQueryHandler : IRequestHandler<GetBessSummaryQuery, S
 
     private static DynamicSectionDto BuildTemperatureSection(ParameterResolver? resolver, JsonElement? batt)
     {
-        var minTemp = resolver?.ResolveNumber(ParameterKeys.TempMin) ?? ExtractNum(batt, "minCellTempC");
-        var maxTemp = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "maxCellTempC");
+        var minTemp = resolver?.ResolveNumber(ParameterKeys.TempMin) ?? ExtractNum(batt, "tempMin");
+        var maxTemp = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "tempMax");
         var avgTemp = resolver?.ResolveNumber(ParameterKeys.TempAvg)
             ?? ((minTemp.HasValue && maxTemp.HasValue) ? Math.Round((minTemp.Value + maxTemp.Value) / 2.0, 1) : (double?)null);
 

@@ -225,21 +225,21 @@ public class GetBessUnitHeaderQueryHandler : IRequestHandler<GetBessUnitHeaderQu
             Status = StatusBadgeDto.FromStatus(status),
             OperatingMode = operatingMode,
             Soc = resolver?.ResolveNumber(ParameterKeys.Soc)
-                ?? ExtractDouble(battPayload, "socPercent"),
+                ?? ExtractDouble(battPayload, "soc"),
             Soh = resolver?.ResolveNumber(ParameterKeys.Soh)
-                ?? ExtractDouble(battPayload, "sohPercent"),
+                ?? ExtractDouble(battPayload, "soh"),
             Voltage = resolver?.ResolveNumber(ParameterKeys.Voltage)
-                ?? ExtractDouble(battPayload, "totalVoltageV"),
+                ?? ExtractDouble(battPayload, "voltage"),
             Current = resolver?.ResolveNumber(ParameterKeys.Current)
-                ?? ExtractDouble(battPayload, "instantCurrentA"),
+                ?? ExtractDouble(battPayload, "current"),
             Power = resolver?.ResolveNumber(ParameterKeys.Power)
-                ?? (ExtractDouble(battPayload, "instantCurrentA") is double current
-                        && ExtractDouble(battPayload, "totalVoltageV") is double voltage
+                ?? (ExtractDouble(battPayload, "current") is double current
+                        && ExtractDouble(battPayload, "voltage") is double voltage
                     ? Math.Round(voltage * current / 1000.0, 1)
                     : null),
             CapacityKwh = isRootUnit
                 ? resolver?.ResolveNumber(ParameterKeys.AvailableEnergy)
-                    ?? ExtractDouble(battPayload, "availableEnergyKwh")
+                    ?? ExtractDouble(battPayload, "availableEnergy")
                 : null,
             ActiveAlarmCount = alarmCount,
             AvailableTabs = tabs,

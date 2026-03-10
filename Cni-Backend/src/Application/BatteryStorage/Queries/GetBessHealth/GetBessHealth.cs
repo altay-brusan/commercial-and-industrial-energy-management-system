@@ -112,13 +112,13 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
 
     private static DynamicSectionDto BuildHealthOverviewSection(JsonElement? batt, JsonElement? metadata, ParameterResolver? resolver = null)
     {
-        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "sohPercent", "stateOfHealth", "soh");
+        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "soh");
         var cycleCount = resolver?.ResolveNumber(ParameterKeys.CycleCount) ?? ExtractNum(batt, "cycleCount", "equivalentFullCycles");
         var designedCycles = ExtractNum(metadata, "designedCycleLife") ?? 6000;
         var designedLifeYears = ExtractNum(metadata, "designedCalendarLife") ?? 15;
 
         var cycleLifeUsed = cycleCount.HasValue ? Math.Round(cycleCount.Value / designedCycles * 100, 1) : (double?)null;
-        var rte = resolver?.ResolveNumber(ParameterKeys.Rte) ?? ExtractNum(batt, "roundTripEfficiency");
+        var rte = resolver?.ResolveNumber(ParameterKeys.Rte) ?? ExtractNum(batt, "rte");
 
         // Calendar life: from commissioning date in metadata
         double? calendarLifeUsed = null;
@@ -192,7 +192,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
         foreach (var entry in monthlyHistory)
         {
             var entryPayload = PayloadDeserializer.GetElement(entry.Payload);
-            var soh = ExtractNum(entryPayload, "sohPercent", "stateOfHealth", "soh");
+            var soh = ExtractNum(entryPayload, "soh");
             if (!soh.HasValue) continue;
 
             var monthLabel = new DateTime(entry.Year, entry.Month, 1).ToString("MMM yy");
@@ -237,9 +237,9 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
             {
                 NumField("equivalentFullCycles", "Equivalent Full Cycles", resolver?.ResolveNumber(ParameterKeys.CycleCount) ?? ExtractNum(batt, "equivalentFullCycles", "cycleCount"), ""),
                 NumField("designedCycleLife", "Designed Cycle Life", ExtractNum(metadata, "designedCycleLife"), "cycles"),
-                NumField("averageDod", "Average DoD", ExtractNum(batt, "averageDod", "avgDepthOfDischarge"), "%"),
+                NumField("averageDod", "Average DoD", ExtractNum(batt, "averageDod"), "%"),
                 NumField("totalCycleCount", "Total Cycle Count", ExtractNum(batt, "totalCycleCount", "cycleCount"), ""),
-                NumField("currentSoh", "Current SoH", resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "sohPercent", "stateOfHealth", "soh"), "%"),
+                NumField("currentSoh", "Current SoH", resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "soh"), "%"),
                 NumField("designedCalendarLife", "Designed Calendar Life", ExtractNum(metadata, "designedCalendarLife"), "years"),
             }
         };
@@ -256,9 +256,9 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
             Columns = 3,
             Fields = new List<SectionFieldDto>
             {
-                NumField("lifetimeCharged", "Lifetime Charged", ExtractNum(batt, "lifetimeChargedMwh", "totalCharged"), "MWh"),
-                NumField("lifetimeDischarged", "Lifetime Discharged", ExtractNum(batt, "lifetimeDischargedMwh", "totalDischarged"), "MWh"),
-                NumField("rte", "RTE", resolver?.ResolveNumber(ParameterKeys.Rte) ?? ExtractNum(batt, "roundTripEfficiency"), "%"),
+                NumField("lifetimeCharged", "Lifetime Charged", ExtractNum(batt, "totalChargeEnergy"), "MWh"),
+                NumField("lifetimeDischarged", "Lifetime Discharged", ExtractNum(batt, "totalDischargeEnergy"), "MWh"),
+                NumField("rte", "RTE", resolver?.ResolveNumber(ParameterKeys.Rte) ?? ExtractNum(batt, "rte"), "%"),
                 NumField("initialRte", "Initial RTE", ExtractNum(batt, "initialRte"), "%"),
                 NumField("efficiencyDegradation", "Efficiency Degradation", ExtractNum(batt, "efficiencyDegradation"), "%"),
                 NumField("dailyCharged", "Daily Charged", ExtractNum(batt, "dailyChargedKwh", "dailyCharged"), "kWh"),
@@ -279,11 +279,11 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
             Fields = new List<SectionFieldDto>
             {
                 new() { Key = "maxRecordedTemp", Label = "Max Recorded Temp",
-                    Value = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "maxRecordedTempC", "maxCellTempC"),
+                    Value = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "tempMax"),
                     Type = "number", Unit = "\u00b0C", Format = "temperature" },
                 NumField("thermalExcursions", "Thermal Excursions", ExtractNum(batt, "thermalExcursions"), ""),
                 new() { Key = "avgOperatingTemp", Label = "Avg Operating Temp",
-                    Value = resolver?.ResolveNumber(ParameterKeys.TempAvg) ?? ExtractNum(batt, "avgOperatingTempC", "ambientTempC"),
+                    Value = resolver?.ResolveNumber(ParameterKeys.TempAvg) ?? ExtractNum(batt, "tempAvg"),
                     Type = "number", Unit = "\u00b0C", Format = "temperature" },
             }
         };

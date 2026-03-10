@@ -197,22 +197,22 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
             {
                 NumField("gridFrequency", "Grid Frequency",
                     resolver?.ResolveNumber(ParameterKeys.PcsGridFreq)
-                        ?? ExtractDouble(payload, "pcs_gridFreqHz"), "Hz"),
+                        ?? ExtractDouble(payload, "pcsGridFreq"), "Hz"),
                 StringField("phaseSequence", "Phase Sequence",
                     resolver?.ResolveString(ParameterKeys.PcsPhaseSequence)
-                        ?? ExtractString(payload, "pcs_phaseSeq")),
+                        ?? ExtractString(payload, "pcsPhaseSequence")),
                 NumField("deratingCoefficient", "Derating Coefficient",
                     resolver?.ResolveNumber(ParameterKeys.PcsDeratingCoefficient)
-                        ?? ExtractDouble(payload, "pcs_deratingCoef")),
+                        ?? ExtractDouble(payload, "pcsDeratingCoefficient")),
                 StringField("workingCondition", "Working Condition",
                     resolver?.ResolveString(ParameterKeys.PcsWorkingCondition)
-                        ?? ExtractString(payload, "pcs_workCondition")),
+                        ?? ExtractString(payload, "pcsWorkingCondition")),
                 StringField("sourceMode", "Source Mode",
                     resolver?.ResolveString(ParameterKeys.PcsSourceMode)
-                        ?? ExtractString(payload, "pcs_srcMode")),
+                        ?? ExtractString(payload, "pcsSourceMode")),
                 StringField("gridMode", "Grid Mode",
                     resolver?.ResolveString(ParameterKeys.PcsGridMode)
-                        ?? MapGridMode(ExtractInt(payload, "pcs_gridMode"))),
+                        ?? MapGridMode(ExtractInt(payload, "pcsGridMode"))),
             }
         };
     }
@@ -230,46 +230,46 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
                 // Line Voltages
                 GroupedNumField("lineVoltAB", "V(AB)", "Line Voltages",
                     resolver?.ResolveNumber(ParameterKeys.PcsLineVoltageAB)
-                        ?? ExtractDouble(payload, "pcs_lineVoltAB"), "V"),
+                        ?? ExtractDouble(payload, "pcsLineVoltageAB"), "V"),
                 GroupedNumField("lineVoltBC", "V(BC)", "Line Voltages",
                     resolver?.ResolveNumber(ParameterKeys.PcsLineVoltageBC)
-                        ?? ExtractDouble(payload, "pcs_lineVoltBC"), "V"),
+                        ?? ExtractDouble(payload, "pcsLineVoltageBC"), "V"),
                 GroupedNumField("lineVoltCA", "V(CA)", "Line Voltages",
                     resolver?.ResolveNumber(ParameterKeys.PcsLineVoltageCA)
-                        ?? ExtractDouble(payload, "pcs_lineVoltCA"), "V"),
+                        ?? ExtractDouble(payload, "pcsLineVoltageCA"), "V"),
 
                 // Phase Voltages
                 GroupedNumField("phaseVoltA", "V(A)", "Phase Voltages",
                     resolver?.ResolveNumber(ParameterKeys.PcsPhaseVoltageA)
-                        ?? ExtractDouble(payload, "pcs_phaseVoltA"), "V"),
+                        ?? ExtractDouble(payload, "pcsPhaseVoltageA"), "V"),
                 GroupedNumField("phaseVoltB", "V(B)", "Phase Voltages",
                     resolver?.ResolveNumber(ParameterKeys.PcsPhaseVoltageB)
-                        ?? ExtractDouble(payload, "pcs_phaseVoltB"), "V"),
+                        ?? ExtractDouble(payload, "pcsPhaseVoltageB"), "V"),
                 GroupedNumField("phaseVoltC", "V(C)", "Phase Voltages",
                     resolver?.ResolveNumber(ParameterKeys.PcsPhaseVoltageC)
-                        ?? ExtractDouble(payload, "pcs_phaseVoltC"), "V"),
+                        ?? ExtractDouble(payload, "pcsPhaseVoltageC"), "V"),
 
                 // Phase Currents
                 GroupedNumField("phaseCurrentA", "I(A)", "Phase Currents",
                     resolver?.ResolveNumber(ParameterKeys.PcsPhaseCurrentA)
-                        ?? ExtractDouble(payload, "pcs_phaseCurrA"), "A"),
+                        ?? ExtractDouble(payload, "pcsPhaseCurrentA"), "A"),
                 GroupedNumField("phaseCurrentB", "I(B)", "Phase Currents",
                     resolver?.ResolveNumber(ParameterKeys.PcsPhaseCurrentB)
-                        ?? ExtractDouble(payload, "pcs_phaseCurrB"), "A"),
+                        ?? ExtractDouble(payload, "pcsPhaseCurrentB"), "A"),
                 GroupedNumField("phaseCurrentC", "I(C)", "Phase Currents",
                     resolver?.ResolveNumber(ParameterKeys.PcsPhaseCurrentC)
-                        ?? ExtractDouble(payload, "pcs_phaseCurrC"), "A"),
+                        ?? ExtractDouble(payload, "pcsPhaseCurrentC"), "A"),
 
                 // Inductor Currents
                 GroupedNumField("inductorCurrentA", "IL(A)", "Inductor Currents",
                     resolver?.ResolveNumber(ParameterKeys.PcsInductorCurrentA)
-                        ?? ExtractDouble(payload, "pcs_inductCurrA"), "A"),
+                        ?? ExtractDouble(payload, "pcsInductorCurrentA"), "A"),
                 GroupedNumField("inductorCurrentB", "IL(B)", "Inductor Currents",
                     resolver?.ResolveNumber(ParameterKeys.PcsInductorCurrentB)
-                        ?? ExtractDouble(payload, "pcs_inductCurrB"), "A"),
+                        ?? ExtractDouble(payload, "pcsInductorCurrentB"), "A"),
                 GroupedNumField("inductorCurrentC", "IL(C)", "Inductor Currents",
                     resolver?.ResolveNumber(ParameterKeys.PcsInductorCurrentC)
-                        ?? ExtractDouble(payload, "pcs_inductCurrC"), "A"),
+                        ?? ExtractDouble(payload, "pcsInductorCurrentC"), "A"),
             }
         };
     }
@@ -286,28 +286,28 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
             {
                 NumField("totalDcBus", "Total DC Bus",
                     resolver?.ResolveNumber(ParameterKeys.PcsTotalDcBusVoltage)
-                        ?? ExtractDouble(payload, "pcs_totalDcBusV"), "V"),
+                        ?? ExtractDouble(payload, "pcsTotalDcBusVoltage"), "V"),
                 NumField("dcBusPos", "DC Bus (+)",
                     resolver?.ResolveNumber(ParameterKeys.PcsDcBusPosVoltage)
-                        ?? ExtractDouble(payload, "pcs_dcBusPosV"), "V"),
+                        ?? ExtractDouble(payload, "pcsDcBusPosVoltage"), "V"),
                 NumField("dcBusNeg", "DC Bus (-)",
                     resolver?.ResolveNumber(ParameterKeys.PcsDcBusNegVoltage)
-                        ?? ExtractDouble(payload, "pcs_dcBusNegV"), "V"),
+                        ?? ExtractDouble(payload, "pcsDcBusNegVoltage"), "V"),
                 NumField("batteryVoltage", "Battery Voltage",
                     resolver?.ResolveNumber(ParameterKeys.PcsBatteryVoltage)
-                        ?? ExtractDouble(payload, "pcs_battVoltV"), "V"),
+                        ?? ExtractDouble(payload, "pcsBatteryVoltage"), "V"),
                 NumField("batteryCurrent", "Battery Current",
                     resolver?.ResolveNumber(ParameterKeys.PcsBatteryCurrent)
-                        ?? ExtractDouble(payload, "pcs_battCurrA"), "A"),
+                        ?? ExtractDouble(payload, "pcsBatteryCurrent"), "A"),
                 NumField("dcPower", "DC Power",
                     resolver?.ResolveNumber(ParameterKeys.PcsDcPower)
-                        ?? ExtractDouble(payload, "pcs_dcPwrKw"), "kW"),
+                        ?? ExtractDouble(payload, "pcsDcPower"), "kW"),
                 NumField("acPowerFactor", "AC Power Factor",
                     resolver?.ResolveNumber(ParameterKeys.PcsPowerFactor)
-                        ?? ExtractDouble(payload, "pcs_acPwrFactor")),
+                        ?? ExtractDouble(payload, "pcsPowerFactor")),
                 NumField("totalDcCurrent", "Total DC Current",
                     resolver?.ResolveNumber(ParameterKeys.PcsTotalDcCurrent)
-                        ?? ExtractDouble(payload, "pcs_totalDcCurrA"), "A"),
+                        ?? ExtractDouble(payload, "pcsTotalDcCurrent"), "A"),
             }
         };
     }
@@ -318,27 +318,27 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
 
         // Phase A
         rows.Add(PowerRow("Phase A",
-            resolver?.ResolveNumber(ParameterKeys.PcsActivePowerA) ?? ExtractDouble(payload, "pcs_actPwrKwA"),
-            resolver?.ResolveNumber(ParameterKeys.PcsApparentPowerA) ?? ExtractDouble(payload, "pcs_appPwrKvaA"),
-            resolver?.ResolveNumber(ParameterKeys.PcsReactivePowerA) ?? ExtractDouble(payload, "pcs_reaPwrKvarA")));
+            resolver?.ResolveNumber(ParameterKeys.PcsActivePowerA) ?? ExtractDouble(payload, "pcsActivePowerA"),
+            resolver?.ResolveNumber(ParameterKeys.PcsApparentPowerA) ?? ExtractDouble(payload, "pcsApparentPowerA"),
+            resolver?.ResolveNumber(ParameterKeys.PcsReactivePowerA) ?? ExtractDouble(payload, "pcsReactivePowerA")));
 
         // Phase B
         rows.Add(PowerRow("Phase B",
-            resolver?.ResolveNumber(ParameterKeys.PcsActivePowerB) ?? ExtractDouble(payload, "pcs_actPwrKwB"),
-            resolver?.ResolveNumber(ParameterKeys.PcsApparentPowerB) ?? ExtractDouble(payload, "pcs_appPwrKvaB"),
-            resolver?.ResolveNumber(ParameterKeys.PcsReactivePowerB) ?? ExtractDouble(payload, "pcs_reaPwrKvarB")));
+            resolver?.ResolveNumber(ParameterKeys.PcsActivePowerB) ?? ExtractDouble(payload, "pcsActivePowerB"),
+            resolver?.ResolveNumber(ParameterKeys.PcsApparentPowerB) ?? ExtractDouble(payload, "pcsApparentPowerB"),
+            resolver?.ResolveNumber(ParameterKeys.PcsReactivePowerB) ?? ExtractDouble(payload, "pcsReactivePowerB")));
 
         // Phase C
         rows.Add(PowerRow("Phase C",
-            resolver?.ResolveNumber(ParameterKeys.PcsActivePowerC) ?? ExtractDouble(payload, "pcs_actPwrKwC"),
-            resolver?.ResolveNumber(ParameterKeys.PcsApparentPowerC) ?? ExtractDouble(payload, "pcs_appPwrKvaC"),
-            resolver?.ResolveNumber(ParameterKeys.PcsReactivePowerC) ?? ExtractDouble(payload, "pcs_reaPwrKvarC")));
+            resolver?.ResolveNumber(ParameterKeys.PcsActivePowerC) ?? ExtractDouble(payload, "pcsActivePowerC"),
+            resolver?.ResolveNumber(ParameterKeys.PcsApparentPowerC) ?? ExtractDouble(payload, "pcsApparentPowerC"),
+            resolver?.ResolveNumber(ParameterKeys.PcsReactivePowerC) ?? ExtractDouble(payload, "pcsReactivePowerC")));
 
         // Total
         rows.Add(PowerRow("Total",
-            resolver?.ResolveNumber(ParameterKeys.PcsActivePower) ?? ExtractDouble(payload, "pcs_outActPwrKw"),
-            resolver?.ResolveNumber(ParameterKeys.PcsApparentPowerTotal) ?? ExtractDouble(payload, "pcs_outAppPwrKva"),
-            resolver?.ResolveNumber(ParameterKeys.PcsReactivePower) ?? ExtractDouble(payload, "pcs_outReaPwrKvar")));
+            resolver?.ResolveNumber(ParameterKeys.PcsActivePower) ?? ExtractDouble(payload, "pcsActivePower"),
+            resolver?.ResolveNumber(ParameterKeys.PcsApparentPowerTotal) ?? ExtractDouble(payload, "pcsApparentPowerTotal"),
+            resolver?.ResolveNumber(ParameterKeys.PcsReactivePower) ?? ExtractDouble(payload, "pcsReactivePower")));
 
         return new DynamicSectionDto
         {
@@ -372,13 +372,13 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
             {
                 NumField("igbtTemp", "IGBT",
                     resolver?.ResolveNumber(ParameterKeys.PcsIgbtTemp)
-                        ?? ExtractDouble(payload, "pcs_igbtTempC"), "°C"),
+                        ?? ExtractDouble(payload, "pcsIgbtTemp"), "°C"),
                 NumField("ambientTemp", "Ambient",
                     resolver?.ResolveNumber(ParameterKeys.PcsAmbientTemp)
-                        ?? ExtractDouble(payload, "pcs_ambTempC"), "°C"),
+                        ?? ExtractDouble(payload, "pcsAmbientTemp"), "°C"),
                 NumField("inductanceTemp", "Inductance",
                     resolver?.ResolveNumber(ParameterKeys.PcsInductanceTemp)
-                        ?? ExtractDouble(payload, "pcs_inductTempC"), "°C"),
+                        ?? ExtractDouble(payload, "pcsInductanceTemp"), "°C"),
             }
         };
     }
@@ -395,22 +395,22 @@ public class GetPcsGeneralQueryHandler : IRequestHandler<GetPcsGeneralQuery, Pcs
             {
                 NumField("ccCvRechargeV", "CC-CV Recharge V",
                     resolver?.ResolveNumber(ParameterKeys.PcsCcCvRechargeV)
-                        ?? ExtractDouble(payload, "pcs_ccCvRechargeV"), "V"),
+                        ?? ExtractDouble(payload, "pcsCcCvRechargeV"), "V"),
                 NumField("cvChargeV", "CV Charge V",
                     resolver?.ResolveNumber(ParameterKeys.PcsCvChargeV)
-                        ?? ExtractDouble(payload, "pcs_cvChargeV"), "V"),
+                        ?? ExtractDouble(payload, "pcsCvChargeV"), "V"),
                 NumField("cvMaxTime", "CV Max Time",
                     resolver?.ResolveNumber(ParameterKeys.PcsCvMaxTime)
-                        ?? ExtractDouble(payload, "pcs_cvMaxTimeMin"), "min"),
+                        ?? ExtractDouble(payload, "pcsCvMaxTime"), "min"),
                 NumField("cvFloatI", "CV \u2192 Float I",
                     resolver?.ResolveNumber(ParameterKeys.PcsCvFloatI)
-                        ?? ExtractDouble(payload, "pcs_cvFloatI"), "A"),
+                        ?? ExtractDouble(payload, "pcsCvFloatI"), "A"),
                 NumField("floatChargeV", "Float Charge V",
                     resolver?.ResolveNumber(ParameterKeys.PcsFloatChargeV)
-                        ?? ExtractDouble(payload, "pcs_floatChargeV"), "V"),
+                        ?? ExtractDouble(payload, "pcsFloatChargeV"), "V"),
                 NumField("floatCcI", "Float \u2192 CC I",
                     resolver?.ResolveNumber(ParameterKeys.PcsFloatCcI)
-                        ?? ExtractDouble(payload, "pcs_floatCcI"), "A"),
+                        ?? ExtractDouble(payload, "pcsFloatCcI"), "A"),
             }
         };
     }
