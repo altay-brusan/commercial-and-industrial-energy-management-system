@@ -966,6 +966,412 @@
         ]
       }
     },
+    "/api/v1/Dashboard/{facilityId}/Stats": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardStats",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStatsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/EnergyUsage": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardEnergyUsage",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyUsageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/EnergySource": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardEnergySource",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergySourcePowerDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/BessState": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardBessState",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardBessStateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/PcsState": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardPcsState",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPcsStateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/SolarCapacity": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardSolarCapacity",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSolarCapacityDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/EnergyConsumption": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardEnergyConsumption",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnergyConsumptionChartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/Co2Emissions": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardCo2Emissions",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Co2EmissionsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/SourceDistribution": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardSourceDistribution",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDistributionChartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Dashboard/{facilityId}/CostSavings": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "operationId": "GetApiV1DashboardCostSavings",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostSavingsChartDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/DeviceData/Ingest": {
       "post": {
         "tags": [
@@ -6929,6 +7335,424 @@
           },
           "strokeDasharray": {
             "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DashboardStatsDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalEnergyKWh": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "currentPowerKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "dailyCostValue": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "bessSocPercent": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "EnergyUsageDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalEnergyKWh": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "activePowerKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "reactivePowerKVAR": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnergySourceBreakdownDto"
+            }
+          }
+        }
+      },
+      "EnergySourceBreakdownDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "energyKWh": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "percentage": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "EnergySourcePowerDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalPowerKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PowerSourceDto"
+            }
+          }
+        }
+      },
+      "PowerSourceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "powerKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "percentage": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "DashboardBessStateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BessUnitStateDto"
+            }
+          }
+        }
+      },
+      "BessUnitStateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "socPercent": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "chargeLevel": {
+            "type": "string",
+            "nullable": true
+          },
+          "capacityKWh": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "healthPercent": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "DashboardPcsStateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PcsUnitStateDto"
+            }
+          }
+        }
+      },
+      "PcsUnitStateDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "nullable": true
+          },
+          "temperatureC": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "currentLoadKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "efficiencyPercent": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "acVoltageV": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "dcVoltageV": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "DashboardSolarCapacityDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "currentPowerKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "maxCapacityKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "utilizationPercent": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "producedTodayKWh": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "panelTemperatureC": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "EnergyConsumptionChartDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "dataPoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnergyConsumptionDataPoint"
+            }
+          }
+        }
+      },
+      "EnergyConsumptionDataPoint": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "consumptionKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "productionKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "Co2EmissionsDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "totalEmissionsKg": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "totalSavedKg": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "emissionFactorKgPerKWh": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "dataPoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Co2DataPoint"
+            }
+          }
+        }
+      },
+      "Co2DataPoint": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "emissionsKg": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "savedKg": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "SourceDistributionChartDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "dataPoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceDistributionDataPoint"
+            }
+          }
+        }
+      },
+      "SourceDistributionDataPoint": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "gridKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "solarKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "bessKW": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          }
+        }
+      },
+      "CostSavingsChartDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "totalCost": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "totalSavings": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataPoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CostSavingsDataPoint"
+            }
+          }
+        }
+      },
+      "CostSavingsDataPoint": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "costAmount": {
+            "type": "number",
+            "format": "decimal",
+            "nullable": true
+          },
+          "savingsAmount": {
+            "type": "number",
+            "format": "decimal",
             "nullable": true
           }
         }
