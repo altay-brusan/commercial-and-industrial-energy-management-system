@@ -61,7 +61,7 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
 
         // Resolve battery data Kind from template (default: Battery.CellArray)
         var specs = PayloadDeserializer.GetElement(device.SpecificationTemplate?.SpecificationsTemplate);
-        var batteryDataKind = "Battery.CellArray";
+        var batteryDataKind = "Battery.Energy";
         if (specs.HasValue && specs.Value.TryGetProperty("batteryDataKind", out var kindProp)
             && kindProp.ValueKind == JsonValueKind.String)
         {
@@ -305,24 +305,24 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         {
             BuildChart("powerSoc", "Power & State of Charge", "area", timeFormat, data,
                 new CurveSeriesDto { Key = "power", Label = "Power", Unit = "kW", Color = "#8b5cf6", YAxis = "left", Type = "area", SourcePath = "@computed:power" },
-                new CurveSeriesDto { Key = "soc", Label = "SoC", Unit = "%", Color = "#22c55e", YAxis = "right", Type = "line", SourcePath = "socPercent" }),
+                new CurveSeriesDto { Key = "soc", Label = "SoC", Unit = "%", Color = "#22c55e", YAxis = "right", Type = "line", SourcePath = "soc" }),
 
             BuildChart("voltageCurrent", "Voltage & Current", "line", timeFormat, data,
-                new CurveSeriesDto { Key = "voltage", Label = "Voltage", Unit = "V", Color = "#3b82f6", YAxis = "left", Type = "line", SourcePath = "totalVoltageV" },
-                new CurveSeriesDto { Key = "current", Label = "Current", Unit = "A", Color = "#f59e0b", YAxis = "right", Type = "line", SourcePath = "instantCurrentA" }),
+                new CurveSeriesDto { Key = "voltage", Label = "Voltage", Unit = "V", Color = "#3b82f6", YAxis = "left", Type = "line", SourcePath = "voltage" },
+                new CurveSeriesDto { Key = "current", Label = "Current", Unit = "A", Color = "#f59e0b", YAxis = "right", Type = "line", SourcePath = "current" }),
 
             BuildChart("temperature", "Temperature", "area", timeFormat, data,
-                new CurveSeriesDto { Key = "tempMax", Label = "T.Max", Unit = "\u00b0C", Color = "#ef4444", Type = "area", SourcePath = "maxCellTempC" },
-                new CurveSeriesDto { Key = "tempAvg", Label = "T.Avg", Unit = "\u00b0C", Color = "#f59e0b", Type = "area", SourcePath = "ambientTempC" },
-                new CurveSeriesDto { Key = "tempMin", Label = "T.Min", Unit = "\u00b0C", Color = "#3b82f6", Type = "area", SourcePath = "minCellTempC" }),
+                new CurveSeriesDto { Key = "tempMax", Label = "T.Max", Unit = "\u00b0C", Color = "#ef4444", Type = "area", SourcePath = "tempMax" },
+                new CurveSeriesDto { Key = "tempAvg", Label = "T.Avg", Unit = "\u00b0C", Color = "#f59e0b", Type = "area", SourcePath = "tempAvg" },
+                new CurveSeriesDto { Key = "tempMin", Label = "T.Min", Unit = "\u00b0C", Color = "#3b82f6", Type = "area", SourcePath = "tempMin" }),
         };
 
         // Add PCS chart if child PCS data is available
         if (pcsData is { Count: > 0 })
         {
             charts.Add(BuildChart("pcsAcPower", "PCS AC Power", "line", timeFormat, pcsData,
-                new CurveSeriesDto { Key = "acActivePower", Label = "Active Power", Unit = "kW", Color = "#06b6d4", YAxis = "left", Type = "line", SourcePath = "acPower.totalActivePower" },
-                new CurveSeriesDto { Key = "efficiency", Label = "Efficiency", Unit = "%", Color = "#a855f7", YAxis = "right", Type = "line", SourcePath = "efficiency" }));
+                new CurveSeriesDto { Key = "acActivePower", Label = "Active Power", Unit = "kW", Color = "#06b6d4", YAxis = "left", Type = "line", SourcePath = "pcsActivePower" },
+                new CurveSeriesDto { Key = "efficiency", Label = "Efficiency", Unit = "%", Color = "#a855f7", YAxis = "right", Type = "line", SourcePath = "pcsEfficiency" }));
         }
 
         return charts;
@@ -375,8 +375,8 @@ public class GetBessCurvesQueryHandler : IRequestHandler<GetBessCurvesQuery, Cha
         // Computed fields: voltage * current / 1000 = power in kW
         if (path == "@computed:power")
         {
-            var voltage = PayloadDeserializer.ExtractValue(payload, "totalVoltageV");
-            var current = PayloadDeserializer.ExtractValue(payload, "instantCurrentA");
+            var voltage = PayloadDeserializer.ExtractValue(payload, "voltage");
+            var current = PayloadDeserializer.ExtractValue(payload, "current");
             if (voltage is double v && current is double c)
                 return Math.Round(v * c / 1000.0, 1);
             if (voltage is int vi && current is int ci)

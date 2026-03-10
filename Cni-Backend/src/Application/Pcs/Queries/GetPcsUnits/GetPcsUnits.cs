@@ -140,13 +140,13 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
                 : null;
 
             var activePower = resolver?.ResolveNumber(ParameterKeys.PcsActivePower)
-                ?? ExtractDouble(powerPayload, "pcs_outActPwrKw");
+                ?? ExtractDouble(powerPayload, "pcsActivePower");
 
             var reactivePower = resolver?.ResolveNumber(ParameterKeys.PcsReactivePower)
-                ?? ExtractDouble(powerPayload, "pcs_outReaPwrKvar");
+                ?? ExtractDouble(powerPayload, "pcsReactivePower");
 
             var dcPower = resolver?.ResolveNumber(ParameterKeys.PcsDcPower)
-                ?? ExtractDouble(dcPayload, "pcs_dcPwrKw");
+                ?? ExtractDouble(dcPayload, "pcsDcPower");
 
             // Compute efficiency: |AC power| / |DC power| * 100, capped at 100
             var efficiency = resolver?.ResolveNumber(ParameterKeys.PcsEfficiency);
@@ -159,7 +159,7 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
             var gridModeStr = resolver?.ResolveString(ParameterKeys.PcsGridMode);
             if (gridModeStr == null)
             {
-                gridModeStr = MapGridMode(ExtractInt(statusPayload, "pcs_gridMode"));
+                gridModeStr = MapGridMode(ExtractInt(statusPayload, "pcsGridMode"));
             }
 
             return new PcsUnitListItemDto
@@ -177,12 +177,12 @@ public class GetPcsUnitsQueryHandler : IRequestHandler<GetPcsUnitsQuery, PcsUnit
                 ActivePowerKw = activePower,
                 ReactivePowerKvar = reactivePower,
                 GridFreqHz = resolver?.ResolveNumber(ParameterKeys.PcsGridFreq)
-                    ?? ExtractDouble(statusPayload, "pcs_gridFreqHz"),
+                    ?? ExtractDouble(statusPayload, "pcsGridFreq"),
                 IgbtTempC = resolver?.ResolveNumber(ParameterKeys.PcsIgbtTemp)
-                    ?? ExtractDouble(tempsPayload, "pcs_igbtTempC"),
+                    ?? ExtractDouble(tempsPayload, "pcsIgbtTemp"),
                 EfficiencyPct = efficiency,
                 PowerFactor = resolver?.ResolveNumber(ParameterKeys.PcsPowerFactor)
-                    ?? ExtractDouble(dcPayload, "pcs_acPwrFactor"),
+                    ?? ExtractDouble(dcPayload, "pcsPowerFactor"),
                 ActiveFaultCount = alarmCounts.GetValueOrDefault(device.Id, 0),
                 LastSeenUtc = device.LastSeenUtc
             };

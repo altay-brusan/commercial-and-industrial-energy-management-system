@@ -131,8 +131,8 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
             Data = buckets.Select(b => new Dictionary<string, object?>
             {
                 ["time"] = b.Time.ToString(timeFormat),
-                ["activePowerKw"] = Extract(b.Payloads, "pcs_outActPwrKw"),
-                ["reactivePowerKvar"] = Extract(b.Payloads, "pcs_outReaPwrKvar"),
+                ["activePowerKw"] = Extract(b.Payloads, "pcsActivePower"),
+                ["reactivePowerKvar"] = Extract(b.Payloads, "pcsReactivePower"),
             }).ToList()
         };
     }
@@ -154,8 +154,8 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
             Data = buckets.Select(b => new Dictionary<string, object?>
             {
                 ["time"] = b.Time.ToString(timeFormat),
-                ["dcBusV"] = Extract(b.Payloads, "pcs_totalDcBusV"),
-                ["dcCurrentA"] = Extract(b.Payloads, "pcs_totalDcCurrA"),
+                ["dcBusV"] = Extract(b.Payloads, "pcsTotalDcBusVoltage"),
+                ["dcCurrentA"] = Extract(b.Payloads, "pcsTotalDcCurrent"),
             }).ToList()
         };
     }
@@ -178,9 +178,9 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
             Data = buckets.Select(b => new Dictionary<string, object?>
             {
                 ["time"] = b.Time.ToString(timeFormat),
-                ["phaseA"] = Extract(b.Payloads, "pcs_phaseCurrA"),
-                ["phaseB"] = Extract(b.Payloads, "pcs_phaseCurrB"),
-                ["phaseC"] = Extract(b.Payloads, "pcs_phaseCurrC"),
+                ["phaseA"] = Extract(b.Payloads, "pcsPhaseCurrentA"),
+                ["phaseB"] = Extract(b.Payloads, "pcsPhaseCurrentB"),
+                ["phaseC"] = Extract(b.Payloads, "pcsPhaseCurrentC"),
             }).ToList()
         };
     }
@@ -207,7 +207,7 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
             Data = buckets.Select(b => new Dictionary<string, object?>
             {
                 ["time"] = b.Time.ToString(timeFormat),
-                ["freqHz"] = Extract(b.Payloads, "pcs_gridFreqHz"),
+                ["freqHz"] = Extract(b.Payloads, "pcsGridFreq"),
             }).ToList()
         };
     }
@@ -230,9 +230,9 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
             Data = buckets.Select(b => new Dictionary<string, object?>
             {
                 ["time"] = b.Time.ToString(timeFormat),
-                ["igbt"] = Extract(b.Payloads, "pcs_igbtTempC"),
-                ["inductance"] = Extract(b.Payloads, "pcs_inductTempC"),
-                ["ambient"] = Extract(b.Payloads, "pcs_ambTempC"),
+                ["igbt"] = Extract(b.Payloads, "pcsIgbtTemp"),
+                ["inductance"] = Extract(b.Payloads, "pcsInductanceTemp"),
+                ["ambient"] = Extract(b.Payloads, "pcsAmbientTemp"),
             }).ToList()
         };
     }
@@ -258,7 +258,7 @@ public class GetPcsCurvesQueryHandler : IRequestHandler<GetPcsCurvesQuery, Chart
             Data = buckets.Select(b => new Dictionary<string, object?>
             {
                 ["time"] = b.Time.ToString(timeFormat),
-                ["efficiency"] = Extract(b.Payloads, "pcs_efficiency"),
+                ["efficiency"] = Extract(b.Payloads, "pcsEfficiency"),
             }).ToList()
         };
     }
