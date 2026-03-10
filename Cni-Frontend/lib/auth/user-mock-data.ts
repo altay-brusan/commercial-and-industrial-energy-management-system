@@ -8,7 +8,8 @@ function getRoleIdsForUser(userId: string): string[] {
 export const userAccounts: UserAccount[] = [
   {
     id: "user-1",
-    name: "John Doe",
+    firstName: "John",
+    lastName: "Doe",
     email: "john@energy.com",
     initials: "JD",
     department: "Operations",
@@ -21,7 +22,8 @@ export const userAccounts: UserAccount[] = [
   },
   {
     id: "user-2",
-    name: "Jane Smith",
+    firstName: "Jane",
+    lastName: "Smith",
     email: "jane@energy.com",
     initials: "JS",
     department: "Field Services",
@@ -34,7 +36,8 @@ export const userAccounts: UserAccount[] = [
   },
   {
     id: "user-3",
-    name: "Mike Johnson",
+    firstName: "Mike",
+    lastName: "Johnson",
     email: "mike@energy.com",
     initials: "MJ",
     department: "Battery Systems",
@@ -47,7 +50,8 @@ export const userAccounts: UserAccount[] = [
   },
   {
     id: "user-4",
-    name: "Sarah Wilson",
+    firstName: "Sarah",
+    lastName: "Wilson",
     email: "sarah@energy.com",
     initials: "SW",
     department: "Engineering",
@@ -60,7 +64,8 @@ export const userAccounts: UserAccount[] = [
   },
   {
     id: "user-5",
-    name: "Tom Brown",
+    firstName: "Tom",
+    lastName: "Brown",
     email: "tom@energy.com",
     initials: "TB",
     department: "Grid Operations",
@@ -73,7 +78,8 @@ export const userAccounts: UserAccount[] = [
   },
   {
     id: "user-6",
-    name: "Emily Chen",
+    firstName: "Emily",
+    lastName: "Chen",
     email: "emily@energy.com",
     initials: "EC",
     department: "Analytics",
@@ -86,7 +92,8 @@ export const userAccounts: UserAccount[] = [
   },
   {
     id: "user-7",
-    name: "David Park",
+    firstName: "David",
+    lastName: "Park",
     email: "david@energy.com",
     initials: "DP",
     department: "Compliance",
@@ -99,7 +106,8 @@ export const userAccounts: UserAccount[] = [
   },
   {
     id: "user-8",
-    name: "Lisa Martinez",
+    firstName: "Lisa",
+    lastName: "Martinez",
     email: "lisa@energy.com",
     initials: "LM",
     department: "Field Services",

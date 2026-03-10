@@ -5,98 +5,77 @@ import { users } from "@/lib/maintenance/mock-data";
 
 export const features: Feature[] = [
   // Core
-  { id: "feat-1", key: "Dashboard", name: "Dashboard", description: "Main dashboard and overview panels", category: "Core", isActive: true },
-  { id: "feat-2", key: "Alarms", name: "Alarms", description: "Alarm monitoring and management", category: "Core", isActive: true },
-  { id: "feat-3", key: "Notifications", name: "Notifications", description: "System notifications and alerts", category: "Core", isActive: true },
-  { id: "feat-4", key: "Monitoring", name: "Monitoring", description: "Real-time system monitoring", category: "Core", isActive: true },
+  { id: "feat-1", key: "Portfolio", name: "Portfolio", description: "Portfolio overview and management", category: "Core", isActive: true },
+  { id: "feat-2", key: "Dashboard", name: "Dashboard", description: "Main dashboard and overview panels", category: "Core", isActive: true },
+  { id: "feat-3", key: "Monitoring", name: "Monitoring", description: "Real-time system monitoring", category: "Core", isActive: true },
+  { id: "feat-4", key: "FacilityMap", name: "Facility Map", description: "Interactive facility map view", category: "Core", isActive: true },
 
   // Energy
-  { id: "feat-5", key: "BESS", name: "Battery Storage", description: "Battery energy storage system management", category: "Energy", isActive: true },
-  { id: "feat-6", key: "SolarInverters", name: "Solar Inverters", description: "Solar inverter monitoring and control", category: "Energy", isActive: true },
-  { id: "feat-7", key: "EnergyTrading", name: "Energy Trading", description: "Energy market trading operations", category: "Energy", isActive: true },
-  { id: "feat-8", key: "DemandResponse", name: "Demand Response", description: "Demand response program management", category: "Energy", isActive: true },
+  { id: "feat-5", key: "Solar", name: "Solar", description: "Solar energy monitoring and management", category: "Energy", isActive: true },
+  { id: "feat-6", key: "Bess", name: "BESS", description: "Battery energy storage system management", category: "Energy", isActive: true },
+  { id: "feat-7", key: "Pcs", name: "PCS", description: "Power conversion system management", category: "Energy", isActive: true },
+  { id: "feat-8", key: "GridAndLoads", name: "Grid & Loads", description: "Grid connection and load management", category: "Energy", isActive: true },
+  { id: "feat-9", key: "Scada", name: "SCADA", description: "Supervisory control and data acquisition", category: "Energy", isActive: true },
 
   // Intelligence
-  { id: "feat-9", key: "Forecasting", name: "Forecasting", description: "Energy generation and demand forecasting", category: "Intelligence", isActive: true },
-  { id: "feat-10", key: "Analytics", name: "Analytics", description: "Advanced analytics and reporting", category: "Intelligence", isActive: true },
-  { id: "feat-11", key: "Optimization", name: "Optimization", description: "Dispatch optimization algorithms", category: "Intelligence", isActive: true },
-  { id: "feat-12", key: "MachineLearning", name: "Machine Learning", description: "ML model management and predictions", category: "Intelligence", isActive: false },
+  { id: "feat-10", key: "Analytics", name: "Analytics", description: "Advanced analytics and data insights", category: "Intelligence", isActive: true },
+  { id: "feat-11", key: "Financials", name: "Financials", description: "Financial data and energy market prices", category: "Intelligence", isActive: true },
+  { id: "feat-12", key: "Reporting", name: "Reporting", description: "Report generation and export", category: "Intelligence", isActive: true },
 
   // Management
-  { id: "feat-13", key: "Maintenance", name: "Maintenance", description: "Maintenance task management", category: "Management", isActive: true },
-  { id: "feat-14", key: "Configuration", name: "Configuration", description: "System configuration and settings", category: "Management", isActive: true },
-  { id: "feat-15", key: "UserManagement", name: "User Management", description: "User accounts and profile management", category: "Management", isActive: true },
-  { id: "feat-16", key: "RoleManagement", name: "Role Management", description: "Role and permission management", category: "Management", isActive: true },
+  { id: "feat-13", key: "Operations", name: "Operations", description: "Operational management and maintenance", category: "Management", isActive: true },
+  { id: "feat-14", key: "Settings", name: "Settings", description: "System configuration and entity management", category: "Management", isActive: true },
+  { id: "feat-15", key: "UserManagement", name: "User Management", description: "User accounts and access management", category: "Management", isActive: true },
+  { id: "feat-16", key: "Audit", name: "Audit", description: "Audit logs and activity tracking", category: "Management", isActive: true },
 ];
 
 // ── Permissions (34 permissions with Feature.Action keys) ──
 
 export const permissions: Permission[] = [
-  // Dashboard
-  { id: "perm-1", key: "Dashboard.View", name: "View Dashboard", description: "Access main dashboard", featureId: "feat-1" },
-  { id: "perm-2", key: "Dashboard.Configure", name: "Configure Dashboard", description: "Customize dashboard layout and widgets", featureId: "feat-1" },
+  // Core
+  { id: "perm-1", key: "Portfolio.View", name: "View Portfolio", description: "Access portfolio overview", featureId: "feat-1" },
+  { id: "perm-2", key: "Dashboard.View", name: "View Dashboard", description: "Access main dashboard", featureId: "feat-2" },
+  { id: "perm-3", key: "Monitoring.View", name: "View Monitoring", description: "Access monitoring dashboards", featureId: "feat-3" },
+  { id: "perm-4", key: "FacilityMap.View", name: "View Facility Map", description: "Access facility map", featureId: "feat-4" },
 
-  // Alarms
-  { id: "perm-3", key: "Alarms.View", name: "View Alarms", description: "View alarm list and details", featureId: "feat-2" },
-  { id: "perm-4", key: "Alarms.Acknowledge", name: "Acknowledge Alarms", description: "Acknowledge active alarms", featureId: "feat-2" },
-  { id: "perm-5", key: "Alarms.Manage", name: "Manage Alarms", description: "Create, edit, and resolve alarms", featureId: "feat-2" },
+  // Energy
+  { id: "perm-5", key: "Solar.View", name: "View Solar", description: "View solar energy data", featureId: "feat-5" },
+  { id: "perm-6", key: "Bess.View", name: "View BESS", description: "View battery storage data", featureId: "feat-6" },
+  { id: "perm-7", key: "Pcs.View", name: "View PCS", description: "View power conversion data", featureId: "feat-7" },
+  { id: "perm-8", key: "GridAndLoads.View", name: "View Grid & Loads", description: "View grid and load data", featureId: "feat-8" },
+  { id: "perm-9", key: "Scada.View", name: "View SCADA", description: "View SCADA data", featureId: "feat-9" },
+  { id: "perm-10", key: "Scada.Control", name: "Control SCADA", description: "Send SCADA control commands", featureId: "feat-9" },
 
-  // Notifications
-  { id: "perm-6", key: "Notifications.View", name: "View Notifications", description: "View system notifications", featureId: "feat-3" },
-  { id: "perm-7", key: "Notifications.Manage", name: "Manage Notifications", description: "Configure notification preferences", featureId: "feat-3" },
+  // Intelligence
+  { id: "perm-11", key: "Analytics.View", name: "View Analytics", description: "Access analytics dashboards", featureId: "feat-10" },
+  { id: "perm-12", key: "Financials.View", name: "View Financials", description: "View financial data", featureId: "feat-11" },
+  { id: "perm-13", key: "Reporting.View", name: "View Reporting", description: "View reports", featureId: "feat-12" },
+  { id: "perm-14", key: "Reporting.Export", name: "Export Reports", description: "Export report data", featureId: "feat-12" },
 
-  // Monitoring
-  { id: "perm-8", key: "Monitoring.View", name: "View Monitoring", description: "Access monitoring dashboards", featureId: "feat-4" },
-  { id: "perm-9", key: "Monitoring.Control", name: "Control Devices", description: "Send commands to monitored devices", featureId: "feat-4" },
+  // Operations
+  { id: "perm-15", key: "Operations.View", name: "View Operations", description: "View operational data", featureId: "feat-13" },
+  { id: "perm-16", key: "Operations.Manage", name: "Manage Operations", description: "Manage operational tasks", featureId: "feat-13" },
 
-  // BESS
-  { id: "perm-10", key: "BESS.View", name: "View BESS", description: "View battery storage data", featureId: "feat-5" },
-  { id: "perm-11", key: "BESS.Control", name: "Control BESS", description: "Control battery charge/discharge", featureId: "feat-5" },
-  { id: "perm-12", key: "BESS.Configure", name: "Configure BESS", description: "Configure battery parameters", featureId: "feat-5" },
-
-  // Solar Inverters
-  { id: "perm-13", key: "SolarInverters.View", name: "View Inverters", description: "View solar inverter data", featureId: "feat-6" },
-  { id: "perm-14", key: "SolarInverters.Control", name: "Control Inverters", description: "Control inverter operations", featureId: "feat-6" },
-
-  // Energy Trading
-  { id: "perm-15", key: "EnergyTrading.View", name: "View Trading", description: "View energy trading data", featureId: "feat-7" },
-  { id: "perm-16", key: "EnergyTrading.Execute", name: "Execute Trades", description: "Execute energy trades", featureId: "feat-7" },
-
-  // Demand Response
-  { id: "perm-17", key: "DemandResponse.View", name: "View DR Programs", description: "View demand response programs", featureId: "feat-8" },
-  { id: "perm-18", key: "DemandResponse.Manage", name: "Manage DR Programs", description: "Create and manage DR events", featureId: "feat-8" },
-
-  // Forecasting
-  { id: "perm-19", key: "Forecasting.View", name: "View Forecasts", description: "View energy forecasts", featureId: "feat-9" },
-  { id: "perm-20", key: "Forecasting.Configure", name: "Configure Forecasting", description: "Configure forecast models", featureId: "feat-9" },
-
-  // Analytics
-  { id: "perm-21", key: "Analytics.View", name: "View Analytics", description: "Access analytics dashboards", featureId: "feat-10" },
-  { id: "perm-22", key: "Analytics.Export", name: "Export Reports", description: "Export analytics reports", featureId: "feat-10" },
-
-  // Optimization
-  { id: "perm-23", key: "Optimization.View", name: "View Optimization", description: "View optimization results", featureId: "feat-11" },
-  { id: "perm-24", key: "Optimization.Execute", name: "Run Optimization", description: "Execute optimization algorithms", featureId: "feat-11" },
-
-  // Machine Learning
-  { id: "perm-25", key: "MachineLearning.View", name: "View ML Models", description: "View ML model status and results", featureId: "feat-12" },
-  { id: "perm-26", key: "MachineLearning.Manage", name: "Manage ML Models", description: "Train and deploy ML models", featureId: "feat-12" },
-
-  // Maintenance
-  { id: "perm-27", key: "Maintenance.View", name: "View Maintenance", description: "View maintenance tasks", featureId: "feat-13" },
-  { id: "perm-28", key: "Maintenance.Manage", name: "Manage Maintenance", description: "Create and assign maintenance tasks", featureId: "feat-13" },
-
-  // Configuration
-  { id: "perm-29", key: "Configuration.View", name: "View Configuration", description: "View system configuration", featureId: "feat-14" },
-  { id: "perm-30", key: "Configuration.Manage", name: "Manage Configuration", description: "Modify system settings", featureId: "feat-14" },
+  // Settings (Firm, Facility, Device)
+  { id: "perm-17", key: "Firm.View", name: "View Firms", description: "View firm information", featureId: "feat-14" },
+  { id: "perm-18", key: "Firm.Create", name: "Create Firms", description: "Create new firms", featureId: "feat-14" },
+  { id: "perm-19", key: "Firm.Edit", name: "Edit Firms", description: "Edit firm information", featureId: "feat-14" },
+  { id: "perm-20", key: "Firm.Delete", name: "Delete Firms", description: "Delete firms", featureId: "feat-14" },
+  { id: "perm-21", key: "Facility.View", name: "View Facilities", description: "View facility information", featureId: "feat-14" },
+  { id: "perm-22", key: "Facility.Create", name: "Create Facilities", description: "Create new facilities", featureId: "feat-14" },
+  { id: "perm-23", key: "Facility.Edit", name: "Edit Facilities", description: "Edit facility information", featureId: "feat-14" },
+  { id: "perm-24", key: "Facility.Delete", name: "Delete Facilities", description: "Delete facilities", featureId: "feat-14" },
+  { id: "perm-25", key: "Device.View", name: "View Devices", description: "View device information", featureId: "feat-14" },
+  { id: "perm-26", key: "Device.Create", name: "Create Devices", description: "Create new devices", featureId: "feat-14" },
 
   // User Management
-  { id: "perm-31", key: "UserManagement.View", name: "View Users", description: "View user accounts", featureId: "feat-15" },
-  { id: "perm-32", key: "UserManagement.Manage", name: "Manage Users", description: "Create, edit, and deactivate users", featureId: "feat-15" },
+  { id: "perm-27", key: "UserManagement.View", name: "View Users", description: "View user accounts", featureId: "feat-15" },
+  { id: "perm-28", key: "UserManagement.Create", name: "Create Users", description: "Create new user accounts", featureId: "feat-15" },
+  { id: "perm-29", key: "UserManagement.Edit", name: "Edit Users", description: "Edit user accounts", featureId: "feat-15" },
+  { id: "perm-30", key: "UserManagement.Delete", name: "Delete Users", description: "Delete user accounts", featureId: "feat-15" },
 
-  // Role Management
-  { id: "perm-33", key: "RoleManagement.View", name: "View Roles", description: "View roles and permissions", featureId: "feat-16" },
-  { id: "perm-34", key: "RoleManagement.Manage", name: "Manage Roles", description: "Create, edit, and delete roles", featureId: "feat-16" },
+  // Audit
+  { id: "perm-31", key: "Audit.View", name: "View Audit Logs", description: "View audit trail", featureId: "feat-16" },
 ];
 
 // All permission IDs for convenience
@@ -127,10 +106,10 @@ export const roles: TenantRole[] = [
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date("2024-06-15"),
     permissionIds: [
-      "perm-1", "perm-2", "perm-3", "perm-4", "perm-5", "perm-6", "perm-7",
-      "perm-8", "perm-10", "perm-13", "perm-15", "perm-17", "perm-19", "perm-21",
-      "perm-22", "perm-27", "perm-28", "perm-29", "perm-30", "perm-31", "perm-32",
-      "perm-33", "perm-34",
+      "perm-1", "perm-2", "perm-3", "perm-4", "perm-5", "perm-6", "perm-7", "perm-8", "perm-9",
+      "perm-11", "perm-12", "perm-13", "perm-14", "perm-15", "perm-16",
+      "perm-17", "perm-18", "perm-19", "perm-20", "perm-21", "perm-22", "perm-23", "perm-24",
+      "perm-25", "perm-26", "perm-27", "perm-28", "perm-29", "perm-30", "perm-31",
     ],
     userIds: ["user-1", "user-4"],
   },
@@ -144,9 +123,8 @@ export const roles: TenantRole[] = [
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date("2024-03-20"),
     permissionIds: [
-      "perm-1", "perm-3", "perm-4", "perm-5", "perm-6", "perm-8", "perm-9",
-      "perm-10", "perm-11", "perm-13", "perm-14", "perm-17", "perm-19", "perm-23",
-      "perm-27",
+      "perm-1", "perm-2", "perm-3", "perm-4", "perm-5", "perm-6", "perm-7", "perm-8",
+      "perm-9", "perm-10", "perm-11", "perm-15", "perm-16",
     ],
     userIds: ["user-2", "user-3"],
   },
@@ -160,8 +138,8 @@ export const roles: TenantRole[] = [
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date("2024-01-01"),
     permissionIds: [
-      "perm-1", "perm-3", "perm-6", "perm-8", "perm-10", "perm-13", "perm-15",
-      "perm-17", "perm-19", "perm-21", "perm-23", "perm-25", "perm-27", "perm-29",
+      "perm-1", "perm-2", "perm-3", "perm-4", "perm-5", "perm-6", "perm-7", "perm-8",
+      "perm-9", "perm-11", "perm-12", "perm-13", "perm-15", "perm-17", "perm-21", "perm-25",
     ],
     userIds: ["user-5", "user-6"],
   },
@@ -175,9 +153,9 @@ export const roles: TenantRole[] = [
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date("2024-01-01"),
     permissionIds: [
-      "perm-1", "perm-3", "perm-6", "perm-8", "perm-10", "perm-13", "perm-15",
-      "perm-17", "perm-19", "perm-21", "perm-23", "perm-25", "perm-27", "perm-29",
-      "perm-31", "perm-33",
+      "perm-1", "perm-2", "perm-3", "perm-4", "perm-5", "perm-6", "perm-7", "perm-8",
+      "perm-9", "perm-11", "perm-12", "perm-13", "perm-15", "perm-17", "perm-21", "perm-25",
+      "perm-27", "perm-31",
     ],
     userIds: ["user-7"],
   },
@@ -185,14 +163,14 @@ export const roles: TenantRole[] = [
     id: "role-6",
     tenantId: "tenant-1",
     name: "Field Technician",
-    description: "Access to maintenance, BESS, and solar inverter systems for field operations.",
+    description: "Access to operations, BESS, and solar systems for field operations.",
     isActive: true,
     isSystem: false,
     createdAt: new Date("2024-08-10"),
     updatedAt: new Date("2025-01-05"),
     permissionIds: [
-      "perm-1", "perm-3", "perm-4", "perm-6", "perm-8", "perm-9", "perm-10",
-      "perm-11", "perm-12", "perm-13", "perm-14", "perm-27", "perm-28",
+      "perm-1", "perm-2", "perm-3", "perm-5", "perm-6", "perm-7", "perm-9", "perm-10",
+      "perm-15", "perm-16", "perm-25",
     ],
     userIds: ["user-2", "user-3", "user-5"],
   },
@@ -200,14 +178,13 @@ export const roles: TenantRole[] = [
     id: "role-7",
     tenantId: "tenant-1",
     name: "Financial Analyst",
-    description: "Access to energy trading, analytics, and reporting for financial analysis.",
+    description: "Access to financials, analytics, and reporting for financial analysis.",
     isActive: false,
     isSystem: false,
     createdAt: new Date("2024-11-20"),
     updatedAt: new Date("2025-02-14"),
     permissionIds: [
-      "perm-1", "perm-6", "perm-15", "perm-16", "perm-19", "perm-21", "perm-22",
-      "perm-23",
+      "perm-1", "perm-2", "perm-11", "perm-12", "perm-13", "perm-14",
     ],
     userIds: ["user-4"],
   },

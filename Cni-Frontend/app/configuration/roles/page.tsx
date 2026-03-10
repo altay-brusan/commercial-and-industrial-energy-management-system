@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, Search, Shield, Users, Lock, Unlock } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Plus, Search, Shield, Lock, Unlock, Loader2 } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { ConfigurationSidebar } from "@/components/configuration/configuration-sidebar";
 import { AccessTabs } from "@/components/auth/access-tabs";
@@ -10,7 +10,6 @@ import { RoleDetailPanel } from "@/components/auth/role-detail-panel";
 import { RoleFormModal } from "@/components/auth/role-form-modal";
 import { RoleDeleteDialog } from "@/components/auth/role-delete-dialog";
 import { PermissionMatrix } from "@/components/auth/permission-matrix";
-import { RoleUsersSection } from "@/components/auth/role-users-section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,25 +19,42 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { roles as initialRoles, getUsersForRole } from "@/lib/auth/mock-data";
+import { roles as mockRoles, getUsersForRole } from "@/lib/auth/mock-data";
 import { users } from "@/lib/maintenance/mock-data";
+import * as roleService from "@/lib/auth/role-service";
 import type { TenantRole, RoleFormData } from "@/lib/auth/types";
 
 export default function RolesPage() {
-  const [roleList, setRoleList] = useState<TenantRole[]>(initialRoles);
+  const [roleList, setRoleList] = useState<TenantRole[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<TenantRole | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
-  const [usersDialogOpen, setUsersDialogOpen] = useState(false);
 
   // Permission editing state
   const [editingPermissionIds, setEditingPermissionIds] = useState<string[]>([]);
+
+  // Fetch roles from API with mock fallback
+  const fetchRoles = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await roleService.getRoles();
+      setRoleList(data);
+    } catch {
+      setRoleList(mockRoles);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRoles();
+  }, [fetchRoles]);
 
   // Filtered roles
   const filteredRoles = useMemo(() => {
@@ -66,44 +82,60 @@ export default function RolesPage() {
   }, [selectedRole]);
 
   // Handlers
-  const handleCreateRole = (data: RoleFormData) => {
-    const newRole: TenantRole = {
-      id: `role-${Date.now()}`,
-      tenantId: "tenant-1",
-      name: data.name,
-      description: data.description,
-      isActive: data.isActive,
-      isSystem: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      permissionIds: [],
-      userIds: [],
-    };
-    setRoleList((prev) => [...prev, newRole]);
-    console.log("Created role:", newRole);
+  const handleCreateRole = async (data: RoleFormData) => {
+    try {
+      const created = await roleService.createRole(data);
+      setRoleList((prev) => [...prev, created]);
+    } catch {
+      const newRole: TenantRole = {
+        id: `role-${Date.now()}`,
+        tenantId: "tenant-1",
+        name: data.name,
+        description: data.description,
+        isActive: data.isActive,
+        isSystem: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        permissionIds: [],
+        userIds: [],
+      };
+      setRoleList((prev) => [...prev, newRole]);
+    }
   };
 
-  const handleEditRole = (data: RoleFormData) => {
+  const handleEditRole = async (data: RoleFormData) => {
     if (!selectedRole) return;
-    setRoleList((prev) =>
-      prev.map((r) =>
-        r.id === selectedRole.id
-          ? { ...r, name: data.name, description: data.description, isActive: data.isActive, updatedAt: new Date() }
-          : r
-      )
-    );
-    setSelectedRole((prev) =>
-      prev ? { ...prev, name: data.name, description: data.description, isActive: data.isActive, updatedAt: new Date() } : null
-    );
-    console.log("Updated role:", selectedRole.id, data);
+
+    try {
+      const updated = await roleService.updateRole(selectedRole.id, data);
+      setRoleList((prev) => prev.map((r) => (r.id === selectedRole.id ? updated : r)));
+      setSelectedRole(updated);
+    } catch {
+      setRoleList((prev) =>
+        prev.map((r) =>
+          r.id === selectedRole.id
+            ? { ...r, name: data.name, description: data.description, isActive: data.isActive, updatedAt: new Date() }
+            : r
+        )
+      );
+      setSelectedRole((prev) =>
+        prev ? { ...prev, name: data.name, description: data.description, isActive: data.isActive, updatedAt: new Date() } : null
+      );
+    }
   };
 
-  const handleDeleteRole = () => {
+  const handleDeleteRole = async () => {
     if (!selectedRole) return;
+
+    try {
+      await roleService.deleteRole(selectedRole.id);
+    } catch {
+      // Continue with local removal
+    }
+
     setRoleList((prev) => prev.filter((r) => r.id !== selectedRole.id));
     setSelectedRole(null);
     setDeleteDialogOpen(false);
-    console.log("Deleted role:", selectedRole.id);
   };
 
   const handleOpenPermissions = () => {
@@ -112,8 +144,15 @@ export default function RolesPage() {
     setPermissionsDialogOpen(true);
   };
 
-  const handleSavePermissions = () => {
+  const handleSavePermissions = async () => {
     if (!selectedRole) return;
+
+    try {
+      await roleService.updateRolePermissions(selectedRole.id, editingPermissionIds);
+    } catch {
+      // Continue with local update
+    }
+
     setRoleList((prev) =>
       prev.map((r) =>
         r.id === selectedRole.id
@@ -125,11 +164,17 @@ export default function RolesPage() {
       prev ? { ...prev, permissionIds: editingPermissionIds, updatedAt: new Date() } : null
     );
     setPermissionsDialogOpen(false);
-    console.log("Updated permissions for role:", selectedRole.id, editingPermissionIds);
   };
 
-  const handleAddUser = (userId: string) => {
+  const handleAddUser = async (userId: string) => {
     if (!selectedRole) return;
+
+    try {
+      await roleService.addUserToRole(selectedRole.id, userId);
+    } catch {
+      // Continue with local update
+    }
+
     const newUserIds = [...selectedRole.userIds, userId];
     setRoleList((prev) =>
       prev.map((r) =>
@@ -139,11 +184,17 @@ export default function RolesPage() {
     setSelectedRole((prev) =>
       prev ? { ...prev, userIds: newUserIds, updatedAt: new Date() } : null
     );
-    console.log("Added user to role:", userId, selectedRole.id);
   };
 
-  const handleRemoveUser = (userId: string) => {
+  const handleRemoveUser = async (userId: string) => {
     if (!selectedRole) return;
+
+    try {
+      await roleService.removeUserFromRole(selectedRole.id, userId);
+    } catch {
+      // Continue with local update
+    }
+
     const newUserIds = selectedRole.userIds.filter((id) => id !== userId);
     setRoleList((prev) =>
       prev.map((r) =>
@@ -153,7 +204,6 @@ export default function RolesPage() {
     setSelectedRole((prev) =>
       prev ? { ...prev, userIds: newUserIds, updatedAt: new Date() } : null
     );
-    console.log("Removed user from role:", userId, selectedRole.id);
   };
 
   const handleRoleSelect = (role: TenantRole) => {
@@ -220,11 +270,17 @@ export default function RolesPage() {
 
           {/* Table */}
           <div className="flex-1 overflow-auto">
-            <RoleTable
-              roles={filteredRoles}
-              selectedRoleId={selectedRole?.id}
-              onRoleSelect={handleRoleSelect}
-            />
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <RoleTable
+                roles={filteredRoles}
+                selectedRoleId={selectedRole?.id}
+                onRoleSelect={handleRoleSelect}
+              />
+            )}
           </div>
 
           {/* Footer */}
