@@ -36,7 +36,9 @@ public class HuaweiDataTranslator
             DeviceId = deviceId,
             DeviceLocalTime = timestamp,
             Kind = "Battery.Energy",
-            Payload = JsonSerializer.Serialize(payload)
+            Payload = JsonSerializer.Serialize(payload),
+            Created = timestamp,
+            LastModified = timestamp
         };
     }
 
@@ -72,7 +74,9 @@ public class HuaweiDataTranslator
             DeviceId = deviceId,
             DeviceLocalTime = timestamp,
             Kind = "Pcs.AcMeasurement",
-            Payload = JsonSerializer.Serialize(payload)
+            Payload = JsonSerializer.Serialize(payload),
+            Created = timestamp,
+            LastModified = timestamp
         };
     }
 
@@ -101,7 +105,9 @@ public class HuaweiDataTranslator
             DeviceId = deviceId,
             DeviceLocalTime = timestamp,
             Kind = "Solar.Power",
-            Payload = JsonSerializer.Serialize(payload)
+            Payload = JsonSerializer.Serialize(payload),
+            Created = timestamp,
+            LastModified = timestamp
         };
     }
 
