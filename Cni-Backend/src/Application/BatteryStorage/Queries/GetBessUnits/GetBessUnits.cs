@@ -36,9 +36,12 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
     {
         var query = _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Include(d => d.Rtu!).ThenInclude(r => r.Facility)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage);
+            .Where(d =>
+                (d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage) ||
+                (d.LogicalDevice != null && d.LogicalDevice.Category == "BESS"));
 
         if (request.FacilityId.HasValue)
             query = query.Where(d => d.Rtu!.FacilityId == request.FacilityId.Value);
@@ -122,8 +125,8 @@ public class GetBessUnitsQueryHandler : IRequestHandler<GetBessUnitsQuery, BessU
             var payloadsByKind = telemetryByDevice.GetValueOrDefault(device.Id)
                 ?? new Dictionary<string, JsonElement?>();
 
-            // Fallback payload for legacy extraction (ContainerBatteryState)
-            var payload = payloadsByKind.GetValueOrDefault("ContainerBatteryState");
+            // Fallback payload for direct extraction (Battery.Energy)
+            var payload = payloadsByKind.GetValueOrDefault("Battery.Energy");
 
             // Build resolver from template's ParameterMapTemplate (if present)
             var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);

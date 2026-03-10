@@ -19,6 +19,7 @@ using Serilog.Core;
 using Backend.Infrastructure.Services;
 using Backend.Infrastructure.Mappings;
 using Backend.Infrastructure.BackgroundJobs;
+using Backend.Infrastructure.Huawei;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -158,6 +159,22 @@ public static class DependencyInjection
         if (!isTestEnvironment)
         {
             builder.Services.AddHostedService<MqttSubscriberService>();
+        }
+
+        // Huawei FusionSolar integration
+        builder.Services.Configure<HuaweiSettings>(configuration.GetSection("HuaweiSettings"));
+        var huaweiSettings = configuration.GetSection("HuaweiSettings").Get<HuaweiSettings>();
+        if (huaweiSettings?.Enabled == true)
+        {
+            builder.Services.AddSingleton(new HuaweiCredentialEncryptor(huaweiSettings.EncryptionKey));
+            builder.Services.AddHttpClient<IHuaweiApiClient, HuaweiApiClient>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = false // So Set-Cookie headers are accessible in response
+                });
+            builder.Services.AddScoped<HuaweiTokenManager>();
+            builder.Services.AddSingleton<HuaweiDataTranslator>();
+            builder.Services.AddScoped<HuaweiFusionSolarSyncWorker>();
         }
     }
 }

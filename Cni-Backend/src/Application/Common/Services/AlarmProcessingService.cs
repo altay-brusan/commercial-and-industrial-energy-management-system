@@ -8,19 +8,13 @@ using Microsoft.Extensions.Logging;
 namespace Backend.Application.Common.Services;
 
 /// <summary>
-/// Processes telemetry payloads to auto-create/recover DeviceAlarm records
-/// based on the DeviceAlarmType catalog. Supports multiple detection strategies:
-/// BooleanFlag (BESS containers), MessageMatch, ErrorCode.
+/// Processes dedicated alarm packages (e.g., Battery.Alarm, Pcs.Alarm) sent by the RTU.
+/// The RTU determines when faults are active/recovered — backend records them as DeviceAlarm entities.
 /// </summary>
 public class AlarmProcessingService
 {
     private readonly IMemoryCache _cache;
     private readonly ILogger<AlarmProcessingService> _logger;
-
-    private static readonly MemoryCacheEntryOptions TypeCacheOptions = new()
-    {
-        SlidingExpiration = TimeSpan.FromMinutes(30)
-    };
 
     public AlarmProcessingService(IMemoryCache cache, ILogger<AlarmProcessingService> logger)
     {
@@ -29,164 +23,105 @@ public class AlarmProcessingService
     }
 
     /// <summary>
-    /// Checks if the incoming message Kind has any alarm type definitions,
-    /// and if so, creates or recovers DeviceAlarm records on the context's change tracker.
-    /// The caller is responsible for calling SaveChangesAsync.
+    /// Processes a dedicated alarm package from the RTU.
+    /// Expected payload format:
+    /// { "code": "CELL_OVERVOLT_WARN", "active": true, "message": "Cell 12 exceeded 3.7V" }
+    /// If active=true and no matching active alarm exists, creates one.
+    /// If active=false and a matching alarm exists, recovers it.
     /// </summary>
-    public async Task ProcessAsync(
+    public async Task ProcessAlarmPackageAsync(
         IApplicationDbContext context,
         Guid deviceId,
-        Guid deviceTypeId,
-        string? manufacturer,
-        string? model,
-        string kind,
+        string? path,
         string payload,
         DateTimeOffset timestamp,
         CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(model))
-            return;
-
-        // 1. Load alarm types for this device's model, filtered to this Kind
-        var alarmTypes = await GetAlarmTypesForKind(context, deviceTypeId, manufacturer, model, kind, ct);
-        if (alarmTypes.Count == 0)
-            return;
-
-        // 2. Parse payload
         var payloadElement = PayloadDeserializer.GetElement(payload);
         if (!payloadElement.HasValue)
             return;
 
-        // 3. Resolve target device for rack-level addressing (bmuLoc)
-        var targetDeviceId = deviceId;
-        var bmuLoc = ExtractBmuLoc(payloadElement.Value);
-        if (bmuLoc.HasValue)
+        var root = payloadElement.Value;
+
+        // Extract required fields
+        if (!root.TryGetProperty("code", out var codeElement) || codeElement.ValueKind != JsonValueKind.String)
         {
-            var resolver = new DeviceAddressResolver(context, _cache);
-            var childId = await resolver.ResolveChildByHierarchyIndex(deviceId, bmuLoc.Value, ct);
-            if (childId.HasValue)
-                targetDeviceId = childId.Value;
+            _logger.LogWarning("Alarm package missing 'code' field on device {DeviceId}", deviceId);
+            return;
+        }
+        var code = codeElement.GetString()!;
+
+        var isActive = true;
+        if (root.TryGetProperty("active", out var activeElement) && activeElement.ValueKind == JsonValueKind.False)
+            isActive = false;
+
+        string? message = null;
+        if (root.TryGetProperty("message", out var msgElement) && msgElement.ValueKind == JsonValueKind.String)
+            message = msgElement.GetString();
+
+        // Find the alarm type by code
+        var alarmType = await ResolveAlarmTypeByCode(context, code, ct);
+        if (alarmType == null)
+        {
+            _logger.LogWarning("Unknown alarm code {Code} on device {DeviceId} — no matching DeviceAlarmType", code, deviceId);
+            return;
         }
 
-        // 4. Load existing active alarms for this device, keyed by AlarmTypeId
-        var activeAlarms = await context.DeviceAlarms
+        // Check existing active alarm for this device + path + alarm type
+        var existingAlarm = await context.DeviceAlarms
             .IgnoreQueryFilters()
-            .Where(a => a.DeviceId == targetDeviceId && a.IsActive)
-            .ToListAsync(ct);
+            .FirstOrDefaultAsync(a => a.DeviceId == deviceId
+                                      && a.Path == path
+                                      && a.DeviceAlarmTypeId == alarmType.Id
+                                      && a.IsActive, ct);
 
-        var activeAlarmsByTypeId = activeAlarms
-            .ToDictionary(a => a.DeviceAlarmTypeId);
-
-        // 5. Process each alarm type using its detection strategy
-        foreach (var alarmType in alarmTypes)
+        if (isActive && existingAlarm == null)
         {
-            var isFaulted = DetectFault(alarmType, payloadElement.Value);
-
-            if (isFaulted && !activeAlarmsByTypeId.ContainsKey(alarmType.Id))
+            // New fault
+            var alarm = new DeviceAlarm
             {
-                // New fault — create alarm record
-                var alarm = new DeviceAlarm
-                {
-                    DeviceId = targetDeviceId,
-                    DeviceAlarmTypeId = alarmType.Id,
-                    OccurredAt = timestamp,
-                    IsActive = true
-                };
-                context.DeviceAlarms.Add(alarm);
-                _logger.LogInformation("Alarm created: {Code} on device {DeviceId}", alarmType.Code, targetDeviceId);
-            }
-            else if (!isFaulted && activeAlarmsByTypeId.TryGetValue(alarmType.Id, out var existingAlarm))
-            {
-                // Fault cleared — recover alarm
-                existingAlarm.RecoveredAt = timestamp;
-                existingAlarm.IsActive = false;
-                _logger.LogInformation("Alarm recovered: {Code} on device {DeviceId}", alarmType.Code, targetDeviceId);
-            }
+                DeviceId = deviceId,
+                DeviceAlarmTypeId = alarmType.Id,
+                Path = path,
+                OccurredAt = timestamp,
+                IsActive = true,
+                Details = message
+            };
+            context.DeviceAlarms.Add(alarm);
+            _logger.LogInformation("Alarm created: {Code} on device {DeviceId} path {Path}",
+                code, deviceId, path ?? "(device-level)");
+        }
+        else if (!isActive && existingAlarm != null)
+        {
+            // Fault cleared
+            existingAlarm.RecoveredAt = timestamp;
+            existingAlarm.IsActive = false;
+            if (message != null)
+                existingAlarm.Details = message;
+            _logger.LogInformation("Alarm recovered: {Code} on device {DeviceId} path {Path}",
+                code, deviceId, path ?? "(device-level)");
         }
     }
 
-    /// <summary>
-    /// Determines if a fault is active based on the alarm type's detection strategy.
-    /// </summary>
-    private static bool DetectFault(DeviceAlarmType alarmType, JsonElement payload)
+    private async Task<DeviceAlarmType?> ResolveAlarmTypeByCode(
+        IApplicationDbContext context, string code, CancellationToken ct)
     {
-        var value = PayloadDeserializer.ExtractValue(payload, alarmType.FaultKey);
+        var cacheKey = $"alarm-type-code:{code}";
 
-        return alarmType.DetectionStrategy switch
-        {
-            "BooleanFlag" => value is true,
-            "MessageMatch" => DetectMessageMatch(value, alarmType.MatchPattern),
-            "ErrorCode" => DetectErrorCode(value),
-            _ => value is true // fallback to boolean
-        };
-    }
-
-    /// <summary>
-    /// MessageMatch: fault is active if the value is a non-empty string
-    /// that matches the optional pattern (regex), or any non-empty string if no pattern.
-    /// </summary>
-    private static bool DetectMessageMatch(object? value, string? matchPattern)
-    {
-        if (value is not string strValue || string.IsNullOrWhiteSpace(strValue))
-            return false;
-
-        if (string.IsNullOrWhiteSpace(matchPattern))
-            return true; // Any non-empty message = fault
-
-        return Regex.IsMatch(strValue, matchPattern, RegexOptions.IgnoreCase);
-    }
-
-    /// <summary>
-    /// ErrorCode: fault is active if the value is a non-zero number.
-    /// </summary>
-    private static bool DetectErrorCode(object? value)
-    {
-        return value switch
-        {
-            double d => d != 0,
-            int i => i != 0,
-            long l => l != 0,
-            _ => false
-        };
-    }
-
-    private async Task<List<DeviceAlarmType>> GetAlarmTypesForKind(
-        IApplicationDbContext context,
-        Guid deviceTypeId,
-        string? manufacturer,
-        string model,
-        string kind,
-        CancellationToken ct)
-    {
-        var cacheKey = $"alarm-types:{deviceTypeId}:{manufacturer ?? ""}:{model}:{kind}";
-
-        if (_cache.TryGetValue(cacheKey, out List<DeviceAlarmType>? cached) && cached != null)
+        if (_cache.TryGetValue(cacheKey, out DeviceAlarmType? cached))
             return cached;
 
-        var types = await context.DeviceAlarmTypes
-            .Where(t => t.DeviceTypeId == deviceTypeId
-                        && t.Model == model
-                        && t.Kind == kind
-                        && t.IsEnabled
-                        && (t.Manufacturer == null || t.Manufacturer == manufacturer))
-            .ToListAsync(ct);
+        var alarmType = await context.DeviceAlarmTypes
+            .FirstOrDefaultAsync(t => t.Code == code && t.IsEnabled, ct);
 
-        _cache.Set(cacheKey, types, TypeCacheOptions);
-        return types;
-    }
-
-    /// <summary>
-    /// Extracts bmuLoc (rack address) from the payload if present.
-    /// Edge devices send this as an integer field to identify which rack the data belongs to.
-    /// </summary>
-    private static int? ExtractBmuLoc(JsonElement payload)
-    {
-        if (payload.TryGetProperty("bmuLoc", out var bmuLocElement))
+        if (alarmType != null)
         {
-            if (bmuLocElement.ValueKind == JsonValueKind.Number && bmuLocElement.TryGetInt32(out var loc))
-                return loc;
+            _cache.Set(cacheKey, alarmType, new MemoryCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(30)
+            });
         }
 
-        return null;
+        return alarmType;
     }
 }

@@ -3,7 +3,9 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Backend.Domain.Constants;
 using Backend.Domain.Entities;
+using Backend.Domain.Entities.Huawei;
 using Backend.Domain.Enums;
+using Backend.Infrastructure.Huawei;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -630,19 +632,19 @@ public class ApplicationDbContextInitializer
                       "parameters": {
                         "soc": {
                           "type": "number", "unit": "%",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["socPercent", "stateOfCharge", "soc"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["socPercent", "stateOfCharge", "soc"] }
                         },
                         "soh": {
                           "type": "number", "unit": "%",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["sohPercent", "stateOfHealth"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["sohPercent", "stateOfHealth"] }
                         },
                         "voltage": {
                           "type": "number", "unit": "V",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["totalVoltageV"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["totalVoltageV"] }
                         },
                         "current": {
                           "type": "number", "unit": "A",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["instantCurrentA"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["instantCurrentA"] }
                         },
                         "power": {
                           "type": "number", "unit": "kW",
@@ -650,7 +652,7 @@ public class ApplicationDbContextInitializer
                             "expression": "round(multiply(voltage, current, 0.001), 1)",
                             "inputs": { "voltage": {"$ref":"voltage"}, "current": {"$ref":"current"} }
                           },
-                          "fallback": { "kind": "ContainerBatteryState", "paths": ["dcPower.power", "power"] }
+                          "fallback": { "kind": "Battery.Energy", "paths": ["dcPower.power", "power"] }
                         },
                         "powerDirection": {
                           "type": "string",
@@ -661,11 +663,11 @@ public class ApplicationDbContextInitializer
                         },
                         "tempMin": {
                           "type": "number", "unit": "C",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["minCellTempC"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["minCellTempC"] }
                         },
                         "tempMax": {
                           "type": "number", "unit": "C",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["maxCellTempC"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["maxCellTempC"] }
                         },
                         "tempAvg": {
                           "type": "number", "unit": "C",
@@ -676,11 +678,11 @@ public class ApplicationDbContextInitializer
                         },
                         "cellVoltageMax": {
                           "type": "number", "unit": "mV",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["maxCellVoltageMv"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["maxCellVoltageMv"] }
                         },
                         "cellVoltageMin": {
                           "type": "number", "unit": "mV",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["minCellVoltageMv"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["minCellVoltageMv"] }
                         },
                         "voltageSpread": {
                           "type": "number", "unit": "mV",
@@ -691,19 +693,19 @@ public class ApplicationDbContextInitializer
                         },
                         "pcsActivePower": {
                           "type": "number", "unit": "kW",
-                          "source": { "kind": "PcsPowerState", "paths": ["pcs_outActPwrKw"] }
+                          "source": { "kind": "Pcs.PowerDistribution", "paths": ["pcs_outActPwrKw"] }
                         },
                         "pcsDcPower": {
                           "type": "number", "unit": "kW",
-                          "source": { "kind": "PcsDcMeasState", "paths": ["pcs_dcPwrKw"] }
+                          "source": { "kind": "Pcs.DcMeasurement", "paths": ["pcs_dcPwrKw"] }
                         },
                         "pcsGridFreq": {
                           "type": "number", "unit": "Hz",
-                          "source": { "kind": "PcsStatusState", "paths": ["pcs_gridFreqHz"] }
+                          "source": { "kind": "Pcs.Status", "paths": ["pcs_gridFreqHz"] }
                         },
                         "cycleCount": {
                           "type": "number",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["cycleCount"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["cycleCount"] }
                         },
                         "cycleLifePct": {
                           "type": "number", "unit": "%",
@@ -717,31 +719,31 @@ public class ApplicationDbContextInitializer
                         },
                         "operatingMode": {
                           "type": "string",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["state"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["state"] }
                         },
                         "remainingEnergy": {
                           "type": "number", "unit": "kWh",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["remainingEnergyKwh"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["remainingEnergyKwh"] }
                         },
                         "availableEnergy": {
                           "type": "number", "unit": "kWh",
-                          "source": { "kind": "ContainerBatteryState", "paths": ["availableEnergyKwh"] }
+                          "source": { "kind": "Battery.Energy", "paths": ["availableEnergyKwh"] }
                         },
                         "chillerCoolantOut": {
                           "type": "number", "unit": "C",
-                          "source": { "kind": "ChillerState", "paths": ["outletCoolantTempC"] }
+                          "source": { "kind": "Battery.Thermal", "paths": ["outletCoolantTempC"] }
                         },
                         "chillerCoolantIn": {
                           "type": "number", "unit": "C",
-                          "source": { "kind": "ChillerState", "paths": ["inletCoolantTempC"] }
+                          "source": { "kind": "Battery.Thermal", "paths": ["inletCoolantTempC"] }
                         },
                         "compressorRunning": {
                           "type": "boolean",
-                          "source": { "kind": "ChillerState", "paths": ["compressorStatus"] }
+                          "source": { "kind": "Battery.Thermal", "paths": ["compressorStatus"] }
                         },
                         "ambientTemp": {
                           "type": "number", "unit": "C",
-                          "source": { "kind": "ChillerState", "paths": ["ambientTempC"] }
+                          "source": { "kind": "Battery.Thermal", "paths": ["ambientTempC"] }
                         }
                       }
                     }
@@ -899,6 +901,42 @@ public class ApplicationDbContextInitializer
 
         #endregion
 
+        #region LogicalNodes and LogicalDevices
+
+        if (!_context.LogicalNodes.Any())
+        {
+            var (logicalNodes, logicalDevices) = BuildLogicalDeviceCatalog();
+            _context.LogicalNodes.AddRange(logicalNodes);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} LogicalNodes", logicalNodes.Count);
+
+            // Build lookup for node assignment
+            var nodeLookup = logicalNodes.ToDictionary(n => n.Name, n => n.Id);
+
+            foreach (var (ld, nodeSpecs) in logicalDevices)
+            {
+                foreach (var spec in nodeSpecs)
+                {
+                    if (nodeLookup.TryGetValue(spec.NodeName, out var nodeId))
+                    {
+                        ld.LogicalDeviceNodes.Add(new LogicalDeviceNode
+                        {
+                            LogicalNodeId = nodeId,
+                            NodeAlias = spec.Alias,
+                            InstanceCount = spec.InstanceCount,
+                            SortOrder = spec.SortOrder
+                        });
+                    }
+                }
+            }
+
+            _context.LogicalDevices.AddRange(logicalDevices.Select(x => x.Device));
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} LogicalDevices", logicalDevices.Count);
+        }
+
+        #endregion
+
         #region Tariffs
 
         // Seed default tariffs
@@ -959,6 +997,540 @@ public class ApplicationDbContextInitializer
         }
 
         #endregion
+
+        #region HuaweiPemVilla
+
+        // Seed Huawei Pem Villa EMMA facility with virtual RTU + devices
+        var existingHuaweiAccount = await _context.HuaweiAccounts.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.UserName == "Pemapi");
+
+        if (existingHuaweiAccount == null)
+        {
+            _logger.LogInformation("Seeding Huawei Pem Villa EMMA integration...");
+
+            // Use the existing demo tenant for Pem Villa
+            // Create Pem Villa firm
+            var pemFirm = new Firm
+            {
+                TenantId = tenantId,
+                Name = "Pem Villa Energy",
+                Type = "Residential Energy",
+                Country = "Turkey",
+                State = "Antalya",
+                City = "Antalya",
+                District = "Konyaalti",
+                PostalCode = "07070",
+                Address = "Pem Villa, Antalya",
+                ContactEmail = "info@pemvilla.com",
+                ContactPhone = "+90 242 000 0000",
+                TaxNumber = "N/A",
+                TaxOffice = "N/A",
+                Created = DateTime.UtcNow
+            };
+            _context.Firms.Add(pemFirm);
+            await _context.SaveChangesAsync();
+
+            // Create Pem Villa EMMA facility
+            var pemFacility = new Facility
+            {
+                FirmId = pemFirm.Id,
+                Name = "Pem Villa EMMA",
+                Address = "Pem Villa, Antalya, Turkey",
+                EnergyCapacity = 20,
+                EnergyUnit = EnergyUnit.KWh,
+                Longitude = 30.7133,
+                Latitude = 36.8969,
+                DataSource = FacilityDataSource.Huawei,
+                Created = DateTime.UtcNow
+            };
+            _context.Facilities.Add(pemFacility);
+            await _context.SaveChangesAsync();
+
+            // Create virtual RTU for Huawei station
+            var pemRtu = new Rtu
+            {
+                FacilityId = pemFacility.Id,
+                RtuSerialNumber = "HUAWEI-NE55911180",
+                RtuModel = "Huawei FusionSolar Virtual RTU",
+                Protocol = "HTTPS",
+                Status = "online",
+                Created = DateTime.UtcNow
+            };
+            _context.Rtus.Add(pemRtu);
+            await _context.SaveChangesAsync();
+
+            // Create Huawei specification templates with ParameterMapTemplate
+            var huaweiBatteryTemplate = new DeviceSpecificationTemplate
+            {
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                Model = "LUNA2000",
+                Manufacturer = "Huawei",
+                IsDefault = false,
+                SpecificationsTemplate = """
+                {
+                  "supportedTabs": [
+                    { "key": "summary", "label": "Summary", "isEnabled": true, "order": 0 },
+                    { "key": "health", "label": "Health", "isEnabled": true, "order": 1 },
+                    { "key": "curves", "label": "Curves", "isEnabled": true, "order": 2 },
+                    { "key": "faults", "label": "Faults", "isEnabled": true, "order": 3 }
+                  ],
+                  "batteryDataKind": "Battery.Energy",
+                  "curveCharts": [
+                    {
+                      "key": "powerSoc",
+                      "title": "Power & State of Charge",
+                      "type": "area",
+                      "series": [
+                        { "key": "power", "label": "Power", "sourcePath": "chDischargePower", "unit": "W", "color": "#8b5cf6", "yAxis": "left", "type": "area" },
+                        { "key": "soc", "label": "SoC", "sourcePath": "soc", "unit": "%", "color": "#22c55e", "yAxis": "right", "type": "line" }
+                      ]
+                    },
+                    {
+                      "key": "voltageEnergy",
+                      "title": "Voltage & Energy",
+                      "type": "line",
+                      "series": [
+                        { "key": "voltage", "label": "Busbar Voltage", "sourcePath": "busbarVoltage", "unit": "V", "color": "#3b82f6", "yAxis": "left", "type": "line" },
+                        { "key": "chargeEnergy", "label": "Charge Energy", "sourcePath": "chargeEnergy", "unit": "kWh", "color": "#22c55e", "yAxis": "right", "type": "line" }
+                      ]
+                    }
+                  ]
+                }
+                """,
+                MetadataTemplate = """{"cellChemistry": "LFP"}""",
+                ParameterMapTemplate = """
+                {
+                  "version": 1,
+                  "parameters": {
+                    "soc": {
+                      "type": "number", "unit": "%",
+                      "source": { "kind": "Battery.Energy", "paths": ["soc"] }
+                    },
+                    "soh": {
+                      "type": "number", "unit": "%",
+                      "source": { "kind": "Battery.Energy", "paths": ["soh"] }
+                    },
+                    "power": {
+                      "type": "number", "unit": "W",
+                      "source": { "kind": "Battery.Energy", "paths": ["chDischargePower"] }
+                    },
+                    "powerDirection": {
+                      "type": "string",
+                      "formula": {
+                        "expression": "cond(gt(p, 0), 'charging', cond(lt(p, 0), 'discharging', 'idle'))",
+                        "inputs": { "p": {"$ref":"power"} }
+                      }
+                    },
+                    "voltage": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Battery.Energy", "paths": ["busbarVoltage"] }
+                    },
+                    "availableEnergy": {
+                      "type": "number", "unit": "kWh",
+                      "source": { "kind": "Battery.Energy", "paths": ["ratedCapacity"] }
+                    },
+                    "operatingMode": {
+                      "type": "string",
+                      "formula": {
+                        "expression": "cond(eq(s, 0), 'offline', cond(eq(s, 1), 'standby', cond(eq(s, 2), 'running', cond(eq(s, 3), 'fault', 'unknown'))))",
+                        "inputs": { "s": {"source": {"kind": "Battery.Energy", "paths": ["batteryStatus"]}} }
+                      }
+                    },
+                    "ambientTemp": {
+                      "type": "number", "unit": "°C",
+                      "source": { "kind": "Battery.Energy", "paths": ["batteryTemperature"] }
+                    }
+                  }
+                }
+                """,
+                Created = DateTime.UtcNow
+            };
+
+            var huaweiPcsTemplate = new DeviceSpecificationTemplate
+            {
+                DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                Model = "SUN2000-Inverter",
+                Manufacturer = "Huawei",
+                IsDefault = false,
+                SpecificationsTemplate = """
+                {
+                  "supportedTabs": [
+                    { "key": "general", "label": "General", "isEnabled": true, "order": 0 },
+                    { "key": "curve", "label": "Curve", "isEnabled": true, "order": 1 },
+                    { "key": "fault", "label": "Fault", "isEnabled": true, "order": 2 }
+                  ]
+                }
+                """,
+                MetadataTemplate = "{}",
+                ParameterMapTemplate = """
+                {
+                  "version": 1,
+                  "parameters": {
+                    "pcsActivePower": {
+                      "type": "number", "unit": "kW",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["activePower"] }
+                    },
+                    "pcsReactivePower": {
+                      "type": "number", "unit": "kVar",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["reactivePower"] }
+                    },
+                    "pcsPowerFactor": {
+                      "type": "number",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["powerFactor"] }
+                    },
+                    "pcsGridFreq": {
+                      "type": "number", "unit": "Hz",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["gridFrequency"] }
+                    },
+                    "pcsIgbtTemp": {
+                      "type": "number", "unit": "°C",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["temperature"] }
+                    },
+                    "pcsEfficiency": {
+                      "type": "number", "unit": "%",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["efficiency"] }
+                    },
+                    "pcsPhaseVoltageA": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseAVoltage"] }
+                    },
+                    "pcsPhaseVoltageB": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseBVoltage"] }
+                    },
+                    "pcsPhaseVoltageC": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseCVoltage"] }
+                    },
+                    "pcsPhaseCurrentA": {
+                      "type": "number", "unit": "A",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseACurrent"] }
+                    },
+                    "pcsPhaseCurrentB": {
+                      "type": "number", "unit": "A",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseBCurrent"] }
+                    },
+                    "pcsPhaseCurrentC": {
+                      "type": "number", "unit": "A",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["phaseCCurrent"] }
+                    },
+                    "pcsLineVoltageAB": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["lineABVoltage"] }
+                    },
+                    "pcsLineVoltageBC": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["lineBCVoltage"] }
+                    },
+                    "pcsLineVoltageCA": {
+                      "type": "number", "unit": "V",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["lineCAVoltage"] }
+                    },
+                    "pcsAmbientTemp": {
+                      "type": "number", "unit": "°C",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["temperature"] }
+                    },
+                    "pcsGridMode": {
+                      "type": "string",
+                      "source": { "kind": "Pcs.AcMeasurement", "paths": ["inverterState"], "default": "N/A" }
+                    }
+                  }
+                }
+                """,
+                Created = DateTime.UtcNow
+            };
+
+            var huaweiSolarTemplate = new DeviceSpecificationTemplate
+            {
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                Model = "SUN2000-Solar",
+                Manufacturer = "Huawei",
+                IsDefault = false,
+                SpecificationsTemplate = "{}",
+                MetadataTemplate = "{}",
+                ParameterMapTemplate = """
+                {
+                  "version": 1,
+                  "parameters": {
+                    "activePower": {
+                      "type": "number", "unit": "kW",
+                      "source": { "kind": "Solar.Power", "paths": ["activePower"] }
+                    },
+                    "dailyYield": {
+                      "type": "number", "unit": "kWh",
+                      "source": { "kind": "Solar.Power", "paths": ["dailyYield"] }
+                    },
+                    "totalYield": {
+                      "type": "number", "unit": "kWh",
+                      "source": { "kind": "Solar.Power", "paths": ["totalYield"] }
+                    },
+                    "mpptPower": {
+                      "type": "number", "unit": "kW",
+                      "source": { "kind": "Solar.Power", "paths": ["mpptPower"] }
+                    }
+                  }
+                }
+                """,
+                Created = DateTime.UtcNow
+            };
+
+            _context.DeviceSpecificationTemplates.AddRange(huaweiBatteryTemplate, huaweiPcsTemplate, huaweiSolarTemplate);
+            await _context.SaveChangesAsync();
+
+            // Create battery devices (3x LUNA2000)
+            var battery12 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                DeviceSpecificationTemplateId = huaweiBatteryTemplate.Id,
+                Name = "Battery-12",
+                Model = "LUNA2000-10KW-C1",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            var battery13 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                DeviceSpecificationTemplateId = huaweiBatteryTemplate.Id,
+                Name = "Battery-13",
+                Model = "LUNA2000-5KW-C0",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            var battery14 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.EnergyStorage],
+                DeviceSpecificationTemplateId = huaweiBatteryTemplate.Id,
+                Name = "Battery-14",
+                Model = "LUNA2000-5KW-C0",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            _context.Devices.AddRange(battery12, battery13, battery14);
+            await _context.SaveChangesAsync();
+
+            // Create PCS devices (inverters as PCS, children of batteries)
+            var pcs12 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                DeviceSpecificationTemplateId = huaweiPcsTemplate.Id,
+                ParentDeviceId = battery12.Id,
+                Name = "Inverter-12-PCS",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2460093355",
+                Manufacturer = "Huawei",
+                HierarchyIndex = 0,
+                Created = DateTime.UtcNow
+            };
+            var pcs13 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                DeviceSpecificationTemplateId = huaweiPcsTemplate.Id,
+                ParentDeviceId = battery13.Id,
+                Name = "Inverter-13-PCS",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2511002783",
+                Manufacturer = "Huawei",
+                HierarchyIndex = 0,
+                Created = DateTime.UtcNow
+            };
+            var pcs14 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Pcs],
+                DeviceSpecificationTemplateId = huaweiPcsTemplate.Id,
+                ParentDeviceId = battery14.Id,
+                Name = "Inverter-14-PCS",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2511002884",
+                Manufacturer = "Huawei",
+                HierarchyIndex = 0,
+                Created = DateTime.UtcNow
+            };
+
+            // Create Solar devices (inverters as solar producers)
+            var solar12 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                DeviceSpecificationTemplateId = huaweiSolarTemplate.Id,
+                Name = "Inverter-12-Solar",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2460093355-SOL",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            var solar13 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                DeviceSpecificationTemplateId = huaweiSolarTemplate.Id,
+                Name = "Inverter-13-Solar",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2511002783-SOL",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+            var solar14 = new Device
+            {
+                RtuId = pemRtu.Id,
+                DeviceTypeId = dtLookup[DeviceTypeNames.Solar],
+                DeviceSpecificationTemplateId = huaweiSolarTemplate.Id,
+                Name = "Inverter-14-Solar",
+                Model = "SUN2000-10K-MAP0",
+                SerialNumber = "BT2511002884-SOL",
+                Manufacturer = "Huawei",
+                Created = DateTime.UtcNow
+            };
+
+            _context.Devices.AddRange(pcs12, pcs13, pcs14, solar12, solar13, solar14);
+            await _context.SaveChangesAsync();
+
+            // Create HuaweiAccount with encrypted credentials
+            var encryptor = new HuaweiCredentialEncryptor("change-me-in-production-32-bytes!");
+            var huaweiAccount = new HuaweiAccount
+            {
+                TenantId = tenantId,
+                UserName = "Pemapi",
+                EncryptedSystemCode = encryptor.Encrypt("Pem12345"),
+                BaseUrl = "https://intl.fusionsolar.huawei.com/thirdData",
+                IsActive = true,
+                Created = DateTime.UtcNow
+            };
+            _context.HuaweiAccounts.Add(huaweiAccount);
+            await _context.SaveChangesAsync();
+
+            // Create station mapping
+            var stationMapping = new HuaweiStationMapping
+            {
+                HuaweiAccountId = huaweiAccount.Id,
+                StationCode = "NE=55911180",
+                StationName = "Pem Villa EMMA",
+                FacilityId = pemFacility.Id,
+                SyncEnabled = true,
+                Created = DateTime.UtcNow
+            };
+            _context.HuaweiStationMappings.Add(stationMapping);
+            await _context.SaveChangesAsync();
+
+            // Create device mappings
+            // Each Huawei inverter (devTypeId=1) maps to TWO CNI devices (PCS + Solar)
+            // Each Huawei battery (devTypeId=39) maps to ONE CNI device (EnergyStorage)
+            var deviceMappings = new List<HuaweiDeviceMapping>
+            {
+                // Battery mappings (devTypeId=39)
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000055833018,
+                    HuaweiDevTypeId = 39,
+                    DeviceId = battery12.Id,
+                    DeviceName = "Battery-1 (Inverter-12)",
+                    Model = "LUNA2000-10KW-C1",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185748,
+                    HuaweiDevTypeId = 39,
+                    DeviceId = battery13.Id,
+                    DeviceName = "Battery-1 (Inverter-13)",
+                    Model = "LUNA2000-5KW-C0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185750,
+                    HuaweiDevTypeId = 39,
+                    DeviceId = battery14.Id,
+                    DeviceName = "Battery-1 (Inverter-14)",
+                    Model = "LUNA2000-5KW-C0",
+                    Created = DateTime.UtcNow
+                },
+                // Inverter → PCS mappings (devTypeId=1)
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000055833015,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = pcs12.Id,
+                    DeviceName = "Inverter-12 (PCS)",
+                    SerialNumber = "BT2460093355",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185746,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = pcs13.Id,
+                    DeviceName = "Inverter-13 (PCS)",
+                    SerialNumber = "BT2511002783",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185749,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = pcs14.Id,
+                    DeviceName = "Inverter-14 (PCS)",
+                    SerialNumber = "BT2511002884",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                // Inverter → Solar mappings (devTypeId=1, same Huawei device, different CNI device)
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000055833015,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = solar12.Id,
+                    DeviceName = "Inverter-12 (Solar)",
+                    SerialNumber = "BT2460093355",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185746,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = solar13.Id,
+                    DeviceName = "Inverter-13 (Solar)",
+                    SerialNumber = "BT2511002783",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                },
+                new HuaweiDeviceMapping
+                {
+                    StationMappingId = stationMapping.Id,
+                    HuaweiDeviceId = 1000000060185749,
+                    HuaweiDevTypeId = 1,
+                    DeviceId = solar14.Id,
+                    DeviceName = "Inverter-14 (Solar)",
+                    SerialNumber = "BT2511002884",
+                    Model = "SUN2000-10K-MAP0",
+                    Created = DateTime.UtcNow
+                }
+            };
+
+            _context.HuaweiDeviceMappings.AddRange(deviceMappings);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Huawei Pem Villa EMMA seeded: Account={AccountId}, Station={StationCode}, Facility={FacilityId}, {DeviceCount} device mappings",
+                huaweiAccount.Id, stationMapping.StationCode, pemFacility.Id, deviceMappings.Count);
+        }
+
+        #endregion
     }
 
     private static List<DeviceAlarmType> BuildDemoBessAlarmTypes(Guid energyStorageTypeId)
@@ -986,33 +1558,33 @@ public class ApplicationDbContextInitializer
         return new List<DeviceAlarmType>
         {
             // ContainerBatteryFaultState — BMS faults
-            T("BATT_CELL_OV_WARN", "faultCellOverVoltageWarning", "ContainerBatteryFaultState", "Cell Over Voltage Warning", "battery", "Warning", "BMS"),
-            T("BATT_CELL_UV_WARN", "faultCellUnderVoltageWarning", "ContainerBatteryFaultState", "Cell Under Voltage Warning", "battery", "Warning", "BMS"),
-            T("BATT_CELL_OV_FAULT", "faultCellOverVoltageFault", "ContainerBatteryFaultState", "Cell Over Voltage Fault", "battery", "Critical", "BMS"),
-            T("BATT_CELL_UV_FAULT", "faultCellUnderVoltageFault", "ContainerBatteryFaultState", "Cell Under Voltage Fault", "battery", "Critical", "BMS"),
-            T("BATT_PACK_OC", "faultPackOC", "ContainerBatteryFaultState", "Pack Over Current", "battery", "Critical", "BMS"),
-            T("BATT_PACK_OV", "faultPackOV", "ContainerBatteryFaultState", "Pack Over Voltage", "battery", "Major", "BMS"),
-            T("BATT_PACK_UV", "faultPackUV", "ContainerBatteryFaultState", "Pack Under Voltage", "battery", "Major", "BMS"),
-            T("BATT_OT_WARN", "faultOverTempWarning", "ContainerBatteryFaultState", "Over Temperature Warning", "battery", "Warning", "BMS"),
-            T("BATT_OT_FAULT", "faultOverTempFault", "ContainerBatteryFaultState", "Over Temperature Fault", "battery", "Critical", "BMS"),
-            T("BATT_UT_WARN", "faultUnderTempWarning", "ContainerBatteryFaultState", "Under Temperature Warning", "battery", "Warning", "BMS"),
-            T("BATT_UT_FAULT", "faultUnderTempFault", "ContainerBatteryFaultState", "Under Temperature Fault", "battery", "Critical", "BMS"),
-            T("BATT_INSUL_WARN", "faultInsulationWarning", "ContainerBatteryFaultState", "Insulation Warning", "battery", "Warning", "BMS"),
-            T("BATT_INSUL_FAULT", "faultInsulationFault", "ContainerBatteryFaultState", "Insulation Fault", "battery", "Critical", "BMS"),
-            T("BATT_VDIFF_WARN", "faultVoltageDiffWarning", "ContainerBatteryFaultState", "Voltage Difference Warning", "battery", "Warning", "BMS"),
-            T("BATT_VDIFF_FAULT", "faultVoltageDiffFault", "ContainerBatteryFaultState", "Voltage Difference Fault", "battery", "Major", "BMS"),
-            T("BATT_TDIFF_WARN", "faultTempDiffWarning", "ContainerBatteryFaultState", "Temperature Difference Warning", "battery", "Warning", "BMS"),
-            T("BATT_TDIFF_FAULT", "faultTempDiffFault", "ContainerBatteryFaultState", "Temperature Difference Fault", "battery", "Major", "BMS"),
-            T("BATT_SOC_LOW_WARN", "faultSocLowWarning", "ContainerBatteryFaultState", "SOC Low Warning", "battery", "Warning", "BMS"),
-            T("BATT_SOC_LOW_FAULT", "faultSocLowFault", "ContainerBatteryFaultState", "SOC Low Fault", "battery", "Major", "BMS"),
-            T("BATT_SOC_HIGH_WARN", "faultSocHighWarning", "ContainerBatteryFaultState", "SOC High Warning", "battery", "Warning", "BMS"),
-            T("BATT_BMS_COMM", "faultBmsCommFailure", "ContainerBatteryFaultState", "BMS Communication Failure", "battery", "Critical", "BMS"),
-            T("BATT_CONTACTOR", "faultContactorFailure", "ContainerBatteryFaultState", "Contactor Failure", "battery", "Critical", "BMS"),
-            T("BATT_FUSE", "faultFuseBlown", "ContainerBatteryFaultState", "Fuse Blown", "battery", "Critical", "BMS"),
-            T("BATT_CHG_OC", "faultChargeOverCurrent", "ContainerBatteryFaultState", "Charge Over Current", "battery", "Major", "BMS"),
-            T("BATT_DISCHG_OC", "faultDischargeOverCurrent", "ContainerBatteryFaultState", "Discharge Over Current", "battery", "Major", "BMS"),
-            T("BATT_EMRG_STOP", "faultEmergencyStop", "ContainerBatteryFaultState", "Emergency Stop", "battery", "Critical", "BMS"),
-            T("BATT_PRECHARGE", "faultPrechargeFailure", "ContainerBatteryFaultState", "Precharge Failure", "battery", "Major", "BMS"),
+            T("BATT_CELL_OV_WARN", "faultCellOverVoltageWarning", "Battery.Status", "Cell Over Voltage Warning", "battery", "Warning", "BMS"),
+            T("BATT_CELL_UV_WARN", "faultCellUnderVoltageWarning", "Battery.Status", "Cell Under Voltage Warning", "battery", "Warning", "BMS"),
+            T("BATT_CELL_OV_FAULT", "faultCellOverVoltageFault", "Battery.Status", "Cell Over Voltage Fault", "battery", "Critical", "BMS"),
+            T("BATT_CELL_UV_FAULT", "faultCellUnderVoltageFault", "Battery.Status", "Cell Under Voltage Fault", "battery", "Critical", "BMS"),
+            T("BATT_PACK_OC", "faultPackOC", "Battery.Status", "Pack Over Current", "battery", "Critical", "BMS"),
+            T("BATT_PACK_OV", "faultPackOV", "Battery.Status", "Pack Over Voltage", "battery", "Major", "BMS"),
+            T("BATT_PACK_UV", "faultPackUV", "Battery.Status", "Pack Under Voltage", "battery", "Major", "BMS"),
+            T("BATT_OT_WARN", "faultOverTempWarning", "Battery.Status", "Over Temperature Warning", "battery", "Warning", "BMS"),
+            T("BATT_OT_FAULT", "faultOverTempFault", "Battery.Status", "Over Temperature Fault", "battery", "Critical", "BMS"),
+            T("BATT_UT_WARN", "faultUnderTempWarning", "Battery.Status", "Under Temperature Warning", "battery", "Warning", "BMS"),
+            T("BATT_UT_FAULT", "faultUnderTempFault", "Battery.Status", "Under Temperature Fault", "battery", "Critical", "BMS"),
+            T("BATT_INSUL_WARN", "faultInsulationWarning", "Battery.Status", "Insulation Warning", "battery", "Warning", "BMS"),
+            T("BATT_INSUL_FAULT", "faultInsulationFault", "Battery.Status", "Insulation Fault", "battery", "Critical", "BMS"),
+            T("BATT_VDIFF_WARN", "faultVoltageDiffWarning", "Battery.Status", "Voltage Difference Warning", "battery", "Warning", "BMS"),
+            T("BATT_VDIFF_FAULT", "faultVoltageDiffFault", "Battery.Status", "Voltage Difference Fault", "battery", "Major", "BMS"),
+            T("BATT_TDIFF_WARN", "faultTempDiffWarning", "Battery.Status", "Temperature Difference Warning", "battery", "Warning", "BMS"),
+            T("BATT_TDIFF_FAULT", "faultTempDiffFault", "Battery.Status", "Temperature Difference Fault", "battery", "Major", "BMS"),
+            T("BATT_SOC_LOW_WARN", "faultSocLowWarning", "Battery.Status", "SOC Low Warning", "battery", "Warning", "BMS"),
+            T("BATT_SOC_LOW_FAULT", "faultSocLowFault", "Battery.Status", "SOC Low Fault", "battery", "Major", "BMS"),
+            T("BATT_SOC_HIGH_WARN", "faultSocHighWarning", "Battery.Status", "SOC High Warning", "battery", "Warning", "BMS"),
+            T("BATT_BMS_COMM", "faultBmsCommFailure", "Battery.Status", "BMS Communication Failure", "battery", "Critical", "BMS"),
+            T("BATT_CONTACTOR", "faultContactorFailure", "Battery.Status", "Contactor Failure", "battery", "Critical", "BMS"),
+            T("BATT_FUSE", "faultFuseBlown", "Battery.Status", "Fuse Blown", "battery", "Critical", "BMS"),
+            T("BATT_CHG_OC", "faultChargeOverCurrent", "Battery.Status", "Charge Over Current", "battery", "Major", "BMS"),
+            T("BATT_DISCHG_OC", "faultDischargeOverCurrent", "Battery.Status", "Discharge Over Current", "battery", "Major", "BMS"),
+            T("BATT_EMRG_STOP", "faultEmergencyStop", "Battery.Status", "Emergency Stop", "battery", "Critical", "BMS"),
+            T("BATT_PRECHARGE", "faultPrechargeFailure", "Battery.Status", "Precharge Failure", "battery", "Major", "BMS"),
 
             // ChillerAlarmState — TMS alarms
             T("TMS_COOLANT_SHORT", "systemCoolantShortage", "ChillerAlarmState", "System Coolant Shortage", "chiller", "Major", "TMS"),
@@ -1032,41 +1604,41 @@ public class ApplicationDbContextInitializer
             T("TMS_HEATER", "heaterFault", "ChillerAlarmState", "Heater Fault", "chiller", "Warning", "TMS"),
 
             // PcsFaultGrp1State — PCS hardware & grid faults
-            T("PCS_HW_EPO", "pcs_hwEpoFault", "PcsFaultGrp1State", "Hardware EPO Fault", "pcs", "Critical", "PCS"),
-            T("PCS_GRID_A_OV", "pcs_gridAOvFault", "PcsFaultGrp1State", "Grid Phase A Over Voltage", "pcs", "Major", "PCS"),
-            T("PCS_GRID_B_OV", "pcs_gridBOvFault", "PcsFaultGrp1State", "Grid Phase B Over Voltage", "pcs", "Major", "PCS"),
-            T("PCS_GRID_C_OV", "pcs_gridCOvFault", "PcsFaultGrp1State", "Grid Phase C Over Voltage", "pcs", "Major", "PCS"),
-            T("PCS_GRID_A_UV", "pcs_gridAUvFault", "PcsFaultGrp1State", "Grid Phase A Under Voltage", "pcs", "Major", "PCS"),
-            T("PCS_GRID_B_UV", "pcs_gridBUvFault", "PcsFaultGrp1State", "Grid Phase B Under Voltage", "pcs", "Major", "PCS"),
-            T("PCS_GRID_C_UV", "pcs_gridCUvFault", "PcsFaultGrp1State", "Grid Phase C Under Voltage", "pcs", "Major", "PCS"),
-            T("PCS_GRID_FREQ_HI", "pcs_gridFreqHighFault", "PcsFaultGrp1State", "Grid Frequency High", "pcs", "Major", "PCS"),
-            T("PCS_GRID_FREQ_LO", "pcs_gridFreqLowFault", "PcsFaultGrp1State", "Grid Frequency Low", "pcs", "Major", "PCS"),
-            T("PCS_DC_OV", "pcs_dcBusOvFault", "PcsFaultGrp1State", "DC Bus Over Voltage", "pcs", "Critical", "PCS"),
-            T("PCS_DC_UV", "pcs_dcBusUvFault", "PcsFaultGrp1State", "DC Bus Under Voltage", "pcs", "Major", "PCS"),
-            T("PCS_IGBT_OT", "pcs_igbtOverTempFault", "PcsFaultGrp1State", "IGBT Over Temperature", "pcs", "Critical", "PCS"),
-            T("PCS_AC_OC_A", "pcs_acOverCurrentAFault", "PcsFaultGrp1State", "AC Over Current Phase A", "pcs", "Major", "PCS"),
-            T("PCS_AC_OC_B", "pcs_acOverCurrentBFault", "PcsFaultGrp1State", "AC Over Current Phase B", "pcs", "Major", "PCS"),
-            T("PCS_AC_OC_C", "pcs_acOverCurrentCFault", "PcsFaultGrp1State", "AC Over Current Phase C", "pcs", "Major", "PCS"),
-            T("PCS_DC_OC", "pcs_dcOverCurrentFault", "PcsFaultGrp1State", "DC Over Current", "pcs", "Critical", "PCS"),
-            T("PCS_AMBIENT_OT", "pcs_ambientOverTempFault", "PcsFaultGrp1State", "Ambient Over Temperature", "pcs", "Warning", "PCS"),
-            T("PCS_INDUCT_OT", "pcs_inductanceOverTempFault", "PcsFaultGrp1State", "Inductance Over Temperature", "pcs", "Major", "PCS"),
+            T("PCS_HW_EPO", "pcs_hwEpoFault", "Pcs.Status", "Hardware EPO Fault", "pcs", "Critical", "PCS"),
+            T("PCS_GRID_A_OV", "pcs_gridAOvFault", "Pcs.Status", "Grid Phase A Over Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_B_OV", "pcs_gridBOvFault", "Pcs.Status", "Grid Phase B Over Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_C_OV", "pcs_gridCOvFault", "Pcs.Status", "Grid Phase C Over Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_A_UV", "pcs_gridAUvFault", "Pcs.Status", "Grid Phase A Under Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_B_UV", "pcs_gridBUvFault", "Pcs.Status", "Grid Phase B Under Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_C_UV", "pcs_gridCUvFault", "Pcs.Status", "Grid Phase C Under Voltage", "pcs", "Major", "PCS"),
+            T("PCS_GRID_FREQ_HI", "pcs_gridFreqHighFault", "Pcs.Status", "Grid Frequency High", "pcs", "Major", "PCS"),
+            T("PCS_GRID_FREQ_LO", "pcs_gridFreqLowFault", "Pcs.Status", "Grid Frequency Low", "pcs", "Major", "PCS"),
+            T("PCS_DC_OV", "pcs_dcBusOvFault", "Pcs.Status", "DC Bus Over Voltage", "pcs", "Critical", "PCS"),
+            T("PCS_DC_UV", "pcs_dcBusUvFault", "Pcs.Status", "DC Bus Under Voltage", "pcs", "Major", "PCS"),
+            T("PCS_IGBT_OT", "pcs_igbtOverTempFault", "Pcs.Status", "IGBT Over Temperature", "pcs", "Critical", "PCS"),
+            T("PCS_AC_OC_A", "pcs_acOverCurrentAFault", "Pcs.Status", "AC Over Current Phase A", "pcs", "Major", "PCS"),
+            T("PCS_AC_OC_B", "pcs_acOverCurrentBFault", "Pcs.Status", "AC Over Current Phase B", "pcs", "Major", "PCS"),
+            T("PCS_AC_OC_C", "pcs_acOverCurrentCFault", "Pcs.Status", "AC Over Current Phase C", "pcs", "Major", "PCS"),
+            T("PCS_DC_OC", "pcs_dcOverCurrentFault", "Pcs.Status", "DC Over Current", "pcs", "Critical", "PCS"),
+            T("PCS_AMBIENT_OT", "pcs_ambientOverTempFault", "Pcs.Status", "Ambient Over Temperature", "pcs", "Warning", "PCS"),
+            T("PCS_INDUCT_OT", "pcs_inductanceOverTempFault", "Pcs.Status", "Inductance Over Temperature", "pcs", "Major", "PCS"),
 
             // PcsFaultGrp2State — PCS protection & relay faults
-            T("PCS_PREREL_CLOSE", "pcs_preRelCloseFail", "PcsFaultGrp2State", "Pre-charge Relay Close Failure", "pcs", "Critical", "PCS"),
-            T("PCS_PREREL_OPEN", "pcs_preRelOpenFail", "PcsFaultGrp2State", "Pre-charge Relay Open Failure", "pcs", "Critical", "PCS"),
-            T("PCS_MAINREL_CLOSE", "pcs_mainRelCloseFail", "PcsFaultGrp2State", "Main Relay Close Failure", "pcs", "Critical", "PCS"),
-            T("PCS_MAINREL_OPEN", "pcs_mainRelOpenFail", "PcsFaultGrp2State", "Main Relay Open Failure", "pcs", "Critical", "PCS"),
-            T("PCS_ACBKR_CLOSE", "pcs_acBreakerCloseFail", "PcsFaultGrp2State", "AC Breaker Close Failure", "pcs", "Critical", "PCS"),
-            T("PCS_ACBKR_OPEN", "pcs_acBreakerOpenFail", "PcsFaultGrp2State", "AC Breaker Open Failure", "pcs", "Critical", "PCS"),
-            T("PCS_GROUND_FAULT", "pcs_groundFault", "PcsFaultGrp2State", "Ground Fault", "pcs", "Critical", "PCS"),
-            T("PCS_FAN_FAULT", "pcs_coolingFanFault", "PcsFaultGrp2State", "Cooling Fan Fault", "pcs", "Major", "PCS"),
-            T("PCS_FUSE_FAULT", "pcs_dcFuseFault", "PcsFaultGrp2State", "DC Fuse Fault", "pcs", "Critical", "PCS"),
-            T("PCS_SPD_FAULT", "pcs_surgeSpdFault", "PcsFaultGrp2State", "Surge Protector Fault", "pcs", "Major", "PCS"),
-            T("PCS_PHASE_SEQ", "pcs_phaseSeqFault", "PcsFaultGrp2State", "Phase Sequence Fault", "pcs", "Major", "PCS"),
-            T("PCS_SYNC_FAIL", "pcs_gridSyncFail", "PcsFaultGrp2State", "Grid Sync Failure", "pcs", "Major", "PCS"),
-            T("PCS_SW_EPO", "pcs_swEpoFault", "PcsFaultGrp2State", "Software EPO Fault", "pcs", "Critical", "PCS"),
-            T("PCS_COMM_BMS", "pcs_bmsCommFault", "PcsFaultGrp2State", "BMS Communication Fault", "pcs", "Major", "PCS"),
-            T("PCS_COMM_EMS", "pcs_emsCommFault", "PcsFaultGrp2State", "EMS Communication Fault", "pcs", "Warning", "PCS"),
+            T("PCS_PREREL_CLOSE", "pcs_preRelCloseFail", "Pcs.Status", "Pre-charge Relay Close Failure", "pcs", "Critical", "PCS"),
+            T("PCS_PREREL_OPEN", "pcs_preRelOpenFail", "Pcs.Status", "Pre-charge Relay Open Failure", "pcs", "Critical", "PCS"),
+            T("PCS_MAINREL_CLOSE", "pcs_mainRelCloseFail", "Pcs.Status", "Main Relay Close Failure", "pcs", "Critical", "PCS"),
+            T("PCS_MAINREL_OPEN", "pcs_mainRelOpenFail", "Pcs.Status", "Main Relay Open Failure", "pcs", "Critical", "PCS"),
+            T("PCS_ACBKR_CLOSE", "pcs_acBreakerCloseFail", "Pcs.Status", "AC Breaker Close Failure", "pcs", "Critical", "PCS"),
+            T("PCS_ACBKR_OPEN", "pcs_acBreakerOpenFail", "Pcs.Status", "AC Breaker Open Failure", "pcs", "Critical", "PCS"),
+            T("PCS_GROUND_FAULT", "pcs_groundFault", "Pcs.Status", "Ground Fault", "pcs", "Critical", "PCS"),
+            T("PCS_FAN_FAULT", "pcs_coolingFanFault", "Pcs.Status", "Cooling Fan Fault", "pcs", "Major", "PCS"),
+            T("PCS_FUSE_FAULT", "pcs_dcFuseFault", "Pcs.Status", "DC Fuse Fault", "pcs", "Critical", "PCS"),
+            T("PCS_SPD_FAULT", "pcs_surgeSpdFault", "Pcs.Status", "Surge Protector Fault", "pcs", "Major", "PCS"),
+            T("PCS_PHASE_SEQ", "pcs_phaseSeqFault", "Pcs.Status", "Phase Sequence Fault", "pcs", "Major", "PCS"),
+            T("PCS_SYNC_FAIL", "pcs_gridSyncFail", "Pcs.Status", "Grid Sync Failure", "pcs", "Major", "PCS"),
+            T("PCS_SW_EPO", "pcs_swEpoFault", "Pcs.Status", "Software EPO Fault", "pcs", "Critical", "PCS"),
+            T("PCS_COMM_BMS", "pcs_bmsCommFault", "Pcs.Status", "BMS Communication Fault", "pcs", "Major", "PCS"),
+            T("PCS_COMM_EMS", "pcs_emsCommFault", "Pcs.Status", "EMS Communication Fault", "pcs", "Warning", "PCS"),
 
             // PcsTimeoutsState — PCS protection timeouts
             T("PCS_DC_OC_TOUT", "pcs_dcOcProtTout", "PcsTimeoutsState", "DC Over Current Protection Timeout", "pcs", "Critical", "PCS"),
@@ -1232,5 +1804,434 @@ public class ApplicationDbContextInitializer
             T("PCS_TO_HB", "timeoutHeartbeat", "Heartbeat Timeout", "timeout", "Major"),
             T("PCS_TO_FW", "timeoutFirmwareUpdate", "Firmware Update Timeout", "timeout", "Warning"),
         };
+    }
+
+    private record NodeSpec(string NodeName, int SortOrder, int InstanceCount = 1, string? Alias = null);
+
+    private static (List<LogicalNode> Nodes, List<(LogicalDevice Device, NodeSpec[] Nodes)> Devices) BuildLogicalDeviceCatalog()
+    {
+        var now = DateTime.UtcNow;
+
+        // Helper to build parameter JSON
+        static string P(params (string key, string label, string unit, string dataType, string sourceType)[] parameters)
+        {
+            var items = parameters.Select(p => $@"{{""key"":""{p.key}"",""label"":""{p.label}"",""unit"":""{p.unit}"",""dataType"":""{p.dataType}"",""sourceType"":""{p.sourceType}""}}");
+            return "[" + string.Join(",", items) + "]";
+        }
+
+        // ── LogicalNodes ──
+        var nodes = new List<LogicalNode>
+        {
+            // BESS Nodes
+            new()
+            {
+                Name = LogicalNodeNames.BatteryNameplateData,
+                DisplayName = "Battery Nameplate Data",
+                Description = "Static registration data for a battery container",
+                Parameters = P(
+                    ("ratedCapacityAh", "Rated Capacity", "Ah", "float", "Registration"),
+                    ("ratedCapacityKwh", "Rated Energy Capacity", "kWh", "float", "Registration"),
+                    ("ratedVoltage", "Rated Voltage", "V", "float", "Registration"),
+                    ("maxChargeCurrent", "Max Charge Current", "A", "float", "Registration"),
+                    ("maxDischargeCurrent", "Max Discharge Current", "A", "float", "Registration"),
+                    ("nominalVoltage", "Nominal Voltage", "V", "float", "Registration"),
+                    ("chemistry", "Chemistry Type", "", "string", "Registration"),
+                    ("cycleLifeRating", "Cycle Life Rating", "cycles", "int", "Registration"),
+                    ("calendarLifeYears", "Calendar Life", "years", "int", "Registration"),
+                    ("maxChargeVoltage", "Max Charge Voltage", "V", "float", "Registration")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryStatusData,
+                DisplayName = "Battery Status Data",
+                Description = "Real-time operational status of a battery container",
+                Parameters = P(
+                    ("operatingState", "Operating State", "", "string", "Realtime"),
+                    ("contactorState", "Contactor State", "", "string", "Realtime"),
+                    ("alarmState", "Alarm State", "", "string", "Realtime"),
+                    ("warningState", "Warning State", "", "string", "Realtime"),
+                    ("protectionState", "Protection State", "", "string", "Realtime"),
+                    ("communicationState", "Communication State", "", "string", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryEnergyData,
+                DisplayName = "Battery Energy Data",
+                Description = "Real-time energy measurements for a battery container",
+                Parameters = P(
+                    ("soc", "State of Charge", "%", "float", "Realtime"),
+                    ("soh", "State of Health", "%", "float", "Realtime"),
+                    ("voltage", "Voltage", "V", "float", "Realtime"),
+                    ("current", "Current", "A", "float", "Realtime"),
+                    ("power", "Power", "kW", "float", "Realtime"),
+                    ("powerDirection", "Power Direction", "", "string", "Realtime"),
+                    ("temperature", "Temperature", "°C", "float", "Realtime"),
+                    ("maxCellVoltage", "Max Cell Voltage", "V", "float", "Realtime"),
+                    ("minCellVoltage", "Min Cell Voltage", "V", "float", "Realtime"),
+                    ("maxCellTemp", "Max Cell Temperature", "°C", "float", "Realtime"),
+                    ("minCellTemp", "Min Cell Temperature", "°C", "float", "Realtime"),
+                    ("chargedEnergy", "Charged Energy", "kWh", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryHealthData,
+                DisplayName = "Battery Health Data",
+                Description = "Health and degradation metrics for a battery container",
+                Parameters = P(
+                    ("soh", "State of Health", "%", "float", "Realtime"),
+                    ("cycleCount", "Cycle Count", "", "int", "Realtime"),
+                    ("capacityFade", "Capacity Fade", "%", "float", "Calculated"),
+                    ("resistanceIncrease", "Resistance Increase", "%", "float", "Calculated"),
+                    ("avgCellVoltageDeviation", "Avg Cell Voltage Deviation", "mV", "float", "Calculated"),
+                    ("avgCellTempDeviation", "Avg Cell Temp Deviation", "°C", "float", "Calculated"),
+                    ("energyThroughput", "Energy Throughput", "MWh", "float", "Calculated"),
+                    ("estimatedRemainingLife", "Estimated Remaining Life", "%", "float", "Calculated"),
+                    ("lastMaintenanceDate", "Last Maintenance Date", "", "datetime", "Installation"),
+                    ("nextMaintenanceDate", "Next Maintenance Date", "", "datetime", "Calculated")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryPackEnergyData,
+                DisplayName = "Battery Pack Energy Data",
+                Description = "Real-time measurements for individual battery racks",
+                Parameters = P(
+                    ("soc", "State of Charge", "%", "float", "Realtime"),
+                    ("voltage", "Voltage", "V", "float", "Realtime"),
+                    ("current", "Current", "A", "float", "Realtime"),
+                    ("power", "Power", "kW", "float", "Realtime"),
+                    ("maxCellVoltage", "Max Cell Voltage", "V", "float", "Realtime"),
+                    ("minCellVoltage", "Min Cell Voltage", "V", "float", "Realtime"),
+                    ("maxCellTemp", "Max Cell Temperature", "°C", "float", "Realtime"),
+                    ("minCellTemp", "Min Cell Temperature", "°C", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.BatteryModuleEnergyData,
+                DisplayName = "Battery Module Energy Data",
+                Description = "Real-time measurements for individual battery packs/modules",
+                Parameters = P(
+                    ("voltage", "Voltage", "V", "float", "Realtime"),
+                    ("current", "Current", "A", "float", "Realtime"),
+                    ("temperature", "Temperature", "°C", "float", "Realtime"),
+                    ("maxCellVoltage", "Max Cell Voltage", "V", "float", "Realtime"),
+                    ("minCellVoltage", "Min Cell Voltage", "V", "float", "Realtime"),
+                    ("cellVoltageSpread", "Cell Voltage Spread", "mV", "float", "Calculated")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.HvacStatusData,
+                DisplayName = "HVAC Status Data",
+                Description = "Real-time HVAC/TMS status for container thermal management",
+                Parameters = P(
+                    ("operatingMode", "Operating Mode", "", "string", "Realtime"),
+                    ("supplyAirTemp", "Supply Air Temperature", "°C", "float", "Realtime"),
+                    ("returnAirTemp", "Return Air Temperature", "°C", "float", "Realtime"),
+                    ("setpointTemp", "Setpoint Temperature", "°C", "float", "Realtime"),
+                    ("compressorState", "Compressor State", "", "string", "Realtime"),
+                    ("fanSpeed", "Fan Speed", "RPM", "int", "Realtime"),
+                    ("powerConsumption", "Power Consumption", "kW", "float", "Realtime"),
+                    ("alarmState", "Alarm State", "", "string", "Realtime")
+                ),
+                Created = now
+            },
+
+            // PCS Nodes
+            new()
+            {
+                Name = LogicalNodeNames.PcsStatusData,
+                DisplayName = "PCS Status Data",
+                Description = "Real-time status of a power conversion system",
+                Parameters = P(
+                    ("operatingState", "Operating State", "", "string", "Realtime"),
+                    ("operatingMode", "Operating Mode", "", "string", "Realtime"),
+                    ("alarmState", "Alarm State", "", "string", "Realtime"),
+                    ("warningState", "Warning State", "", "string", "Realtime"),
+                    ("gridContactorState", "Grid Contactor State", "", "string", "Realtime"),
+                    ("dcContactorState", "DC Contactor State", "", "string", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.PcsAcMeasurementData,
+                DisplayName = "PCS AC Measurement Data",
+                Description = "AC-side electrical measurements of a PCS",
+                Parameters = P(
+                    ("acVoltageA", "AC Voltage Phase A", "V", "float", "Realtime"),
+                    ("acVoltageB", "AC Voltage Phase B", "V", "float", "Realtime"),
+                    ("acVoltageC", "AC Voltage Phase C", "V", "float", "Realtime"),
+                    ("acCurrentA", "AC Current Phase A", "A", "float", "Realtime"),
+                    ("acCurrentB", "AC Current Phase B", "A", "float", "Realtime"),
+                    ("acCurrentC", "AC Current Phase C", "A", "float", "Realtime"),
+                    ("acActivePower", "AC Active Power", "kW", "float", "Realtime"),
+                    ("acFrequency", "AC Frequency", "Hz", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.PcsDcMeasurementData,
+                DisplayName = "PCS DC Measurement Data",
+                Description = "DC-side electrical measurements of a PCS",
+                Parameters = P(
+                    ("dcVoltage", "DC Voltage", "V", "float", "Realtime"),
+                    ("dcCurrent", "DC Current", "A", "float", "Realtime"),
+                    ("dcPower", "DC Power", "kW", "float", "Realtime"),
+                    ("dcBusVoltage", "DC Bus Voltage", "V", "float", "Realtime"),
+                    ("insulationResistance", "Insulation Resistance", "MΩ", "float", "Realtime"),
+                    ("igbtTemperature", "IGBT Temperature", "°C", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.PcsChargeAlgorithmData,
+                DisplayName = "PCS Charge Algorithm Data",
+                Description = "Charge/discharge algorithm parameters of a PCS",
+                Parameters = P(
+                    ("chargeMode", "Charge Mode", "", "string", "Realtime"),
+                    ("targetPower", "Target Power", "kW", "float", "Realtime"),
+                    ("currentLimit", "Current Limit", "A", "float", "Realtime"),
+                    ("voltageLimit", "Voltage Limit", "V", "float", "Realtime"),
+                    ("powerFactor", "Power Factor", "", "float", "Realtime"),
+                    ("reactivePower", "Reactive Power", "kVAR", "float", "Realtime")
+                ),
+                Created = now
+            },
+
+            // Solar Nodes
+            new()
+            {
+                Name = LogicalNodeNames.SolarStatusData,
+                DisplayName = "Solar Status Data",
+                Description = "Real-time status and output of a solar inverter/string",
+                Parameters = P(
+                    ("operatingState", "Operating State", "", "string", "Realtime"),
+                    ("totalActivePower", "Total Active Power", "kW", "float", "Realtime"),
+                    ("totalEnergy", "Total Energy", "kWh", "float", "Realtime"),
+                    ("dailyEnergy", "Daily Energy", "kWh", "float", "Realtime"),
+                    ("efficiency", "Efficiency", "%", "float", "Realtime"),
+                    ("irradiance", "Irradiance", "W/m²", "float", "Realtime"),
+                    ("panelTemperature", "Panel Temperature", "°C", "float", "Realtime"),
+                    ("ambientTemperature", "Ambient Temperature", "°C", "float", "Realtime"),
+                    ("alarmState", "Alarm State", "", "string", "Realtime"),
+                    ("peakPower", "Peak Power Today", "kW", "float", "Calculated")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.SolarInverterData,
+                DisplayName = "Solar Inverter Data",
+                Description = "Electrical measurements from a solar inverter",
+                Parameters = P(
+                    ("dcVoltage", "DC Voltage", "V", "float", "Realtime"),
+                    ("dcCurrent", "DC Current", "A", "float", "Realtime"),
+                    ("acVoltage", "AC Voltage", "V", "float", "Realtime"),
+                    ("acCurrent", "AC Current", "A", "float", "Realtime"),
+                    ("acFrequency", "AC Frequency", "Hz", "float", "Realtime"),
+                    ("acPower", "AC Power", "kW", "float", "Realtime")
+                ),
+                Created = now
+            },
+
+            // Grid Nodes
+            new()
+            {
+                Name = LogicalNodeNames.GridMeterPowerData,
+                DisplayName = "Grid Meter Power Data",
+                Description = "Real-time power measurements from a grid meter",
+                Parameters = P(
+                    ("voltageA", "Voltage Phase A", "V", "float", "Realtime"),
+                    ("voltageB", "Voltage Phase B", "V", "float", "Realtime"),
+                    ("voltageC", "Voltage Phase C", "V", "float", "Realtime"),
+                    ("currentA", "Current Phase A", "A", "float", "Realtime"),
+                    ("currentB", "Current Phase B", "A", "float", "Realtime"),
+                    ("currentC", "Current Phase C", "A", "float", "Realtime"),
+                    ("activePower", "Active Power", "kW", "float", "Realtime"),
+                    ("reactivePower", "Reactive Power", "kVAR", "float", "Realtime"),
+                    ("apparentPower", "Apparent Power", "kVA", "float", "Realtime"),
+                    ("powerFactor", "Power Factor", "", "float", "Realtime"),
+                    ("frequency", "Frequency", "Hz", "float", "Realtime"),
+                    ("totalEnergy", "Total Energy", "kWh", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.GridBreakerLifecycleData,
+                DisplayName = "Grid Breaker Lifecycle Data",
+                Description = "Calculated lifecycle metrics for grid breakers",
+                Parameters = P(
+                    ("operationCount", "Operation Count", "", "int", "Calculated"),
+                    ("lastTripDate", "Last Trip Date", "", "datetime", "Calculated"),
+                    ("avgTripCurrent", "Avg Trip Current", "A", "float", "Calculated"),
+                    ("estimatedRemainingOps", "Estimated Remaining Operations", "", "int", "Calculated"),
+                    ("maintenanceRequired", "Maintenance Required", "", "bool", "Calculated"),
+                    ("healthScore", "Health Score", "%", "float", "Calculated")
+                ),
+                Created = now
+            },
+
+            // Wind Nodes
+            new()
+            {
+                Name = LogicalNodeNames.WindPowerData,
+                DisplayName = "Wind Power Data",
+                Description = "Real-time power output from a wind turbine",
+                Parameters = P(
+                    ("activePower", "Active Power", "kW", "float", "Realtime"),
+                    ("reactivePower", "Reactive Power", "kVAR", "float", "Realtime"),
+                    ("dailyEnergy", "Daily Energy", "kWh", "float", "Realtime"),
+                    ("totalEnergy", "Total Energy", "MWh", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.WindConditionData,
+                DisplayName = "Wind Condition Data",
+                Description = "Environmental conditions at a wind turbine site",
+                Parameters = P(
+                    ("windSpeed", "Wind Speed", "m/s", "float", "Realtime"),
+                    ("windDirection", "Wind Direction", "°", "float", "Realtime"),
+                    ("ambientTemp", "Ambient Temperature", "°C", "float", "Realtime"),
+                    ("humidity", "Humidity", "%", "float", "Realtime"),
+                    ("airPressure", "Air Pressure", "hPa", "float", "Realtime")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.WindElectricalData,
+                DisplayName = "Wind Electrical Data",
+                Description = "Electrical measurements from a wind turbine generator",
+                Parameters = P(
+                    ("generatorSpeed", "Generator Speed", "RPM", "float", "Realtime"),
+                    ("rotorSpeed", "Rotor Speed", "RPM", "float", "Realtime"),
+                    ("pitchAngle", "Pitch Angle", "°", "float", "Realtime"),
+                    ("yawAngle", "Yaw Angle", "°", "float", "Realtime"),
+                    ("voltageA", "Voltage Phase A", "V", "float", "Realtime"),
+                    ("voltageB", "Voltage Phase B", "V", "float", "Realtime"),
+                    ("voltageC", "Voltage Phase C", "V", "float", "Realtime"),
+                    ("currentA", "Current Phase A", "A", "float", "Realtime"),
+                    ("currentB", "Current Phase B", "A", "float", "Realtime"),
+                    ("frequency", "Frequency", "Hz", "float", "Realtime")
+                ),
+                Created = now
+            },
+
+            // Common Nodes
+            new()
+            {
+                Name = LogicalNodeNames.DeviceMaintenanceData,
+                DisplayName = "Device Maintenance Data",
+                Description = "Calculated maintenance metrics applicable to any device",
+                Parameters = P(
+                    ("lastMaintenanceDate", "Last Maintenance Date", "", "datetime", "Calculated"),
+                    ("nextMaintenanceDate", "Next Maintenance Date", "", "datetime", "Calculated"),
+                    ("maintenanceScore", "Maintenance Score", "%", "float", "Calculated")
+                ),
+                Created = now
+            },
+            new()
+            {
+                Name = LogicalNodeNames.DeviceNameplateData,
+                DisplayName = "Device Nameplate Data",
+                Description = "Common registration data for any device",
+                Parameters = P(
+                    ("serialNumber", "Serial Number", "", "string", "Registration"),
+                    ("manufacturer", "Manufacturer", "", "string", "Registration"),
+                    ("model", "Model", "", "string", "Registration"),
+                    ("firmwareVersion", "Firmware Version", "", "string", "Registration"),
+                    ("installationDate", "Installation Date", "", "datetime", "Installation"),
+                    ("warrantyExpiry", "Warranty Expiry Date", "", "datetime", "Registration")
+                ),
+                Created = now
+            }
+        };
+
+        // ── LogicalDevices ──
+        var devices = new List<(LogicalDevice Device, NodeSpec[] Nodes)>
+        {
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.BatteryContainer,
+                DisplayName = "Battery Container",
+                Description = "A BESS container with racks, packs, PCS and HVAC",
+                Category = "BESS",
+                HierarchyTemplate = @"{""children"":[{""logicalDeviceName"":""BatteryRack"",""count"":4,""namePattern"":""Rack {index}"",""deviceTypeName"":""EnergyStorage.Rack""}]}",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.BatteryNameplateData, 0), new NodeSpec(LogicalNodeNames.BatteryStatusData, 1), new NodeSpec(LogicalNodeNames.BatteryEnergyData, 2), new NodeSpec(LogicalNodeNames.BatteryHealthData, 3), new NodeSpec(LogicalNodeNames.HvacStatusData, 4) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.BatteryRack,
+                DisplayName = "Battery Rack",
+                Description = "A rack within a battery container, containing packs",
+                Category = "BESS",
+                HierarchyTemplate = @"{""children"":[{""logicalDeviceName"":""BatteryPack"",""count"":8,""namePattern"":""Pack {index}"",""deviceTypeName"":""EnergyStorage.Pack""}]}",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.BatteryPackEnergyData, 0) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.BatteryPack,
+                DisplayName = "Battery Pack",
+                Description = "A pack/module within a battery rack",
+                Category = "BESS",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.BatteryModuleEnergyData, 0) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.PcsUnit,
+                DisplayName = "PCS Unit",
+                Description = "A power conversion system (bidirectional inverter)",
+                Category = "PCS",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.PcsStatusData, 0), new NodeSpec(LogicalNodeNames.PcsAcMeasurementData, 1), new NodeSpec(LogicalNodeNames.PcsDcMeasurementData, 2), new NodeSpec(LogicalNodeNames.PcsChargeAlgorithmData, 3) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.SolarInverter,
+                DisplayName = "Solar Inverter",
+                Description = "A solar inverter with MPPT strings",
+                Category = "Solar",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.SolarStatusData, 0), new NodeSpec(LogicalNodeNames.SolarInverterData, 1, InstanceCount: 2, Alias: "mppt") }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.GridMeter,
+                DisplayName = "Grid Meter",
+                Description = "A grid-connection smart meter with breaker monitoring",
+                Category = "Grid",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.GridMeterPowerData, 0), new NodeSpec(LogicalNodeNames.GridBreakerLifecycleData, 1) }),
+
+            (new LogicalDevice
+            {
+                Name = LogicalDeviceNames.WindTurbine,
+                DisplayName = "Wind Turbine",
+                Description = "A wind turbine generator",
+                Category = "Wind",
+                Created = now
+            }, new[] { new NodeSpec(LogicalNodeNames.WindPowerData, 0), new NodeSpec(LogicalNodeNames.WindConditionData, 1), new NodeSpec(LogicalNodeNames.WindElectricalData, 2) })
+        };
+
+        return (nodes, devices);
     }
 }

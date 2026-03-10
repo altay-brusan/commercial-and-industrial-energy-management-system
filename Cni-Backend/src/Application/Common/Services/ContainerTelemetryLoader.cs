@@ -28,6 +28,7 @@ public class ContainerTelemetryLoader
         // 1. Load root + all descendants
         var root = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .FirstOrDefaultAsync(d => d.Id == rootDeviceId, ct);
 
         if (root == null)
@@ -153,12 +154,13 @@ public class ContainerTelemetryLoader
     {
         var current = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .FirstOrDefaultAsync(d => d.Id == deviceId, ct);
 
         while (current?.ParentDeviceId.HasValue == true)
         {
             var parentId = current.ParentDeviceId.Value;
-            var category = CategorizeByDeviceType(current.DeviceType?.Name);
+            var category = CategorizeByDeviceType(current.DeviceType?.Name, current.LogicalDevice?.Category);
 
             // Check if parent has telemetry data
             var hasData = category switch
@@ -193,6 +195,7 @@ public class ContainerTelemetryLoader
 
             current = await _context.Devices
                 .Include(d => d.DeviceType)
+                .Include(d => d.LogicalDevice)
                 .FirstOrDefaultAsync(d => d.Id == parentId, ct);
         }
 
@@ -205,6 +208,7 @@ public class ContainerTelemetryLoader
         // For now, do two levels (children + grandchildren) which covers Container > Rack > Pack > Module
         var children = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Where(d => d.ParentDeviceId == rootId)
             .ToListAsync(ct);
 
@@ -216,6 +220,7 @@ public class ContainerTelemetryLoader
         var childIds = children.Select(d => d.Id).ToList();
         var grandchildren = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Where(d => d.ParentDeviceId.HasValue && childIds.Contains(d.ParentDeviceId.Value))
             .ToListAsync(ct);
 
@@ -226,6 +231,7 @@ public class ContainerTelemetryLoader
             var grandchildIds = grandchildren.Select(d => d.Id).ToList();
             var greatGrandchildren = await _context.Devices
                 .Include(d => d.DeviceType)
+                .Include(d => d.LogicalDevice)
                 .Where(d => d.ParentDeviceId.HasValue && grandchildIds.Contains(d.ParentDeviceId.Value))
                 .ToListAsync(ct);
 
@@ -238,7 +244,7 @@ public class ContainerTelemetryLoader
     private static ContainerDevice MapDevice(Domain.Entities.Device device)
     {
         var typeName = device.DeviceType?.Name;
-        var category = CategorizeByDeviceType(typeName);
+        var category = CategorizeByDeviceType(typeName, device.LogicalDevice?.Category);
 
         return new ContainerDevice
         {
@@ -253,24 +259,37 @@ public class ContainerTelemetryLoader
     /// <summary>
     /// Maps DeviceType.Name to the telemetry table category.
     /// </summary>
-    private static DeviceDataCategory CategorizeByDeviceType(string? deviceTypeName)
+    private static DeviceDataCategory CategorizeByDeviceType(string? deviceTypeName, string? logicalDeviceCategory = null)
     {
-        if (string.IsNullOrEmpty(deviceTypeName))
-            return DeviceDataCategory.Unknown;
+        if (!string.IsNullOrEmpty(deviceTypeName))
+        {
+            if (deviceTypeName == DeviceTypeNames.Pcs)
+                return DeviceDataCategory.Pcs;
 
-        if (deviceTypeName == DeviceTypeNames.Pcs)
-            return DeviceDataCategory.Pcs;
+            if (deviceTypeName == DeviceTypeNames.Solar)
+                return DeviceDataCategory.Solar;
 
-        if (deviceTypeName == DeviceTypeNames.Solar)
-            return DeviceDataCategory.Solar;
+            if (deviceTypeName == DeviceTypeNames.SmartMeter)
+                return DeviceDataCategory.SmartMeter;
 
-        if (deviceTypeName == DeviceTypeNames.SmartMeter)
-            return DeviceDataCategory.SmartMeter;
+            // EnergyStorage and all sub-types → Battery table
+            if (deviceTypeName == DeviceTypeNames.EnergyStorage ||
+                deviceTypeName.StartsWith(DeviceTypeNames.EnergyStoragePrefix, StringComparison.Ordinal))
+                return DeviceDataCategory.Bess;
+        }
 
-        // EnergyStorage and all sub-types → Battery table
-        if (deviceTypeName == DeviceTypeNames.EnergyStorage ||
-            deviceTypeName.StartsWith(DeviceTypeNames.EnergyStoragePrefix, StringComparison.Ordinal))
-            return DeviceDataCategory.Bess;
+        // Fallback to LogicalDevice.Category
+        if (!string.IsNullOrEmpty(logicalDeviceCategory))
+        {
+            return logicalDeviceCategory switch
+            {
+                "BESS" => DeviceDataCategory.Bess,
+                "PCS" => DeviceDataCategory.Pcs,
+                "Solar" => DeviceDataCategory.Solar,
+                "Grid" => DeviceDataCategory.SmartMeter,
+                _ => DeviceDataCategory.Unknown
+            };
+        }
 
         return DeviceDataCategory.Unknown;
     }

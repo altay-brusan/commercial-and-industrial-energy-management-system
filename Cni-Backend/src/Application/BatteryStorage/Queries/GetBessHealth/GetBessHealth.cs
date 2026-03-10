@@ -3,7 +3,9 @@ using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Models.Monitoring;
 using Backend.Application.Common.Security;
 using Backend.Application.Common.Services;
+using Backend.Application.Common.Services.ParameterMapper;
 using Backend.Domain.Constants;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Backend.Application.BatteryStorage.Queries.GetBessHealth;
 
@@ -18,10 +20,12 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
 {
     private readonly IApplicationDbContext _context;
     private readonly ContainerTelemetryLoader _telemetryLoader;
+    private readonly IMemoryCache _cache;
 
-    public GetBessHealthQueryHandler(IApplicationDbContext context)
+    public GetBessHealthQueryHandler(IApplicationDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
         _telemetryLoader = new ContainerTelemetryLoader(context);
     }
 
@@ -29,6 +33,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .FirstOrDefaultAsync(d => d.Id == request.UnitId, cancellationToken);
 
@@ -47,10 +52,12 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
             return new SummaryResponseDto { Sections = BuildFromSchema(sectionsElement, payload) };
         }
 
-        // Default: build based on device type
-        var sections = device.DeviceType?.Name switch
+        // Default: build based on device type (or LogicalDevice category)
+        var deviceTypeName = device.DeviceType?.Name;
+        var sections = deviceTypeName switch
         {
             DeviceTypeNames.EnergyStorage => await BuildBatteryHealthSections(device, cancellationToken),
+            _ when device.LogicalDevice?.Category == "BESS" => await BuildBatteryHealthSections(device, cancellationToken),
             _ => await BuildGenericHealthSections(device, cancellationToken)
         };
 
@@ -66,14 +73,19 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
         var telemetry = await _telemetryLoader.LoadLatest(device.Id, ct);
         var payloads = telemetry.GetPayloadsByKind();
 
-        var batt = payloads.GetValueOrDefault("ContainerBatteryState");
+        var batt = payloads.GetValueOrDefault("Battery.Energy");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
+
+        // Create ParameterResolver for template-driven extraction
+        var parameterMap = ParameterMapParser.ParseCached(device.SpecificationTemplate?.ParameterMapTemplate, _cache);
+        var resolver = parameterMap.Count > 0
+            ? new ParameterResolver(parameterMap, payloads, metadata)
+            : null;
 
         // Load monthly SoH history for trend chart (last 12 months of data)
         var twelveMonthsAgo = DateTimeOffset.UtcNow.AddMonths(-12);
         var monthlyHistory = await _context.DeviceBatteryData
             .Where(dd => dd.DeviceId == device.Id
-                && dd.Kind == "ContainerBatteryState"
                 && dd.DeviceLocalTime >= twelveMonthsAgo)
             .GroupBy(dd => new { dd.DeviceLocalTime.Year, dd.DeviceLocalTime.Month })
             .Select(g => new MonthlyPayloadEntry
@@ -87,26 +99,26 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
 
         var sections = new List<DynamicSectionDto>();
 
-        sections.Add(BuildHealthOverviewSection(batt, metadata));
+        sections.Add(BuildHealthOverviewSection(batt, metadata, resolver));
         sections.Add(BuildSohTrendSection(monthlyHistory));
-        sections.Add(BuildDegradationMetricsSection(batt, metadata));
-        sections.Add(BuildEnergyThroughputSection(batt));
-        sections.Add(BuildThermalStressSection(batt));
-        sections.Add(BuildOperationalHistorySection(batt, metadata));
+        sections.Add(BuildDegradationMetricsSection(batt, metadata, resolver));
+        sections.Add(BuildEnergyThroughputSection(batt, resolver));
+        sections.Add(BuildThermalStressSection(batt, resolver));
+        sections.Add(BuildOperationalHistorySection(batt, metadata, resolver));
         sections.Add(BuildMaintenanceWarrantySection(metadata));
 
         return sections;
     }
 
-    private static DynamicSectionDto BuildHealthOverviewSection(JsonElement? batt, JsonElement? metadata)
+    private static DynamicSectionDto BuildHealthOverviewSection(JsonElement? batt, JsonElement? metadata, ParameterResolver? resolver = null)
     {
-        var soh = ExtractNum(batt, "sohPercent", "stateOfHealth", "soh");
-        var cycleCount = ExtractNum(batt, "cycleCount", "equivalentFullCycles");
+        var soh = resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "sohPercent", "stateOfHealth", "soh");
+        var cycleCount = resolver?.ResolveNumber(ParameterKeys.CycleCount) ?? ExtractNum(batt, "cycleCount", "equivalentFullCycles");
         var designedCycles = ExtractNum(metadata, "designedCycleLife") ?? 6000;
         var designedLifeYears = ExtractNum(metadata, "designedCalendarLife") ?? 15;
 
         var cycleLifeUsed = cycleCount.HasValue ? Math.Round(cycleCount.Value / designedCycles * 100, 1) : (double?)null;
-        var rte = ExtractNum(batt, "roundTripEfficiency");
+        var rte = resolver?.ResolveNumber(ParameterKeys.Rte) ?? ExtractNum(batt, "roundTripEfficiency");
 
         // Calendar life: from commissioning date in metadata
         double? calendarLifeUsed = null;
@@ -212,7 +224,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
         };
     }
 
-    private static DynamicSectionDto BuildDegradationMetricsSection(JsonElement? batt, JsonElement? metadata)
+    private static DynamicSectionDto BuildDegradationMetricsSection(JsonElement? batt, JsonElement? metadata, ParameterResolver? resolver = null)
     {
         return new DynamicSectionDto
         {
@@ -223,17 +235,17 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
             Columns = 3,
             Fields = new List<SectionFieldDto>
             {
-                NumField("equivalentFullCycles", "Equivalent Full Cycles", ExtractNum(batt, "equivalentFullCycles", "cycleCount"), ""),
+                NumField("equivalentFullCycles", "Equivalent Full Cycles", resolver?.ResolveNumber(ParameterKeys.CycleCount) ?? ExtractNum(batt, "equivalentFullCycles", "cycleCount"), ""),
                 NumField("designedCycleLife", "Designed Cycle Life", ExtractNum(metadata, "designedCycleLife"), "cycles"),
                 NumField("averageDod", "Average DoD", ExtractNum(batt, "averageDod", "avgDepthOfDischarge"), "%"),
                 NumField("totalCycleCount", "Total Cycle Count", ExtractNum(batt, "totalCycleCount", "cycleCount"), ""),
-                NumField("currentSoh", "Current SoH", ExtractNum(batt, "sohPercent", "stateOfHealth", "soh"), "%"),
+                NumField("currentSoh", "Current SoH", resolver?.ResolveNumber(ParameterKeys.Soh) ?? ExtractNum(batt, "sohPercent", "stateOfHealth", "soh"), "%"),
                 NumField("designedCalendarLife", "Designed Calendar Life", ExtractNum(metadata, "designedCalendarLife"), "years"),
             }
         };
     }
 
-    private static DynamicSectionDto BuildEnergyThroughputSection(JsonElement? batt)
+    private static DynamicSectionDto BuildEnergyThroughputSection(JsonElement? batt, ParameterResolver? resolver = null)
     {
         return new DynamicSectionDto
         {
@@ -246,7 +258,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
             {
                 NumField("lifetimeCharged", "Lifetime Charged", ExtractNum(batt, "lifetimeChargedMwh", "totalCharged"), "MWh"),
                 NumField("lifetimeDischarged", "Lifetime Discharged", ExtractNum(batt, "lifetimeDischargedMwh", "totalDischarged"), "MWh"),
-                NumField("rte", "RTE", ExtractNum(batt, "roundTripEfficiency"), "%"),
+                NumField("rte", "RTE", resolver?.ResolveNumber(ParameterKeys.Rte) ?? ExtractNum(batt, "roundTripEfficiency"), "%"),
                 NumField("initialRte", "Initial RTE", ExtractNum(batt, "initialRte"), "%"),
                 NumField("efficiencyDegradation", "Efficiency Degradation", ExtractNum(batt, "efficiencyDegradation"), "%"),
                 NumField("dailyCharged", "Daily Charged", ExtractNum(batt, "dailyChargedKwh", "dailyCharged"), "kWh"),
@@ -255,7 +267,7 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
         };
     }
 
-    private static DynamicSectionDto BuildThermalStressSection(JsonElement? batt)
+    private static DynamicSectionDto BuildThermalStressSection(JsonElement? batt, ParameterResolver? resolver = null)
     {
         return new DynamicSectionDto
         {
@@ -267,17 +279,17 @@ public class GetBessHealthQueryHandler : IRequestHandler<GetBessHealthQuery, Sum
             Fields = new List<SectionFieldDto>
             {
                 new() { Key = "maxRecordedTemp", Label = "Max Recorded Temp",
-                    Value = ExtractNum(batt, "maxRecordedTempC", "maxCellTempC"),
+                    Value = resolver?.ResolveNumber(ParameterKeys.TempMax) ?? ExtractNum(batt, "maxRecordedTempC", "maxCellTempC"),
                     Type = "number", Unit = "\u00b0C", Format = "temperature" },
                 NumField("thermalExcursions", "Thermal Excursions", ExtractNum(batt, "thermalExcursions"), ""),
                 new() { Key = "avgOperatingTemp", Label = "Avg Operating Temp",
-                    Value = ExtractNum(batt, "avgOperatingTempC", "ambientTempC"),
+                    Value = resolver?.ResolveNumber(ParameterKeys.TempAvg) ?? ExtractNum(batt, "avgOperatingTempC", "ambientTempC"),
                     Type = "number", Unit = "\u00b0C", Format = "temperature" },
             }
         };
     }
 
-    private static DynamicSectionDto BuildOperationalHistorySection(JsonElement? batt, JsonElement? metadata)
+    private static DynamicSectionDto BuildOperationalHistorySection(JsonElement? batt, JsonElement? metadata, ParameterResolver? resolver = null)
     {
         var firmwareVersion = batt.HasValue
             ? PayloadDeserializer.ExtractValue(batt.Value, "firmwareVersion") as string

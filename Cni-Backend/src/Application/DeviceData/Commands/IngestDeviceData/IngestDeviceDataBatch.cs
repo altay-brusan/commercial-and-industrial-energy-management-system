@@ -42,8 +42,8 @@ public class IngestDeviceDataBatchCommandHandler : IRequestHandler<IngestDeviceD
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to ingest message for RTU {RtuSn} Device {DeviceSn}",
-                    message.RtuSn, message.DeviceSn);
+                _logger.LogWarning(ex, "Failed to ingest message for RTU {RtuSn} Device {DeviceName}",
+                    message.RtuSn, message.DeviceName);
                 failed++;
             }
         }

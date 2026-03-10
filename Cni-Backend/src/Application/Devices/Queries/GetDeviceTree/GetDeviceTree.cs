@@ -24,12 +24,14 @@ public class GetDeviceTreeQueryHandler : IRequestHandler<GetDeviceTreeQuery, Dev
     {
         var rootDevice = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .FirstOrDefaultAsync(d => d.Id == request.DeviceId, cancellationToken);
 
         Guard.Against.NotFound(request.DeviceId, rootDevice);
 
         var allDevices = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
             .Where(d => d.RtuId == rootDevice.RtuId)
             .ToListAsync(cancellationToken);

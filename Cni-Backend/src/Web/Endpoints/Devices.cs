@@ -8,6 +8,7 @@ using Backend.Application.Devices.Queries.GetDeviceTree;
 using Backend.Application.Devices.Queries.GetDeviceStatus;
 using Backend.Application.Devices.Commands;
 using Backend.Application.Devices.Commands.RegisterDeviceComposite;
+using Backend.Application.Devices.Commands.RegisterDeviceFromLogicalDevice;
 
 
 namespace Backend.Web.Endpoints;
@@ -22,7 +23,8 @@ public class Devices : EndpointGroupBase
             .MapGet(GetDeviceTree, "{id}/Tree")
             .MapGet(GetDeviceStatus, "{id}/Status")
             .MapPost(CreateDevice)
-            .MapPost(RegisterComposite, "RegisterComposite");
+            .MapPost(RegisterComposite, "RegisterComposite")
+            .MapPost(RegisterFromLogicalDevice, "RegisterFromLogicalDevice");
     }
     public async Task<Ok<DeviceDto>> GetDevice(ISender sender, [AsParameters] GetDeviceQuery query)
     {
@@ -57,6 +59,12 @@ public class Devices : EndpointGroupBase
     }
 
     public async Task<Created<Guid>> RegisterComposite(ISender sender, RegisterDeviceCompositeCommand command)
+    {
+        var id = await sender.Send(command);
+        return TypedResults.Created($"/{nameof(Devices)}/{id}", id);
+    }
+
+    public async Task<Created<Guid>> RegisterFromLogicalDevice(ISender sender, RegisterDeviceFromLogicalDeviceCommand command)
     {
         var id = await sender.Send(command);
         return TypedResults.Created($"/{nameof(Devices)}/{id}", id);

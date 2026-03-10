@@ -93,7 +93,19 @@ public class GetSolarEnergyProductionQueryHandler : IRequestHandler<GetSolarEner
 
         try
         {
-            return JsonSerializer.Deserialize<SolarPayload>(payload, JsonOptions);
+            var result = JsonSerializer.Deserialize<SolarPayload>(payload, JsonOptions);
+
+            // Support flat payloads (e.g. Huawei: { "dailyYield": 32.4, "activePower": 5.2 })
+            if (result?.DcOutput?.TotalEnergyDaily == null && result?.DailyYield != null)
+            {
+                result.DcOutput = new DcPowerDto
+                {
+                    TotalEnergyDaily = result.DailyYield,
+                    Power = result.ActivePower
+                };
+            }
+
+            return result;
         }
         catch
         {
@@ -104,6 +116,10 @@ public class GetSolarEnergyProductionQueryHandler : IRequestHandler<GetSolarEner
     private class SolarPayload
     {
         public DcPowerDto? DcOutput { get; set; }
+
+        // Flat payload fields (Huawei format)
+        public double? DailyYield { get; set; }
+        public double? ActivePower { get; set; }
     }
 
     private class DcPowerDto

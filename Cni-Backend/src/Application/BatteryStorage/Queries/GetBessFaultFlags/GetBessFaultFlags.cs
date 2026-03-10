@@ -15,7 +15,7 @@ namespace Backend.Application.BatteryStorage.Queries.GetBessFaultFlags;
 //
 // 2. TELEMETRY SOURCE: Uses ContainerTelemetryLoader then picks the first payload it finds
 //    (line 41: mergedPayloads.Values.FirstOrDefault). This is fragile — fault flags may
-//    come from multiple Kinds (e.g. ChillerState, HVCUState, PcsStatusState), not just
+//    come from multiple Kinds (e.g. Battery.Thermal, Battery.Status, Pcs.Status), not just
 //    the first one in the dictionary. Each Kind should be checked against its own flag
 //    definitions from the schema.
 //
@@ -52,8 +52,11 @@ public class GetBessFaultFlagsQueryHandler : IRequestHandler<GetBessFaultFlagsQu
     {
         var device = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Include(d => d.SpecificationTemplate)
-            .Where(d => d.Id == request.UnitId && d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage)
+            .Where(d => d.Id == request.UnitId &&
+                ((d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage) ||
+                 (d.LogicalDevice != null && d.LogicalDevice.Category == "BESS")))
             .FirstOrDefaultAsync(cancellationToken);
 
         Guard.Against.NotFound(request.UnitId, device);

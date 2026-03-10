@@ -54,7 +54,7 @@ public class GetBessCellsQueryHandler : IRequestHandler<GetBessCellsQuery, BessC
         // Load telemetry from root container
         var telemetry = await _telemetryLoader.LoadLatest(rootId, cancellationToken);
         var payloads = telemetry.GetPayloadsByKind();
-        var batt = payloads.GetValueOrDefault("ContainerBatteryState");
+        var batt = payloads.GetValueOrDefault("Battery.Energy");
 
         var cells = new List<CellDto>();
 

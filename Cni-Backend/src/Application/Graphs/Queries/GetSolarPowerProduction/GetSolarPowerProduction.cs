@@ -92,7 +92,15 @@ public class GetSolarPowerProductionQueryHandler : IRequestHandler<GetSolarPower
 
         try
         {
-            return JsonSerializer.Deserialize<SolarPayload>(payload, JsonOptions);
+            var result = JsonSerializer.Deserialize<SolarPayload>(payload, JsonOptions);
+
+            // Support flat payloads (e.g. Huawei: { "activePower": 5.2 })
+            if (result?.DcOutput?.Power == null && result?.ActivePower != null)
+            {
+                result.DcOutput = new DcPowerDto { Power = result.ActivePower };
+            }
+
+            return result;
         }
         catch
         {
@@ -103,6 +111,9 @@ public class GetSolarPowerProductionQueryHandler : IRequestHandler<GetSolarPower
     private class SolarPayload
     {
         public DcPowerDto? DcOutput { get; set; }
+
+        // Flat payload fields (Huawei format)
+        public double? ActivePower { get; set; }
     }
 
     private class DcPowerDto

@@ -191,7 +191,7 @@ public class GetBessSettingsQueryHandler : IRequestHandler<GetBessSettingsQuery,
     private async Task<List<DynamicSectionDto>> BuildTmsSettings(
         Domain.Entities.Device device, CancellationToken ct)
     {
-        // Walk up to find root container (ChillerState data is stored there)
+        // Walk up to find root container (Battery.Thermal data is stored there)
         var rootId = device.Id;
         var currentId = device.ParentDeviceId;
 
@@ -207,7 +207,7 @@ public class GetBessSettingsQueryHandler : IRequestHandler<GetBessSettingsQuery,
 
         var telemetry = await _telemetryLoader.LoadLatest(rootId, ct);
         var payloads = telemetry.GetPayloadsByKind();
-        var chiller = payloads.GetValueOrDefault("ChillerState");
+        var chiller = payloads.GetValueOrDefault("Battery.Thermal");
         var metadata = PayloadDeserializer.GetElement(device.Metadata);
 
         return new List<DynamicSectionDto>

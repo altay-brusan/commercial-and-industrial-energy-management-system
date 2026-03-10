@@ -27,7 +27,10 @@ public class GetBessDeviceTreeQueryHandler : IRequestHandler<GetBessDeviceTreeQu
         // Find all root EnergyStorage devices
         var rootQuery = _context.Devices
             .Include(d => d.DeviceType)
-            .Where(d => d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage);
+            .Include(d => d.LogicalDevice)
+            .Where(d =>
+                (d.DeviceType != null && d.DeviceType.Name == DeviceTypeNames.EnergyStorage) ||
+                (d.LogicalDevice != null && d.LogicalDevice.Category == "BESS"));
 
         if (request.FacilityId.HasValue)
             rootQuery = rootQuery.Where(d => d.Rtu!.FacilityId == request.FacilityId.Value);
@@ -43,6 +46,7 @@ public class GetBessDeviceTreeQueryHandler : IRequestHandler<GetBessDeviceTreeQu
         var rtuIds = rootDevices.Select(d => d.RtuId).Distinct().ToList();
         var allDevices = await _context.Devices
             .Include(d => d.DeviceType)
+            .Include(d => d.LogicalDevice)
             .Where(d => rtuIds.Contains(d.RtuId))
             .ToListAsync(cancellationToken);
 
