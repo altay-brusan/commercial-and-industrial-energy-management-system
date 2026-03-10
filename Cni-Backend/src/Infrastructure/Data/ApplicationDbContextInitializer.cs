@@ -1596,7 +1596,7 @@ public class ApplicationDbContextInitializer
                         IsActive = true,
                         IsRead = false,
                         IsProcessed = false,
-                        Details = "Cell voltage reached 4.35V (threshold: 4.20V). Pack 3 in Rack 1 affected.",
+                        Details = "{\"message\":\"Cell voltage reached 4.35V (threshold: 4.20V). Pack 3 in Rack 1 affected.\",\"value\":4.35,\"threshold\":4.20}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         Created = now.AddHours(-2)
@@ -1615,7 +1615,7 @@ public class ApplicationDbContextInitializer
                         IsActive = true,
                         IsRead = true,
                         IsProcessed = false,
-                        Details = "Rack 2 temperature at 48°C (threshold: 45°C). Cooling system under investigation.",
+                        Details = "{\"message\":\"Rack 2 temperature at 48°C (threshold: 45°C). Cooling system under investigation.\",\"value\":48,\"threshold\":45}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         AcknowledgedById = adminUserId,
@@ -1635,7 +1635,7 @@ public class ApplicationDbContextInitializer
                         IsActive = true,
                         IsRead = false,
                         IsProcessed = false,
-                        Details = "State of charge dropped to 8%. Minimum threshold is 10%.",
+                        Details = "{\"message\":\"State of charge dropped to 8%. Minimum threshold is 10%.\",\"value\":8,\"threshold\":10}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         Created = now.AddHours(-1)
@@ -1653,7 +1653,7 @@ public class ApplicationDbContextInitializer
                         IsActive = true,
                         IsRead = true,
                         IsProcessed = true,
-                        Details = "Coolant level below minimum. Maintenance scheduled.",
+                        Details = "{\"message\":\"Coolant level below minimum. Maintenance scheduled.\"}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         AcknowledgedById = adminUserId,
@@ -1674,7 +1674,7 @@ public class ApplicationDbContextInitializer
                         IsActive = true,
                         IsRead = false,
                         IsProcessed = false,
-                        Details = "Lost communication with BMS on Rack 3. Last heartbeat 30 minutes ago.",
+                        Details = "{\"message\":\"Lost communication with BMS on Rack 3. Last heartbeat 30 minutes ago.\"}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         Created = now.AddMinutes(-30)
@@ -1700,7 +1700,7 @@ public class ApplicationDbContextInitializer
                         IsActive = false,
                         IsRead = true,
                         IsProcessed = true,
-                        Details = "Cell voltage warning on Pack 1, self-recovered after load balancing.",
+                        Details = "{\"message\":\"Cell voltage warning on Pack 1, self-recovered after load balancing.\"}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         AcknowledgedById = adminUserId,
@@ -1722,7 +1722,7 @@ public class ApplicationDbContextInitializer
                         IsActive = false,
                         IsRead = true,
                         IsProcessed = true,
-                        Details = "Under-temperature fault during cold snap. Heaters activated and recovered.",
+                        Details = "{\"message\":\"Under-temperature fault during cold snap. Heaters activated and recovered.\"}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         AcknowledgedById = adminUserId,
@@ -1744,7 +1744,7 @@ public class ApplicationDbContextInitializer
                         IsActive = false,
                         IsRead = true,
                         IsProcessed = true,
-                        Details = "Coolant pump failure. Replacement pump installed on-site.",
+                        Details = "{\"message\":\"Coolant pump failure. Replacement pump installed on-site.\"}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         AcknowledgedById = adminUserId,
@@ -1767,7 +1767,7 @@ public class ApplicationDbContextInitializer
                         IsActive = false,
                         IsRead = true,
                         IsProcessed = true,
-                        Details = "Contactor on Rack 2 failed to close. Manual reset resolved the issue.",
+                        Details = "{\"message\":\"Contactor on Rack 2 failed to close. Manual reset resolved the issue.\"}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "BESS_001",
                         AcknowledgedById = adminUserId,
@@ -1793,7 +1793,7 @@ public class ApplicationDbContextInitializer
                         IsActive = true,
                         IsRead = true,
                         IsProcessed = false,
-                        Details = "Grid voltage on Phase A at 253V (threshold: 250V). Inverter derated to 80%.",
+                        Details = "{\"message\":\"Grid voltage on Phase A at 253V (threshold: 250V). Inverter derated to 80%.\",\"value\":253,\"threshold\":250}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "INVERTER_001",
                         AcknowledgedById = adminUserId,
@@ -1814,7 +1814,7 @@ public class ApplicationDbContextInitializer
                         IsActive = false,
                         IsRead = true,
                         IsProcessed = true,
-                        Details = "Emergency stop triggered during routine maintenance. System restarted after inspection.",
+                        Details = "{\"message\":\"Emergency stop triggered during routine maintenance. System restarted after inspection.\"}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "INVERTER_001",
                         AcknowledgedById = adminUserId,
@@ -1837,7 +1837,7 @@ public class ApplicationDbContextInitializer
                         IsActive = false,
                         IsRead = true,
                         IsProcessed = true,
-                        Details = "Grid frequency dropped to 49.2Hz. Inverter disconnected and reconnected after frequency stabilized.",
+                        Details = "{\"message\":\"Grid frequency dropped to 49.2Hz. Inverter disconnected and reconnected after frequency stabilized.\",\"value\":49.2,\"threshold\":49.5}",
                         RtuSerialNumber = "RTU-DEMO-001",
                         DeviceName = "INVERTER_001",
                         AcknowledgedById = adminUserId,
@@ -1861,7 +1861,7 @@ public class ApplicationDbContextInitializer
 
             // 1. Critical — linked to the BMS communication alarm
             var bmsAlarm = activeAlarms.FirstOrDefault(a => a.DeviceName == "BESS_001"
-                && a.Details != null && a.Details.Contains("BMS"));
+                && a.Details != null && a.Details.Contains("BMS", StringComparison.OrdinalIgnoreCase));
             maintenanceTasks.Add(new MaintenanceTask
             {
                 Title = "Investigate BMS communication failure on Rack 3",
