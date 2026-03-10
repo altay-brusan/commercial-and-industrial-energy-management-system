@@ -27,6 +27,11 @@ public class MarketOperatorConfiguration : IEntityTypeConfiguration<MarketOperat
         builder.Property(p => p.ApiKey)
             .HasMaxLength(500);
 
+        builder.Property(p => p.PriceUnit)
+            .HasMaxLength(20)
+            .IsRequired()
+            .HasDefaultValue("MWh");
+
         // JSON columns for PostgreSQL - need explicit conversion for List<T> types
         builder.Property(p => p.SupportedResolutions)
             .HasColumnType("jsonb")

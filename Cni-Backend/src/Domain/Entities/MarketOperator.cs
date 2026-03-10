@@ -40,6 +40,11 @@ public class MarketOperator : BaseAuditableEntity
     public List<string> AreaCodes { get; set; } = new();
 
     /// <summary>
+    /// The energy unit that prices are provided in (e.g., "MWh", "kWh")
+    /// </summary>
+    public string PriceUnit { get; set; } = "MWh";
+
+    /// <summary>
     /// Whether this Market Operator is currently active and available for use
     /// </summary>
     public bool IsActive { get; set; } = true;
