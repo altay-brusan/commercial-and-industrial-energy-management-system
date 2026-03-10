@@ -114,6 +114,7 @@ Stores the price data sources (ENTSO-E, EPIAS) including API credentials.
 | ApiKey | string(500) | API key or credentials (EPIAS stores `username:password`) |
 | SupportedResolutions | List\<int\> (JSONB) | Supported time intervals in minutes (e.g., [15, 60]) |
 | AreaCodes | List\<string\> (JSONB) | Available bidding zone codes |
+| PriceUnit | string(20) | Unit of fetched prices: `MWh` (default), `kWh`, or `GWh`. Used for conversion when publishing to RTUs. |
 | IsActive | bool | Whether this operator is active |
 
 > **Note:** This table currently stores raw credentials. This should be revisited in the future to use encrypted storage or a secrets manager.
@@ -304,16 +305,23 @@ Fetches day-ahead prices **directly from the market operator API** in real time.
 
 ## Data Flow Summary
 
-### Price Collection (Automated)
+### Price Collection & RTU Dispatch (Automated)
 
 ```
 Hangfire (00:01 & 13:01 UTC)
-  → EnergyPriceFetchWorker
+  → EnergyPriceFetchWorker.FetchDailyPrices()
     → For each unique (MarketOperator, AreaCode):
         → ENTSO-E API (XML) or EPIAS API (JSON)
         → Store net prices in DayAheadNetEnergyPriceHistories
           (deduplicated by MarketOperatorId + Country + TimestampUtc)
+        → PublishPricesToRtusAsync():
+            → Query: FirmMarketOperator → Firm → Facility → RTU
+            → Build payload (MWh → kWh conversion via MarketOperator.PriceUnit)
+            → MqttPublisherService.PublishToManyAsync()
+            → Topic: cni/{facilityId}/{rtuId}/command (QoS 1)
 ```
+
+**Error handling:** If the API fetch or DB save fails, Hangfire retries the entire job. If MQTT publishing fails, it is logged but does **not** trigger a retry (prices are already stored). Individual RTU publish failures do not affect other RTUs.
 
 ### Price Query from Database
 
