@@ -1046,6 +1046,27 @@ public class ApplicationDbContextInitializer
             _context.Facilities.Add(pemFacility);
             await _context.SaveChangesAsync();
 
+            // Assign Pem Villa firm/facility to admin users
+            var pemAdminUsers = await _userManager.GetUsersInRoleAsync(Roles.Administrator);
+            foreach (var adminUser in pemAdminUsers)
+            {
+                var exists = await _context.UserFirmFacilities.IgnoreQueryFilters()
+                    .AnyAsync(uff => uff.UserId == adminUser.Id && uff.FirmId == pemFirm.Id && uff.FacilityId == pemFacility.Id);
+
+                if (!exists)
+                {
+                    _context.UserFirmFacilities.Add(new UserFirmFacility
+                    {
+                        TenantId = tenantId,
+                        UserId = adminUser.Id,
+                        FirmId = pemFirm.Id,
+                        FacilityId = pemFacility.Id,
+                        Created = DateTime.UtcNow
+                    });
+                }
+            }
+            await _context.SaveChangesAsync();
+
             // Create virtual RTU for Huawei station
             var pemRtu = new Rtu
             {
