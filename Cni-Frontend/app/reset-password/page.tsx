@@ -47,13 +47,8 @@ function ResetPasswordForm() {
       setSubmitted(true)
     } catch (error) {
       if (error instanceof ApiError) {
-        if (error.fieldErrors) {
-          for (const [field, messages] of Object.entries(error.fieldErrors)) {
-            const formField = field as keyof ResetPasswordFormValues
-            if (formField in form.getValues()) {
-              form.setError(formField, { message: messages[0] })
-            }
-          }
+        if (error.details && error.details.length > 0) {
+          toast.error(error.details[0])
         } else {
           toast.error(error.message)
         }

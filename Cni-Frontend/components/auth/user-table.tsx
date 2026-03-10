@@ -17,6 +17,7 @@ import { UserStatusBadge } from "./user-status-badge";
 import { cn } from "@/lib/utils";
 import { roles } from "@/lib/auth/mock-data";
 import type { UserAccount } from "@/lib/auth/user-types";
+import { getFullName } from "@/lib/auth/user-types";
 
 interface UserTableProps {
   users: UserAccount[];
@@ -85,7 +86,7 @@ export function UserTable({ users, selectedUserId, onUserSelect }: UserTableProp
 
       switch (sortField) {
         case "name":
-          comparison = a.name.localeCompare(b.name);
+          comparison = getFullName(a).localeCompare(getFullName(b));
           break;
         case "email":
           comparison = a.email.localeCompare(b.email);
@@ -173,6 +174,7 @@ export function UserTable({ users, selectedUserId, onUserSelect }: UserTableProp
       <TableBody>
         {sortedUsers.map((user) => {
           const roleNames = getRoleNames(user.roleIds);
+          const fullName = getFullName(user);
 
           return (
             <TableRow
@@ -190,7 +192,7 @@ export function UserTable({ users, selectedUserId, onUserSelect }: UserTableProp
                       {user.initials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium">{user.name}</span>
+                  <span className="text-sm font-medium">{fullName}</span>
                 </div>
               </TableCell>
               <TableCell className="py-3">

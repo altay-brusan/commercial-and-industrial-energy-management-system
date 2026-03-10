@@ -29,7 +29,8 @@ export function UserFormModal({
   onSubmit,
   editUser,
 }: UserFormModalProps) {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [department, setDepartment] = useState("");
   const [phone, setPhone] = useState("");
@@ -39,14 +40,16 @@ export function UserFormModal({
   useEffect(() => {
     if (open) {
       if (editUser) {
-        setName(editUser.name);
+        setFirstName(editUser.firstName);
+        setLastName(editUser.lastName);
         setEmail(editUser.email);
         setDepartment(editUser.department || "");
         setPhone(editUser.phone || "");
         setIsActive(editUser.isActive);
         setRoleIds([...editUser.roleIds]);
       } else {
-        setName("");
+        setFirstName("");
+        setLastName("");
         setEmail("");
         setDepartment("");
         setPhone("");
@@ -57,10 +60,11 @@ export function UserFormModal({
   }, [open, editUser]);
 
   const handleSubmit = () => {
-    if (!name.trim() || !email.trim()) return;
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) return;
 
     onSubmit({
-      name: name.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
       email: email.trim(),
       department: department.trim(),
       phone: phone.trim(),
@@ -68,7 +72,8 @@ export function UserFormModal({
       roleIds,
     });
 
-    setName("");
+    setFirstName("");
+    setLastName("");
     setEmail("");
     setDepartment("");
     setPhone("");
@@ -85,7 +90,10 @@ export function UserFormModal({
     );
   };
 
-  const isFormValid = name.trim().length > 0 && email.trim().length > 0;
+  const isFormValid =
+    firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    email.trim().length > 0;
 
   const activeRoles = roles.filter((r) => r.isActive);
 
@@ -99,16 +107,29 @@ export function UserFormModal({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="user-name">
-              Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="user-name"
-              placeholder="Enter full name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label htmlFor="user-first-name">
+                First Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="user-first-name"
+                placeholder="First name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="user-last-name">
+                Last Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="user-last-name"
+                placeholder="Last name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="grid gap-2">

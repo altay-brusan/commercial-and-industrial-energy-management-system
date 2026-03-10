@@ -8,6 +8,8 @@ export interface AuthUser {
   permissions: string[];
   tenantId: string;
   tenantName: string;
+  lastLoginAt?: string;
+  createdAt?: string;
 }
 
 // API request types
@@ -30,16 +32,33 @@ export interface ResetPasswordRequest {
 // API response types
 export interface LoginResponse {
   accessToken: string;
+  tokenType: string;
+  expiresIn: number;
   user: AuthUser;
 }
 
 export interface RefreshTokenResponse {
   accessToken: string;
+  tokenType: string;
+  expiresIn: number;
 }
 
 export interface ApiErrorResponse {
-  message: string;
-  errors?: Record<string, string[]>;
+  error: {
+    code: string;
+    message: string;
+    details?: string[];
+    retryAfter?: number;
+  };
+}
+
+// Pagination
+export interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 // Feature & Permission types
@@ -87,4 +106,15 @@ export interface RoleFormData {
   name: string;
   description: string;
   isActive: boolean;
+}
+
+// UserInfo response from /api/Users/userinfo
+export interface UserInfoResponse {
+  email: string;
+  name: string;
+  surname: string;
+  roles: string[];
+  permissions: string[];
+  planFeatures: string[];
+  tenants: unknown[];
 }

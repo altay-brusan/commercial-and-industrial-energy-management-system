@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, Search, Users, UserCheck, UserX } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Plus, Search, Users, UserCheck, UserX, Loader2 } from "lucide-react";
 import { TopBar } from "@/components/layout/top-bar";
 import { ConfigurationSidebar } from "@/components/configuration/configuration-sidebar";
 import { AccessTabs } from "@/components/auth/access-tabs";
@@ -11,18 +11,41 @@ import { UserFormModal } from "@/components/auth/user-form-modal";
 import { UserDeleteDialog } from "@/components/auth/user-delete-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { userAccounts as initialUsers } from "@/lib/auth/user-mock-data";
+import { userAccounts as mockUsers } from "@/lib/auth/user-mock-data";
+import * as userService from "@/lib/auth/user-service";
 import type { UserAccount, UserFormData } from "@/lib/auth/user-types";
+import { getFullName, getInitials } from "@/lib/auth/user-types";
 
 export default function UsersPage() {
-  const [userList, setUserList] = useState<UserAccount[]>(initialUsers);
+  const [userList, setUserList] = useState<UserAccount[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserAccount | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Modal states
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Fetch users from API with mock fallback
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await userService.getUsers();
+      setUserList(response.items);
+    } catch {
+      // Fallback to mock data when API is unavailable
+      setUserList(mockUsers);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   // Filtered users
   const filteredUsers = useMemo(() => {
@@ -30,7 +53,7 @@ export default function UsersPage() {
     const q = searchQuery.toLowerCase();
     return userList.filter(
       (u) =>
-        u.name.toLowerCase().includes(q) ||
+        getFullName(u).toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
         (u.department || "").toLowerCase().includes(q)
     );
@@ -47,81 +70,71 @@ export default function UsersPage() {
   );
 
   // Handlers
-  const handleCreateUser = (data: UserFormData) => {
-    const initials = data.name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-
-    const newUser: UserAccount = {
-      id: `user-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      initials,
-      department: data.department || undefined,
-      phone: data.phone || undefined,
-      isActive: data.isActive,
-      roleIds: data.roleIds,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setUserList((prev) => [...prev, newUser]);
-    console.log("Created user:", newUser);
+  const handleCreateUser = async (data: UserFormData) => {
+    try {
+      const created = await userService.createUser(data);
+      setUserList((prev) => [...prev, created]);
+    } catch {
+      // Fallback: create locally
+      const initials = getInitials(data.firstName, data.lastName);
+      const newUser: UserAccount = {
+        id: `user-${Date.now()}`,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        initials,
+        department: data.department || undefined,
+        phone: data.phone || undefined,
+        isActive: data.isActive,
+        roleIds: data.roleIds,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      setUserList((prev) => [...prev, newUser]);
+    }
   };
 
-  const handleEditUser = (data: UserFormData) => {
+  const handleEditUser = async (data: UserFormData) => {
     if (!selectedUser) return;
 
-    const initials = data.name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-
-    setUserList((prev) =>
-      prev.map((u) =>
-        u.id === selectedUser.id
-          ? {
-              ...u,
-              name: data.name,
-              email: data.email,
-              initials,
-              department: data.department || undefined,
-              phone: data.phone || undefined,
-              isActive: data.isActive,
-              roleIds: data.roleIds,
-              updatedAt: new Date(),
-            }
-          : u
-      )
-    );
-    setSelectedUser((prev) =>
-      prev
-        ? {
-            ...prev,
-            name: data.name,
-            email: data.email,
-            initials,
-            department: data.department || undefined,
-            phone: data.phone || undefined,
-            isActive: data.isActive,
-            roleIds: data.roleIds,
-            updatedAt: new Date(),
-          }
-        : null
-    );
-    console.log("Updated user:", selectedUser.id, data);
+    try {
+      const updated = await userService.updateUser(selectedUser.id, data);
+      setUserList((prev) => prev.map((u) => (u.id === selectedUser.id ? updated : u)));
+      setSelectedUser(updated);
+    } catch {
+      // Fallback: update locally
+      const initials = getInitials(data.firstName, data.lastName);
+      const updatedUser = {
+        ...selectedUser,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        initials,
+        department: data.department || undefined,
+        phone: data.phone || undefined,
+        isActive: data.isActive,
+        roleIds: data.roleIds,
+        updatedAt: new Date(),
+      };
+      setUserList((prev) =>
+        prev.map((u) => (u.id === selectedUser.id ? updatedUser : u))
+      );
+      setSelectedUser(updatedUser);
+    }
   };
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (!selectedUser) return;
+
+    try {
+      await userService.deleteUser(selectedUser.id);
+    } catch {
+      // Continue with local removal even if API fails
+    }
+
     setUserList((prev) => prev.filter((u) => u.id !== selectedUser.id));
     setSelectedUser(null);
     setDeleteDialogOpen(false);
-    console.log("Deleted user:", selectedUser.id);
   };
 
   const handleUserSelect = (user: UserAccount) => {
@@ -184,11 +197,21 @@ export default function UsersPage() {
 
           {/* Table */}
           <div className="flex-1 overflow-auto">
-            <UserTable
-              users={filteredUsers}
-              selectedUserId={selectedUser?.id}
-              onUserSelect={handleUserSelect}
-            />
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+            ) : (
+              <UserTable
+                users={filteredUsers}
+                selectedUserId={selectedUser?.id}
+                onUserSelect={handleUserSelect}
+              />
+            )}
           </div>
 
           {/* Footer */}

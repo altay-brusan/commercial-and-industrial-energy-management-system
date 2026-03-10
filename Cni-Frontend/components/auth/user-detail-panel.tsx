@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserStatusBadge } from "./user-status-badge";
 import { roles } from "@/lib/auth/mock-data";
 import type { UserAccount } from "@/lib/auth/user-types";
+import { getFullName } from "@/lib/auth/user-types";
 
 interface UserDetailPanelProps {
   user: UserAccount;
@@ -24,12 +25,13 @@ export function UserDetailPanel({
   onDelete,
 }: UserDetailPanelProps) {
   const userRoles = roles.filter((r) => user.roleIds.includes(r.id));
+  const fullName = getFullName(user);
 
   return (
     <aside className="w-[420px] shrink-0 border-l border-border bg-background flex flex-col overflow-hidden">
       {/* Header */}
       <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border">
-        <h2 className="text-sm font-semibold truncate">{user.name}</h2>
+        <h2 className="text-sm font-semibold truncate">{fullName}</h2>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -44,7 +46,7 @@ export function UserDetailPanel({
               <AvatarFallback className="text-base">{user.initials}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-sm font-medium">{fullName}</p>
               <UserStatusBadge isActive={user.isActive} />
             </div>
           </div>

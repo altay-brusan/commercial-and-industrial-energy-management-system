@@ -5,17 +5,23 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 export class ApiError extends Error {
   status: number;
-  fieldErrors?: Record<string, string[]>;
+  code: string;
+  details?: string[];
+  retryAfter?: number;
 
   constructor(
     status: number,
     message: string,
-    fieldErrors?: Record<string, string[]>
+    code: string = "UNKNOWN_ERROR",
+    details?: string[],
+    retryAfter?: number
   ) {
     super(message);
     this.name = "ApiError";
     this.status = status;
-    this.fieldErrors = fieldErrors;
+    this.code = code;
+    this.details = details;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -42,13 +48,24 @@ async function refreshAccessToken(): Promise<string> {
 
   refreshPromise = (async () => {
     try {
+      const expiredToken = getAccessToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      // Send expired token in Authorization header as required by backend
+      if (expiredToken) {
+        headers["Authorization"] = `Bearer ${expiredToken}`;
+      }
+
       const res = await fetch(`${API_BASE_URL}${AUTH_ENDPOINTS.REFRESH_TOKEN}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: "include",
       });
 
       if (!res.ok) {
-        throw new ApiError(res.status, "Session expired");
+        throw new ApiError(res.status, "Session expired", "SESSION_EXPIRED");
       }
 
       const data: RefreshTokenResponse = await res.json();
@@ -82,6 +99,7 @@ export async function apiClient<T>(
   let res = await fetch(`${base}${endpoint}`, {
     ...options,
     headers,
+    credentials: "include",
   });
 
   // On 401, attempt token refresh and retry once
@@ -92,13 +110,14 @@ export async function apiClient<T>(
       res = await fetch(`${base}${endpoint}`, {
         ...options,
         headers,
+        credentials: "include",
       });
     } catch {
       setAccessToken(null);
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
-      throw new ApiError(401, "Session expired. Please sign in again.");
+      throw new ApiError(401, "Session expired. Please sign in again.", "SESSION_EXPIRED");
     }
   }
 
@@ -111,8 +130,10 @@ export async function apiClient<T>(
     }
     throw new ApiError(
       res.status,
-      errorData?.message ?? `Request failed (${res.status})`,
-      errorData?.errors
+      errorData?.error?.message ?? `Request failed (${res.status})`,
+      errorData?.error?.code ?? "UNKNOWN_ERROR",
+      errorData?.error?.details,
+      errorData?.error?.retryAfter
     );
   }
 

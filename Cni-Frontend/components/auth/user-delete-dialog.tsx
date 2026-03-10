@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { UserAccount } from "@/lib/auth/user-types";
+import { getFullName } from "@/lib/auth/user-types";
 
 interface UserDeleteDialogProps {
   open: boolean;
@@ -33,7 +34,7 @@ export function UserDeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete User</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the user &ldquo;{user.name}&rdquo;?
+            Are you sure you want to delete the user &ldquo;{getFullName(user)}&rdquo;?
             This will remove the user from {user.roleIds.length} assigned role(s)
             and revoke all access. This action cannot be undone.
           </AlertDialogDescription>
