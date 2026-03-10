@@ -1568,7 +1568,9 @@ public class ApplicationDbContextInitializer
 
             // Look up alarm types
             var allAlarmTypes = await _context.DeviceAlarmTypes.ToListAsync();
-            var alarmTypeByCode = allAlarmTypes.ToDictionary(at => at.Code, at => at);
+            var alarmTypeByCode = allAlarmTypes
+                .GroupBy(at => at.Code)
+                .ToDictionary(g => g.Key, g => g.First());
 
             // Find admin user for assignments
             var adminUser = await _userManager.FindByEmailAsync("administrator@localhost");
