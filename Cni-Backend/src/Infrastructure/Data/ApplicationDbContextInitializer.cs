@@ -1564,7 +1564,9 @@ public class ApplicationDbContextInitializer
             var demoDevices = await _context.Devices.IgnoreQueryFilters()
                 .Where(d => d.Rtu != null && d.Rtu.FacilityId == facilitiyId)
                 .ToListAsync();
-            var deviceByName = demoDevices.ToDictionary(d => d.Name!, d => d);
+            var deviceByName = demoDevices
+                .GroupBy(d => d.Name!)
+                .ToDictionary(g => g.Key, g => g.First());
 
             // Look up alarm types
             var allAlarmTypes = await _context.DeviceAlarmTypes.ToListAsync();
