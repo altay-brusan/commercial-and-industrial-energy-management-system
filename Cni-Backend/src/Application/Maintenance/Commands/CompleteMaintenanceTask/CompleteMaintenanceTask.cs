@@ -51,8 +51,9 @@ public class CompleteMaintenanceTaskCommandHandler : IRequestHandler<CompleteMai
         task.CompletedAt = DateTimeOffset.UtcNow;
         task.CompletedById = _user.Id;
 
-        task.StatusChanges.Add(new TaskStatusChange
+        _context.TaskStatusChanges.Add(new TaskStatusChange
         {
+            MaintenanceTaskId = task.Id,
             FromStatus = previousStatus,
             ToStatus = TaskStatuses.Completed,
             ChangedById = _user.Id!,

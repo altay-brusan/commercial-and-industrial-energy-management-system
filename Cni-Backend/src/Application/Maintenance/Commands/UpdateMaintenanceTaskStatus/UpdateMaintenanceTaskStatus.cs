@@ -48,8 +48,9 @@ public class UpdateMaintenanceTaskStatusCommandHandler : IRequestHandler<UpdateM
         var previousStatus = task.Status;
         task.Status = request.NewStatus;
 
-        task.StatusChanges.Add(new TaskStatusChange
+        _context.TaskStatusChanges.Add(new TaskStatusChange
         {
+            MaintenanceTaskId = task.Id,
             FromStatus = previousStatus,
             ToStatus = request.NewStatus,
             ChangedById = _user.Id!,

@@ -45,8 +45,9 @@ public class CloseMaintenanceTaskCommandHandler : IRequestHandler<CloseMaintenan
         task.ClosedAt = DateTimeOffset.UtcNow;
         task.ClosedById = _user.Id;
 
-        task.StatusChanges.Add(new TaskStatusChange
+        _context.TaskStatusChanges.Add(new TaskStatusChange
         {
+            MaintenanceTaskId = task.Id,
             FromStatus = previousStatus,
             ToStatus = TaskStatuses.Closed,
             ChangedById = _user.Id!,
