@@ -73,9 +73,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace("/login");
   }, [router]);
 
-  // While loading on protected routes, render nothing to prevent flash
+  // While loading or unauthenticated on protected routes, render nothing to prevent flash
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
-  if (isLoading && !isPublicRoute) {
+  if (!isPublicRoute && (isLoading || !user)) {
     return null;
   }
 
