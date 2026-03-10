@@ -1552,6 +1552,469 @@ public class ApplicationDbContextInitializer
         }
 
         #endregion
+
+        #region DemoAlarmsAndMaintenanceTasks
+
+        // Seed demo alarms and maintenance tasks for "Demo Solar Park Amsterdam"
+        if (!await _context.DeviceAlarms.IgnoreQueryFilters().AnyAsync(a => a.DeviceName == "BESS_001" || a.DeviceName == "PV_001"))
+        {
+            _logger.LogInformation("Seeding demo alarms and maintenance tasks for Demo Solar Park Amsterdam...");
+
+            // Look up devices by name (they were created earlier in this method)
+            var demoDevices = await _context.Devices.IgnoreQueryFilters()
+                .Where(d => d.Rtu != null && d.Rtu.FacilityId == facilitiyId)
+                .ToListAsync();
+            var deviceByName = demoDevices.ToDictionary(d => d.Name!, d => d);
+
+            // Look up alarm types
+            var allAlarmTypes = await _context.DeviceAlarmTypes.ToListAsync();
+            var alarmTypeByCode = allAlarmTypes
+                .GroupBy(at => at.Code)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // Find admin user for assignments
+            var adminUser = await _userManager.FindByEmailAsync("administrator@localhost");
+            var adminUserId = adminUser?.Id ?? "";
+
+            var now = DateTimeOffset.UtcNow;
+
+            // ── Active Alarms (currently firing) ──
+
+            var activeAlarms = new List<DeviceAlarm>();
+
+            if (deviceByName.TryGetValue("BESS_001", out var bessDevice))
+            {
+                // Critical: Battery cell over-voltage fault — active, unacknowledged
+                if (alarmTypeByCode.TryGetValue("BATT_CELL_OV_FAULT", out var cellOvFault))
+                {
+                    activeAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessDevice.Id,
+                        DeviceAlarmTypeId = cellOvFault.Id,
+                        Path = "Rack/1/Pack/3",
+                        OccurredAt = now.AddHours(-2),
+                        IsActive = true,
+                        IsRead = false,
+                        IsProcessed = false,
+                        Details = "{\"message\":\"Cell voltage reached 4.35V (threshold: 4.20V). Pack 3 in Rack 1 affected.\",\"value\":4.35,\"threshold\":4.20}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        Created = now.AddHours(-2)
+                    });
+                }
+
+                // Major: Battery over-temperature — active, acknowledged
+                if (alarmTypeByCode.TryGetValue("BATT_OT_FAULT", out var otFault))
+                {
+                    activeAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessDevice.Id,
+                        DeviceAlarmTypeId = otFault.Id,
+                        Path = "Rack/2",
+                        OccurredAt = now.AddHours(-5),
+                        IsActive = true,
+                        IsRead = true,
+                        IsProcessed = false,
+                        Details = "{\"message\":\"Rack 2 temperature at 48°C (threshold: 45°C). Cooling system under investigation.\",\"value\":48,\"threshold\":45}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddHours(-4),
+                        Created = now.AddHours(-5)
+                    });
+                }
+
+                // Warning: SOC low — active
+                if (alarmTypeByCode.TryGetValue("BATT_SOC_LOW_FAULT", out var socLow))
+                {
+                    activeAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessDevice.Id,
+                        DeviceAlarmTypeId = socLow.Id,
+                        OccurredAt = now.AddHours(-1),
+                        IsActive = true,
+                        IsRead = false,
+                        IsProcessed = false,
+                        Details = "{\"message\":\"State of charge dropped to 8%. Minimum threshold is 10%.\",\"value\":8,\"threshold\":10}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        Created = now.AddHours(-1)
+                    });
+                }
+
+                // Warning: Coolant shortage — active
+                if (alarmTypeByCode.TryGetValue("TMS_COOLANT_SHORT", out var coolant))
+                {
+                    activeAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessDevice.Id,
+                        DeviceAlarmTypeId = coolant.Id,
+                        OccurredAt = now.AddDays(-1),
+                        IsActive = true,
+                        IsRead = true,
+                        IsProcessed = true,
+                        Details = "{\"message\":\"Coolant level below minimum. Maintenance scheduled.\"}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddDays(-1).AddHours(1),
+                        Created = now.AddDays(-1)
+                    });
+                }
+
+                // Critical: BMS communication failure — active
+                if (alarmTypeByCode.TryGetValue("BATT_BMS_COMM", out var bmsComm))
+                {
+                    activeAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessDevice.Id,
+                        DeviceAlarmTypeId = bmsComm.Id,
+                        Path = "Rack/3",
+                        OccurredAt = now.AddMinutes(-30),
+                        IsActive = true,
+                        IsRead = false,
+                        IsProcessed = false,
+                        Details = "{\"message\":\"Lost communication with BMS on Rack 3. Last heartbeat 30 minutes ago.\"}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        Created = now.AddMinutes(-30)
+                    });
+                }
+            }
+
+            // ── Recovered Alarms (historical, resolved) ──
+
+            var recoveredAlarms = new List<DeviceAlarm>();
+
+            if (deviceByName.TryGetValue("BESS_001", out var bessForRecovered))
+            {
+                if (alarmTypeByCode.TryGetValue("BATT_CELL_OV_WARN", out var cellOvWarn))
+                {
+                    recoveredAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessForRecovered.Id,
+                        DeviceAlarmTypeId = cellOvWarn.Id,
+                        Path = "Rack/1/Pack/1",
+                        OccurredAt = now.AddDays(-3),
+                        RecoveredAt = now.AddDays(-3).AddHours(2),
+                        IsActive = false,
+                        IsRead = true,
+                        IsProcessed = true,
+                        Details = "{\"message\":\"Cell voltage warning on Pack 1, self-recovered after load balancing.\"}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddDays(-3).AddMinutes(15),
+                        ResolvedById = adminUserId,
+                        ResolvedAt = now.AddDays(-3).AddHours(2),
+                        Created = now.AddDays(-3)
+                    });
+                }
+
+                if (alarmTypeByCode.TryGetValue("BATT_UT_FAULT", out var utFault))
+                {
+                    recoveredAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessForRecovered.Id,
+                        DeviceAlarmTypeId = utFault.Id,
+                        OccurredAt = now.AddDays(-7),
+                        RecoveredAt = now.AddDays(-7).AddHours(4),
+                        IsActive = false,
+                        IsRead = true,
+                        IsProcessed = true,
+                        Details = "{\"message\":\"Under-temperature fault during cold snap. Heaters activated and recovered.\"}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddDays(-7).AddMinutes(10),
+                        ResolvedById = adminUserId,
+                        ResolvedAt = now.AddDays(-7).AddHours(4),
+                        Created = now.AddDays(-7)
+                    });
+                }
+
+                if (alarmTypeByCode.TryGetValue("TMS_PUMP_FAULT", out var pumpFault))
+                {
+                    recoveredAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessForRecovered.Id,
+                        DeviceAlarmTypeId = pumpFault.Id,
+                        OccurredAt = now.AddDays(-14),
+                        RecoveredAt = now.AddDays(-12),
+                        IsActive = false,
+                        IsRead = true,
+                        IsProcessed = true,
+                        Details = "{\"message\":\"Coolant pump failure. Replacement pump installed on-site.\"}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddDays(-14).AddMinutes(5),
+                        ResolvedById = adminUserId,
+                        ResolvedAt = now.AddDays(-12),
+                        Created = now.AddDays(-14)
+                    });
+                }
+
+                if (alarmTypeByCode.TryGetValue("BATT_CONTACTOR", out var contactor))
+                {
+                    recoveredAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = bessForRecovered.Id,
+                        DeviceAlarmTypeId = contactor.Id,
+                        Path = "Rack/2",
+                        OccurredAt = now.AddDays(-5),
+                        RecoveredAt = now.AddDays(-5).AddHours(1),
+                        IsActive = false,
+                        IsRead = true,
+                        IsProcessed = true,
+                        Details = "{\"message\":\"Contactor on Rack 2 failed to close. Manual reset resolved the issue.\"}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "BESS_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddDays(-5).AddMinutes(20),
+                        ResolvedById = adminUserId,
+                        ResolvedAt = now.AddDays(-5).AddHours(1),
+                        Created = now.AddDays(-5)
+                    });
+                }
+            }
+
+            // PCS/Inverter alarms
+            if (deviceByName.TryGetValue("INVERTER_001", out var inverterDevice))
+            {
+                // Active: Grid over-voltage on phase A
+                if (alarmTypeByCode.TryGetValue("PCS_GRID_OV_A", out var gridOvA))
+                {
+                    activeAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = inverterDevice.Id,
+                        DeviceAlarmTypeId = gridOvA.Id,
+                        OccurredAt = now.AddHours(-3),
+                        IsActive = true,
+                        IsRead = true,
+                        IsProcessed = false,
+                        Details = "{\"message\":\"Grid voltage on Phase A at 253V (threshold: 250V). Inverter derated to 80%.\",\"value\":253,\"threshold\":250}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "INVERTER_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddHours(-2),
+                        Created = now.AddHours(-3)
+                    });
+                }
+
+                // Recovered: Emergency stop
+                if (alarmTypeByCode.TryGetValue("PCS_SYS_ESTOP", out var estop))
+                {
+                    recoveredAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = inverterDevice.Id,
+                        DeviceAlarmTypeId = estop.Id,
+                        OccurredAt = now.AddDays(-10),
+                        RecoveredAt = now.AddDays(-10).AddHours(6),
+                        IsActive = false,
+                        IsRead = true,
+                        IsProcessed = true,
+                        Details = "{\"message\":\"Emergency stop triggered during routine maintenance. System restarted after inspection.\"}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "INVERTER_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddDays(-10).AddMinutes(5),
+                        ResolvedById = adminUserId,
+                        ResolvedAt = now.AddDays(-10).AddHours(6),
+                        Created = now.AddDays(-10)
+                    });
+                }
+
+                // Recovered: Grid frequency fault
+                if (alarmTypeByCode.TryGetValue("PCS_GRID_FREQ", out var gridFreq))
+                {
+                    recoveredAlarms.Add(new DeviceAlarm
+                    {
+                        DeviceId = inverterDevice.Id,
+                        DeviceAlarmTypeId = gridFreq.Id,
+                        OccurredAt = now.AddDays(-2),
+                        RecoveredAt = now.AddDays(-2).AddMinutes(45),
+                        IsActive = false,
+                        IsRead = true,
+                        IsProcessed = true,
+                        Details = "{\"message\":\"Grid frequency dropped to 49.2Hz. Inverter disconnected and reconnected after frequency stabilized.\",\"value\":49.2,\"threshold\":49.5}",
+                        RtuSerialNumber = "RTU-DEMO-001",
+                        DeviceName = "INVERTER_001",
+                        AcknowledgedById = adminUserId,
+                        AcknowledgedAt = now.AddDays(-2).AddMinutes(10),
+                        ResolvedById = adminUserId,
+                        ResolvedAt = now.AddDays(-2).AddMinutes(45),
+                        Created = now.AddDays(-2)
+                    });
+                }
+            }
+
+            var allAlarms = activeAlarms.Concat(recoveredAlarms).ToList();
+            _context.DeviceAlarms.AddRange(allAlarms);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} demo alarms ({Active} active, {Recovered} recovered)",
+                allAlarms.Count, activeAlarms.Count, recoveredAlarms.Count);
+
+            // ── Maintenance Tasks ──
+
+            var maintenanceTasks = new List<MaintenanceTask>();
+
+            // 1. Critical — linked to the BMS communication alarm
+            var bmsAlarm = activeAlarms.FirstOrDefault(a => a.DeviceName == "BESS_001"
+                && a.Details != null && a.Details.Contains("BMS", StringComparison.OrdinalIgnoreCase));
+            maintenanceTasks.Add(new MaintenanceTask
+            {
+                Title = "Investigate BMS communication failure on Rack 3",
+                Description = "BMS on Rack 3 stopped responding. Check CAN bus wiring, BMS controller board, and communication module. Restart BMS if wiring is intact.",
+                Status = TaskStatuses.InProgress,
+                Priority = TaskPriorities.Critical,
+                AssignedToId = adminUserId,
+                AssignedById = adminUserId,
+                DueDate = now.AddHours(4),
+                FacilityId = facilitiyId,
+                DeviceId = bessDevice?.Id,
+                DeviceAlarmId = bmsAlarm?.Id,
+                Created = now.AddMinutes(-25)
+            });
+
+            // 2. High — coolant system maintenance (linked to coolant alarm)
+            var coolantAlarm = activeAlarms.FirstOrDefault(a => a.Details != null && a.Details.Contains("Coolant"));
+            maintenanceTasks.Add(new MaintenanceTask
+            {
+                Title = "Refill coolant and inspect TMS loop",
+                Description = "Coolant level is below minimum. Refill with approved glycol mixture. Inspect all hose connections, pump seals, and radiator for leaks.",
+                Status = TaskStatuses.Scheduled,
+                Priority = TaskPriorities.High,
+                AssignedToId = adminUserId,
+                AssignedById = adminUserId,
+                DueDate = now.AddDays(1),
+                FacilityId = facilitiyId,
+                DeviceId = bessDevice?.Id,
+                DeviceAlarmId = coolantAlarm?.Id,
+                Created = now.AddDays(-1).AddHours(2)
+            });
+
+            // 3. Medium — routine inverter inspection
+            maintenanceTasks.Add(new MaintenanceTask
+            {
+                Title = "Quarterly inverter inspection — SMA Sunny Tripower",
+                Description = "Perform quarterly maintenance: check AC/DC connections torque, clean dust filters, verify fan operation, inspect surge protection devices, and review error logs.",
+                Status = TaskStatuses.Pending,
+                Priority = TaskPriorities.Medium,
+                AssignedToId = adminUserId,
+                AssignedById = adminUserId,
+                DueDate = now.AddDays(7),
+                FacilityId = facilitiyId,
+                DeviceId = inverterDevice?.Id,
+                Created = now.AddDays(-2)
+            });
+
+            // 4. Low — solar panel cleaning
+            maintenanceTasks.Add(new MaintenanceTask
+            {
+                Title = "Solar panel array cleaning — PV_001",
+                Description = "Scheduled cleaning of solar panel array. Use deionized water and soft brushes. Check for micro-cracks and hotspots with thermal camera.",
+                Status = TaskStatuses.Scheduled,
+                Priority = TaskPriorities.Low,
+                AssignedToId = adminUserId,
+                AssignedById = adminUserId,
+                DueDate = now.AddDays(14),
+                FacilityId = facilitiyId,
+                DeviceId = deviceByName.GetValueOrDefault("PV_001")?.Id,
+                Created = now.AddDays(-5)
+            });
+
+            // 5. Completed — pump replacement (linked to recovered pump alarm)
+            var pumpAlarm = recoveredAlarms.FirstOrDefault(a => a.Details != null && a.Details.Contains("pump"));
+            maintenanceTasks.Add(new MaintenanceTask
+            {
+                Title = "Replace failed coolant pump",
+                Description = "Primary coolant pump seized. Replace with spare unit from warehouse.",
+                Status = TaskStatuses.Completed,
+                Priority = TaskPriorities.Critical,
+                AssignedToId = adminUserId,
+                AssignedById = adminUserId,
+                DueDate = now.AddDays(-13),
+                FacilityId = facilitiyId,
+                DeviceId = bessDevice?.Id,
+                DeviceAlarmId = pumpAlarm?.Id,
+                Resolution = "Replaced pump with Grundfos MAGNA3 unit. System tested and running normally.",
+                RootCause = "Bearing failure due to coolant contamination. Coolant filter was clogged.",
+                LaborHours = 6.5m,
+                PartsUsed = "Grundfos MAGNA3 40-120F (1x), coolant filter (1x), glycol coolant 20L",
+                Recommendations = "Add coolant filter inspection to monthly checklist. Consider upgrading to stainless steel impeller pump.",
+                CompletedAt = now.AddDays(-12),
+                CompletedById = adminUserId,
+                Created = now.AddDays(-14)
+            });
+
+            // 6. Closed — false alarm investigation
+            maintenanceTasks.Add(new MaintenanceTask
+            {
+                Title = "Investigate false contactor alarm — Rack 2",
+                Description = "Contactor alarm triggered but no physical fault found. Investigate sensor and wiring.",
+                Status = TaskStatuses.Closed,
+                Priority = TaskPriorities.Medium,
+                AssignedToId = adminUserId,
+                AssignedById = adminUserId,
+                DueDate = now.AddDays(-4),
+                FacilityId = facilitiyId,
+                DeviceId = bessDevice?.Id,
+                Resolution = "Loose connector on contactor feedback sensor. Re-crimped and tested.",
+                RootCause = "Vibration from adjacent HVAC unit loosened the feedback connector over time.",
+                LaborHours = 2.0m,
+                PartsUsed = "Crimp connectors (2x)",
+                CompletedAt = now.AddDays(-4).AddHours(3),
+                CompletedById = adminUserId,
+                CloseReason = "Resolved",
+                CloseExplanation = "Root cause identified and fixed. Added vibration dampening pad between HVAC mount and cable tray.",
+                ClosedAt = now.AddDays(-4).AddHours(4),
+                ClosedById = adminUserId,
+                Created = now.AddDays(-5)
+            });
+
+            // 7. Overdue — smart meter calibration
+            maintenanceTasks.Add(new MaintenanceTask
+            {
+                Title = "Annual smart meter calibration — SM_001",
+                Description = "Perform annual calibration of Schneider PM5560. Compare readings against reference meter and adjust CT ratios if needed.",
+                Status = TaskStatuses.Overdue,
+                Priority = TaskPriorities.Medium,
+                AssignedToId = adminUserId,
+                AssignedById = adminUserId,
+                DueDate = now.AddDays(-3),
+                FacilityId = facilitiyId,
+                DeviceId = deviceByName.GetValueOrDefault("SM_001")?.Id,
+                Created = now.AddDays(-10)
+            });
+
+            // 8. High — grid voltage investigation
+            maintenanceTasks.Add(new MaintenanceTask
+            {
+                Title = "Investigate persistent grid over-voltage on Phase A",
+                Description = "Grid voltage on Phase A has been consistently above 250V for the past 3 hours. Contact grid operator (Liander) if issue persists. Check transformer tap settings.",
+                Status = TaskStatuses.InProgress,
+                Priority = TaskPriorities.High,
+                AssignedToId = adminUserId,
+                AssignedById = adminUserId,
+                DueDate = now.AddDays(1),
+                FacilityId = facilitiyId,
+                DeviceId = inverterDevice?.Id,
+                Created = now.AddHours(-2)
+            });
+
+            _context.MaintenanceTasks.AddRange(maintenanceTasks);
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} demo maintenance tasks", maintenanceTasks.Count);
+
+            // Link alarms to their maintenance tasks where applicable
+            if (bmsAlarm != null) bmsAlarm.MaintenanceTaskId = maintenanceTasks[0].Id;
+            if (coolantAlarm != null) coolantAlarm.MaintenanceTaskId = maintenanceTasks[1].Id;
+            if (pumpAlarm != null) pumpAlarm.MaintenanceTaskId = maintenanceTasks[4].Id;
+            await _context.SaveChangesAsync();
+        }
+
+        #endregion
     }
 
     private static List<DeviceAlarmType> BuildDemoBessAlarmTypes(Guid energyStorageTypeId)
