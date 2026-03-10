@@ -460,28 +460,50 @@ public class ApplicationDbContextInitializer
         var savedDeviceTypes = await _context.DeviceTypes.ToListAsync();
         var dtLookup = savedDeviceTypes.ToDictionary(dt => dt.Name!, dt => dt.Id);
 
-        // Seed RTU (Remote Terminal Unit) for the facility
+        // Seed RTU (Remote Terminal Unit) for the demo facility
+        // Look for the known demo RTU first, then fall back to any RTU on this facility, then create one
+        const string demoRtuSerial = "ec-100-38100938B6076C91";
         Guid rtuId;
-        var existingRtu = await _context.Rtus.IgnoreQueryFilters().OrderBy(x => x.Created).FirstOrDefaultAsync();
-        if (existingRtu == null)
+        var existingRtu = await _context.Rtus.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(r => r.RtuSerialNumber == demoRtuSerial);
+        if (existingRtu != null)
         {
-            var rtu = new Rtu
+            rtuId = existingRtu.Id;
+            // Ensure the RTU is attached to the demo facility
+            if (existingRtu.FacilityId != facilitiyId)
             {
-                FacilityId = facilitiyId,
-                RtuSerialNumber = "RTU-DEMO-001",
-                RtuModel = "Siemens SICAM A8000",
-                Protocol = "Modbus TCP",
-                Status = "online",
-                Created = DateTime.UtcNow
-            };
-            _context.Rtus.Add(rtu);
-            await _context.SaveChangesAsync();
-            rtuId = rtu.Id;
-            _logger.LogInformation("Demo RTU created with ID {RtuId}", rtuId);
+                existingRtu.FacilityId = facilitiyId;
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Reassigned RTU {RtuSerial} to demo facility {FacilityId}", demoRtuSerial, facilitiyId);
+            }
+            _logger.LogInformation("Using existing demo RTU {RtuSerial} with ID {RtuId}", demoRtuSerial, rtuId);
         }
         else
         {
-            rtuId = existingRtu.Id;
+            // Fall back to any RTU already on this facility
+            var facilityRtu = await _context.Rtus.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(r => r.FacilityId == facilitiyId);
+            if (facilityRtu != null)
+            {
+                rtuId = facilityRtu.Id;
+                _logger.LogInformation("Using existing facility RTU with ID {RtuId}", rtuId);
+            }
+            else
+            {
+                var rtu = new Rtu
+                {
+                    FacilityId = facilitiyId,
+                    RtuSerialNumber = demoRtuSerial,
+                    RtuModel = "Siemens SICAM A8000",
+                    Protocol = "Modbus TCP",
+                    Status = "online",
+                    Created = DateTime.UtcNow
+                };
+                _context.Rtus.Add(rtu);
+                await _context.SaveChangesAsync();
+                rtuId = rtu.Id;
+                _logger.LogInformation("Demo RTU created with serial {RtuSerial}, ID {RtuId}", demoRtuSerial, rtuId);
+            }
         }
 
         var devices = new List<Device>
@@ -547,10 +569,18 @@ public class ApplicationDbContextInitializer
             }
         };
 
-        if (!_context.Devices.Any())
+        // Seed only demo devices that don't already exist (by name)
+        var existingDeviceNames = await _context.Devices.IgnoreQueryFilters()
+            .Where(d => d.RtuId == rtuId)
+            .Select(d => d.Name)
+            .ToListAsync();
+        var newDevices = devices.Where(d => !existingDeviceNames.Contains(d.Name)).ToList();
+        if (newDevices.Count != 0)
         {
-            _context.Devices.AddRange(devices);
+            _context.Devices.AddRange(newDevices);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("Seeded {Count} demo devices: {Names}", newDevices.Count,
+                string.Join(", ", newDevices.Select(d => d.Name)));
         }
 
         // Seed DeviceSpecificationTemplate for Tesla Megapack
@@ -2014,6 +2044,117 @@ public class ApplicationDbContextInitializer
             if (coolantAlarm != null) coolantAlarm.MaintenanceTaskId = maintenanceTasks[1].Id;
             if (pumpAlarm != null) pumpAlarm.MaintenanceTaskId = maintenanceTasks[4].Id;
             await _context.SaveChangesAsync();
+
+            // ── Notifications ──
+            if (!await _context.Notifications.AnyAsync())
+            {
+                var notifications = new List<Notification>
+                {
+                    // Unread alarm notifications
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "alarm",
+                        Title = "Critical: BMS Communication Failure",
+                        Message = "Lost communication with BMS on Rack 3 of BESS_001. Immediate investigation required.",
+                        IsRead = false,
+                        Timestamp = now.AddMinutes(-30),
+                        RelatedAlarmId = bmsAlarm?.Id
+                    },
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "alarm",
+                        Title = "Critical: Cell Over-Voltage Detected",
+                        Message = "Cell voltage reached 4.35V on BESS_001 Rack/1/Pack/3. Threshold is 4.20V.",
+                        IsRead = false,
+                        Timestamp = now.AddHours(-2),
+                        RelatedAlarmId = activeAlarms.FirstOrDefault(a => a.Details != null && a.Details.Contains("4.35"))?.Id
+                    },
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "alarm",
+                        Title = "Warning: SOC Below Minimum",
+                        Message = "BESS_001 state of charge dropped to 8%. Minimum threshold is 10%.",
+                        IsRead = false,
+                        Timestamp = now.AddHours(-1)
+                    },
+                    // Read alarm notifications
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "alarm",
+                        Title = "Over-Temperature on Rack 2",
+                        Message = "Rack 2 temperature at 48°C (threshold: 45°C). Cooling system under investigation.",
+                        IsRead = true,
+                        Timestamp = now.AddHours(-5)
+                    },
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "alarm",
+                        Title = "Grid Over-Voltage Phase A",
+                        Message = "Grid voltage on Phase A at 253V. Inverter derated to 80%.",
+                        IsRead = true,
+                        Timestamp = now.AddHours(-3)
+                    },
+                    // Maintenance task notifications
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "maintenance",
+                        Title = "Task Assigned: BMS Communication Failure",
+                        Message = "You have been assigned a critical maintenance task: Investigate BMS communication failure on Rack 3.",
+                        IsRead = false,
+                        Timestamp = now.AddMinutes(-25),
+                        RelatedTaskId = maintenanceTasks[0].Id
+                    },
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "maintenance",
+                        Title = "Task Overdue: Smart Meter Calibration",
+                        Message = "Annual smart meter calibration for SM_001 is 3 days overdue.",
+                        IsRead = false,
+                        Timestamp = now.AddDays(-3),
+                        RelatedTaskId = maintenanceTasks[6].Id
+                    },
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "maintenance",
+                        Title = "Task Completed: Coolant Pump Replacement",
+                        Message = "Coolant pump replacement on BESS_001 has been completed successfully.",
+                        IsRead = true,
+                        Timestamp = now.AddDays(-12),
+                        RelatedTaskId = maintenanceTasks[4].Id
+                    },
+                    // System notifications
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "info",
+                        Title = "Scheduled Maintenance Window",
+                        Message = "Planned maintenance window for Demo Solar Park Amsterdam: Saturday 02:00-06:00 UTC.",
+                        IsRead = true,
+                        Timestamp = now.AddDays(-1)
+                    },
+                    new Notification
+                    {
+                        UserId = adminUserId,
+                        Type = "info",
+                        Title = "System Update Available",
+                        Message = "DERMS platform v2.4.1 is available. Contact admin to schedule the update.",
+                        IsRead = false,
+                        Timestamp = now.AddDays(-2)
+                    }
+                };
+
+                _context.Notifications.AddRange(notifications);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Seeded {Count} demo notifications", notifications.Count);
+            }
         }
 
         #endregion
