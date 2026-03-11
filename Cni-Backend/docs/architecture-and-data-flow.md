@@ -23,7 +23,7 @@
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                        External Systems                            │
-│   EMQX Broker ──webhook──►  API        Frontend ──JWT──► API       │
+│   EMQX Broker ◄──subscribe── Backend    Frontend ──JWT──► API       │
 │   ENTSO-E / EPIAS ◄──── Hangfire Jobs                              │
 └────────────────────────────────┬───────────────────────────────────┘
                                  │
@@ -78,35 +78,38 @@
 | Real-time | SignalR (`LiveDataHub`) |
 | Background Jobs | Hangfire (PostgreSQL storage) |
 | Caching | IMemoryCache (future: Redis) |
-| Broker | EMQX (external) — communicates via webhook HTTP POST |
+| Broker | EMQX (external) — backend subscribes directly via MQTTnet |
 
 ### Request Flow
 
 ```
 [EMQX Broker]                    [Frontend SPA]
      │                                │
-     │ POST /api/v1/DeviceData/       │ GET /api/v1/BatteryStorage/
-     │     Ingest (X-API-Key)         │     Units/{id}/summary (Bearer JWT)
+     │ MQTT Subscribe (QoS 1)         │ GET /api/v1/BatteryStorage/
+     │ cni/+/+/telemetry              │     Units/{unitId}/summary (Bearer JWT)
      ▼                                ▼
-┌─────────────────────────────────────────┐
-│            ASP.NET Core Pipeline        │
-│  Routing → Auth → Endpoint → MediatR   │
-└─────────────┬───────────────┬───────────┘
-              │               │
-    IngestDeviceData    GetBessSummary
-    CommandHandler      QueryHandler
-              │               │
-     ┌────────▼────────┐  ┌──▼──────────────┐
-     │ Categorize Kind │  │ Load Device +   │
-     │ Resolve RTU/Dev │  │   Specifications│
-     │ Store in Bucket │  │ Load Payload    │
-     │ Update LastSeen │  │ Extract values  │
-     └────────┬────────┘  │   via sourcePath│
-              │           └──┬──────────────┘
-              ▼              ▼
-         PostgreSQL     JSON Response
-         (JSONB)        to Frontend
+┌─────────────────────┐   ┌─────────────────────────────────┐
+│ MqttIngestionWorker │   │    ASP.NET Core Pipeline        │
+│ (BackgroundService) │   │  Routing → Auth → MediatR       │
+└────────┬────────────┘   └──────────────┬──────────────────┘
+         │                               │
+   IngestDeviceData              GetBessSummary
+   Command (MediatR)             QueryHandler
+         │                               │
+  ┌──────▼─────────┐         ┌───────────▼────────────┐
+  │ Resolve by     │         │ Load Device by         │
+  │  deviceName    │         │  Device.Id (Guid)      │
+  │ Categorize Kind│         │ Load latest telemetry  │
+  │ Store in Bucket│         │  by DeviceId (Guid)    │
+  │ Update LastSeen│         │ Extract values         │
+  └──────┬─────────┘         └───────────┬────────────┘
+         │                               │
+         ▼                               ▼
+    PostgreSQL                     JSON Response
+    (JSONB)                        to Frontend
 ```
+
+**Key:** Ingestion resolves devices by `deviceName` (string from RTU). All query endpoints and telemetry joins use `Device.Id` (Guid). The `deviceName` is never exposed to the frontend.
 
 ---
 
@@ -173,7 +176,7 @@ Each telemetry record stores:
 
 ### Overview
 
-The edge device (RTU) collects data from physical devices via Modbus/CAN, converts registers to JSON, and publishes to EMQX MQTT broker. EMQX is configured with webhook rules that POST to this backend.
+The edge device (RTU) collects data from physical devices via Modbus/CAN, converts registers to JSON, and publishes to EMQX MQTT broker. The backend subscribes directly to EMQX as an MQTT client (no HTTP webhook hop).
 
 ```
 Physical Device (BMS/PCS)
@@ -184,60 +187,117 @@ Physical Device (BMS/PCS)
 │   RTU    │  (Edge device — register → JSON conversion)
 │ (Gateway)│
 └────┬─────┘
-     │  MQTT Publish
+     │  MQTT Publish → cni/{facilityId}/{rtuId}/telemetry
      ▼
 ┌──────────┐
 │  EMQX    │  (MQTT Broker)
 │  Broker  │
 └────┬─────┘
-     │  HTTP Webhook POST
+     │  Direct MQTT Subscribe (QoS 1, persistent session)
      ▼
 ┌──────────────────────────────────────────┐
-│  POST /api/v1/DeviceData/Ingest          │
-│  Header: X-API-Key: <configured-key>     │
-│  Body: { rtuSn, deviceSn, kind, payload }│
+│  MqttIngestionWorker (BackgroundService) │
+│                                          │
+│  1. Parse topic → facilityId, rtuId      │
+│  2. Resolve RTU GUID → serial number     │
+│  3. Parse payload JSON                   │
+│  4. Send IngestDeviceDataCommand (MediatR)│
 └────┬─────────────────────────────────────┘
      │
      ▼
 ┌──────────────────────────────────────────┐
 │  IngestDeviceDataHandler                 │
 │                                          │
-│  1. Validate API key                     │
-│  2. Resolve RTU by rtuSn (cached 5min)   │
-│  3. Resolve Device by deviceSn (cached)  │
-│  4. Categorize Kind → bucket table       │
-│  5. Store raw payload as JSONB           │
-│  6. Update LastSeenUtc on RTU + Device   │
+│  1. Resolve RTU by rtuSn (cached 5min)   │
+│  2. Resolve Device by deviceName + RtuId │
+│  3. Categorize Kind → bucket table       │
+│  4. Store raw payload as JSONB           │
+│  5. Update LastSeenUtc on RTU + Device   │
 └──────────────────────────────────────────┘
 ```
 
-### Ingest Message Format
+> **Note:** HTTP ingestion endpoints (`POST /api/v1/DeviceData/Ingest` and `/Ingest/Batch`) remain available for testing, development, and third-party adapters, but production RTU traffic flows through MQTT.
+
+### Device Identity Resolution
+
+This is a critical concept for understanding how data flows from the edge to the frontend:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    DEVICE IDENTITY FLOW                              │
+│                                                                     │
+│  INGESTION (edge → backend)                                        │
+│  ─────────────────────────                                         │
+│  MQTT topic:  cni/{facilityId}/{rtuId}/telemetry                   │
+│  Payload:     { "deviceName": "Battery1", "kind": "...", ... }     │
+│                      │                                              │
+│                      ▼                                              │
+│  Device lookup:  Device.Name == "Battery1" AND Device.RtuId == rtuId│
+│                      │                                              │
+│                      ▼                                              │
+│  Telemetry stored:  DeviceBatteryData.DeviceId = Device.Id (Guid)  │
+│                                                                     │
+│  QUERY (backend → frontend)                                        │
+│  ──────────────────────────                                        │
+│  All query endpoints use Device.Id (Guid) exclusively:             │
+│    GET /BatteryStorage/Units/{unitId}/summary  → Device.Id         │
+│    GET /Pcs/Units/{unitId}/general             → Device.Id         │
+│    GET /Dashboard/BessState/{facilityId}       → Rtu.FacilityId    │
+│                                                                     │
+│  Telemetry join:  DeviceBatteryData.DeviceId == Device.Id          │
+│                                                                     │
+│  SUMMARY                                                           │
+│  ───────                                                           │
+│  RTU sends:     deviceName (string)  → human-readable, configured  │
+│  Backend stores: Device.Id (Guid)    → all telemetry FK            │
+│  Frontend uses:  Device.Id (Guid)    → all API calls               │
+│  deviceName is ONLY used at the ingestion boundary                 │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Ingest Message Format (MQTT)
+
+**Topic:** `cni/{facilityId}/{rtuId}/telemetry`
 
 ```json
 {
-  "rtuSn": "RTU-001",
-  "deviceSn": "EC100-DEV-001",
+  "deviceName": "Battery1",
   "kind": "ContainerBatteryState",
   "payload": "{\"socPercent\":9,\"sohPercent\":100,\"totalVoltageV\":793.6,...}",
-  "deviceLocalTime": "2026-02-11T14:35:00.000Z"
+  "timestampUtc": "2026-02-11T14:35:00.000Z"
 }
 ```
 
-### Batch Endpoint
+| Field | Type | Description |
+|-------|------|-------------|
+| `deviceName` | string | Device name (unique within the RTU). Matched to `Device.Name` in DB. |
+| `kind` | string | Telemetry type identifier — determines which bucket table stores the data |
+| `payload` | string (JSON) | Device-specific telemetry data as a JSON string (stored as JSONB) |
+| `path` | string? | Optional sub-path for hierarchical addressing |
+| `timestampUtc` | ISO 8601 | UTC timestamp from the device |
+
+### HTTP Ingest Endpoint (dev/test)
+
+```
+POST /api/v1/DeviceData/Ingest
+Header: X-API-Key: <configured-key>
+Body: { "rtuSn": "RTU-001", "deviceName": "Battery1", "kind": "...", "payload": "...", "deviceLocalTime": "..." }
+```
 
 ```
 POST /api/v1/DeviceData/Ingest/Batch
-Body: [ {rtuSn, deviceSn, kind, payload}, ... ]
+Body: [ {rtuSn, deviceName, kind, payload}, ... ]
 Response: { total: 10, succeeded: 9, failed: 1 }
 ```
 
 ### Caching Strategy
 
-RTU and Device lookups are cached by serial number in `IMemoryCache` with 5-minute sliding expiration. Only the `Guid` IDs are cached (not EF entities) to avoid cross-scope tracking issues.
+RTU and Device lookups are cached in `IMemoryCache` with 5-minute sliding expiration. Only scalar values are cached (not EF entities) to avoid cross-scope tracking issues.
 
 ```
-Cache Key: "rtu_sn_{serialNumber}" → Guid (RTU ID)
-Cache Key: "dev_sn_{serialNumber}" → Guid (Device ID)
+MQTT path:   RTU GUID from topic → Cache Key: "rtu:id-to-sn:{rtuId}" → RtuSerialNumber
+Ingest:      Cache Key: "rtu:sn:{serialNumber}" → Guid (RTU ID)
+             Cache Key: "device:name:{deviceName}:rtu:{rtuId}" → Guid (Device ID)
 TTL: 5 minutes sliding
 ```
 
@@ -985,20 +1045,34 @@ Then recursively sums child counts into parent `activeAlarmCount`.
 
 ## 11. CQRS Query Architecture
 
+### Device Identity at Query Time
+
+**All query endpoints use `Device.Id` (Guid) to find devices and join telemetry.** The `deviceName` used during ingestion is never referenced by query handlers.
+
+| Query Input | Lookup Pattern | Telemetry Join |
+|------------|----------------|----------------|
+| `unitId` (Guid) | `Device.Id == unitId` | `DeviceXxxData.DeviceId == unitId` |
+| `facilityId` (Guid) | `Device.Rtu.FacilityId == facilityId` + DeviceType filter | `DeviceXxxData.DeviceId IN (device IDs)` |
+| Search by name | `Device.Name.Contains(search)` or `Device.SerialNumber.Contains(search)` | N/A (used for filtering list, not telemetry join) |
+
 ### Query Pattern (All Monitoring Pages)
 
 Every monitoring query follows the same pattern:
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  1. Load Device + DeviceType                                     │
-│     WHERE DeviceType.Name == "Battery" AND Device.Id == request  │
+│  1. Load Device by Device.Id (Guid)                              │
+│     Include: DeviceType, LogicalDevice, SpecificationTemplate    │
 │                                                                  │
 │  2. Load latest telemetry from bucket table                      │
-│     DeviceBatteryData.OrderByDescending(DeviceLocalTime).First() │
+│     DeviceBatteryData                                            │
+│       .Where(dd => dd.DeviceId == device.Id)                     │
+│       .GroupBy(dd => dd.Kind)                                    │
+│       .Select(g => g.OrderByDescending(dd.DeviceLocalTime)       │
+│                      .First())                                   │
 │                                                                  │
-│  3. Parse Device.Specifications JSON                             │
-│     specs = JsonDocument.Parse(device.Specifications)            │
+│  3. Load SpecificationTemplate                                   │
+│     specs = device.SpecificationTemplate?.SpecificationsTemplate  │
 │                                                                  │
 │  4. Build response from specs OR defaults                        │
 │     if specs has "tabs.{pageName}.sections":                     │

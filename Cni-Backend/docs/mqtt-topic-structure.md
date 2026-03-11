@@ -155,6 +155,24 @@ Day-ahead energy market prices, published automatically after the backend fetche
 - Twice daily: **00:01 UTC** and **13:01 UTC**
 - Automatically published to all RTUs linked to the market operator after prices are fetched
 
+## Device Identity Resolution
+
+Understanding how the backend resolves device identity from MQTT messages:
+
+| Stage | Identifier | Source | Example |
+|-------|-----------|--------|---------|
+| **MQTT topic** | `facilityId`, `rtuId` | Topic path segments | `cni/82285c08-.../a1b2c3d4-.../telemetry` |
+| **Payload** | `deviceName` | JSON field | `"Battery1"` |
+| **DB lookup** | `Device.Name + RtuId` | Ingestion handler | `WHERE Name = 'Battery1' AND RtuId = 'a1b2c3d4-...'` |
+| **Storage** | `Device.Id` (Guid) | Telemetry FK | `DeviceBatteryData.DeviceId = '...'` |
+| **Frontend** | `Device.Id` (Guid) | All query APIs | `GET /BatteryStorage/Units/{unitId}/summary` |
+
+**Key points:**
+- `deviceName` must match the `Device.Name` registered in the database
+- `deviceName` only needs to be unique **within the same RTU** (not globally)
+- `deviceName` is only used at the ingestion boundary — all query endpoints and telemetry joins use `Device.Id` (Guid)
+- The frontend never sees or uses `deviceName`
+
 ## QoS
 
 All messages use **QoS 1 (At Least Once)** — messages are guaranteed to arrive but may be delivered more than once. RTUs should handle duplicate messages gracefully.
