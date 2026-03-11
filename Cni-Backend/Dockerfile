@@ -11,7 +11,6 @@ COPY Directory.Packages.props .
 COPY src/Domain/Domain.csproj src/Domain/
 COPY src/Application/Application.csproj src/Application/
 COPY src/Infrastructure/Infrastructure.csproj src/Infrastructure/
-COPY src/Proto/Proto.csproj src/Proto/
 COPY src/Web/Web.csproj src/Web/
 
 # Restore dependencies (only Web project to skip test projects)
