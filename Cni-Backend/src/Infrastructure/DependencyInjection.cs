@@ -159,7 +159,7 @@ public static class DependencyInjection
         builder.Services.AddSingleton<IMqttPublisherService, MqttPublisherService>();
         if (!isTestEnvironment)
         {
-            builder.Services.AddHostedService<MqttSubscriberService>();
+            builder.Services.AddHostedService<MqttIngestionWorker>();
         }
 
         // Huawei FusionSolar integration
