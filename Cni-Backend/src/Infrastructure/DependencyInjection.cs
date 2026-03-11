@@ -17,7 +17,6 @@ using Backend.Infrastructure.Persistence;
 using Backend.Infrastructure.Logging;
 using Serilog.Core;
 using Backend.Infrastructure.Services;
-using Backend.Infrastructure.Mappings;
 using Backend.Infrastructure.BackgroundJobs;
 using Backend.Infrastructure.Huawei;
 
@@ -48,8 +47,6 @@ public static class DependencyInjection
             });
             builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
         }
-
-        builder.Services.AddAutoMapper(typeof(GrpcMappingProfile).Assembly);
 
         builder.Services.AddScoped<ApplicationDbContextInitializer>();
 
