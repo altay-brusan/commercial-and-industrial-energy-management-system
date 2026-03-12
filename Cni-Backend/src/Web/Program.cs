@@ -4,10 +4,12 @@ using Backend.Infrastructure.Configurations;
 using Backend.Infrastructure.Data;
 using Backend.Infrastructure.Logging;
 using Backend.Web.Hubs;
+using Backend.Web.Infrastructure;
 using Backend.Web.Middleware;
 using Backend.Web.Services;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,7 +37,26 @@ var app = builder.Build();
 //    dbContext.Database.Migrate();
 //}
 app.UseSerilogRequestLogging();
-// HTTP isteklerini otomatik loglar
+
+// Prometheus HTTP request duration middleware
+app.Use(async (context, next) =>
+{
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+    await next();
+    stopwatch.Stop();
+
+    // Skip /metrics and /health to avoid self-instrumentation noise
+    var path = context.Request.Path.Value ?? "";
+    if (!path.StartsWith("/metrics", StringComparison.OrdinalIgnoreCase)
+        && !path.StartsWith("/health", StringComparison.OrdinalIgnoreCase))
+    {
+        var endpoint = path.Length > 0 ? path : "/";
+        AppMetrics.HttpRequestDuration
+            .WithLabels(context.Request.Method, endpoint, context.Response.StatusCode.ToString())
+            .Observe(stopwatch.Elapsed.TotalSeconds);
+    }
+});
+
 app.UseMiddleware<MultiTenantMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Test")
@@ -109,6 +130,8 @@ if (app.Environment.EnvironmentName != "Test")
             $"*/{intervalMinutes} * * * *");
     }
 }
+app.MapMetrics(); // Expose /metrics endpoint for Prometheus scraping
+
 app.Run();
 
 public partial class Program { }
