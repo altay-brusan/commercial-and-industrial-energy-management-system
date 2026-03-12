@@ -55,6 +55,11 @@ public class Facility : BaseAuditableEntity
     /// </summary>
     public string? Topology { get; set; }
 
+    /// <summary>
+    /// Whether ALM (Algorithm Module) prediction jobs are enabled for this facility.
+    /// </summary>
+    public bool AlmEnabled { get; set; }
+
     // Navigation properties
     public Firm? Firm { get; set; }
     public ICollection<DeviceLink> DeviceLinks { get; set; } = new List<DeviceLink>();

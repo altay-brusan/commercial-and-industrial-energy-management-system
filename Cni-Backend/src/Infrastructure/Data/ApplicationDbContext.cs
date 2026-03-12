@@ -1,6 +1,7 @@
 using System.Reflection;
 using Backend.Application.Common.Interfaces;
 using Backend.Domain.Entities;
+using Backend.Domain.Entities.Alm;
 using Backend.Domain.Entities.DeviceData;
 using Backend.Domain.Entities.Huawei;
 using Microsoft.AspNetCore.Identity;
@@ -59,6 +60,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     // Auth entities
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    // ALM prediction jobs (alm schema)
+    public DbSet<AlmPredictionJob> AlmPredictionJobs => Set<AlmPredictionJob>();
+    public DbSet<AlmForecastPoint> AlmForecastPoints => Set<AlmForecastPoint>();
+
     // Huawei FusionSolar integration (huawei schema)
     public DbSet<HuaweiAccount> HuaweiAccounts => Set<HuaweiAccount>();
     public DbSet<HuaweiStationMapping> HuaweiStationMappings => Set<HuaweiStationMapping>();
@@ -115,6 +120,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<HuaweiDeviceMapping>().HasQueryFilter(x => !_isTenantScoped || x.StationMapping!.HuaweiAccount!.TenantId == _effectiveTenantId);
         builder.Entity<HuaweiRawDataLog>().HasQueryFilter(x => !_isTenantScoped || x.HuaweiAccount!.TenantId == _effectiveTenantId);
         builder.Entity<HuaweiSyncLog>().HasQueryFilter(x => !_isTenantScoped || x.HuaweiAccount!.TenantId == _effectiveTenantId);
+        // ALM prediction jobs - scoped through Facility → Firm → Tenant
+        builder.Entity<AlmPredictionJob>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
+        builder.Entity<AlmForecastPoint>().HasQueryFilter(x => !_isTenantScoped || x.AlmPredictionJob!.Facility!.Firm!.TenantId == _effectiveTenantId);
         // MaintenanceTask scoped through Facility → Firm → Tenant
         builder.Entity<MaintenanceTask>().HasQueryFilter(x => !_isTenantScoped || x.Facility!.Firm!.TenantId == _effectiveTenantId);
         // Note: Tariffs, MarketOperators, DayAheadNetEnergyPriceHistories, DeviceAlarmTypes are global - no tenant query filter

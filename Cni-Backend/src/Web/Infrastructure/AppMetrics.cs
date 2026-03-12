@@ -57,8 +57,7 @@ public static class AppMetrics
             LabelNames = ["kind", "status"]
         });
 
-    // TODO: Wire when ALM service integration is implemented.
-    // These metrics will track backend → ALM request duration and ALM → backend webhook callback duration.
+    // ALM service integration — backend → ALM request duration
     public static readonly Histogram AlmRequestDuration = Metrics.CreateHistogram(
         "cni_alm_request_duration_seconds",
         "Duration of requests to ALM service",
@@ -68,7 +67,7 @@ public static class AppMetrics
             Buckets = Histogram.ExponentialBuckets(0.01, 2, 12)
         });
 
-    // TODO: Wire when ALM service integration is implemented.
+    // ALM webhook callback processing duration
     public static readonly Histogram AlmCallbackDuration = Metrics.CreateHistogram(
         "cni_alm_callback_duration_seconds",
         "Duration of ALM webhook callback processing",

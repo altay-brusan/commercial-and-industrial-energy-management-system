@@ -22,6 +22,94 @@ namespace Backend.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Backend.Domain.Entities.Alm.AlmForecastPoint", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<Guid>("AlmPredictionJobId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Step")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlmPredictionJobId", "Timestamp");
+
+                    b.ToTable("ForecastPoints", "alm");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Alm.AlmPredictionJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DataPointCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ErrorDetails")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("ExternalJobId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("FacilityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("JobType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResultMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("ResultStatusCode")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("SubmittedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalJobId");
+
+                    b.HasIndex("FacilityId", "JobType", "Status");
+
+                    b.ToTable("PredictionJobs", "alm");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -794,6 +882,9 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("AlmEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -2483,6 +2574,28 @@ namespace Backend.Infrastructure.Migrations
                     b.ToTable("AppUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Backend.Domain.Entities.Alm.AlmForecastPoint", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Alm.AlmPredictionJob", "AlmPredictionJob")
+                        .WithMany("ForecastPoints")
+                        .HasForeignKey("AlmPredictionJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AlmPredictionJob");
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Alm.AlmPredictionJob", b =>
+                {
+                    b.HasOne("Backend.Domain.Entities.Facility", "Facility")
+                        .WithMany()
+                        .HasForeignKey("FacilityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Facility");
+                });
+
             modelBuilder.Entity("Backend.Domain.Entities.DayAheadNetEnergyPriceHistory", b =>
                 {
                     b.HasOne("Backend.Domain.Entities.MarketOperator", "MarketOperator")
@@ -3131,6 +3244,11 @@ namespace Backend.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Backend.Domain.Entities.Alm.AlmPredictionJob", b =>
+                {
+                    b.Navigation("ForecastPoints");
                 });
 
             modelBuilder.Entity("Backend.Domain.Entities.ApplicationUser", b =>
