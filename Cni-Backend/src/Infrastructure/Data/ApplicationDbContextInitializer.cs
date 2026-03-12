@@ -1745,6 +1745,111 @@ public class ApplicationDbContextInitializer
 
         #endregion
 
+        #region DemoTenantUser
+
+        // Seed a standalone tenant user with a single facility (no devices)
+        var demoUserEmail = "user@demo.com";
+        if (_userManager.Users.All(u => u.UserName != demoUserEmail))
+        {
+            _logger.LogInformation("Seeding demo tenant user with standalone facility...");
+
+            // Create a separate tenant
+            var demoTenant = new Tenant
+            {
+                Identifier = "greenfield",
+                Name = "Greenfield Solar",
+                Created = DateTime.UtcNow
+            };
+            _context.Tenants.Add(demoTenant);
+            await _context.SaveChangesAsync();
+
+            // Assign Enterprise plan (same as demo tenant)
+            var enterprisePlan = await _context.Set<Plan>().IgnoreQueryFilters()
+                .FirstOrDefaultAsync(p => p.Name == "Enterprise");
+            if (enterprisePlan != null)
+            {
+                demoTenant.PlanId = enterprisePlan.Id;
+                await _context.SaveChangesAsync();
+            }
+
+            // Create firm
+            var demoFirm = new Firm
+            {
+                TenantId = demoTenant.Id,
+                Name = "Greenfield Renewables",
+                Type = "Solar Energy",
+                Country = "Türkiye",
+                State = "Ankara",
+                City = "Ankara",
+                District = "Çankaya",
+                PostalCode = "06690",
+                Address = "Greenfield Solar Park, Çankaya",
+                ContactEmail = "info@greenfield-solar.com",
+                ContactPhone = "+90 312 000 0000",
+                TaxNumber = "TR9876543210",
+                TaxOffice = "Ankara",
+                Created = DateTime.UtcNow
+            };
+            _context.Firms.Add(demoFirm);
+            await _context.SaveChangesAsync();
+
+            // Create facility
+            var demoFacility = new Facility
+            {
+                FirmId = demoFirm.Id,
+                Name = "Greenfield Solar Park",
+                Country = "Türkiye",
+                Province = "06",
+                City = "Çankaya",
+                Address = "Greenfield Solar Park, Çankaya, Ankara, Türkiye",
+                EnergyCapacity = 500,
+                EnergyUnit = EnergyUnit.KWh,
+                Longitude = 32.8597,
+                Latitude = 39.9334,
+                Created = DateTime.UtcNow
+            };
+            _context.Facilities.Add(demoFacility);
+            await _context.SaveChangesAsync();
+
+            // Create TenantAdmin user
+            var demoUser = new ApplicationUser
+            {
+                UserName = demoUserEmail,
+                Email = demoUserEmail,
+                EmailConfirmed = true,
+                TenantId = demoTenant.Id,
+                Name = "Demo",
+                Surname = "User",
+                Title = "Tenant Administrator",
+                Description = "Demo tenant admin with a single facility"
+            };
+
+            var createResult = await _userManager.CreateAsync(demoUser, "Demo@123");
+            if (createResult.Succeeded)
+            {
+                await _userManager.AddToRolesAsync(demoUser, new[] { Roles.TenantAdmin });
+
+                _context.UserFirmFacilities.Add(new UserFirmFacility
+                {
+                    TenantId = demoTenant.Id,
+                    UserId = demoUser.Id,
+                    FirmId = demoFirm.Id,
+                    FacilityId = demoFacility.Id,
+                    Created = DateTime.UtcNow
+                });
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Demo tenant user created: {Email} / Demo@123 (TenantAdmin, Greenfield Solar)", demoUserEmail);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to create demo tenant user: {Errors}",
+                    string.Join(", ", createResult.Errors.Select(e => e.Description)));
+            }
+        }
+
+        #endregion
+
         #region DemoAlarmsAndMaintenanceTasks
 
         // Seed demo alarms and maintenance tasks for "Demo Solar Park Amsterdam"
