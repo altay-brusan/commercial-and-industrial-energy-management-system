@@ -1,4 +1,5 @@
 using Backend.Domain.Entities;
+using Backend.Domain.Entities.Alm;
 using Backend.Domain.Entities.DeviceData;
 using Backend.Domain.Entities.Huawei;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -50,6 +51,10 @@ public interface IApplicationDbContext
     DbSet<HuaweiDeviceMapping> HuaweiDeviceMappings { get; }
     DbSet<HuaweiRawDataLog> HuaweiRawDataLogs { get; }
     DbSet<HuaweiSyncLog> HuaweiSyncLogs { get; }
+
+    // ALM prediction jobs
+    DbSet<AlmPredictionJob> AlmPredictionJobs { get; }
+    DbSet<AlmForecastPoint> AlmForecastPoints { get; }
 
     // Maintenance tasks
     DbSet<MaintenanceTask> MaintenanceTasks { get; }

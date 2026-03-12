@@ -119,6 +119,16 @@ if (app.Environment.EnvironmentName != "Test")
         worker => worker.FetchDailyPrices(),
         "1 13 * * *");
 
+    // ALM prediction jobs — daily at midnight (only processes AlmEnabled facilities)
+    var almSettings = app.Configuration.GetSection("AlmSettings").Get<AlmSettings>();
+    if (almSettings?.Enabled == true)
+    {
+        RecurringJob.AddOrUpdate<Backend.Infrastructure.BackgroundJobs.AlmPredictionWorker>(
+            "alm-daily-predictions",
+            worker => worker.RunPredictions(CancellationToken.None),
+            almSettings.CronSchedule);
+    }
+
     // Huawei FusionSolar sync — every 5 minutes (matches API rate limits)
     var huaweiSettings = app.Configuration.GetSection("HuaweiSettings").Get<HuaweiSettings>();
     if (huaweiSettings?.Enabled == true)

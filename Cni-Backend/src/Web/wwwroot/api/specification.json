@@ -452,6 +452,209 @@
         ]
       }
     },
+    "/api/v1/Alm/Callback": {
+      "post": {
+        "tags": [
+          "Alm"
+        ],
+        "operationId": "PostApiV1AlmCallback",
+        "requestBody": {
+          "x-name": "payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlmCallbackPayload"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 1
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmCallbackResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Alm/Predictions/{facilityId}": {
+      "get": {
+        "tags": [
+          "Alm"
+        ],
+        "operationId": "GetApiV1AlmPredictions",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "jobType",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AlmJobType"
+                }
+              ]
+            },
+            "x-position": 2
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "nullable": true,
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/AlmJobStatus"
+                }
+              ]
+            },
+            "x-position": 3
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlmPredictionSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Alm/Predictions/{facilityId}/Latest": {
+      "get": {
+        "tags": [
+          "Alm"
+        ],
+        "operationId": "GetApiV1AlmPredictionsLatest",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "jobType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AlmJobType"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlmPredictionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Alm/Predictions/{facilityId}/Trigger": {
+      "post": {
+        "tags": [
+          "Alm"
+        ],
+        "operationId": "PostApiV1AlmPredictionsTrigger",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "jobType",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/AlmJobType"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriggerPredictionResult"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/AppRoles/roles": {
       "get": {
         "tags": [
@@ -6659,6 +6862,238 @@
           "dueDate": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AlmCallbackResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AlmCallbackPayload": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "job_status": {
+            "type": "string"
+          },
+          "result": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AlmJobResult"
+              }
+            ]
+          }
+        }
+      },
+      "AlmJobResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status_code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "forecast": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/AlmForecastItem"
+            }
+          }
+        }
+      },
+      "AlmForecastItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "value": {},
+          "step": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AlmPredictionSummaryDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "jobType": {
+            "$ref": "#/components/schemas/AlmJobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AlmJobStatus"
+          },
+          "externalJobId": {
+            "type": "string",
+            "nullable": true
+          },
+          "resultStatusCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resultMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataPointCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "forecastPointCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submittedAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completedAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AlmJobType": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "PowerConsumption",
+          "PowerGeneration"
+        ],
+        "enum": [
+          0,
+          1
+        ]
+      },
+      "AlmJobStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Queued",
+          "Processing",
+          "Completed",
+          "Failed",
+          "Timeout"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "AlmPredictionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "jobType": {
+            "$ref": "#/components/schemas/AlmJobType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AlmJobStatus"
+          },
+          "externalJobId": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataPointCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submittedAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "completedAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "forecastPoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlmForecastPointDto"
+            }
+          }
+        }
+      },
+      "AlmForecastPointDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "step": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "TriggerPredictionResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "externalJobId": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

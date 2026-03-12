@@ -18,6 +18,7 @@ using Backend.Infrastructure.Logging;
 using Serilog.Core;
 using Backend.Infrastructure.Services;
 using Backend.Infrastructure.BackgroundJobs;
+using Backend.Infrastructure.Alm;
 using Backend.Infrastructure.Huawei;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -157,6 +158,17 @@ public static class DependencyInjection
         if (!isTestEnvironment)
         {
             builder.Services.AddHostedService<MqttIngestionWorker>();
+        }
+
+        // ALM (Algorithm Module) integration
+        builder.Services.Configure<AlmSettings>(configuration.GetSection("AlmSettings"));
+        var almSettings = configuration.GetSection("AlmSettings").Get<AlmSettings>();
+        if (almSettings?.Enabled == true)
+        {
+            builder.Services.AddHttpClient<IAlmApiClient, AlmApiClient>();
+            builder.Services.AddScoped<Backend.Application.Common.Services.AlmDataPreparationService>();
+            builder.Services.AddScoped<IAlmJobSubmitter, AlmJobSubmitter>();
+            builder.Services.AddScoped<AlmPredictionWorker>();
         }
 
         // Huawei FusionSolar integration
