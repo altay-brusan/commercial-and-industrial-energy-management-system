@@ -19,6 +19,22 @@ public class Facility : BaseAuditableEntity
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    /// Country name (e.g., "Türkiye", "Germany", "United States")
+    /// </summary>
+    public string Country { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Province or state. For Turkey: plate code (e.g., "06" for Ankara).
+    /// For other countries: free-text province/state name.
+    /// </summary>
+    public string Province { get; set; } = string.Empty;
+
+    /// <summary>
+    /// City, town, or district (ilçe/şehir)
+    /// </summary>
+    public string City { get; set; } = string.Empty;
+
+    /// <summary>
     /// Physical address of the facility
     /// </summary>
     public string Address { get; set; } = string.Empty;
