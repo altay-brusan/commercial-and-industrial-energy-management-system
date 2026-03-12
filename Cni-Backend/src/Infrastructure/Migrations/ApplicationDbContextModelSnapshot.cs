@@ -886,6 +886,14 @@ namespace Backend.Infrastructure.Migrations
                     b.Property<bool>("AlmEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -920,6 +928,10 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Province")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Topology")
                         .HasColumnType("jsonb");

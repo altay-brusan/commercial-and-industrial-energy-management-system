@@ -4119,6 +4119,71 @@
         ]
       }
     },
+    "/api/v1/Lookups/Countries": {
+      "get": {
+        "tags": [
+          "Lookups"
+        ],
+        "operationId": "GetApiV1LookupsCountries",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CountryInfo"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/Lookups/Provinces/{countryCode}": {
+      "get": {
+        "tags": [
+          "Lookups"
+        ],
+        "operationId": "GetApiV1LookupsProvinces",
+        "parameters": [
+          {
+            "name": "countryCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {}
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/v1/Maintenance/Tasks": {
       "get": {
         "tags": [
@@ -9369,6 +9434,15 @@
           "name": {
             "type": "string"
           },
+          "countryCode": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
           "address": {
             "type": "string"
           },
@@ -9452,6 +9526,15 @@
           "name": {
             "type": "string"
           },
+          "countryCode": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
           "address": {
             "type": "string"
           },
@@ -9481,6 +9564,15 @@
             "format": "guid"
           },
           "name": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "city": {
             "type": "string"
           },
           "address": {
@@ -9516,6 +9608,15 @@
             "format": "guid"
           },
           "name": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "province": {
+            "type": "string"
+          },
+          "city": {
             "type": "string"
           },
           "address": {
@@ -10508,6 +10609,18 @@
             "nullable": true
           },
           "parameters": {
+            "type": "string"
+          }
+        }
+      },
+      "CountryInfo": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
             "type": "string"
           }
         }
