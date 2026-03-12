@@ -13,7 +13,7 @@ public class Lookups : EndpointGroupBase
             .RequireAuthorization();
 
         group.MapGet("/Countries", GetCountries);
-        group.MapGet("/Provinces/{countryCode}", GetProvinces);
+        group.MapGet("/Provinces/{country}", GetProvinces);
     }
 
     public static Ok<List<CountryInfo>> GetCountries()
@@ -21,14 +21,14 @@ public class Lookups : EndpointGroupBase
         return TypedResults.Ok(Countries.All.ToList());
     }
 
-    public static Results<Ok<List<ProvinceInfo>>, Ok<List<object>>> GetProvinces(string countryCode)
+    public static Results<Ok<List<ProvinceInfo>>, Ok<List<object>>> GetProvinces(string country)
     {
-        if (string.Equals(countryCode, "TR", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(country, "Türkiye", StringComparison.OrdinalIgnoreCase))
         {
             return TypedResults.Ok(TurkeyProvinces.All.ToList());
         }
 
-        // For non-TR countries, return empty list (provinces are free-text)
+        // For non-Türkiye countries, return empty list (provinces are free-text)
         return TypedResults.Ok(new List<object>());
     }
 }

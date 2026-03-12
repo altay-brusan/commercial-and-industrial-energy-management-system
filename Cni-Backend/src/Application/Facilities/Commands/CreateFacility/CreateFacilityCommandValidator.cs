@@ -15,11 +15,11 @@ public class CreateFacilityCommandValidator : AbstractValidator<CreateFacilityCo
             .NotEmpty()
             .MaximumLength(500);
 
-        RuleFor(v => v.CountryCode)
+        RuleFor(v => v.Country)
             .NotEmpty()
-            .Length(2)
-            .Must(Countries.IsValid)
-            .WithMessage("Invalid ISO 3166-1 alpha-2 country code.");
+            .MaximumLength(200)
+            .Must(Countries.IsValidName)
+            .WithMessage("Invalid country name.");
 
         RuleFor(v => v.Province)
             .NotEmpty()
@@ -27,7 +27,7 @@ public class CreateFacilityCommandValidator : AbstractValidator<CreateFacilityCo
 
         RuleFor(v => v.Province)
             .Must(TurkeyProvinces.IsValid)
-            .When(v => v.CountryCode == "TR")
+            .When(v => string.Equals(v.Country, "Türkiye", StringComparison.OrdinalIgnoreCase))
             .WithMessage("Invalid Turkish province code.");
 
         RuleFor(v => v.City)

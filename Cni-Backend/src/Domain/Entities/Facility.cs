@@ -19,9 +19,9 @@ public class Facility : BaseAuditableEntity
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// ISO 3166-1 alpha-2 country code (e.g., "TR", "DE", "US")
+    /// Country name (e.g., "Türkiye", "Germany", "United States")
     /// </summary>
-    public string CountryCode { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
 
     /// <summary>
     /// Province or state. For Turkey: plate code (e.g., "06" for Ankara).

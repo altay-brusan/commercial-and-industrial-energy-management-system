@@ -4147,7 +4147,7 @@
         ]
       }
     },
-    "/api/v1/Lookups/Provinces/{countryCode}": {
+    "/api/v1/Lookups/Provinces/{country}": {
       "get": {
         "tags": [
           "Lookups"
@@ -4155,7 +4155,7 @@
         "operationId": "GetApiV1LookupsProvinces",
         "parameters": [
           {
-            "name": "countryCode",
+            "name": "country",
             "in": "path",
             "required": true,
             "schema": {
@@ -9434,7 +9434,7 @@
           "name": {
             "type": "string"
           },
-          "countryCode": {
+          "country": {
             "type": "string"
           },
           "province": {
@@ -9526,7 +9526,7 @@
           "name": {
             "type": "string"
           },
-          "countryCode": {
+          "country": {
             "type": "string"
           },
           "province": {
@@ -9566,7 +9566,7 @@
           "name": {
             "type": "string"
           },
-          "countryCode": {
+          "country": {
             "type": "string"
           },
           "province": {
@@ -9610,7 +9610,7 @@
           "name": {
             "type": "string"
           },
-          "countryCode": {
+          "country": {
             "type": "string"
           },
           "province": {

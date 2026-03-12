@@ -8,7 +8,7 @@ public class FacilityDto
     public Guid Id { get; init; }
     public Guid FirmId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string CountryCode { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
     public string Province { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;

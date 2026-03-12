@@ -12,7 +12,7 @@ public record CreateFacilityCommand : IRequest<Guid>
 {
     public Guid FirmId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string CountryCode { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
     public string Province { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
@@ -37,7 +37,7 @@ public class CreateFacilityCommandHandler : IRequestHandler<CreateFacilityComman
         {
             FirmId = request.FirmId,
             Name = request.Name,
-            CountryCode = request.CountryCode,
+            Country = request.Country,
             Province = request.Province,
             City = request.City,
             Address = request.Address,

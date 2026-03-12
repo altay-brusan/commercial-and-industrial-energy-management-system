@@ -207,8 +207,13 @@ public static class Countries
     private static readonly Dictionary<string, CountryInfo> ByCode =
         All.ToDictionary(c => c.Code, StringComparer.OrdinalIgnoreCase);
 
+    private static readonly Dictionary<string, CountryInfo> ByName =
+        All.ToDictionary(c => c.Name, StringComparer.OrdinalIgnoreCase);
+
     public static bool IsValid(string code) => ByCode.ContainsKey(code);
+    public static bool IsValidName(string name) => ByName.ContainsKey(name);
     public static CountryInfo? Get(string code) => ByCode.GetValueOrDefault(code);
+    public static CountryInfo? GetByName(string name) => ByName.GetValueOrDefault(name);
 }
 
 public record CountryInfo(string Code, string Name);

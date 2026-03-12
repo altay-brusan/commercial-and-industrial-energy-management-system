@@ -890,7 +890,7 @@ namespace Backend.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("CountryCode")
+                    b.Property<string>("Country")
                         .IsRequired()
                         .HasColumnType("text");
 
