@@ -27,6 +27,7 @@
     </PackageReference>
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="NSwag.AspNetCore" />
+    <PackageReference Include="prometheus-net.AspNetCore" />
     <PackageReference Include="NSwag.MSBuild">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

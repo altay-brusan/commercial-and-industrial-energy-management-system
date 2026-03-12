@@ -29,6 +29,7 @@ public static class DependencyInjection
         builder.Services.AddMemoryCache();
         builder.Services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         builder.Services.AddScoped<ISaveChangesInterceptor, DispatchDomainEventsInterceptor>();
+        builder.Services.AddSingleton<IDbCommandInterceptor, MetricsDbCommandInterceptor>();
 
         // Skip DbContext and Identity EntityFrameworkStores registration in Test environment
         // Tests will register their own DbContext with SQLite
@@ -43,6 +44,7 @@ public static class DependencyInjection
             builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
             {
                 options.AddInterceptors(sp.GetServices<ISaveChangesInterceptor>());
+                options.AddInterceptors(sp.GetServices<IDbCommandInterceptor>());
                 options.UseNpgsql(connectionString);
             });
             builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());

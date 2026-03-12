@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Backend.Application.Common.Interfaces;
 using Backend.Application.Common.Services;
 using Backend.Domain.Entities.DeviceData;
 using Backend.Domain.Enums;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Prometheus;
 
 namespace Backend.Application.DeviceData.Commands.IngestDeviceData;
 
@@ -40,53 +42,108 @@ public class IngestDeviceDataCommandHandler : IRequestHandler<IngestDeviceDataCo
         _logger = logger;
     }
 
+    private static readonly Histogram MqttProcessing = Metrics.CreateHistogram(
+        "cni_mqtt_message_processing_seconds",
+        "Duration of MQTT message processing in seconds",
+        new HistogramConfiguration
+        {
+            LabelNames = ["kind"],
+            Buckets = Histogram.ExponentialBuckets(0.001, 2, 12)
+        });
+
+    private static readonly Histogram MqttLatency = Metrics.CreateHistogram(
+        "cni_mqtt_message_latency_seconds",
+        "End-to-end latency from device timestamp to server processing",
+        new HistogramConfiguration
+        {
+            LabelNames = ["kind"],
+            Buckets = Histogram.ExponentialBuckets(0.1, 2, 14)
+        });
+
+    private static readonly Counter MqttTotal = Metrics.CreateCounter(
+        "cni_mqtt_messages_total",
+        "Total number of MQTT messages processed",
+        new CounterConfiguration
+        {
+            LabelNames = ["kind", "status"]
+        });
+
     public async Task<bool> Handle(IngestDeviceDataCommand request, CancellationToken cancellationToken)
     {
-        var rtuId = await ResolveRtuId(request.RtuSn, cancellationToken);
-        if (rtuId == null)
-        {
-            _logger.LogWarning("RTU not found for serial number {RtuSn}", request.RtuSn);
-            return false;
-        }
+        var stopwatch = Stopwatch.StartNew();
+        var kind = request.Kind;
 
-        var deviceId = await ResolveDeviceId(request.DeviceName, rtuId.Value, cancellationToken);
-        if (deviceId == null)
+        try
         {
-            _logger.LogWarning("Device not found for name {DeviceName} under RTU {RtuSn}", request.DeviceName, request.RtuSn);
-            return false;
-        }
+            var rtuId = await ResolveRtuId(request.RtuSn, cancellationToken);
+            if (rtuId == null)
+            {
+                _logger.LogWarning("RTU not found for serial number {RtuSn}", request.RtuSn);
+                MqttTotal.WithLabels(kind, "failure").Inc();
+                return false;
+            }
 
-        var now = DateTimeOffset.UtcNow;
-        var deviceLocalTime = request.DeviceLocalTime ?? now;
+            var deviceId = await ResolveDeviceId(request.DeviceName, rtuId.Value, cancellationToken);
+            if (deviceId == null)
+            {
+                _logger.LogWarning("Device not found for name {DeviceName} under RTU {RtuSn}", request.DeviceName, request.RtuSn);
+                MqttTotal.WithLabels(kind, "failure").Inc();
+                return false;
+            }
 
-        // Handle alarm packages separately — they don't produce telemetry records
-        if (DeviceDataCategorizer.IsAlarmPackage(request.Kind))
-        {
+            var now = DateTimeOffset.UtcNow;
+            var deviceLocalTime = request.DeviceLocalTime ?? now;
+
+            // Record end-to-end latency if device timestamp is available
+            if (request.DeviceLocalTime.HasValue)
+            {
+                var latencySeconds = (now - request.DeviceLocalTime.Value).TotalSeconds;
+                if (latencySeconds > 0)
+                {
+                    MqttLatency.WithLabels(kind).Observe(latencySeconds);
+                }
+            }
+
+            // Handle alarm packages separately — they don't produce telemetry records
+            if (DeviceDataCategorizer.IsAlarmPackage(request.Kind))
+            {
+                await UpdateLastSeenThrottled(rtuId.Value, deviceId.Value, now, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+                MqttTotal.WithLabels(kind, "success").Inc();
+                return true;
+            }
+
+            var category = DeviceDataCategorizer.Categorize(request.Kind);
+
+            var device = await _context.Devices.IgnoreQueryFilters()
+                .FirstAsync(d => d.Id == deviceId.Value, cancellationToken);
+            device.LastSeenUtc = now;
+
+            if (category == DeviceDataCategory.Unknown)
+            {
+                _logger.LogWarning("Unrecognized kind {Kind} for device {DeviceName} — message rejected", request.Kind, request.DeviceName);
+                MqttTotal.WithLabels(kind, "failure").Inc();
+                return false;
+            }
+
+            StoreTelemetry(category, deviceId.Value, request.Kind, request.Path, request.Payload, deviceLocalTime, now);
             await UpdateLastSeenThrottled(rtuId.Value, deviceId.Value, now, cancellationToken);
+
             await _context.SaveChangesAsync(cancellationToken);
+
+            MqttTotal.WithLabels(kind, "success").Inc();
             return true;
         }
-
-        var category = DeviceDataCategorizer.Categorize(request.Kind);
-
-
-        var device = await _context.Devices.IgnoreQueryFilters()
-            .FirstAsync(d => d.Id == deviceId.Value, cancellationToken);
-        device.LastSeenUtc = now;
-
-
-        if (category == DeviceDataCategory.Unknown)
+        catch
         {
-            _logger.LogWarning("Unrecognized kind {Kind} for device {DeviceName} — message rejected", request.Kind, request.DeviceName);
-            return false;
+            MqttTotal.WithLabels(kind, "failure").Inc();
+            throw;
         }
-
-        StoreTelemetry(category, deviceId.Value, request.Kind, request.Path, request.Payload, deviceLocalTime, now);
-        await UpdateLastSeenThrottled(rtuId.Value, deviceId.Value, now, cancellationToken);
-
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return true;
+        finally
+        {
+            stopwatch.Stop();
+            MqttProcessing.WithLabels(kind).Observe(stopwatch.Elapsed.TotalSeconds);
+        }
     }
 
     private void StoreTelemetry(
