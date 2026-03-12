@@ -139,8 +139,6 @@ public static class DependencyInjection
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityEmailAdapter<ApplicationUser>>();
         builder.Services.AddSingleton<ILogEventEnricher, UserEnricher>();
         builder.Services.AddSingleton<IExternalDataService, ExternalDataService>();
-        // gRPC disabled
-        // builder.Services.AddSingleton<GrpcStreamManager>();
 
         // Energy Price Service for fetching prices from Market Operators
         builder.Services.AddHttpClient<IEnergyPriceService, EnergyPriceService>();
