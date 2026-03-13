@@ -5591,6 +5591,377 @@
         }
       }
     },
+    "/api/v1/SolarInverters/Units/{facilityId}": {
+      "get": {
+        "tags": [
+          "SolarInverters"
+        ],
+        "operationId": "GetApiV1SolarInvertersUnits",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarUnitsResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/SolarInverters/Units/{unitId}/Header": {
+      "get": {
+        "tags": [
+          "SolarInverters"
+        ],
+        "operationId": "GetApiV1SolarInvertersUnitsHeader",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarUnitHeaderDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/SolarInverters/Units/{unitId}/{tab}": {
+      "get": {
+        "tags": [
+          "SolarInverters"
+        ],
+        "operationId": "GetApiV1SolarInvertersUnits2",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "tab",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 3
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 4
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 5
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "nullable": true
+            },
+            "x-position": 6
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 7
+          },
+          {
+            "name": "isActive",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            },
+            "x-position": 8
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/SolarInverters/DeviceTree/{facilityId}": {
+      "get": {
+        "tags": [
+          "SolarInverters"
+        ],
+        "operationId": "GetApiV1SolarInvertersDeviceTree",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarDeviceTreeResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/SolarInverters/EnergyAnalytics/{facilityId}": {
+      "get": {
+        "tags": [
+          "SolarInverters"
+        ],
+        "operationId": "GetApiV1SolarInvertersEnergyAnalytics",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarEnergyAnalyticsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/SolarInverters/Performance/{facilityId}": {
+      "get": {
+        "tags": [
+          "SolarInverters"
+        ],
+        "operationId": "GetApiV1SolarInvertersPerformance",
+        "parameters": [
+          {
+            "name": "facilityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarPerformanceDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
+    "/api/v1/SolarInverters/Units/{unitId}/Commands/{action}": {
+      "post": {
+        "tags": [
+          "SolarInverters"
+        ],
+        "operationId": "PostApiV1SolarInvertersUnitsCommands",
+        "parameters": [
+          {
+            "name": "unitId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-position": 2
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolarCommandResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "JWT": []
+          }
+        ]
+      }
+    },
     "/api/TenantRoles": {
       "get": {
         "tags": [
@@ -12382,6 +12753,462 @@
           "time": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "SolarUnitsResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SolarUnitListItemDto"
+            }
+          },
+          "aggregates": {
+            "$ref": "#/components/schemas/SolarAggregatesDto"
+          }
+        }
+      },
+      "SolarUnitListItemDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "activePowerKw": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "dailyYieldKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalYieldKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "efficiencyPct": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "temperatureC": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "activeFaultCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastSeenUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SolarAggregatesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalUnits": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "onlineCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "offlineCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "faultCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalActivePowerKw": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalDailyYieldKwh": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "averageEfficiencyPct": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "totalActiveFaults": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SolarUnitHeaderDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "modelName": {
+            "type": "string",
+            "nullable": true
+          },
+          "manufacturer": {
+            "type": "string",
+            "nullable": true
+          },
+          "facilityId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "facilityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusBadgeDto"
+          },
+          "activeAlarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableTabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TabInfoDto"
+            }
+          },
+          "lastSeenUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "SolarDeviceTreeResponseDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "tree": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SolarTreeNodeDto"
+            }
+          }
+        }
+      },
+      "SolarTreeNodeDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "parentDeviceId": {
+            "type": "string",
+            "format": "guid",
+            "nullable": true
+          },
+          "alarmCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SolarTreeNodeDto"
+            }
+          }
+        }
+      },
+      "SolarEnergyAnalyticsDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "stats": {
+            "$ref": "#/components/schemas/SolarAnalyticsStatsDto"
+          },
+          "plantPowerCurve": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ChartDefinitionDto"
+              }
+            ]
+          },
+          "inverterYieldComparison": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        }
+      },
+      "SolarAnalyticsStatsDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalActivePowerKw": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalDailyYieldKwh": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalYieldKwh": {
+            "type": "number",
+            "format": "double"
+          },
+          "inverterCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "onlineCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ChartDefinitionDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "optional": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "xAxis": {
+            "$ref": "#/components/schemas/CurveXAxisDto"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurveSeriesDto"
+            }
+          },
+          "referenceLines": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ChartReferenceLineDto"
+            }
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          }
+        }
+      },
+      "CurveXAxisDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CurveSeriesDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "yAxis": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SolarPerformanceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "totalInstalledCapacityKw": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalActivePowerKw": {
+            "type": "number",
+            "format": "double"
+          },
+          "totalDailyYieldKwh": {
+            "type": "number",
+            "format": "double"
+          },
+          "capacityUtilizationPct": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "averageEfficiencyPct": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "peakPowerKw": {
+            "type": "number",
+            "format": "double"
+          },
+          "inverterMetrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SolarInverterPerformanceDto"
+            }
+          }
+        }
+      },
+      "SolarInverterPerformanceDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "activePowerKw": {
+            "type": "number",
+            "format": "double"
+          },
+          "dailyYieldKwh": {
+            "type": "number",
+            "format": "double"
+          },
+          "efficiencyPct": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "specificYield": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "capacityUtilizationPct": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        }
+      },
+      "SolarCommandResultDto": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "deviceName": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

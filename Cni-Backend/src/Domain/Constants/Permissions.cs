@@ -13,6 +13,7 @@ public abstract class Permissions
 
     // Solar
     public const string SolarView = "Solar.View";
+    public const string SolarControl = "Solar.Control";
 
     // Bess
     public const string BessView = "Bess.View";
