@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package ems.types.generic;
+
+// Generic AC Power Data Structure
+message AC_Power {
+    double voltage_phase_1 = 1;           // Voltage of Phase 1 [Volts (V)]
+    double voltage_phase_2 = 2;           // Voltage of Phase 2 [Volts (V)]
+    double voltage_phase_3 = 3;           // Voltage of Phase 3 [Volts (V)]
+    double line_to_line_voltage_phase_1 = 4; // Line-to-line voltage for Phase 1 [Volts (V)]
+    double line_to_line_voltage_phase_2 = 5; // Line-to-line voltage for Phase 2 [Volts (V)]
+    double line_to_line_voltage_phase_3 = 6; // Line-to-line voltage for Phase 3 [Volts (V)]
+    double voltage_rms = 7;                // RMS Voltage across all phases [Volts (V)]
+    double current_phase_1 = 8;           // Current of Phase 1 [Amps (A)]
+    double current_phase_2 = 9;           // Current of Phase 2 [Amps (A)]
+    double current_phase_3 = 10;           // Current of Phase 3 [Amps (A)]
+    double current_rms = 11;               // RMS Current across all phases [Amps (A)]
+    double active_power_phase_1 = 12;     // Active power of Phase 1 [Kilowatts (kW)]
+    double active_power_phase_2 = 13;     // Active power of Phase 2 [Kilowatts (kW)]
+    double active_power_phase_3 = 14;     // Active power of Phase 3 [Kilowatts (kW)]
+    double total_active_power = 15;       // Total active power across all phases [Kilowatts (kW)]
+    double reactive_power_phase_1 = 16;   // Reactive power of Phase 1 [Kilovars (kVAR)]
+    double reactive_power_phase_2 = 17;   // Reactive power of Phase 2 [Kilovars (kVAR)]
+    double reactive_power_phase_3 = 18;   // Reactive power of Phase 3 [Kilovars (kVAR)]
+    double total_reactive_power = 19;     // Total reactive power across all phases [Kilovars (kVAR)]
+    double apparent_power_phase_1 = 20;   // Apparent power of Phase 1 [Kilovolt-amperes (kVA)]
+    double apparent_power_phase_2 = 21;   // Apparent power of Phase 2 [Kilovolt-amperes (kVA)]
+    double apparent_power_phase_3 = 22;   // Apparent power of Phase 3 [Kilovolt-amperes (kVA)]
+    double total_apparent_power = 23;     // Total apparent power across all phases [Kilovolt-amperes (kVA)]
+    double power_factor_phase_1 = 24;     // Power factor of Phase 1 [Dimensionless]
+    double power_factor_phase_2 = 25;     // Power factor of Phase 2 [Dimensionless]
+    double power_factor_phase_3 = 26;     // Power factor of Phase 3 [Dimensionless]
+    double total_power_factor = 27;       // Total power factor across all phases [Dimensionless]
+    double total_energy_daily = 28;    // Energy consumed since the beginning of the day [Kilowatt-hours (kWh)]
+    double total_energy_lifetime = 29;  // Total energy consumed since the beginning of the system [Kilowatt-hours (kWh)]
+    double frequency = 30;                // Frequency of the system [Hertz (Hz)]
+}
+
+// Generic DC Power Data Structure
+message DC_Power {
+    double voltage = 1;  // DC Voltage (V)
+    double current = 2;  // DC Current (A)
+    double power = 3;  // DC Power (kW)
+    double total_energy_daily = 4;  // Total Energy Generated Since the Beginning of the Day (kWh)
+    double total_energy_lifetime = 5;  // Total Energy Generated Since the Beginning of the System (kWh)
+}
+
+enum OperatingMode {
+    STANDBY = 0;  // Standby Mode
+    ACTIVE = 1;  // Active Mode
+    FAULT = 2;  // Fault Mode
+}
+
+// Generic Device Status Structure
+message Status {
+    OperatingMode operating_mode = 1;  // Operating Mode
+    bool warning_status = 2;  // Warning Status
+    repeated string warning_messages = 3;  // Warning Messages
+    bool fault_status = 4;  // Fault Status
+    repeated string fault_messages = 5;  // Fault Messages
+}

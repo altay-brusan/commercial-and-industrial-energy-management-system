@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package ems.pcs.stream;
+
+import "types_generic.proto";
+
+// Service definition for PPC interactions
+service PCService {
+  // RPC for streaming PCS data with a specified period
+  rpc StreamPCSData (PCSDataRequest) returns (stream PCSData);
+}
+
+// Request message with a period parameter
+message PCSDataRequest {
+  uint32 id = 1; // ID of the component in the system  
+  uint32 period_s = 2; // Period in seconds between data updates
+}
+
+// Comprehensive PCS data structure
+message PCSData {
+  uint32 id = 1;                // ID of the component in the system
+  ems.types.generic.DC_Power dc_power = 2; // PCS dc power values
+  ems.types.generic.AC_Power ac_power = 3; // PCS ac power values
+  ems.types.generic.Status status = 4; // Status of the PCS
+  double temperature_pcs = 5;   // Temperature of the PCS [Degrees Celsius]
+  double efficiency = 6;        // Efficiency of the PCS [%]
+  double total_energy_delivered = 7; // Total energy delivered to the grid [Kilowatt-hours (kWh)]
+  double total_energy_absorbed = 8;  // Total energy absorbed from the grid [Kilowatt-hours (kWh)]
+}

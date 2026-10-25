@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package ems.system.command;
+
+// Enum for BESS modes
+enum BESSMode {
+    BESS_Unknown = 0;
+    BESS_Standby = 1;
+    BESS_Charging = 2;
+    BESS_Discharging = 3;
+    BESS_Error = 5;
+}
+
+enum SystemState {
+    Sys_Initializing = 0;
+    Sys_WaitingConfiguration = 1;
+    Sys_ReadyToOperate = 2;
+    Sys_Active = 3;
+    Sys_Error = 4;
+}
+
+service SystemPowerService {
+    rpc SetSystemMode (SystemModeData) returns (CommandResponseData);
+    rpc GetSystemMode (Empty) returns (SystemModeData);
+}
+
+service QuerySystemInfoService {
+    rpc GetSystemState (Empty) returns (SystemStateData);
+}
+
+service SystemSetupService {
+    rpc ForceConfiguration (Empty) returns (CommandResponseData);
+    rpc SetBESSId (IdArrayData) returns (CommandResponseData);
+    rpc SetPCSId (IdArrayData) returns (CommandResponseData);
+    rpc SetSmartMeterId (IdArrayData) returns (CommandResponseData);
+    rpc SetSolarId (IdArrayData) returns (CommandResponseData);
+    rpc SetGeneratorId (IdArrayData) returns (CommandResponseData);
+    rpc GetComponentIds (Empty) returns (ComponentIdsData);
+    rpc SetSystemConnections (SystemConnectionData) returns (CommandResponseData);
+    rpc SetSystemActive (Empty) returns (CommandResponseData);
+}
+
+message SystemModeData {
+    string id = 1;
+    BESSMode mode = 3;
+    double active_power = 4; // Active power from PCS to grid
+    double reactive_power = 5; // Reactive power from PCS to grid
+    double charge_power = 6; // Charge power to BESS
+}
+
+message CommandResponseData {
+    bool success = 1;
+    string message = 2;
+}
+
+message Empty {}
+
+message IdArrayData {
+    repeated string ids = 1;
+    string description = 2;
+}
+
+message ComponentIdsData {
+    repeated string bess_ids = 1;
+    repeated string pcs_ids = 2;
+    repeated string smart_meter_ids = 3;
+    repeated string solar_ids = 4;
+    repeated string geneator_ids = 5;
+    uint32 number_of_bess = 6;
+    uint32 number_of_pcs = 7;
+    uint32 number_of_smart_meters = 8;
+    uint32 number_of_solar = 9;
+    uint32 number_of_generator = 10;
+}
+
+message SystemStateData {
+    SystemState state = 1;
+}
+
+message SystemConnectionData {
+    uint32 number_of_ac_nodes = 1;
+    uint32 number_of_dc_nodes = 2;
+    repeated uint32 ac_node_ids = 3;
+    repeated uint32 dc_node_ids = 4;
+    map<string, uint32> bess_dc_node_map = 5;
+    map<string, uint32> pcs_dc_node_map = 6;
+    map<string, uint32> pcs_ac_node_map = 7;
+    map<string, uint32> solar_dc_node_map = 8;
+    map<string, uint32> solar_ac_node_map = 9;
+    map<string, uint32> generator_ac_node_map = 10;
+    map<string, uint32> smart_meter_ac_node_map = 11;
+}

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package ems.bess.stream;
+
+import "types_generic.proto";
+
+// Service definition for BESS interactions
+enum BESSStatus {
+  STANDBY = 0; // BESS is in standby mode
+  CHARGING = 1; // BESS is charging
+  DISCHARGING = 2; // BESS is discharging
+  ERROR = 3; // BESS is in error state
+}
+
+// Service definition for BESS interactions
+service BESSService {
+  // RPC for streaming BESS data with a specified period
+  rpc StreamBESSData (BESSDataRequest) returns (stream BESSData);
+}
+
+// Request message with a period parameter
+message BESSDataRequest {
+  uint32 id = 1; // ID of the component in the system  
+  uint32 period_s = 2; // Period in seconds between data updates
+}
+
+// Comprehensive BESS data structure
+message BESSData {
+  uint32 id = 1;                // ID of the component in the system
+  double state_of_charge = 2;    // State of Charge (SOC) - Current battery charge level [%]
+  double state_of_health = 3;    // State of Health (SOH) - Health of the battery [%]
+  ems.types.generic.DC_Power dc_power = 4; // Power flow in and out of the BESS [Kilowatts (kW)]
+  double battery_temperature = 5; // Average temperature of the battery [Degrees Celsius]
+  double total_energy_stored = 6;  // Total energy stored in the BESS [Kilowatt-hours (kWh)]
+  double energy_throughput = 7;   // Cumulative energy cycled through the BESS [Kilowatt-hours (kWh)]
+  double charge_limit = 8;        // Maximum allowable charging current [Amps (A)]
+  double discharge_limit = 9;     // Maximum allowable discharging current [Amps (A)]
+  uint32 number_of_packs = 10;  // Number of Battery Packs
+  uint32 number_of_modules = 11;  // Number of Battery Modules in each pack
+  uint32 number_of_cells = 12;  // Number of Cells in each module
+  double capacity = 13;  // Number of Cells in each module
+  bool cooling_active = 14;      // Indicates if the cooling system is active [Boolean]
+  BESSStatus charge_status = 15; // Charging status of the BESS
+  ems.types.generic.Status status = 16; // Status of the BESS
+}
