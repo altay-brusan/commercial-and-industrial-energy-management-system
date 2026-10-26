@@ -176,3 +176,7 @@ The backend started as the **DERMS Backend**, generated from the Clean Architect
 - **Frontend**: `.env.local` (not committed), for example `NEXT_PUBLIC_API_BASE_URL`, plus server-side FusionSolar variables if used.
 
 Never commit real credentials, hostnames of private infrastructure, or seeded passwords. Seeded development accounts should be configured locally and changed before any shared deployment.
+
+## License
+
+Released under the [MIT License](LICENSE).

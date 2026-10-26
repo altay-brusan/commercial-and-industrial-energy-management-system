@@ -88,7 +88,7 @@ Authenticates a user and returns a JWT access token with a refresh token cookie.
 ```json
 {
   "email": "user@example.com",
-  "password": "Password1!",
+  "password": "<your-password>",
   "rememberMe": false
 }
 ```
